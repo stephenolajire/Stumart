@@ -15,12 +15,12 @@ const Navigation = () => {
     <nav className={styles.nav}>
       <div className={styles.container}>
         <NavLink to="/" className={styles.logo}>
-         <img className={styles.imgLogo} src={logo} alt="StuMart" />
+          <img className={styles.imgLogo} src={logo} alt="StuMart" />
           StuMart
         </NavLink>
 
         <button className={styles.menuButton} onClick={toggleMenu}>
-          {isMenuOpen ? <HiX size={24} /> : <HiMenu size={24} />}
+          {isMenuOpen ? <HiX size={32} /> : <HiMenu size={32} />}
         </button>
 
         <div
@@ -33,6 +33,7 @@ const Navigation = () => {
             className={({ isActive }) =>
               isActive ? `${styles.link} ${styles.activeLink}` : styles.link
             }
+            onClick={() => setIsMenuOpen(false)}
           >
             Home
           </NavLink>
@@ -41,6 +42,7 @@ const Navigation = () => {
             className={({ isActive }) =>
               isActive ? `${styles.link} ${styles.activeLink}` : styles.link
             }
+            onClick={() => setIsMenuOpen(false)}
           >
             About
           </NavLink>
@@ -49,24 +51,27 @@ const Navigation = () => {
             className={({ isActive }) =>
               isActive ? `${styles.link} ${styles.activeLink}` : styles.link
             }
+            onClick={() => setIsMenuOpen(false)}
           >
-            Service
+            Rider
           </NavLink>
           <NavLink
             to="/vendors"
             className={({ isActive }) =>
               isActive ? `${styles.link} ${styles.activeLink}` : styles.link
             }
+            onClick={() => setIsMenuOpen(false)}
           >
             Vendors
           </NavLink>
           <NavLink
-            to="/vendors"
+            to="/contact"
             className={({ isActive }) =>
               isActive ? `${styles.link} ${styles.activeLink}` : styles.link
             }
+            onClick={() => setIsMenuOpen(false)}
           >
-            Vendors
+            Contact Us
           </NavLink>
 
           <div className={styles.authButtons}>

@@ -106,7 +106,7 @@
 
   .navLinks {
     position: fixed;
-    top: 7rem;
+    top: 8rem;
     left: 0;
     width: 100%;
     background: var(--neutral-white);
@@ -130,5 +130,9 @@
   .buttonFilled {
     width: 100%;
     text-align: center;
+  }
+
+  .nav {
+    height: 10rem;
   }
 }

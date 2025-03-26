@@ -1,0 +1,271 @@
+.riderContainer {
+  margin-top: 8rem;
+}
+
+.container {
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.hero {
+  background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
+  color: var(--neutral-white);
+  padding: 12rem 0;
+  text-align: center;
+}
+
+.hero h1 {
+  font-size: 4.8rem;
+  margin-bottom: 2rem;
+}
+
+.hero p {
+  font-size: 2rem;
+  opacity: 0.9;
+  margin-bottom: 3rem;
+  max-width: 60rem;
+  margin-left: auto;
+  margin-right: auto;
+    line-height: 3rem;
+}
+
+.ctaButton {
+  display: inline-block;
+  padding: 1.5rem 4rem;
+  font-size: 1.8rem;
+  background: var(--neutral-white);
+  color: var(--primary-600);
+  border: none;
+  border-radius: 0.8rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.ctaButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.benefits,
+.howItWorks,
+.requirements,
+.earnings,
+.faq {
+  padding: 8rem 0;
+}
+
+.benefits {
+  background: var(--neutral-white);
+}
+
+.benefits h2,
+.howItWorks h2,
+.requirements h2,
+.earnings h2,
+.faq h2 {
+  text-align: center;
+  font-size: 3.6rem;
+  margin-bottom: 6rem;
+  color: var(--text-primary);
+}
+
+.benefitsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(25rem, 1fr));
+  gap: 3rem;
+}
+
+.benefitCard {
+  text-align: center;
+  padding: 3rem 2rem;
+  background: var(--neutral-gray-50);
+  border-radius: 1.2rem;
+  transition: transform 0.3s ease;
+}
+
+.benefitCard:hover {
+  transform: translateY(-5px);
+}
+
+.icon {
+  font-size: 4rem;
+  color: var(--primary-500);
+  margin-bottom: 2rem;
+}
+
+.benefitCard h3 {
+  font-size: 2.4rem;
+  margin-bottom: 1.5rem;
+  color: var(--text-primary);
+}
+
+.benefitCard p {
+  font-size: 1.6rem;
+  color: var(--text-secondary);
+  line-height: 3rem;
+}
+
+.howItWorks {
+  background: var(--neutral-gray-50);
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(25rem, 1fr));
+  gap: 3rem;
+}
+
+.step {
+  text-align: center;
+  padding: 3rem 2rem;
+  background: var(--neutral-white);
+  border-radius: 1.2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.step p, .requirement p {
+    font-size: 1.6rem;
+    color: var(--text-secondary);
+    line-height: 3rem;
+    margin-top: 0.5rem;
+}
+
+.stepNumber {
+  width: 5rem;
+  height: 5rem;
+  background: var(--primary-500);
+  color: var(--neutral-white);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.4rem;
+  margin: 0 auto 2rem;
+  font-weight: 600;
+}
+
+.requirements {
+  background: var(--neutral-white);
+}
+
+.requirementsList {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(30rem, 1fr));
+  gap: 3rem;
+}
+
+.requirement {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  padding: 3rem;
+  background: var(--neutral-gray-50);
+  border-radius: 1.2rem;
+}
+
+.earnings {
+  background: var(--neutral-gray-50);
+}
+
+.earningDetails {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(25rem, 1fr));
+  gap: 3rem;
+}
+
+.earning {
+  text-align: center;
+  padding: 3rem;
+  background: var(--neutral-white);
+  border-radius: 1.2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.earning h3 {
+  font-size: 2rem;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+
+.earning p {
+  font-size: 3.6rem;
+  color: var(--primary-500);
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.earning span {
+  font-size: 1.4rem;
+  color: var(--text-secondary);
+}
+
+.faq {
+  background: var(--neutral-white);
+}
+
+.questions {
+  display: grid;
+  gap: 2rem;
+}
+
+.question {
+  padding: 3rem;
+  background: var(--neutral-gray-50);
+  border-radius: 1.2rem;
+}
+
+.question h3 {
+  font-size: 2rem;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+
+.question p {
+  font-size: 1.6rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.cta {
+  padding: 8rem 0;
+  background: var(--primary-500);
+  color: var(--neutral-white);
+  text-align: center;
+  margin-bottom: 8rem;
+}
+
+.cta h2 {
+  font-size: 3.6rem;
+  margin-bottom: 2rem;
+}
+
+.cta p {
+  font-size: 1.8rem;
+  margin-bottom: 3rem;
+  opacity: 0.9;
+}
+
+@media (max-width: 768px) {
+  .hero h1 {
+    font-size: 3.6rem;
+  }
+
+  .hero p {
+    font-size: 1.8rem;
+  }
+
+  .requirement {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .steps,
+  .benefitsGrid,
+  .requirementsList,
+  .earningDetails {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,202 @@
+.aboutContainer {
+  margin-top: 8rem;
+}
+
+.container {
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.hero {
+  background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+  color: var(--neutral-white);
+  padding: 10rem 2rem;
+  text-align: center;
+}
+
+.hero h1 {
+  font-size: 4.8rem;
+  margin-bottom: 2rem;
+}
+
+.hero p {
+  font-size: 2rem;
+  opacity: 0.9;
+}
+
+.mission {
+  padding: 8rem 0;
+  background: var(--neutral-white);
+  text-align: center;
+}
+
+.mission h2 {
+  font-size: 3.6rem;
+  color: var(--text-primary);
+  margin-bottom: 2rem;
+}
+
+.mission p {
+  font-size: 1.8rem;
+  color: var(--text-secondary);
+  max-width: 80rem;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+.features {
+  padding: 8rem 0;
+  background: var(--neutral-gray-50);
+}
+
+.features .container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3rem;
+}
+
+.featureCard {
+  background: var(--neutral-white);
+  border-radius: 1.2rem;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.featureCard img {
+  width: 100%;
+  height: 24rem;
+  object-fit: cover;
+}
+
+.featureCard h3 {
+  font-size: 2.4rem;
+  padding: 2rem;
+  color: var(--text-primary);
+}
+
+.featureCard p {
+  padding: 0 2rem 2rem;
+  color: var(--text-secondary);
+  font-size: 1.6rem;
+  line-height: 1.6;
+}
+
+.howItWorks {
+  padding: 8rem 0;
+  background: var(--neutral-white);
+    text-align: center;
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3rem;
+  margin-top: 4rem;
+}
+
+.step {
+  text-align: center;
+  padding: 2rem;
+}
+
+.stepNumber {
+  width: 5rem;
+  height: 5rem;
+  background: var(--primary-500);
+  color: var(--neutral-white);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.4rem;
+  margin: 0 auto 2rem;
+}
+
+.step p {
+    font-size: 1.6rem;
+    margin-top: 0.5rem;
+    color: var(--text-secondary);
+    line-height: 3rem;
+}
+
+.stats {
+  padding: 8rem 0;
+  background: var(--primary-500);
+  color: var(--neutral-white);
+}
+
+.stats .container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 3rem;
+  text-align: center;
+}
+
+.stat h3 {
+  font-size: 4.8rem;
+  margin-bottom: 1rem;
+}
+
+.stat p {
+  font-size: 1.8rem;
+  opacity: 0.9;
+}
+
+.cta {
+  padding: 8rem 0;
+  background: var(--neutral-gray-50);
+  text-align: center;
+}
+
+.ctaButton {
+  margin-top: 3rem;
+  /* padding: 1.5rem 4rem; */
+  text-align: center;
+  font-size: 1.8rem;
+  height: 4rem;
+  background: var(--primary-500);
+  color: var(--neutral-white);
+  border: none;
+  border-radius: 0.8rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 25rem;
+}
+
+.ctaButton:hover {
+  background: var(--primary-600);
+  transform: translateY(-2px);
+}
+
+.containers p{
+    font-size: 1.8rem;
+    color: var(--text-secondary);
+    /* max-width: 80rem; */
+    margin: 0 auto;
+    line-height: 3rem;
+}
+
+@media (max-width: 968px) {
+  .features .container,
+  .steps,
+  .stats .container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 568px) {
+  .hero h1 {
+    font-size: 3.6rem;
+  }
+
+  .features .container,
+  .steps,
+  .stats .container {
+    grid-template-columns: 1fr;
+  }
+
+  .featureCard img {
+    height: 20rem;
+  }
+}
