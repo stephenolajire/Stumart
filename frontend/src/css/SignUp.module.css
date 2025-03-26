@@ -114,6 +114,10 @@
     padding: 2rem;
   }
 
+  .logoSection h2 {
+    font-size: 2.4rem;
+  }
+
   .nameGroup {
     grid-template-columns: 1fr;
   }
