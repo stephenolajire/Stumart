@@ -3,6 +3,7 @@ import Layout from "./layout/Layout";
 import Home from "./pages/Home";
 import ShopDetails from "./pages/ShopDetails";
 import ProductDetails from "./pages/ProductDetails";
+import Login from "./user/Login";
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
           <Route path="shop/:shopId" element={<ShopDetails />} />
           <Route path="product/:productId" element={<ProductDetails />} />
         </Route>
+        <Route path="/login" element={<Login />} />
       </Routes>
     </Router>
   );
