@@ -23,6 +23,7 @@
 .hero p {
   font-size: 2rem;
   opacity: 0.9;
+  line-height: 3rem;
 }
 
 .mission {
