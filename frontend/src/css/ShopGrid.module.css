@@ -1,0 +1,108 @@
+.shopGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+  padding: 20px;
+}
+
+.shopCard {
+  background-color: var(--neutral-gray-50);
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  text-decoration: none;
+  color: var(--text-primary);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.shopCard:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.imageWrapper {
+  position: relative;
+  /* padding-top: 100%; Aspect ratio 1:1 */
+  overflow: hidden;
+}
+
+.imageWrapper img {
+  /* position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%; */
+  height: 20rem;
+  width: 100%;
+  object-fit: cover;
+  border-bottom: 2px solid var(--neutral-gray-100);
+}
+
+.shopInfo {
+  padding: 15px;
+  /* text-align: center; */
+}
+
+.shopInfo h3 {
+  font-size: var(--h5-desktop);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+}
+
+.shopInfo .category {
+  font-size: var(--h6-desktop);
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 5px;
+  text-align: left;
+  margin-top: 1rem;
+}
+
+.shopInfo .rating {
+  font-size: var(--h5-desktop);
+  font-weight: 600;
+  color: var(--success);
+  margin-bottom: 10px;
+  text-align: left;
+}
+
+.shopInfo .delivery {
+  font-size: var(--h6-desktop);
+  font-weight: 400;
+  color: var(--text-tertiary);
+  text-align: left;
+  margin-top: 1rem;
+}
+
+/* Hover Effect on Shop Info */
+.shopCard:hover .shopInfo h3 {
+  color: var(--primary-500);
+}
+
+.shopCard:hover .shopInfo .category {
+  color: var(--primary-400);
+}
+
+@media screen and (max-width: 768px) {
+  .shopGrid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    padding: 0rem ;
+  }
+
+  .shopInfo h3 {
+    font-size: var(--h4-mobile);
+  }
+
+  .shopInfo .category {
+    font-size: var(--h5-mobile);
+  }
+
+  .shopInfo .rating {
+    font-size: var(--h5-mobile);
+  }
+
+  .shopInfo .delivery {
+    font-size: var(--h6-mobile);
+  }
+}

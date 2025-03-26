@@ -1,0 +1,134 @@
+.nav {
+  width: 100%;
+  height: 10rem;
+  background: var(--neutral-white);
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.container {
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 5rem;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo {
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: var(--primary-500);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+}
+
+.imgLogo {
+  width: 8rem;
+  height: 8rem;
+  border-radius: 4rem;
+  margin-right: 1rem;
+}
+
+.navLinks {
+  display: flex;
+  gap: 3rem;
+  align-items: center;
+}
+
+.link {
+  font-size: 1.6rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.link:hover {
+  color: var(--primary-500);
+}
+
+.activeLink {
+  color: var(--primary-500);
+  font-weight: 600;
+}
+
+.authButtons {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.buttonOutline {
+  padding: 0.8rem 1.6rem;
+  border: 2px solid var(--primary-500);
+  color: var(--primary-500);
+  border-radius: 0.4rem;
+  font-size: 1.6rem;
+  transition: all 0.3s ease;
+}
+
+.buttonFilled {
+  padding: 0.8rem 1.6rem;
+  background: var(--primary-500);
+  color: var(--neutral-white);
+  border-radius: 0.4rem;
+  font-size: 1.6rem;
+  transition: all 0.3s ease;
+}
+
+.menuButton {
+  display: none;
+  font-size: 2.4rem;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+@media screen and (max-width: 768px) {
+  .menuButton {
+    display: block;
+  }
+
+  .container {
+    padding: 0 2rem;
+  }
+
+  .imgLogo {
+    width: 6rem;
+    height: 6rem;
+    border-radius: 3rem;
+  }
+
+  .navLinks {
+    position: fixed;
+    top: 7rem;
+    left: 0;
+    width: 100%;
+    background: var(--neutral-white);
+    flex-direction: column;
+    padding: 2rem;
+    gap: 2rem;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+
+  .navLinksActive {
+    transform: translateX(0);
+  }
+
+  .authButtons {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .buttonOutline,
+  .buttonFilled {
+    width: 100%;
+    text-align: center;
+  }
+}

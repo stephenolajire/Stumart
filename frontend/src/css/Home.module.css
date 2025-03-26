@@ -1,0 +1,40 @@
+.home {
+  padding-top: 3rem;
+}
+
+.container {
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.container h2{
+  text-align: center;
+}
+
+.container p {
+  font-size: 1.8rem;
+  color: var(--text-primary);
+  text-align: center;
+  margin-bottom: 2rem;
+  margin-top: -1.5rem;
+}
+
+.categorySection,
+.shopsSection {
+  margin: 6rem 0;
+}
+
+.categorySection h2,
+.shopsSection h2 {
+  font-size: var(--h2-desktop);
+  margin-bottom: 2rem;
+  color: var(--text-primary);
+}
+
+@media (max-width: 768px) {
+  .categorySection h2,
+  .shopsSection h2 {
+    font-size: var(--h2-mobile);
+  }
+}

@@ -1,0 +1,129 @@
+* {
+  margin: 0%;
+  padding: 0%;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Montserrat, Poppins, sans-serif;
+}
+
+a {
+  text-decoration: none;
+}
+
+:root {
+  /* Make 1rem = 10px */
+  font-size: 62.5%;
+
+  /* Primary Colors - Brownish Gold */
+  --primary-100: #fdf6e9;
+  --primary-200: #f9e5bb;
+  --primary-300: #f4d08d;
+  --primary-400: #efbb5f;
+  --primary-500: #daa520; /* Main brand color - Golden Brown */
+  --primary-600: #b38517;
+  --primary-700: #8c660f;
+  --primary-800: #664807;
+  --primary-900: #402c04;
+
+  /* Secondary Colors - Black */
+  --secondary-100: #e6e6e6;
+  --secondary-200: #cccccc;
+  --secondary-300: #b3b3b3;
+  --secondary-400: #999999;
+  --secondary-500: #000000; /* Pure Black */
+  --secondary-600: #1a1a1a;
+  --secondary-700: #333333;
+  --secondary-800: #4d4d4d;
+  --secondary-900: #666666;
+
+  /* Neutral Colors */
+  --neutral-white: #ffffff;
+  --neutral-gray-50: #f9fafb;
+  --neutral-gray-100: #f3f4f6;
+  --neutral-gray-200: #e5e7eb;
+  --neutral-gray-300: #d1d5db;
+  --neutral-gray-400: #9ca3af;
+
+  /* State Colors */
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --info: #3b82f6;
+
+  /* Text Colors */
+  --text-primary: var(--secondary-500);
+  --text-secondary: var(--secondary-600);
+  --text-tertiary: var(--secondary-700);
+
+  /* Desktop Font Sizes (1rem = 10px) */
+  --h1-desktop: 4.8rem; /* 48px */
+  --h2-desktop: 4rem; /* 40px */
+  --h3-desktop: 3.2rem; /* 32px */
+  --h4-desktop: 2.4rem; /* 24px */
+  --h5-desktop: 2rem; /* 20px */
+  --h6-desktop: 1.8rem; /* 18px */
+
+  /* Mobile Font Sizes (1rem = 10px) */
+  --h1-mobile: 3.2rem; /* 32px */
+  --h2-mobile: 2.8rem; /* 28px */
+  --h3-mobile: 2.4rem; /* 24px */
+  --h4-mobile: 2rem; /* 20px */
+  --h5-mobile: 1.8rem; /* 18px */
+  --h6-mobile: 1.6rem; /* 16px */
+}
+
+/* Heading Styles */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+
+/* Desktop Heading Sizes (default) */
+h1 {
+  font-size: var(--h1-desktop);
+}
+h2 {
+  font-size: var(--h2-desktop);
+}
+h3 {
+  font-size: var(--h3-desktop);
+}
+h4 {
+  font-size: var(--h4-desktop);
+}
+h5 {
+  font-size: var(--h5-desktop);
+}
+h6 {
+  font-size: var(--h6-desktop);
+}
+
+/* Mobile Heading Sizes */
+@media screen and (max-width: 768px) {
+  h1 {
+    font-size: var(--h1-mobile);
+  }
+  h2 {
+    font-size: var(--h2-mobile);
+  }
+  h3 {
+    font-size: var(--h3-mobile);
+  }
+  h4 {
+    font-size: var(--h4-mobile);
+  }
+  h5 {
+    font-size: var(--h5-mobile);
+  }
+  h6 {
+    font-size: var(--h6-mobile);
+  }
+}
