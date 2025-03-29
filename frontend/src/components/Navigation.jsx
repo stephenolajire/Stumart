@@ -87,7 +87,7 @@ const Navigation = () => {
 
           {isAuthenticated ? (
             <div className={styles.authButtons}>
-              <NavLink className={styles.buttonOutline} onClick={handleLogout}>
+              <NavLink className={styles.buttonFilled} onClick={handleLogout}>
                 Logout
               </NavLink>
             </div>
