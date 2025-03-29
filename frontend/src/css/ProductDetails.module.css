@@ -136,7 +136,7 @@
 
 .addButton {
   flex: 1;
-  padding: 1.2rem 2.4rem;
+  /* padding: 1.2rem 2.4rem; */
   background: var(--primary-500);
   color: var(--neutral-white);
   border: none;
@@ -144,6 +144,8 @@
   font-size: 1.6rem;
   cursor: pointer;
   transition: background 0.3s ease;
+  height: 4rem;
+  width: 100%;
 }
 
 .addButton:hover {

@@ -1,9 +1,9 @@
 /* Main ShopDetails Container */
 .shopDetails {
-  padding: 20px;
+  /* padding: 20px; */
   background-color: var(--neutral-gray-50);
   margin-top: 10rem;
-  padding: 2rem 8rem;
+  padding: 2rem 5rem;
 }
 
 .header {
@@ -123,6 +123,7 @@
   width: 100%;
   text-align: center;
   padding-left: 1rem;
+  height: 4rem;
 }
 
 .addToCart:hover {
@@ -184,5 +185,11 @@
     padding: 8px;
     font-size: var(--h6-mobile);
     
+  }
+}
+
+@media (min-width: 300px) and (max-width:567px) {
+  .productCard img {
+    height: 15rem;
   }
 }

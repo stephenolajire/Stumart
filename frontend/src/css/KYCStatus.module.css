@@ -1,0 +1,125 @@
+.statusContainer {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background-color: var(--neutral-50);
+}
+
+.statusBox {
+  background-color: white;
+  padding: 4rem;
+  border-radius: 1.2rem;
+  box-shadow: 0 0.4rem 1.6rem rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 56rem;
+  text-align: center;
+}
+
+.statusIcon {
+  width: 12rem;
+  height: 12rem;
+  margin-bottom: 2.4rem;
+}
+
+.statusBox h2 {
+  font-size: 2.8rem;
+  color: var(--primary-500);
+  margin-bottom: 1.6rem;
+}
+
+.mainText {
+  font-size: 1.8rem;
+  color: var(--text-secondary);
+  margin-bottom: 3.2rem;
+}
+
+.infoBox {
+  background-color: var(--primary-50);
+  padding: 2.4rem;
+  border-radius: 0.8rem;
+  margin-bottom: 3.2rem;
+  text-align: left;
+}
+
+.infoBox h3 {
+  font-size: 1.8rem;
+  color: var(--primary-600);
+  margin-bottom: 1.6rem;
+}
+
+.infoBox ul {
+  list-style: none;
+  padding: 0;
+}
+
+.infoBox li {
+  font-size: 1.6rem;
+  color: var(--text-primary);
+  margin-bottom: 1.2rem;
+  padding-left: 2.4rem;
+  position: relative;
+}
+
+.infoBox li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: var(--primary-500);
+}
+
+.refreshButton {
+  background-color: var(--primary-500);
+  color: white;
+  border: none;
+  border-radius: 0.8rem;
+  padding: 1.6rem 3.2rem;
+  font-size: 1.6rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 1.6rem;
+  width: 100%;
+}
+
+.refreshButton:hover {
+  background-color: var(--primary-600);
+  transform: translateY(-0.1rem);
+}
+
+.homeButton {
+  background-color: transparent;
+  color: var(--primary-500);
+  border: 0.2rem solid var(--primary-500);
+  border-radius: 0.8rem;
+  padding: 1.4rem 3.2rem;
+  font-size: 1.6rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.homeButton:hover {
+  background-color: var(--primary-50);
+}
+
+@media (max-width: 768px) {
+  .statusBox {
+    padding: 2.4rem;
+  }
+
+  .statusIcon {
+    width: 10rem;
+    height: 10rem;
+  }
+
+  .statusBox h2 {
+    font-size: 2.4rem;
+  }
+
+  .mainText {
+    font-size: 1.6rem;
+  }
+}

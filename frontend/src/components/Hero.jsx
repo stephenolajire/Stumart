@@ -7,7 +7,7 @@ const Hero = () => {
         <div className={styles.content}>
           <h1>Your Campus Marketplace</h1>
           <p>
-            "Shop from local vendors, get exclusive student discounts, and enjoy
+            Shop from local vendors, get exclusive student discounts, and enjoy
             fast delivery right to your hostel. By supporting nearby businesses,
             you can access unique, quality products at a fraction of the cost.
             Whether you're looking for books, gadgets, clothing, or snacks,

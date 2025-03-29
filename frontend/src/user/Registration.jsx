@@ -11,6 +11,7 @@ import {
   FaHome,
   FaLock,
 } from "react-icons/fa";
+import Swal from "sweetalert2";
 import styles from "../css/SignUp.module.css";
 import {
   nigeriaStates,
@@ -18,8 +19,11 @@ import {
   businessCategories,
   userTypes,
   fleetTypes,
+  otherBusinessCategories,
 } from "../constant/data";
 import logo from "../assets/stumart.jpeg";
+import api from "../constant/api";
+import { useNavigate } from "react-router-dom";
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -36,15 +40,21 @@ const Signup = () => {
     fleetType: "",
     businessName: "",
     businessCategory: "",
+    specificCategory: "",
     shopImage: null,
     hostelName: "",
     roomNumber: "",
+    matricNumber: "",
+    department: "",
   });
+
+  const navigate = useNavigate();
 
   const [errors, setErrors] = useState({});
   const [institutions, setInstitutions] = useState([]);
   const [isSubmitEnabled, setIsSubmitEnabled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showOtherCategories, setShowOtherCategories] = useState(false);
 
   // Validate form inputs
   const validateForm = () => {
@@ -83,10 +93,18 @@ const Signup = () => {
 
     // Vendor-specific validations
     if (formData.userType === "Vendor") {
-      if (!formData.businessName.trim())
+      if (!formData.businessName.trim()) {
         newErrors.businessName = "Business name is required";
-      if (!formData.businessCategory)
+      }
+      if (!formData.businessCategory) {
         newErrors.businessCategory = "Business category is required";
+      }
+      if (
+        formData.businessCategory === "Others" &&
+        !formData.specificCategory
+      ) {
+        newErrors.specificCategory = "Please select a specific category";
+      }
     }
 
     // Student Picker-specific validations
@@ -95,6 +113,16 @@ const Signup = () => {
         newErrors.hostelName = "Hostel name is required";
       if (!formData.roomNumber.trim())
         newErrors.roomNumber = "Room number is required";
+    }
+
+    // Student-specific validations
+    if (formData.userType === "Student") {
+      if (!formData.matricNumber.trim()) {
+        newErrors.matricNumber = "Matric number is required";
+      }
+      if (!formData.department.trim()) {
+        newErrors.department = "Department is required";
+      }
     }
 
     // Password validations
@@ -138,6 +166,10 @@ const Signup = () => {
   const handleChange = (e) => {
     const { name, value, files } = e.target;
 
+    if (name === "businessCategory") {
+      setShowOtherCategories(value === "Others");
+    }
+
     if (name === "profilePic" || name === "shopImage") {
       setFormData((prev) => ({
         ...prev,
@@ -156,12 +188,121 @@ const Signup = () => {
     e.preventDefault();
     if (validateForm()) {
       setIsLoading(true);
+
       try {
-        // Handle form submission
-        console.log("Form submitted:", formData);
-        // Add your API call here
+        // Create form data
+        const formDataToSend = new FormData();
+
+        // Add all user fields
+        const userData = {
+          email: formData.email,
+          username: formData.email,
+          password: formData.password,
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          phone_number: formData.phoneNumber,
+          state: formData.state,
+          institution: formData.institution,
+          user_type: formData.userType.toLowerCase().replace(" ", "_"),
+        };
+
+        // Append each user field separately
+        Object.keys(userData).forEach((key) => {
+          formDataToSend.append(`user.${key}`, userData[key]);
+        });
+
+        // Handle profile picture
+        if (formData.profilePic) {
+          formDataToSend.append("profile_pic", formData.profilePic);
+        }
+
+        let endpoint = "";
+
+        // Handle specific user types
+        switch (formData.userType) {
+          case "Student":
+            endpoint = "/students/";
+            formDataToSend.append("matric_number", formData.matricNumber);
+            formDataToSend.append("department", formData.department);
+            break;
+
+          case "Vendor":
+            endpoint = "/vendors/";
+            formDataToSend.append("business_name", formData.businessName);
+            formDataToSend.append(
+              "business_category",
+              formData.businessCategory.toLowerCase()
+            );
+            if (formData.businessCategory === "Others") {
+              formDataToSend.append(
+                "specific_category",
+                formData.specificCategory.toLowerCase()
+              );
+            }
+            if (formData.shopImage) {
+              formDataToSend.append("shop_image", formData.shopImage);
+            }
+            break;
+
+          case "Picker":
+            endpoint = "/pickers/";
+            formDataToSend.append(
+              "fleet_type",
+              formData.fleetType.toLowerCase()
+            );
+            break;
+
+          case "Student Picker":
+            endpoint = "/student-pickers/";
+            formDataToSend.append("hostel_name", formData.hostelName);
+            formDataToSend.append("room_number", formData.roomNumber);
+            break;
+
+          default:
+            throw new Error("Invalid user type");
+        }
+
+        // Log form data for debugging
+        for (let pair of formDataToSend.entries()) {
+          console.log(pair[0], pair[1]);
+        }
+
+        const response = await api.post(endpoint, formDataToSend, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+
+        if (response.data?.user_id) {
+          await Swal.fire({
+            icon: "success",
+            title: "Registration Successful!",
+            text: "Please check your email for verification code.",
+            confirmButtonColor: "var(--primary-500)",
+          });
+
+          // Navigate to verify email with user ID
+          navigate("/verify-email", {
+            state: { userId: response.data.user_id },
+          });
+        }
       } catch (error) {
-        console.error("Submission error:", error);
+        console.error("Registration error:", error);
+
+        // Handle different types of errors
+        const errorMessage =
+          error.response?.data?.detail ||
+          error.response?.data?.message ||
+          Object.values(error.response?.data || {})[0]?.[0] ||
+          error.message ||
+          "Registration failed. Please try again.";
+
+        Swal.fire({
+          icon: "error",
+          title: "Registration Failed",
+          text: errorMessage,
+          confirmButtonColor: "var(--primary-500)",
+        });
       } finally {
         setIsLoading(false);
       }
@@ -173,9 +314,9 @@ const Signup = () => {
       <form onSubmit={handleSubmit} className={styles.signupForm}>
         <div className={styles.logoSection}>
           <img src={logo} alt="StuMart Logo" className={styles.logo} />
-            <h2>Welcome to StuMart</h2>
-            <p>Create an account to get started</p>
-        </div> 
+          <h2>Welcome to StuMart</h2>
+          <p>Create an account to get started</p>
+        </div>
 
         {/* User Type Selection */}
         <div className={styles.formGroup}>
@@ -425,6 +566,33 @@ const Signup = () => {
                 <span className={styles.error}>{errors.businessCategory}</span>
               )}
             </div>
+
+            {showOtherCategories && (
+              <div className={styles.formGroup}>
+                <label>
+                  <FaList /> Specific Category
+                </label>
+                <select
+                  name="specificCategory"
+                  value={formData.specificCategory}
+                  onChange={handleChange}
+                  className={styles.formControl}
+                >
+                  <option value="">Select Specific Category</option>
+                  {otherBusinessCategories.map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
+                {errors.specificCategory && (
+                  <span className={styles.error}>
+                    {errors.specificCategory}
+                  </span>
+                )}
+              </div>
+            )}
+
             <div className={styles.formGroup}>
               <label>
                 <FaList /> Shop Image
@@ -474,6 +642,43 @@ const Signup = () => {
               />
               {errors.roomNumber && (
                 <span className={styles.error}>{errors.roomNumber}</span>
+              )}
+            </div>
+          </>
+        )}
+
+        {formData.userType === "Student" && (
+          <>
+            <div className={styles.formGroup}>
+              <label>
+                <FaUniversity /> Matric Number
+              </label>
+              <input
+                type="text"
+                name="matricNumber"
+                value={formData.matricNumber}
+                onChange={handleChange}
+                className={styles.formControl}
+                placeholder="Enter matric number"
+              />
+              {errors.matricNumber && (
+                <span className={styles.error}>{errors.matricNumber}</span>
+              )}
+            </div>
+            <div className={styles.formGroup}>
+              <label>
+                <FaList /> Department
+              </label>
+              <input
+                type="text"
+                name="department"
+                value={formData.department}
+                onChange={handleChange}
+                className={styles.formControl}
+                placeholder="Enter department"
+              />
+              {errors.department && (
+                <span className={styles.error}>{errors.department}</span>
               )}
             </div>
           </>

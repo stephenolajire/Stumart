@@ -46,7 +46,11 @@ const ShopDetails = () => {
               <div key={product.id} className={styles.productCard}>
                 <img src={product.image} alt={product.name} />
                 <div className={styles.productInfo}>
-                  <h3>{product.name}</h3>
+                  {product.name && product.name.length > 14 ? (
+                    <h3>{product.name.substring(0, 10)}...</h3>
+                  ) : (
+                    <h3>{product.name}</h3>
+                  )}
                   <p className={styles.price}>₦{product.price}</p>
                   <button className={styles.addToCart}>Add to Cart</button>
                 </div>

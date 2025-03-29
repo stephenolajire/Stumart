@@ -67,6 +67,24 @@ export const businessCategories = [
   "Home",
   "Books",
   "Electronics",
+  "Others",
+];
+
+export const otherBusinessCategories = [
+  "Laundry Services",
+  "Note Writing",
+  "Assignment Help",
+  "Barbing Services",
+  "Hair Styling",
+  "Printing Services",
+  "Computer Repairs",
+  "Phone Repairs",
+  "Tutoring",
+  "Photography",
+  "Graphic Design",
+  "Tailoring",
+  "Cleaning Services",
+  "Event Planning",
 ];
 
 export const userTypes = ["Student", "Picker", "Vendor", "Student Picker"];

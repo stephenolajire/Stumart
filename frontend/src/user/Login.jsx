@@ -1,26 +1,121 @@
-import { useState } from 'react';
-import { NavLink } from 'react-router-dom';
-import styles from '../css/Login.module.css';
-import logo from '../assets/stumart.jpeg';
+import { useState } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
+import api from "../constant/api";
+import styles from "../css/Login.module.css";
+import logo from "../assets/stumart.jpeg";
 
 const Login = () => {
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
+    email: "",
+    password: "",
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleResendOTP = async (userId) => {
+    try {
+      await api.post("/resend-otp/", { user_id: userId });
+
+      Swal.fire({
+        icon: "success",
+        title: "OTP Sent!",
+        text: "Please check your email for the verification code.",
+        confirmButtonColor: "var(--primary-500)",
+      });
+    } catch (error) {
+      console.error("OTP resend error:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Failed to Send OTP",
+        text: error.response?.data?.error || "Failed to send verification code",
+        confirmButtonColor: "var(--primary-500)",
+      });
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Add login logic here
-    console.log('Login data:', formData);
+    setIsLoading(true);
+
+    try {
+      const response = await api.post("/token/", formData);
+      const { access, user_type, is_verified, kyc_status, user_id } =
+        response.data;
+
+      console.log(response.data);
+
+      // Store the token
+      localStorage.setItem("access", access);
+
+      // Set default auth header for future requests
+      api.defaults.headers.common["Authorization"] = `Bearer ${access}`;
+
+      // If user is not verified, send OTP and navigate to email verification
+      if (!is_verified) {
+        await handleResendOTP(user_id);
+        navigate("/verify-email", { state: { userId: user_id } });
+        return;
+      }
+
+      // If user is a student and verified, navigate to home
+      if (user_type === "student") {
+        navigate("/");
+        return;
+      }
+
+      // If user is picker, student picker, or vendor, handle KYC status
+      if (["picker", "student picker", "vendor"].includes(user_type)) {
+        if (kyc_status === "none" || kyc_status === "rejected") {
+          Swal.fire({
+            icon: "warning",
+            title: "KYC Not Submitted or Rejected",
+            text: "Your KYC verification is required. Please submit your details.",
+            confirmButtonColor: "var(--primary-500)",
+          }).then(() => {
+            navigate("/verify-account");
+          });
+          return;
+        }
+
+        if (kyc_status === "pending") {
+          navigate("/kyc-status");
+          return;
+        }
+
+        if (kyc_status === "approved") {
+          navigate("/dashboard");
+          return;
+        }
+      }
+
+      // Default success message
+      Swal.fire({
+        icon: "success",
+        title: "Login Successful!",
+        text: "Welcome back to StuMart",
+        confirmButtonColor: "var(--primary-500)",
+      });
+    } catch (error) {
+      console.error("Login error:", error);
+
+      Swal.fire({
+        icon: "error",
+        title: "Login Failed",
+        text: error.response?.data?.detail || "Invalid credentials",
+        confirmButtonColor: "var(--primary-500)",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -63,12 +158,16 @@ const Login = () => {
             <NavLink to="/forgot-password">Forgot Password?</NavLink>
           </div>
 
-          <button type="submit" className={styles.loginButton}>
-            Login
+          <button
+            type="submit"
+            className={styles.loginButton}
+            disabled={isLoading}
+          >
+            {isLoading ? "Logging in..." : "Login"}
           </button>
 
           <div className={styles.registerLink}>
-            Don't have an account?{' '}
+            Don't have an account?{" "}
             <NavLink to="/register">Register here</NavLink>
           </div>
         </form>

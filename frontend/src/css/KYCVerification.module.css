@@ -1,0 +1,153 @@
+.kycContainer {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background-color: var(--neutral-50);
+}
+
+.kycBox {
+  background-color: white;
+  padding: 4rem;
+  border-radius: 1.2rem;
+  box-shadow: 0 0.4rem 1.6rem rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 60rem;
+}
+
+/* .cameraButton {
+  width: 100%;
+  height: 20rem;
+  background-color: white;
+  border: 2px solid var(--primary-500);
+} */
+
+.kycBox h2 {
+  font-size: 2.8rem;
+  color: var(--primary-500);
+  margin-bottom: 1.6rem;
+  text-align: center;
+}
+
+.cameraContainer, .videoPreview {
+  width: 100%;
+}
+
+.kycBox p {
+  font-size: 1.6rem;
+  color: var(--text-secondary);
+  margin-bottom: 3.2rem;
+  text-align: center;
+}
+
+.kycForm {
+  display: flex;
+  flex-direction: column;
+  gap: 2.4rem;
+}
+
+.imageSection label {
+  display: block;
+  font-size: 1.6rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 0.8rem;
+}
+
+.uploadBox, .cameraButton {
+  width: 100%;
+  height: 20rem;
+  border: 0.2rem dashed var(--primary-300);
+  border-radius: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  background-size: cover;
+  background-position: center;
+  transition: all 0.3s ease;
+}
+
+.uploadBox:hover {
+  border-color: var(--primary-500);
+}
+
+.uploadBox span {
+  color: var(--text-secondary);
+  font-size: 1.4rem;
+}
+
+.uploadBox input {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.hasImage {
+  border: none;
+}
+
+.formGroup {
+  margin-bottom: 2rem;
+}
+
+.formGroup label {
+  display: block;
+  font-size: 1.6rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 0.8rem;
+}
+
+.formGroup select {
+  width: 100%;
+  padding: 1.2rem;
+  border: 0.1rem solid var(--neutral-300);
+  border-radius: 0.8rem;
+  font-size: 1.6rem;
+  color: var(--text-primary);
+  background-color: white;
+}
+
+.formGroup select:focus {
+  border-color: var(--primary-500);
+  outline: none;
+  box-shadow: 0 0 0 0.2rem var(--primary-100);
+}
+
+.submitButton {
+  background-color: var(--primary-500);
+  color: white;
+  border: none;
+  border-radius: 0.8rem;
+  padding: 1.6rem;
+  font-size: 1.6rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 1.6rem;
+}
+
+.submitButton:hover:not(:disabled) {
+  background-color: var(--primary-600);
+  transform: translateY(-0.1rem);
+}
+
+.submitButton:disabled {
+  background-color: var(--neutral-300);
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .kycBox {
+    padding: 2.4rem;
+  }
+
+  .uploadBox {
+    height: 16rem;
+  }
+}
