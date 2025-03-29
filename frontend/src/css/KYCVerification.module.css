@@ -16,6 +16,13 @@
   max-width: 60rem;
 }
 
+.captureButton, .closeCameraButton {
+  height: 4rem;
+  width: 40%;
+  text-align: center;
+  background-color: var(--primary-600);
+}
+
 /* .cameraButton {
   width: 100%;
   height: 20rem;
@@ -148,6 +155,6 @@
   }
 
   .uploadBox {
-    height: 16rem;
+    height: 20rem;
   }
 }

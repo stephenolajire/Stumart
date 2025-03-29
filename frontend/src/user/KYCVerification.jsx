@@ -18,7 +18,7 @@ const KYCVerification = () => {
   const canvasRef = useRef(null);
 
   const ID_TYPES = [
-    { value: "student_id", label: "Student ID Card" },
+    // { value: "student_id", label: "Student ID Card" },
     { value: "national_id", label: "National ID Card" },
     { value: "drivers_license", label: "Driver's License" },
     { value: "voters_card", label: "Voter's Card" },
@@ -147,12 +147,8 @@ const KYCVerification = () => {
         <form onSubmit={handleSubmit} className={styles.kycForm}>
           <div className={styles.imageSection}>
             <label>Selfie Image</label>
-            {preview.selfie ? (
-              <div
-                className={styles.uploadBox}
-                style={{ backgroundImage: `url(${preview.selfie})` }}
-              />
-            ) : (
+
+            {!isCameraOpen && !preview.selfie && (
               <button
                 type="button"
                 className={styles.cameraButton}
@@ -161,33 +157,41 @@ const KYCVerification = () => {
                 Take a Selfie
               </button>
             )}
-          </div>
 
-          {isCameraOpen && (
-            <div className={styles.cameraContainer}>
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                className={styles.videoPreview}
+            {isCameraOpen && (
+              <div className={styles.cameraContainer}>
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  className={styles.videoPreview}
+                />
+                <button
+                  type="button"
+                  onClick={captureSelfie}
+                  className={styles.captureButton}
+                >
+                  Capture Selfie
+                </button>
+                <button
+                  type="button"
+                  onClick={stopCamera}
+                  className={styles.closeCameraButton}
+                >
+                  Close Camera
+                </button>
+              </div>
+            )}
+
+            {preview.selfie && (
+              <div
+                className={styles.uploadBox}
+                style={{ backgroundImage: `url(${preview.selfie})` }}
               />
-              <button
-                type="button"
-                onClick={captureSelfie}
-                className={styles.captureButton}
-              >
-                Capture Selfie
-              </button>
-              <button
-                type="button"
-                onClick={stopCamera}
-                className={styles.closeCameraButton}
-              >
-                Close Camera
-              </button>
-              <canvas ref={canvasRef} style={{ display: "none" }} />
-            </div>
-          )}
+            )}
+
+            <canvas ref={canvasRef} style={{ display: "none" }} />
+          </div>
 
           <div className={styles.formGroup}>
             <label>

@@ -1,11 +1,14 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import api from "../constant/api";
 import styles from "../css/Login.module.css";
 import logo from "../assets/stumart.jpeg";
+import { GlobalContext } from "../constant/GlobalContext";
 
 const Login = () => {
+
+  const {auth} = useContext(GlobalContext)
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -69,12 +72,13 @@ const Login = () => {
       // If user is a student and verified, navigate to home
       if (user_type === "student") {
         navigate("/");
+        auth()
         return;
       }
 
       // If user is picker, student picker, or vendor, handle KYC status
       if (["picker", "student picker", "vendor"].includes(user_type)) {
-        if (kyc_status === "none" || kyc_status === "rejected") {
+        if (!kyc_status || kyc_status === "rejected") {
           Swal.fire({
             icon: "warning",
             title: "KYC Not Submitted or Rejected",
@@ -92,7 +96,8 @@ const Login = () => {
         }
 
         if (kyc_status === "approved") {
-          navigate("/dashboard");
+          navigate("/");
+          auth()
           return;
         }
       }
