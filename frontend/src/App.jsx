@@ -14,42 +14,45 @@ import Rider from "./pages/Rider";
 import Contact from "./pages/ContactUs";
 import ScrollToTop from "./components/ScrollToTop";
 import ProtectedRoute from "./constant/ProtectedRoute";
+import { GlobalProvider } from "./constant/GlobalContext";
 
 function App() {
   return (
-    <Router>
-      <ScrollToTop />
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Home />} />
-          <Route path="about" element={<About />} />
-          <Route path="vendors" element={<Vendors />} />
-          <Route path="rider" element={<Rider />} />
-          <Route path="contact" element={<Contact />} />
-          <Route path="shop/:shopId" element={<ShopDetails />} />
-          <Route path="product/:productId" element={<ProductDetails />} />
-        </Route>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Signup />} />
-        <Route path="/verify-email" element={<VerifyEmail />} />
-        <Route
-          path="/verify-account"
-          element={
-            <ProtectedRoute>
-              <KYCVerification />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/kyc-status"
-          element={
-            <ProtectedRoute>
-              <KYCStatus />
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
-    </Router>
+    <GlobalProvider>
+      <Router>
+        <ScrollToTop />
+        <Routes>
+          <Route path="/" element={<Layout />}>
+            <Route index element={<Home />} />
+            <Route path="about" element={<About />} />
+            <Route path="vendors" element={<Vendors />} />
+            <Route path="rider" element={<Rider />} />
+            <Route path="contact" element={<Contact />} />
+            <Route path="shop/:shopId" element={<ShopDetails />} />
+            <Route path="product/:productId" element={<ProductDetails />} />
+          </Route>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Signup />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route
+            path="/verify-account"
+            element={
+              <ProtectedRoute>
+                <KYCVerification />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/kyc-status"
+            element={
+              <ProtectedRoute>
+                <KYCStatus />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </Router>
+    </GlobalProvider>
   );
 }
 
