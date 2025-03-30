@@ -9,6 +9,11 @@ export const GlobalContext = createContext();
 export const GlobalProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const user_type = localStorage.getItem("user_type")
+  const [shopsData, setShopsData] = useState([])
+  const [products, setProducts] = useState([])
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
 
   const auth = async () => {
     const token = localStorage.getItem("access");
@@ -39,6 +44,54 @@ export const GlobalProvider = ({ children }) => {
     auth()
   }, [])
 
+  const fetchShopData = async() => {
+    try {
+      const response = await api.get('/vendors')
+      if(response.data) {
+        setShopsData(response.data)
+      }
+    }catch (error) {
+      console.log(error)
+    }
+  }
+
+  useEffect(()=> {
+    fetchShopData()
+  }, [])
+
+  const fetchProducts = async(shopId) => {
+    try {
+      const response = await api.get(`products/${shopId}`)
+      if (response.status === 200){
+        console.log(response.data)
+        setProducts(response.data)
+      }
+    } catch (error) {
+      console.log (error)
+    }
+  }
+
+
+   const fetchShopsBySchool = async (schoolName) => {
+     setLoading(true);
+     try {
+       const response = await api.get("shops-by-school/", {
+         params: { school: schoolName },
+       });
+       // Return the data for immediate use and also update the global state
+       setShopsData(response.data);
+       console.log(response.data)
+       setError(null);
+       return response.data;
+     } catch (err) {
+       setError("Failed to fetch shops for this school");
+       console.error("Error fetching shops by school:", err);
+       return [];
+     } finally {
+       setLoading(false);
+     }
+   };
+
 
   return (
     <GlobalContext.Provider
@@ -46,6 +99,11 @@ export const GlobalProvider = ({ children }) => {
        isAuthenticated,
        auth,
        user_type,
+       shopsData,
+       fetchProducts,
+       products,
+       fetchShopsBySchool,
+       loading,
       }}
     >
       {children}

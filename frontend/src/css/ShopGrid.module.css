@@ -8,7 +8,7 @@
 .shopCard {
   background-color: var(--neutral-gray-50);
   border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 3px 2px rgba(128, 128, 128, 0.504);
   overflow: hidden;
   text-decoration: none;
   color: var(--text-primary);
@@ -82,6 +82,24 @@
 
 .shopCard:hover .shopInfo .category {
   color: var(--primary-400);
+}
+
+.contNo {
+  width: 100%;
+  display: grid;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.contNo p {
+  margin-top: 2rem;
+}
+
+.storeIcon {
+  height: 20rem;
+  width: 20rem;
+  color: var(--neutral-gray-400);
 }
 
 @media screen and (max-width: 768px) {

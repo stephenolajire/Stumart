@@ -33,9 +33,94 @@
   color: var(--text-primary);
 }
 
+.filtering {
+  display: grid;
+  grid-template-columns: 2fr 3fr;
+  background-color: var(--neutral-gray-50);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  height: auto;
+  gap: 2rem;
+  /* padding: 2rem; */
+  /* display: ; */
+}
+
+.filteringSection {
+  height: auto;
+  width: 100%;
+}
+
+.containers h5 {
+  margin-top: 1rem;
+}
+
+.formGroup{
+  display: flex;
+  flex-direction: column;
+}
+
+.formGroup select, .formGroup input {
+  width: 100%;
+  height: 3.2rem;
+  font-size: 1.6rem;
+}
+
+.formGroup label {
+  font-size: 1.6rem;
+  margin-top: 1rem;
+}
+
+.gridForm {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.buttonGroup {
+  margin:1rem 0rem;
+  display: flex;
+  justify-content: space-between;
+}
+
+.resetButton, .submitButton {
+  height: 3.2rem;
+  width: 20rem;
+  border: none;
+  background-color: var(--secondary-500);
+  color: white;
+}
+
+.submitButton {
+  background-color: var(--primary-500);
+}
+
 @media (max-width: 768px) {
   .categorySection h2,
   .shopsSection h2 {
     font-size: var(--h2-mobile);
+  }
+
+  .filtering {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .gridForm {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .buttonGroup {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .submitButton, .resetButton {
+    width: 100%;
+    text-align: center;
+  }
+
+  .resetButton{
+    margin-top: 1rem;
   }
 }

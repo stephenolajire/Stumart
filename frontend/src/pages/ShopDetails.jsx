@@ -1,61 +1,78 @@
-import { useState, useEffect } from "react";
+import { useEffect, useContext } from "react";
 import { useParams } from "react-router-dom";
 import styles from "../css/ShopDetails.module.css";
-import { shopsDetails } from "../constant/ShopDetails";
+import { GlobalContext } from "../constant/GlobalContext";
+import { FaBuilding } from "react-icons/fa";
+
+// ✅ Cloudinary Base URL (Modify if needed)
+const CLOUDINARY_BASE_URL = "https://res.cloudinary.com/YOUR_CLOUDINARY_NAME/";
 
 const ShopDetails = () => {
   const { shopId } = useParams();
-  const [shop, setShop] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { fetchProducts, products } = useContext(GlobalContext);
 
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      const currentShop = shopsDetails.find((s) => s.id === parseInt(shopId));
-      setShop(currentShop);
-      setLoading(false);
-    }, 1000);
+    fetchProducts(shopId);
   }, [shopId]);
 
-  if (loading) {
-    return <div className={styles.loading}>Loading...</div>;
+  // ✅ Ensure `products` is an array before proceeding
+  if (!Array.isArray(products)) {
+    return <div className={styles.loading}>Loading products ...</div>;
   }
 
-  if (!shop) {
-    return <div className={styles.error}>Shop not found</div>;
+  // ✅ If no products exist, show a fallback message
+  if (products.length === 0) {
+    return (
+      <div className={styles.contNo}>
+        <p>No product is available yet for the selected shop</p>
+        <FaBuilding className={styles.storeIcon} />
+      </div>
+    );
   }
+
+  // ✅ Extract Vendor Info from the First Product
+  const vendor = products[0];
 
   return (
     <div className={styles.shopDetails}>
       <div className={styles.header}>
-        <img src={shop.image} alt={shop.name} className={styles.shopImage} />
+        <img
+          src={vendor.vendor_shop_image}
+          alt={vendor.vendor_name}
+          className={styles.shopImage}
+        />
         <div className={styles.shopInfo}>
-          <h1>{shop.name}</h1>
-          <p className={styles.category}>{shop.category}</p>
-          <div className={styles.rating}>⭐ {shop.rating}</div>
-          <p className={styles.delivery}>🕒 {shop.deliveryTime}</p>
-          <p className={styles.description}>{shop.description}</p>
+          <h1>{vendor.vendor_name}</h1>
+          <p className={styles.category}>{vendor.vendor_category}</p>
+          <div className={styles.rating}>⭐ {vendor.vendor_rating}</div>
+          <p className={styles.delivery}>🕒 15mins - 30mins</p>
+          <p className={styles.description}>
+            Discover quality {vendor.vendor_category} and excellence at{" "}
+            {vendor.vendor_name}, your trusted destination for top{" "}
+            {vendor.vendor_category} and services.
+          </p>
         </div>
       </div>
 
       <div className={styles.products}>
         <h2>Products</h2>
         <div className={styles.productGrid}>
-          {shop.products &&
-            shop.products.map((product) => (
-              <div key={product.id} className={styles.productCard}>
-                <img src={product.image} alt={product.name} />
-                <div className={styles.productInfo}>
-                  {product.name && product.name.length > 14 ? (
-                    <h3>{product.name.substring(0, 10)}...</h3>
-                  ) : (
-                    <h3>{product.name}</h3>
-                  )}
-                  <p className={styles.price}>₦{product.price}</p>
-                  <button className={styles.addToCart}>Add to Cart</button>
-                </div>
+          {products.map((product) => (
+            <div key={product.id} className={styles.productCard}>
+              <img src={product.image} alt={product.name || "Product"} />
+              <div className={styles.productInfo}>
+                <h3>
+                  {product.name
+                    ? product.name.length > 14
+                      ? `${product.name.substring(0, 10)}...`
+                      : product.name
+                    : "No Name"}
+                </h3>
+                <p className={styles.price}>₦{product.price || "0.00"}</p>
+                <button className={styles.addToCart}>Add to Cart</button>
               </div>
-            ))}
+            </div>
+          ))}
         </div>
       </div>
     </div>
