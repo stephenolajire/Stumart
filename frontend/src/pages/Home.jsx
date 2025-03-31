@@ -13,6 +13,8 @@ import {
   FaHome,
   FaPlane,
   FaCoffee,
+  FaTablet,
+  FaSearch,
 } from "react-icons/fa";
 
 import { GlobalContext } from "../constant/GlobalContext";
@@ -21,14 +23,14 @@ import { nigeriaInstitutions } from '../constant/data'
 // Sample categories data with "All" option
 const categories = [
   { id: 0, name: "All", icon: null },
-  { id: 1, name: "Education", icon: <FaBook /> },
+  { id: 1, name: "Books", icon: <FaBook /> },
   { id: 2, name: "Food", icon: <FaUtensils /> },
   { id: 3, name: "Technology", icon: <FaLaptop /> },
-  { id: 4, name: "Clothing", icon: <FaTshirt /> },
-  { id: 5, name: "Electronics", icon: <FaDesktop /> },
+  { id: 4, name: "Fashion", icon: <FaTshirt /> },
+  { id: 5, name: "Accessories", icon: <FaDesktop /> },
   { id: 6, name: "Home", icon: <FaHome /> },
-  { id: 7, name: "Travel", icon: <FaPlane /> },
-  { id: 8, name: "Cafe", icon: <FaCoffee /> },
+  { id: 7, name: "Electronics", icon: <FaTablet /> },
+  { id: 8, name: "Other", icon: <FaSearch /> },
 ];
 
 const Home = () => {
