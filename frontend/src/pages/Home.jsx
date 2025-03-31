@@ -5,6 +5,7 @@ import Promotion from "../components/Promotion";
 import CategoryFilter from "../components/CategoryFilter";
 import ShopGrid from "../components/ShopGrid";
 import styles from "../css/Home.module.css";
+import Spinner from "../components/Spinner";
 import {
   FaBook,
   FaUtensils,
@@ -282,11 +283,15 @@ const Home = () => {
                 </form>
               </div>
             </div>
-            <CategoryFilter
-              categories={categories}
-              selectedCategory={selectedCategory}
-              onSelectCategory={handleCategoryChange}
-            />
+            {loading ? (
+              <Spinner />
+            ) : (
+              <CategoryFilter
+                categories={categories}
+                selectedCategory={selectedCategory}
+                onSelectCategory={handleCategoryChange}
+              />
+            )}
           </div>
         </div>
       </section>
@@ -295,7 +300,7 @@ const Home = () => {
         <div className={styles.container}>
           <h2 className={styles.sectionTitle}>{getTitle()}</h2>
           {loading ? (
-            <p className={styles.loadingMessage}>Loading shops...</p>
+            <Spinner/>
           ) : filteredShops && filteredShops.length > 0 ? (
             <ShopGrid shops={filteredShops} />
           ) : (

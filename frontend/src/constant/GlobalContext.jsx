@@ -45,6 +45,7 @@ export const GlobalProvider = ({ children }) => {
   }, []);
 
   const fetchShopData = async () => {
+    setLoading(true)
     try {
       const response = await api.get("/vendors");
       if (response.data) {
@@ -53,6 +54,8 @@ export const GlobalProvider = ({ children }) => {
       }
     } catch (error) {
       console.log(error);
+    }finally {
+      setLoading(false)
     }
   };
 
