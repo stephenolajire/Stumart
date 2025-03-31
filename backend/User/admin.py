@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from django.utils.timezone import timezone
+from django.utils import timezone
 from .models import User, Student, Vendor, Picker, StudentPicker, KYCVerification
 
 @admin.register(User)
