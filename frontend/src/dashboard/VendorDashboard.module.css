@@ -76,6 +76,16 @@
     overflow-x: auto;
 }
 
+.logout {
+    height: 4rem;
+    min-width: 25rem;
+    font-size: 1.6rem;
+    text-align: center;
+    border: none;
+    color: white;
+    background-color: var(--secondary-600);
+}
+
 .topBar {
   display: flex;
   justify-content: space-between;

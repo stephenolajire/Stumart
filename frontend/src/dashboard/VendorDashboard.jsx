@@ -12,6 +12,7 @@ import {
   FaEye,
   FaEdit,
   FaTrash,
+  FaUser
 } from "react-icons/fa";
 import styles from "./VendorDashboard.module.css";
 import Swal from "sweetalert2";
@@ -230,6 +231,13 @@ const VendorDashboard = () => {
 
   const navigate = useNavigate();
 
+  const handleLogout = () => {
+   localStorage.removeItem('access')
+   localStorage.removeItem('refresh')
+   navigate('/')
+   window.location.reload()
+  }
+
   const sidebarItems = [
     { id: "overview", label: "Home", icon: <FaHome /> },
     { id: "products", label: "Products", icon: <FaBox /> },
@@ -238,6 +246,7 @@ const VendorDashboard = () => {
     { id: "payments", label: "Payments", icon: <FaCreditCard /> },
     { id: "reviews", label: "Reviews & Ratings", icon: <FaStar /> },
     { id: "settings", label: "Settings", icon: <FaCog /> },
+    {id: "logout", label: "Logout", icon: <FaUser/>}
   ];
 
   useEffect(() => {
@@ -501,6 +510,9 @@ const VendorDashboard = () => {
 
       default:
         return null;
+
+      case "logout":
+        return <button className={styles.logout} onClick={handleLogout}>Logout</button>;
     }
   };
 
