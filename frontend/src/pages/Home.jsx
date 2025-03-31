@@ -1,4 +1,5 @@
 import { useContext, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Hero from "../components/Hero";
 import Promotion from "../components/Promotion";
 import CategoryFilter from "../components/CategoryFilter";
@@ -18,7 +19,7 @@ import {
 } from "react-icons/fa";
 
 import { GlobalContext } from "../constant/GlobalContext";
-import { nigeriaInstitutions } from '../constant/data'
+import { nigeriaInstitutions } from "../constant/data";
 
 // Sample categories data with "All" option
 const categories = [
@@ -34,15 +35,36 @@ const categories = [
 ];
 
 const Home = () => {
-  const { shopsData, fetchShopsBySchool } = useContext(GlobalContext);
+  const navigate = useNavigate();
+  const { shopsData, fetchShopsBySchool, fetchShopData, loading } =
+    useContext(GlobalContext);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedState, setSelectedState] = useState("");
   const [selectedSchool, setSelectedSchool] = useState("");
   const [availableSchools, setAvailableSchools] = useState([]);
   const [filteredShops, setFilteredShops] = useState([]);
+  const [schoolShops, setSchoolShops] = useState([]); // Store original school shops
+  const [displayMode, setDisplayMode] = useState("allShops"); // "allShops" or "schoolShops"
 
   // Get all states from Nigeria institutions
   const states = Object.keys(nigeriaInstitutions);
+
+  // Utility function to capitalize and format category name
+  const formatCategoryName = (category) => {
+    if (category === "all") return "All";
+
+    // Capitalize first letter of each word
+    return category
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  };
+
+  // Initialize with all shops data
+  useEffect(() => {
+    // Set initial filtered shops to all shops
+    setFilteredShops(shopsData);
+  }, [shopsData]);
 
   // Update available schools whenever state changes
   useEffect(() => {
@@ -54,60 +76,135 @@ const Home = () => {
     setSelectedSchool(""); // Reset selected school when state changes
   }, [selectedState]);
 
-  // Handle filtering shops by category
-  useEffect(() => {
-    if (selectedSchool) {
-      // If school is selected, this takes priority
-      // Shops would be fetched from backend in the handleSchoolSubmit function
+  // Function to filter shops based on category
+  const applyFilters = (shops, category) => {
+    if (!shops || !Array.isArray(shops)) return [];
+
+    if (category === "all") {
+      return shops;
     } else {
-      // Filter by category only when no school is selected
-      const filtered =
-        selectedCategory === "all"
-          ? shopsData
-          : shopsData.filter(
-              (shop) =>
-                shop.business_category.toLowerCase() ===
-                selectedCategory.toLowerCase()
-            );
-      setFilteredShops(filtered);
+      return shops.filter(
+        (shop) =>
+          shop.business_category &&
+          shop.business_category.toLowerCase() === category.toLowerCase()
+      );
     }
-  }, [selectedCategory, shopsData, selectedSchool]);
+  };
+
+  // Apply category filter when category changes
+  useEffect(() => {
+    // "Other" category is handled separately
+    if (selectedCategory.toLowerCase() === "other") {
+      // Navigate will happen in handleCategoryChange
+      return;
+    }
+
+    if (displayMode === "allShops") {
+      setFilteredShops(applyFilters(shopsData, selectedCategory));
+    } else if (displayMode === "schoolShops") {
+      setFilteredShops(applyFilters(schoolShops, selectedCategory));
+    }
+  }, [selectedCategory, displayMode, shopsData, schoolShops]);
 
   // Handle school selection submission
- const handleSchoolSubmit = async (e) => {
-   e.preventDefault();
-   if (selectedSchool) {
-     try {
-       const schoolShops = await fetchShopsBySchool(selectedSchool);
-       console.log("Fetched shops:", schoolShops);
+  const handleSchoolSubmit = async (e) => {
+    e.preventDefault();
+    if (selectedSchool) {
+      try {
+        const fetchedSchoolShops = await fetchShopsBySchool(selectedSchool);
 
-       if (Array.isArray(schoolShops) && schoolShops.length > 0) {
-         setFilteredShops(schoolShops);
-       } else {
-         setFilteredShops([]); // Ensure empty state updates correctly
-       }
-     } catch (error) {
-       console.error("Error fetching shops by school:", error);
-       setFilteredShops([]); // Clear state on error
-     }
-   }
- };
+        if (
+          Array.isArray(fetchedSchoolShops) &&
+          fetchedSchoolShops.length > 0
+        ) {
+          // Store the original school shops
+          setSchoolShops(fetchedSchoolShops);
 
+          // Apply category filter to school shops
+          const filtered = applyFilters(fetchedSchoolShops, selectedCategory);
+          setFilteredShops(filtered);
+          setDisplayMode("schoolShops");
+        } else {
+          setSchoolShops([]);
+          setFilteredShops([]);
+          setDisplayMode("schoolShops");
+        }
+      } catch (error) {
+        console.error("Error fetching shops by school:", error);
+        setSchoolShops([]);
+        setFilteredShops([]);
+      }
+    }
+  };
+
+  // Handle category change with navigation to Other Services
+  const handleCategoryChange = (category) => {
+    setSelectedCategory(category);
+
+    // Navigate to Other Services page if "Other" is selected
+    if (category.toLowerCase() === "other") {
+      if (displayMode === "schoolShops" && selectedSchool) {
+        // Navigate with school parameter
+        navigate(
+          `/other-services?school=${encodeURIComponent(selectedSchool)}`
+        );
+      } else {
+        // Navigate without parameters
+        navigate("/other-services");
+      }
+    }
+  };
 
   // Reset school filter
   const handleResetFilter = () => {
     setSelectedState("");
     setSelectedSchool("");
-    // Reset to category filtering
-    const filtered =
-      selectedCategory === "all"
-        ? shopsData
-        : shopsData.filter(
-            (shop) =>
-              shop.business_category.toLowerCase() ===
-              selectedCategory.toLowerCase()
-          );
+    setDisplayMode("allShops");
+    setSchoolShops([]);
+
+    // Reset to all shops with current category filter
+    const filtered = applyFilters(shopsData, selectedCategory);
     setFilteredShops(filtered);
+  };
+
+  // Format the title based on current selections
+  const getTitle = () => {
+    const formattedCategory = formatCategoryName(selectedCategory);
+
+    if (displayMode === "schoolShops") {
+      return selectedCategory === "all" ? (
+        `Shops in ${selectedSchool}`
+      ) : (
+        <span>
+          <span className={styles.highlightCategory}>{formattedCategory}</span>{" "}
+          Shops in {selectedSchool}
+        </span>
+      );
+    } else {
+      return selectedCategory === "all" ? (
+        "Featured Shops"
+      ) : (
+        <span>
+          <span className={styles.highlightCategory}>{formattedCategory}</span>{" "}
+          Shops
+        </span>
+      );
+    }
+  };
+
+  // Format the no results message based on current selections
+  const getNoResultsMessage = () => {
+    const formattedCategory = formatCategoryName(selectedCategory);
+
+    if (displayMode === "schoolShops") {
+      return selectedCategory === "all"
+        ? `No shops found for ${selectedSchool}`
+        : `No ${formattedCategory} shops found for ${selectedSchool}`;
+    } else {
+      return selectedCategory === "all"
+        ? "No shops available"
+        : `No ${formattedCategory} shops available`;
+    }
   };
 
   return (
@@ -188,7 +285,7 @@ const Home = () => {
             <CategoryFilter
               categories={categories}
               selectedCategory={selectedCategory}
-              onSelectCategory={setSelectedCategory}
+              onSelectCategory={handleCategoryChange}
             />
           </div>
         </div>
@@ -196,17 +293,13 @@ const Home = () => {
 
       <section className={styles.shopsSection}>
         <div className={styles.container}>
-          <h2>
-            {selectedSchool ? `Shops in ${selectedSchool}` : "Featured Shops"}
-          </h2>
-          {filteredShops && filteredShops.length > 0 ? (
+          <h2 className={styles.sectionTitle}>{getTitle()}</h2>
+          {loading ? (
+            <p className={styles.loadingMessage}>Loading shops...</p>
+          ) : filteredShops && filteredShops.length > 0 ? (
             <ShopGrid shops={filteredShops} />
           ) : (
-            <p className={styles.noShopsMessage}>
-              {selectedSchool
-                ? `No shops found for ${selectedSchool}`
-                : "No shops available"}
-            </p>
+            <p className={styles.noShopsMessage}>{getNoResultsMessage()}</p>
           )}
         </div>
       </section>

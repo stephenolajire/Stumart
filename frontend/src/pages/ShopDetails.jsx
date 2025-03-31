@@ -1,5 +1,5 @@
 import { useEffect, useContext } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import styles from "../css/ShopDetails.module.css";
 import { GlobalContext } from "../constant/GlobalContext";
 import { FaBuilding } from "react-icons/fa";
@@ -58,20 +58,22 @@ const ShopDetails = () => {
         <h2>Products</h2>
         <div className={styles.productGrid}>
           {products.map((product) => (
-            <div key={product.id} className={styles.productCard}>
-              <img src={product.image} alt={product.name || "Product"} />
-              <div className={styles.productInfo}>
-                <h3>
-                  {product.name
-                    ? product.name.length > 14
-                      ? `${product.name.substring(0, 10)}...`
-                      : product.name
-                    : "No Name"}
-                </h3>
-                <p className={styles.price}>₦{product.price || "0.00"}</p>
-                <button className={styles.addToCart}>Add to Cart</button>
+            <Link to={`/product/${product.id}`}>
+              <div key={product.id} className={styles.productCard}>
+                <img src={product.image} alt={product.name || "Product"} />
+                <div className={styles.productInfo}>
+                  <h3>
+                    {product.name
+                      ? product.name.length > 14
+                        ? `${product.name.substring(0, 10)}...`
+                        : product.name
+                      : "No Name"}
+                  </h3>
+                  <p className={styles.price}>₦{product.price || "0.00"}</p>
+                  <button className={styles.addToCart}>Add to Cart</button>
+                </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>

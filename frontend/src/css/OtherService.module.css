@@ -1,0 +1,81 @@
+.otherServiceContainer {
+  padding: 2rem;
+  width: 100%;
+  margin-top: 10rem;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.backButton {
+  background-color: #f3f4f6;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  margin-right: 1rem;
+  cursor: pointer;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  transition: background-color 0.2s;
+}
+
+.backButton:hover {
+  background-color: #e5e7eb;
+}
+
+.filterContainer {
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.filterContainer label {
+    font-size: 1.6rem;
+}
+
+.selectInput {
+  /* padding: 0.5rem; */
+  border-radius: 4px;
+  border: 1px solid #d1d5db;
+  min-width: 250px;
+  font-size: 1.4rem;
+  height: 4rem;
+}
+
+.shopsContainer {
+  margin-top: 2rem;
+}
+
+.loadingMessage, .noShopsMessage {
+  text-align: center;
+  padding: 2rem;
+  font-size: 1.6rem;
+  color: #6b7280;
+}
+
+@media (max-width: 768px) {
+  .otherServiceContainer {
+    padding: 1rem;
+  }
+  
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .filterContainer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .selectInput {
+    width: 100%;
+  }
+}

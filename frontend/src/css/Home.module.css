@@ -8,6 +8,10 @@
   padding: 0 2rem;
 }
 
+.highLightCategory {
+  text-transform: capitalize;
+}
+
 .container h2{
   text-align: center;
   margin-top: -3rem;

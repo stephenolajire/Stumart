@@ -15,6 +15,7 @@ import Contact from "./pages/ContactUs";
 import ScrollToTop from "./components/ScrollToTop";
 import ProtectedRoute from "./constant/ProtectedRoute";
 import { GlobalProvider } from "./constant/GlobalContext";
+import OtherService from "./pages/OtherService";
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
             <Route path="contact" element={<Contact />} />
             <Route path="shop/:shopId" element={<ShopDetails />} />
             <Route path="product/:productId" element={<ProductDetails />} />
+            <Route path="other-services" element={<OtherService/>}/>
           </Route>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Signup />} />
