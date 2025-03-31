@@ -94,6 +94,7 @@
 .description p {
   color: var(--secondary-600);
   font-size: 1.6rem;
+  line-height: 3rem;
 }
 
 .ctaButton {
