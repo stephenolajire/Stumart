@@ -16,6 +16,7 @@ import ScrollToTop from "./components/ScrollToTop";
 import ProtectedRoute from "./constant/ProtectedRoute";
 import { GlobalProvider } from "./constant/GlobalContext";
 import OtherService from "./pages/OtherService";
+import VendorDashboard from "./dashboard/VendorDashboard";
 
 function App() {
   return (
@@ -31,7 +32,7 @@ function App() {
             <Route path="contact" element={<Contact />} />
             <Route path="shop/:shopId" element={<ShopDetails />} />
             <Route path="product/:productId" element={<ProductDetails />} />
-            <Route path="other-services" element={<OtherService/>}/>
+            <Route path="other-services" element={<OtherService />} />
           </Route>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Signup />} />
@@ -49,6 +50,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <KYCStatus />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/vendor-dashboard"
+            element={
+              <ProtectedRoute>
+                <VendorDashboard />
               </ProtectedRoute>
             }
           />

@@ -96,7 +96,7 @@ const Login = () => {
         }
 
         if (kyc_status === "approved") {
-          navigate("/");
+          navigate("/vendor-dashboard");
           auth()
           return;
         }

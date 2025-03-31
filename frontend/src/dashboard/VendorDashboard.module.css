@@ -1,0 +1,484 @@
+/* VendorDashboard.module.css */
+.dashboardContainer {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--neutral-gray-50);
+  font-size: 1.6rem;
+}
+
+/* Sidebar styles */
+.sidebar {
+  width: 24rem;
+  min-height: 100vh;
+  background-color: var(--neutral-white);
+  border-right: 1px solid var(--neutral-gray-200);
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 10;
+  transition: all 0.3s ease;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+}
+
+.logoContainer {
+  padding: 2rem;
+  border-bottom: 1px solid var(--neutral-gray-200);
+}
+
+.logo {
+  color: var(--primary-500);
+  font-size: 2.2rem;
+  margin: 0;
+}
+
+.navigation {
+  padding: 2rem 0;
+}
+
+.sidebarItem {
+  display: flex;
+  align-items: center;
+  padding: 1.2rem 2rem;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sidebarItem:hover {
+  background-color: var(--primary-100);
+  color: var(--primary-500);
+}
+
+.sidebarItem.active {
+  background-color: var(--primary-100);
+  color: var(--primary-500);
+  border-left: 4px solid var(--primary-500);
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 1.5rem;
+  font-size: 1.8rem;
+}
+
+/* Main content styles */
+.mainContent {
+  flex: 1;
+  margin-left: 24rem;
+  padding: 2rem;
+  /* overflow-x: scroll; */
+}
+
+.dataTable {
+    overflow-x: auto;
+}
+
+.topBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--neutral-gray-200);
+}
+
+.topBar h1 {
+  font-size: var(--h3-desktop);
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.vendorProfile {
+  display: flex;
+  align-items: center;
+}
+
+.vendorProfile img {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  margin-right: 1rem;
+}
+
+.vendorProfile span {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* Overview section */
+.overviewGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(32rem, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.overviewGrid > *:nth-child(5),
+.overviewGrid > *:nth-child(6) {
+  grid-column: span 2;
+}
+
+.statCard {
+  background-color: var(--neutral-white);
+  border-radius: 0.8rem;
+  padding: 2rem;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 0.2rem 0.8rem rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease;
+}
+
+.statCard:hover {
+  transform: translateY(-0.5rem);
+}
+
+.statIcon {
+  width: 5rem;
+  height: 5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 1.5rem;
+  font-size: 2.4rem;
+}
+
+.statInfo h3 {
+  font-size: 1.6rem;
+  margin: 0 0 0.5rem 0;
+  color: var(--text-secondary);
+}
+
+.statInfo p {
+  font-size: 2.4rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+/* Chart styles */
+.chartCard {
+  background-color: var(--neutral-white);
+  border-radius: 0.8rem;
+  padding: 2rem;
+  box-shadow: 0 0.2rem 0.8rem rgba(0, 0, 0, 0.05);
+  height: 30rem;
+}
+
+.chartCard h3 {
+  font-size: 1.8rem;
+  margin: 0 0 2rem 0;
+  color: var(--text-primary);
+}
+
+.chartPlaceholder {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 20rem;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.chartBar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  border-radius: 0.4rem 0.4rem 0 0;
+  position: relative;
+  min-height: 4rem;
+  transition: height 0.5s ease;
+}
+
+.barValue {
+  position: absolute;
+  top: -2.5rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.chartLabels {
+  display: flex;
+  justify-content: space-between;
+}
+
+.chartLabel {
+  flex: 1;
+  text-align: center;
+  font-size: 1.4rem;
+  color: var(--text-secondary);
+}
+
+/* Products section */
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.sectionHeader h2 {
+  font-size: var(--h4-desktop);
+  margin: 0;
+}
+
+.addButton {
+  background-color: var(--primary-500);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 0.4rem;
+  font-size: 1.4rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.addButton:hover {
+  background-color: var(--primary-600);
+}
+
+.filters {
+  display: flex;
+  margin-bottom: 2rem;
+  gap: 1rem;
+}
+
+.filterSelect {
+  padding: 1rem;
+  border: 1px solid var(--neutral-gray-300);
+  border-radius: 0.4rem;
+  background-color: var(--neutral-white);
+  font-size: 1.4rem;
+}
+
+.searchInput {
+  flex: 1;
+  padding: 1rem;
+  border: 1px solid var(--neutral-gray-300);
+  border-radius: 0.4rem;
+  font-size: 1.4rem;
+}
+
+.tableContainer {
+  background-color: var(--neutral-white);
+  border-radius: 0.8rem;
+  overflow: hidden;
+  box-shadow: 0 0.2rem 0.8rem rgba(0, 0, 0, 0.05);
+}
+
+.dataTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dataTable th {
+  background-color: var(--neutral-gray-100);
+  color: var(--text-secondary);
+  text-align: left;
+  padding: 1.5rem;
+  font-size: 1.4rem;
+}
+
+.dataTable td {
+  padding: 1.5rem;
+  border-top: 1px solid var(--neutral-gray-200);
+  font-size: 1.4rem;
+}
+
+.productName {
+  font-weight: 600;
+  color: var(--primary-600);
+}
+
+.orderId {
+  font-weight: 600;
+  color: var(--secondary-700);
+}
+
+.status {
+  display: inline-block;
+  padding: 0.6rem 1.2rem;
+  border-radius: 2rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.active {
+  background-color: var(--success);
+  color: white;
+}
+
+.low-stock {
+  background-color: var(--warning);
+  color: white;
+}
+
+.statusPending {
+  background-color: var(--warning);
+  color: white;
+}
+
+.statusProcessing {
+  background-color: var(--info);
+  color: white;
+}
+
+.statusShipped {
+  background-color: var(--primary-500);
+  color: white;
+}
+
+.statusDelivered {
+  background-color: var(--success);
+  color: white;
+}
+
+.actions {
+  display: flex;
+  gap: 0.8rem;
+}
+
+.actions button {
+  border: none;
+  background: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.2rem;
+  height: 3.2rem;
+  border-radius: 0.4rem;
+  transition: all 0.2s;
+}
+
+.viewButton {
+  color: var(--info);
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+.viewButton:hover {
+  background-color: rgba(59, 130, 246, 0.2);
+}
+
+.editButton {
+  color: var(--primary-500);
+  background-color: rgba(218, 165, 32, 0.1);
+}
+
+.editButton:hover {
+  background-color: rgba(218, 165, 32, 0.2);
+}
+
+.deleteButton {
+  color: var(--error);
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+.deleteButton:hover {
+  background-color: rgba(239, 68, 68, 0.2);
+}
+
+.updateButton {
+  background-color: var(--primary-500);
+  color: white;
+  border: none;
+  padding: 0.8rem 1.2rem;
+  border-radius: 0.4rem;
+  font-size: 1.3rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.updateButton:hover {
+  background-color: var(--primary-600);
+}
+
+/* Order filters */
+.orderFilters {
+  display: flex;
+  gap: 1rem;
+}
+
+/* Placeholder section */
+.placeholderSection {
+  background-color: var(--neutral-white);
+  border-radius: 0.8rem;
+  padding: 3rem;
+  text-align: center;
+  box-shadow: 0 0.2rem 0.8rem rgba(0, 0, 0, 0.05);
+}
+
+.placeholderSection h2 {
+  margin-bottom: 1.5rem;
+  color: var(--text-primary);
+}
+
+.placeholderSection p {
+  font-size: 1.6rem;
+  color: var(--text-tertiary);
+}
+
+/* Media queries for responsive design */
+@media screen and (max-width: 1200px) {
+  .overviewGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .overviewGrid > *:nth-child(5),
+  .overviewGrid > *:nth-child(6) {
+    grid-column: span 1;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .sidebar {
+    width: 7rem;
+  }
+  
+  .logo {
+    font-size: 1.6rem;
+  }
+  
+  .sidebarItem .label {
+    display: none;
+  }
+  
+  .mainContent {
+    margin-left: 7rem;
+  }
+  
+  .overviewGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .topBar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .filters {
+    flex-direction: column;
+  }
+  
+  .orderFilters {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .sectionHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+}
