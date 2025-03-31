@@ -10,6 +10,8 @@ import {
   FaList,
   FaHome,
   FaLock,
+  FaCreditCard,
+  FaMoneyBill,
 } from "react-icons/fa";
 import Swal from "sweetalert2";
 import styles from "../css/SignUp.module.css";
@@ -24,6 +26,7 @@ import {
 import logo from "../assets/stumart.jpeg";
 import api from "../constant/api";
 import { useNavigate } from "react-router-dom";
+import { banks } from "../constant/bank";
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -46,6 +49,9 @@ const Signup = () => {
     roomNumber: "",
     matricNumber: "",
     department: "",
+    accountNumber: "",
+    accountName: "",
+    bankName: "",
   });
 
   const navigate = useNavigate();
@@ -86,6 +92,24 @@ const Signup = () => {
     // User type specific validations
     if (!formData.userType) newErrors.userType = "User type is required";
 
+    // Password validations
+    if (!formData.password) {
+      newErrors.password = "Password is required";
+    } else if (formData.password.length < 8) {
+      newErrors.password = "Password must be at least 8 characters";
+    }
+
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = "Please confirm your password";
+    } else if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match";
+    }
+
+    // File validations
+    if (!formData.profilePic) {
+      newErrors.profilePic = "Profile picture is required";
+    }
+
     // Picker-specific validations
     if (formData.userType === "Picker") {
       if (!formData.fleetType) newErrors.fleetType = "Fleet type is required";
@@ -104,6 +128,9 @@ const Signup = () => {
         !formData.specificCategory
       ) {
         newErrors.specificCategory = "Please select a specific category";
+      }
+      if (!formData.shopImage) {
+        newErrors.shopImage = "Shop image is required";
       }
     }
 
@@ -125,26 +152,17 @@ const Signup = () => {
       }
     }
 
-    // Password validations
-    if (!formData.password) {
-      newErrors.password = "Password is required";
-    } else if (formData.password.length < 8) {
-      newErrors.password = "Password must be at least 8 characters";
-    }
-
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = "Please confirm your password";
-    } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match";
-    }
-
-    // File validations
-    if (!formData.profilePic) {
-      newErrors.profilePic = "Profile picture is required";
-    }
-
-    if (formData.userType === "Vendor" && !formData.shopImage) {
-      newErrors.shopImage = "Shop image is required";
+    // Bank account validations for Vendor, Picker, and Student Picker
+    if (["Vendor", "Picker", "Student Picker"].includes(formData.userType)) {
+      if (!formData.bankName) {
+        newErrors.bankName = "Please select a bank";
+      }
+      if (!formData.accountName.trim()) {
+        newErrors.accountName = "Account name is required";
+      }
+      if (!/^[0-9]{10}$/.test(formData.accountNumber)) {
+        newErrors.accountNumber = "Account number must be exactly 10 digits";
+      }
     }
 
     setErrors(newErrors);
@@ -242,6 +260,10 @@ const Signup = () => {
             if (formData.shopImage) {
               formDataToSend.append("shop_image", formData.shopImage);
             }
+            // Add bank details
+            formDataToSend.append("bank_name", formData.bankName);
+            formDataToSend.append("account_name", formData.accountName);
+            formDataToSend.append("account_number", formData.accountNumber);
             break;
 
           case "Picker":
@@ -250,12 +272,20 @@ const Signup = () => {
               "fleet_type",
               formData.fleetType.toLowerCase()
             );
+            // Add bank details
+            formDataToSend.append("bank_name", formData.bankName);
+            formDataToSend.append("account_name", formData.accountName);
+            formDataToSend.append("account_number", formData.accountNumber);
             break;
 
           case "Student Picker":
             endpoint = "/student-pickers/";
             formDataToSend.append("hostel_name", formData.hostelName);
             formDataToSend.append("room_number", formData.roomNumber);
+            // Add bank details
+            formDataToSend.append("bank_name", formData.bankName);
+            formDataToSend.append("account_name", formData.accountName);
+            formDataToSend.append("account_number", formData.accountNumber);
             break;
 
           default:
@@ -411,7 +441,7 @@ const Signup = () => {
 
         <div className={styles.formGroup}>
           <label>
-            <FaMapMarkerAlt /> State of Schooling
+            <FaMapMarkerAlt /> State of Schooling/Operating
           </label>
           <select
             name="state"
@@ -595,7 +625,7 @@ const Signup = () => {
 
             <div className={styles.formGroup}>
               <label>
-                <FaList /> Shop Image
+                <FaImage /> Shop Image
               </label>
               <input
                 type="file"
@@ -679,6 +709,68 @@ const Signup = () => {
               />
               {errors.department && (
                 <span className={styles.error}>{errors.department}</span>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* Bank Account Details for Vendor, Picker, and Student Picker */}
+        {["Vendor", "Picker", "Student Picker"].includes(formData.userType) && (
+          <>
+            <div className={styles.formGroup}>
+              <label>
+                <FaMoneyBill /> Bank Name
+              </label>
+              <select
+                name="bankName"
+                value={formData.bankName}
+                onChange={handleChange}
+                className={styles.formControl}
+              >
+                <option value="">Select a bank</option>
+                {banks.map((bank) => (
+                  <option key={bank} value={bank}>
+                    {bank}
+                  </option>
+                ))}
+              </select>
+              {errors.bankName && (
+                <span className={styles.error}>{errors.bankName}</span>
+              )}
+            </div>
+
+            <div className={styles.formGroup}>
+              <label>
+                <FaUser /> Account Name
+              </label>
+              <input
+                type="text"
+                name="accountName"
+                value={formData.accountName}
+                onChange={handleChange}
+                className={styles.formControl}
+                placeholder="Enter account name"
+              />
+              {errors.accountName && (
+                <span className={styles.error}>{errors.accountName}</span>
+              )}
+            </div>
+
+            <div className={styles.formGroup}>
+              <label>
+                <FaCreditCard /> Account Number
+              </label>
+              <input
+                type="text"
+                name="accountNumber"
+                value={formData.accountNumber}
+                onChange={handleChange}
+                className={styles.formControl}
+                placeholder="Enter 10-digit account number"
+                maxLength="10"
+              />
+              {errors.accountNumber && (
+                <span className={styles.error}>{errors.accountNumber}</span>
               )}
             </div>
           </>
