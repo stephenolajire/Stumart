@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   FaHome,
   FaBox,
@@ -355,7 +355,9 @@ const VendorDashboard = () => {
           <div className={styles.productsSection}>
             <div className={styles.sectionHeader}>
               <h2>Product Management</h2>
-              <button className={styles.addButton}>Add New Product</button>
+              <Link to="/add-product">
+                <button className={styles.addButton}>Add New Product</button>
+              </Link>
             </div>
             <div className={styles.filters}>
               <select

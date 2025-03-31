@@ -17,6 +17,7 @@ import ProtectedRoute from "./constant/ProtectedRoute";
 import { GlobalProvider } from "./constant/GlobalContext";
 import OtherService from "./pages/OtherService";
 import VendorDashboard from "./dashboard/VendorDashboard";
+import AddProduct from "./dashboard/AddProduct";
 
 function App() {
   return (
@@ -58,6 +59,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <VendorDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/add-product"
+            element={
+              <ProtectedRoute>
+                <AddProduct />
               </ProtectedRoute>
             }
           />

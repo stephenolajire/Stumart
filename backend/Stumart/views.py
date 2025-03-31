@@ -7,6 +7,14 @@ from User.models import Vendor, User
 from .serializers import ProductSerializer
 from django.shortcuts import get_list_or_404
 from User.serializers import VendorSerializer
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+from django.core.exceptions import ValidationError
+from django.db import transaction
+import logging
+
+# Set up logger
+logger = logging.getLogger(__name__)
 
 class ProductsView(APIView):
     def get(self, request, id):
@@ -166,4 +174,89 @@ class ProductView(APIView):
         return Response(serializer.data, status=200)
 
 
+class ProductCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+    
+    def post(self, request, format=None):
+        """
+        Create a new product for the vendor associated with the authenticated user.
+        The vendor is determined by the authenticated user making the request.
+        """
+        try:
+            # Get the vendor associated with the authenticated user
+            vendor = Vendor.objects.get(user=request.user)
+        except Vendor.DoesNotExist:
+            return Response(
+                {"message": "You must be registered as a vendor to add products."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Log request data for debugging
+        logger.debug(f"Request data: {request.data}")
+        logger.debug(f"Request FILES: {request.FILES}")
+        
+        # Create serializer with request data
+        serializer = ProductSerializer(data=request.data)
+        
+        if serializer.is_valid():
+            try:
+                # Use transaction to ensure atomicity
+                with transaction.atomic():
+                    # Save the product with the vendor
+                    product = serializer.save(vendor=vendor)
+                    
+                    # Get a fresh copy of the product to ensure all data is current
+                    product.refresh_from_db()
+                    
+                    # Return the refreshed data using the serializer
+                    serialized_data = ProductSerializer(product).data
+                    
+                    return Response(
+                        {
+                            "message": "Product added successfully.", 
+                            "data": serialized_data,
+                            "image_url": serialized_data.get('image')  # Include image URL in response
+                        },
+                        status=status.HTTP_201_CREATED
+                    )
+            except ValidationError as e:
+                return Response(
+                    {"message": "Failed to add product.", "errors": e.message_dict},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            except Exception as e:
+                logger.error(f"Error creating product: {str(e)}")
+                return Response(
+                    {"message": "An unexpected error occurred.", "errors": str(e)},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+        else:
+            logger.error(f"Validation errors: {serializer.errors}")
+            return Response(
+                {"message": "Failed to add product.", "errors": serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    
+    def get(self, request, format=None):
+        """
+        Get all products for the vendor associated with the authenticated user.
+        """
+        try:
+            # Get the vendor associated with the authenticated user
+            vendor = Vendor.objects.get(user=request.user)
+        except Vendor.DoesNotExist:
+            return Response(
+                {"message": "You must be registered as a vendor to view your products."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Get all products for this vendor
+        products = Product.objects.filter(vendor=vendor).order_by('-created_at')
+        serializer = ProductSerializer(products, many=True)
+        
+        return Response(
+            {"message": "Products retrieved successfully.", "data": serializer.data},
+            status=status.HTTP_200_OK
+        )
 

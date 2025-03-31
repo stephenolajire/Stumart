@@ -7,4 +7,5 @@ urlpatterns = [
     path("shops-by-category/", VendorsByOtherView.as_view()),
     path("shops-by-school-and-category/", VendorsByOtherandSchoolView.as_view()),
     path('product/<str:id>', ProductView.as_view(), name='list-products'),
+    path("products/", ProductCreateView.as_view()),
 ]
