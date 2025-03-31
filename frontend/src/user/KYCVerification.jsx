@@ -125,7 +125,7 @@ const KYCVerification = () => {
         confirmButtonColor: "var(--primary-500)",
       });
 
-      navigate("/dashboard");
+      navigate("/login");
     } catch (error) {
       Swal.fire({
         icon: "error",
