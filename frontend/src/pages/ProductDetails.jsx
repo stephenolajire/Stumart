@@ -34,6 +34,11 @@ const ProductDetails = () => {
               <div className={styles.rating}>⭐ {product.vendor_rating}</div>
             </div>
 
+            <div className={styles.shopInfo}>
+              {product.in_stock && <h3>In Stock: {product.in_stock}</h3>}
+              {/* <div className={styles.rating}>⭐ {product.vendor_rating}</div> */}
+            </div>
+
             {/* <div className={styles.specifications}>
               <h3>Specifications</h3>
               <ul>
@@ -45,14 +50,14 @@ const ProductDetails = () => {
 
             <div className={styles.addToCart}>
               <div className={styles.quantity}>
-                <button 
-                  onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                <button
+                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                   disabled={quantity === 1}
                 >
                   -
                 </button>
                 <span>{quantity}</span>
-                <button onClick={() => setQuantity(q => q + 1)}>+</button>
+                <button onClick={() => setQuantity((q) => q + 1)}>+</button>
               </div>
               <button className={styles.addButton}>
                 Add to Cart - ₦{product.price * quantity}
