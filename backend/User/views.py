@@ -318,7 +318,15 @@ class KYCVerificationView(APIView):
             )
             
             if serializer.is_valid():
-                serializer.save(user=request.user)
+                # Save the KYC object first
+                kyc_instance = serializer.save(user=request.user)
+                
+                # Set verification status to PENDING
+                kyc_instance.verification_status = 'PENDING'
+                
+                # Save the updated instance
+                kyc_instance.save()
+
                 return Response({
                     'message': 'KYC verification submitted successfully',
                     'data': serializer.data
@@ -333,6 +341,7 @@ class KYCVerificationView(APIView):
             return Response({
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
     def get(self, request):
         try:

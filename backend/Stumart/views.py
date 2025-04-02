@@ -3,44 +3,47 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from .models import *
-from User.models import Vendor, User
-from .serializers import ProductSerializer
+from User.models import Vendor
 from django.shortcuts import get_list_or_404
 from User.serializers import VendorSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
-from django.core.exceptions import ValidationError
-from django.db import transaction
-import logging
-
-# Set up logger
-logger = logging.getLogger(__name__)
+from .serializers import*
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 class ProductsView(APIView):
     def get(self, request, id):
         try:
             vendor = get_object_or_404(Vendor, id=id)
-            products = Product.objects.filter(vendor=vendor)
+            products = Product.objects.filter(vendor=vendor.user)
             serializer = ProductSerializer(products, many=True)
 
-            business_name = vendor.business_name
-            shop_image = str(vendor.shop_image) if vendor.shop_image else None  # ✅ Convert to URL
-            business_category = vendor.business_category
-            rating = vendor.rating
-            data = serializer.data  # Convert to a mutable format
-            
+            # Vendor Details
+            business_data = {
+                "business_name": vendor.business_name,
+                "shop_image": request.build_absolute_uri(vendor.shop_image.url) if vendor.shop_image else None,
+                "business_category": vendor.business_category,
+                "rating": vendor.rating
+            }
+
+            product_data = serializer.data
+
             # Remove 'in_stock' if business category is 'food'
-            if isinstance(business_category, str) and business_category.lower() == "food":
-                for product in data:
+            if vendor.business_category and vendor.business_category.lower() == "food":
+                for product in product_data:
                     product.pop("in_stock", None)
 
-            return Response(data, status=status.HTTP_200_OK)
+            return Response(
+                {
+                    "vendor_details": business_data,
+                    "products": product_data
+                },
+                status=status.HTTP_200_OK
+            )
 
         except Exception as e:
-            return Response(
-                {"error": str(e)},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class VendorsBySchoolView(APIView):
     def get(self, request):
@@ -166,97 +169,159 @@ class VendorsByOtherandSchoolView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
         
-
 class ProductView(APIView):
-    def get(self, request, id):
+    def get (self, request, id):
         product = Product.objects.get(id=id)
-        serializer = ProductSerializer(product)
-        return Response(serializer.data, status=200)
+        serializers = ProductSerializer
+        return Response(serializers.data, status=status.HTTP_200_OK)
 
 
-class ProductCreateView(APIView):
+class GetVendorView(APIView):
+    """API endpoint to get vendor information before creating a product"""
     permission_classes = [IsAuthenticated]
-    parser_classes = [MultiPartParser, FormParser, JSONParser]
     
-    def post(self, request, format=None):
-        """
-        Create a new product for the vendor associated with the authenticated user.
-        The vendor is determined by the authenticated user making the request.
-        """
+    def get(self, request, *args, **kwargs):
+        """Get vendor information to determine what fields to show"""
         try:
-            # Get the vendor associated with the authenticated user
-            vendor = Vendor.objects.get(user=request.user)
-        except Vendor.DoesNotExist:
+            user = request.user
+            vendor = Vendor.objects.get(user=user)
+            business_category = vendor.business_category if vendor.business_category else ""
+            
+            return Response({
+                "business_category": business_category,
+                "vendor_id": vendor.id,
+                "business_name": vendor.business_name
+            })
+        except vendor.DoesNotExist:
             return Response(
-                {"message": "You must be registered as a vendor to add products."},
+                {"error": "User is not registered as a vendor"},
                 status=status.HTTP_403_FORBIDDEN
             )
-        
-        # Log request data for debugging
-        logger.debug(f"Request data: {request.data}")
-        logger.debug(f"Request FILES: {request.FILES}")
-        
-        # Create serializer with request data
-        serializer = ProductSerializer(data=request.data)
-        
-        if serializer.is_valid():
-            try:
-                # Use transaction to ensure atomicity
-                with transaction.atomic():
-                    # Save the product with the vendor
-                    product = serializer.save(vendor=vendor)
-                    
-                    # Get a fresh copy of the product to ensure all data is current
-                    product.refresh_from_db()
-                    
-                    # Return the refreshed data using the serializer
-                    serialized_data = ProductSerializer(product).data
-                    
+
+
+class ProductListCreateAPIView(APIView):
+    """API endpoints for listing and creating products"""
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+    
+    def get(self, request, *args, **kwargs):
+        """List all products for current vendor"""
+        try:
+            user = request.user
+            vendor = Vendor.objects.get(user=user)
+            products = Product.objects.filter(vendor=vendor)
+            serializer = ProductSerializer(products, many=True)
+            return Response(serializer.data)
+        except vendor.DoesNotExist:
+            return Response(
+                {"error": "User is not registered as a vendor"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+    
+    def post(self, request, *args, **kwargs):
+        """Create a new product"""
+        try:
+            # Verify user is a vendor
+            user = request.user
+            if user.user_type == "vendor":
+            
+                # Create product
+                serializer = ProductCreateSerializer(
+                    data=request.data,
+                    context={'request': request}
+                )
+                
+                if serializer.is_valid():
+                    serializer.save()
                     return Response(
-                        {
-                            "message": "Product added successfully.", 
-                            "data": serialized_data,
-                            "image_url": serialized_data.get('image')  # Include image URL in response
-                        },
+                        {"message": "Product created successfully", "data": serializer.data},
                         status=status.HTTP_201_CREATED
                     )
-            except ValidationError as e:
+            
+                # Return validation errors
                 return Response(
-                    {"message": "Failed to add product.", "errors": e.message_dict},
+                    {"errors": serializer.errors},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            except Exception as e:
-                logger.error(f"Error creating product: {str(e)}")
-                return Response(
-                    {"message": "An unexpected error occurred.", "errors": str(e)},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                )
-        else:
-            logger.error(f"Validation errors: {serializer.errors}")
+            
+        except user.DoesNotExist:
             return Response(
-                {"message": "Failed to add product.", "errors": serializer.errors},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-    
-    def get(self, request, format=None):
-        """
-        Get all products for the vendor associated with the authenticated user.
-        """
-        try:
-            # Get the vendor associated with the authenticated user
-            vendor = Vendor.objects.get(user=request.user)
-        except Vendor.DoesNotExist:
-            return Response(
-                {"message": "You must be registered as a vendor to view your products."},
+                {"error": "User is not registered as a vendor"},
                 status=status.HTTP_403_FORBIDDEN
             )
+
+
+class ProductDetailAPIView(APIView):
+    """API endpoints for retrieving, updating and deleting a product"""
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+    
+    def get_object(self, pk, request):
+        """Helper method to get product object and verify ownership"""
+        product = get_object_or_404(Product, pk=pk)
+        user = request.user
+        vendor = Vendor.objects.get(user=user)
         
-        # Get all products for this vendor
-        products = Product.objects.filter(vendor=vendor).order_by('-created_at')
-        serializer = ProductSerializer(products, many=True)
+        # Verify the product belongs to the requesting vendor
+        if product.vendor != vendor.user:
+            return None
+            
+        return product
+    
+    def get(self, request, pk, *args, **kwargs):
+        """Retrieve a product"""
+        product = self.get_object(pk, request)
         
-        return Response(
-            {"message": "Products retrieved successfully.", "data": serializer.data},
-            status=status.HTTP_200_OK
+        if not product:
+            return Response(
+                {"error": "Product not found or you don't have permission to view it"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+            
+        serializer = ProductSerializer(product)
+        return Response(serializer.data)
+    
+    def put(self, request, pk, *args, **kwargs):
+        """Update a product"""
+        product = self.get_object(pk, request)
+        
+        if not product:
+            return Response(
+                {"error": "Product not found or you don't have permission to update it"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+            
+        serializer = ProductCreateSerializer(
+            product,
+            data=request.data,
+            context={'request': request}
         )
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {"message": "Product updated successfully", "data": serializer.data}
+            )
+            
+        return Response(
+            {"errors": serializer.errors},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    def delete(self, request, pk, *args, **kwargs):
+        """Delete a product"""
+        product = self.get_object(pk, request)
+        
+        if not product:
+            return Response(
+                {"error": "Product not found or you don't have permission to delete it"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+            
+        product.delete()
+        return Response(
+            {"message": "Product deleted successfully"},
+            status=status.HTTP_204_NO_CONTENT
+        )
+
 
