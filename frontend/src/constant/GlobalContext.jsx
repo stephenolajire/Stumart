@@ -14,6 +14,7 @@ export const GlobalProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [product, setProduct] = useState([])
+  const [details, setDetails] = useState({})
 
   const auth = async () => {
     const token = localStorage.getItem("access");
@@ -64,11 +65,14 @@ export const GlobalProvider = ({ children }) => {
   }, []);
 
   const fetchProducts = async (shopId) => {
+    console.log("Fetching products for shopId:", shopId);
     try {
-      const response = await api.get(`products/${shopId}`);
+      const response = await api.get(`vendor-products/${shopId}`);
       if (response.status === 200) {
         // console.log(response.data);
         setProducts(response.data);
+        setDetails(response.data.vendor_details)
+        // console.log(response.data.vendor_details)
       }
     } catch (error) {
       console.log(error);
@@ -126,6 +130,7 @@ export const GlobalProvider = ({ children }) => {
         error,
         fetchProduct,
         product,
+        details,
       }}
     >
       {children}

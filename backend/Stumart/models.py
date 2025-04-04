@@ -33,7 +33,7 @@ class Product(models.Model):
     image = CloudinaryField('product_images/', null=True, blank=True)
     
     # Fashion-specific fields
-    gender = models.CharField(max_length=10, choices=GENDER_CHOICES, null=True, blank=True)
+    gender = models.CharField(max_length=10, choices=GENDER_CHOICES, null=True, blank=True, default="unisex")
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -62,7 +62,7 @@ class ProductSize(models.Model):
         on_delete=models.CASCADE, 
         related_name="sizes"
     )
-    size = models.CharField(max_length=20)
+    size = models.CharField(max_length=20, default="M")
     quantity = models.PositiveIntegerField(default=0)
     
     def __str__(self):
@@ -79,7 +79,7 @@ class ProductColor(models.Model):
         on_delete=models.CASCADE, 
         related_name="colors"
     )
-    color = models.CharField(max_length=50)
+    color = models.CharField(max_length=50, default="red")
     quantity = models.PositiveIntegerField(default=0)
     
     def __str__(self):

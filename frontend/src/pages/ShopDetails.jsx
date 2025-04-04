@@ -3,25 +3,26 @@ import { Link, useParams } from "react-router-dom";
 import styles from "../css/ShopDetails.module.css";
 import { GlobalContext } from "../constant/GlobalContext";
 import { FaBuilding } from "react-icons/fa";
+import { MEDIA_BASE_URL } from "../constant/api";
 
-// ✅ Cloudinary Base URL (Modify if needed)
+// Cloudinary Base URL (Modify if needed)
 const CLOUDINARY_BASE_URL = "https://res.cloudinary.com/YOUR_CLOUDINARY_NAME/";
 
 const ShopDetails = () => {
   const { shopId } = useParams();
-  const { fetchProducts, products } = useContext(GlobalContext);
+  const { fetchProducts, products, details } = useContext(GlobalContext);
 
   useEffect(() => {
     fetchProducts(shopId);
   }, [shopId]);
 
-  // ✅ Ensure `products` is an array before proceeding
-  if (!Array.isArray(products)) {
+  // Ensure `products` is an array before proceeding
+  if (!Array.isArray(products.products)) {
     return <div className={styles.loading}>Loading products ...</div>;
   }
 
-  // ✅ If no products exist, show a fallback message
-  if (products.length === 0) {
+  // If no products exist, show a fallback message
+  if (products.products.length === 0) {
     return (
       <div className={styles.contNo}>
         <p>No product is available yet for the selected shop</p>
@@ -30,26 +31,23 @@ const ShopDetails = () => {
     );
   }
 
-  // ✅ Extract Vendor Info from the First Product
-  const vendor = products[0];
-
   return (
     <div className={styles.shopDetails}>
       <div className={styles.header}>
         <img
-          src={vendor.vendor_shop_image}
-          alt={vendor.vendor_name}
+          src={details.shop_image}
+          alt={details.business_name} // Fixed typo here
           className={styles.shopImage}
         />
         <div className={styles.shopInfo}>
-          <h1>{vendor.vendor_name}</h1>
-          <p className={styles.category}>{vendor.vendor_category}</p>
-          <div className={styles.rating}>⭐ {vendor.vendor_rating}</div>
+          <h1>{details.business_name}</h1>
+          <p className={styles.category}>{details.business_category}</p>
+          <div className={styles.rating}>⭐ {details.rating}</div>
           <p className={styles.delivery}>🕒 15mins - 30mins</p>
           <p className={styles.description}>
-            Discover quality {vendor.vendor_category} and excellence at{" "}
-            {vendor.vendor_name}, your trusted destination for top{" "}
-            {vendor.vendor_category} and services.
+            Discover quality {details.business_category} and excellence at{" "}
+            {details.business_name}, your trusted destination for top{" "}
+            {details.business_category} and services.
           </p>
         </div>
       </div>
@@ -57,10 +55,13 @@ const ShopDetails = () => {
       <div className={styles.products}>
         <h2>Products</h2>
         <div className={styles.productGrid}>
-          {products.map((product) => (
-            <Link to={`/product/${product.id}`}>
-              <div key={product.id} className={styles.productCard}>
-                <img src={product.image} alt={product.name || "Product"} />
+          {products.products.map((product) => (
+            <Link to={`/product/${product.id}`} key={product.id}>
+              <div className={styles.productCard}>
+                <img
+                  src={`${MEDIA_BASE_URL}${product.image}`}
+                  alt={product.name || "Product"}
+                />
                 <div className={styles.productInfo}>
                   <h3>
                     {product.name

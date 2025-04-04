@@ -16,6 +16,7 @@ const Navigation = () => {
     localStorage.removeItem("access")
     localStorage.removeItem("refresh")
     navigate ('/')
+    window.location.reload()
   }
 
   const toggleMenu = () => {
