@@ -386,7 +386,7 @@ const AddProduct = () => {
       }
 
       // Send API request
-      const response = await api.post("products/", formData, {
+      const response = await api.post("vendor-products/", formData, {
         headers,
       });
 
