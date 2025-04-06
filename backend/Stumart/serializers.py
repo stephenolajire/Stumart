@@ -1,11 +1,6 @@
 # serializers.py
 from rest_framework import serializers
-from .models import (
-    Product, 
-    ProductImage, 
-    ProductSize, 
-    ProductColor, 
-)
+from .models import *
 import json
 from User.models import Vendor
 from django.contrib.auth import get_user_model
@@ -33,36 +28,80 @@ class ProductColorSerializer(serializers.ModelSerializer):
 
 
 class ProductImageSerializer(serializers.ModelSerializer):
+    image_url = serializers.SerializerMethodField()
     class Meta:
         model = ProductImage
-        fields = ['id', 'image']
+        fields = ['id', 'image_url']
+
+    def get_image_url(self, obj):
+        request = self.context.get('request')
+        if obj.image and request:
+            return request.build_absolute_uri(obj.image.url)
+        elif obj.image:
+            return obj.image.url
+        return None
 
 
 class ProductSerializer(serializers.ModelSerializer):
-    # Define related fields explicitly 
-    additional_images = ProductImageSerializer(many=True, read_only=True)
+    additional_images = serializers.SerializerMethodField()
     sizes = ProductSizeSerializer(many=True, read_only=True)
     colors = ProductColorSerializer(many=True, read_only=True)
-    # vendor_name = serializers.SerializerMethodField()
     image_url = serializers.SerializerMethodField()
+    vendor_name = serializers.SerializerMethodField()
+    vendor_rating = serializers.SerializerMethodField()
+    vendor_category = serializers.SerializerMethodField()
     
     class Meta:
         model = Product
         fields = [
             'id', 'name', 'description', 'price', 'in_stock',
-            'image', 'gender', 'created_at', 'updated_at',
+            'gender', 'created_at', 'updated_at',
             'additional_images', 'sizes', 'colors', 'image_url',
+            'vendor_name', 'vendor_rating','vendor_category'
         ]
     
     def get_vendor_name(self, obj):
-        # Return the vendor's name or business name if available
         if hasattr(obj.vendor, 'vendor_profile'):
             return obj.vendor.vendor_profile.business_name
         return f"{obj.vendor.first_name} {obj.vendor.last_name}"
 
-    def get_image_url(self, obj):
-        return obj.image.url if obj.image else None
+    def get_vendor_category(self, obj):
+        if hasattr(obj.vendor, 'vendor_profile'):
+            return obj.vendor.vendor_profile.business_category
+        return f"{obj.vendor.first_name} {obj.vendor.last_name}"
     
+    def get_vendor_rating(self, obj):
+        # Add appropriate vendor rating logic here
+        return 4.5  # Placeholder, replace with actual rating logic
+    
+    def get_image_url(self, obj):
+        if obj.image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.image.url)
+            return obj.image.url
+        return None
+        
+    def get_additional_images(self, obj):
+        request = self.context.get('request')
+        images = []
+        
+        for image in obj.additional_images.all():
+            image_data = {
+                'id': image.id,
+                'image_url': None
+            }
+            
+            if image.image:
+                if request:
+                    image_data['image_url'] = request.build_absolute_uri(image.image.url)
+                else:
+                    image_data['image_url'] = image.image.url
+                    
+            images.append(image_data)
+            
+        return images
+      
 
 class ProductCreateSerializer(serializers.ModelSerializer):
     sizes = serializers.CharField(required=False)
@@ -176,3 +215,44 @@ class ProductCreateSerializer(serializers.ModelSerializer):
                 )
                 
         return product
+    
+
+class CartItemSerializer(serializers.ModelSerializer):
+    product_name = serializers.CharField(source='product.name', read_only=True)
+    product_price = serializers.DecimalField(source='product.price', max_digits=10, decimal_places=2, read_only=True)
+    product_image = serializers.SerializerMethodField()
+    total_price = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = CartItem
+        fields = [
+            'id', 'product', 'product_name', 'product_price', 'product_image',
+            'quantity', 'size', 'color', 'total_price', 'created_at'
+        ]
+        
+    def get_product_image(self, obj):
+        request = self.context.get('request')
+        if obj.product.image and request:
+            return request.build_absolute_uri(obj.product.image.url)
+        elif obj.product.image:
+            return obj.product.image.url
+        return None
+        
+    def get_total_price(self, obj):
+        return obj.product.price * obj.quantity
+
+
+class CartSerializer(serializers.ModelSerializer):
+    items = CartItemSerializer(many=True, read_only=True, source='cartitem_set')
+    total_price = serializers.SerializerMethodField()
+    item_count = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Cart
+        fields = ['id', 'user', 'cart_code', 'items', 'total_price', 'item_count', 'created_at', 'updated_at']
+        
+    def get_total_price(self, obj):
+        return sum(item.product.price * item.quantity for item in obj.cartitem_set.all())
+        
+    def get_item_count(self, obj):
+        return sum(item.quantity for item in obj.cartitem_set.all())

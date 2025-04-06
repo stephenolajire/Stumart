@@ -87,3 +87,41 @@ class ProductColor(models.Model):
     
     class Meta:
         unique_together = ('product', 'color')
+
+
+class Cart(models.Model):
+    """Model for user cart"""
+    user = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name="cart",
+        null=True, blank=True
+    )
+    cart_code = models.CharField(max_length=100, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
+    
+    def __str__(self):
+        return f"{self.cart_code}"
+    
+
+class CartItem(models.Model):
+    """Model for items in the cart"""
+    cart = models.ForeignKey(
+        Cart, 
+        on_delete=models.CASCADE, 
+        related_name="items"
+    )
+    product = models.ForeignKey(
+        Product, 
+        on_delete=models.CASCADE, 
+        related_name="cart_items"
+    )
+    quantity = models.PositiveIntegerField(default=1)
+    size = models.CharField(max_length=50, blank=True, null=True)
+    color = models.CharField(max_length=50, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
+    
+    def __str__(self):
+        return f"{self.product.name}"

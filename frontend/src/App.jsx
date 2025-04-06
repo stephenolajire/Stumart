@@ -16,11 +16,13 @@ import ScrollToTop from "./components/ScrollToTop";
 import ProtectedRoute from "./constant/ProtectedRoute";
 import { GlobalProvider } from "./constant/GlobalContext";
 import OtherService from "./pages/OtherService";
-import VendorDashboard from "./dashboard/VendorDashboard";
-import AddProduct from "./dashboard/AddProduct";
+import VendorDashboard from "./vendor-dashboard/VendorDashboard";
+import AddProduct from "./vendor-dashboard/AddProduct";
 import RequestOTPForm from "./forgot password/RequestOTPForm";
 import VerifyOTPForm from "./forgot password/VerifyOTPForm";
 import SetNewPasswordForm from "./forgot password/SetNewPasswordForm";
+import ShoppingCart from "./pages/ShoppingCart";
+import Checkout from "./pages/Checkout";
 
 function App() {
   return (
@@ -37,6 +39,8 @@ function App() {
             <Route path="shop/:shopId" element={<ShopDetails />} />
             <Route path="product/:productId" element={<ProductDetails />} />
             <Route path="other-services" element={<OtherService />} />
+            <Route path="shopping-cart" element={<ShoppingCart/>}/>
+            <Route path="checkout" element={<Checkout/>}/>
           </Route>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Signup />} />

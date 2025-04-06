@@ -59,7 +59,7 @@ const ShopDetails = () => {
             <Link to={`/product/${product.id}`} key={product.id}>
               <div className={styles.productCard}>
                 <img
-                  src={`${MEDIA_BASE_URL}${product.image}`}
+                  src={product.image_url}
                   alt={product.name || "Product"}
                 />
                 <div className={styles.productInfo}>

@@ -1,23 +1,24 @@
 import { useContext, useState } from "react";
-import { Navigate, NavLink, useNavigate } from "react-router-dom";
+import { Link, Navigate, NavLink, useNavigate } from "react-router-dom";
 import { HiMenu, HiX } from "react-icons/hi"; // Import icons
 import styles from "../css/Navigation.module.css";
-import logo from "../assets/stumart.jpeg"
+// import { FaCarAlt } from "react-icons/fa";
+import { FaCartPlus } from "react-icons/fa";
+import logo from "../assets/stumart.jpeg";
 import { GlobalContext } from "../constant/GlobalContext";
 
 const Navigation = () => {
+  const navigate = useNavigate();
 
-  const navigate = useNavigate()
-
-  const {isAuthenticated} = useContext(GlobalContext)
+  const { isAuthenticated, count } = useContext(GlobalContext);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleLogout = () => {
-    localStorage.removeItem("access")
-    localStorage.removeItem("refresh")
-    navigate ('/')
-    window.location.reload()
-  }
+    localStorage.removeItem("access");
+    localStorage.removeItem("refresh");
+    navigate("/");
+    window.location.reload();
+  };
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -28,12 +29,27 @@ const Navigation = () => {
       <div className={styles.container}>
         <NavLink to="/" className={styles.logo}>
           <img className={styles.imgLogo} src={logo} alt="StuMart" />
-          StuMart
         </NavLink>
 
-        <button className={styles.menuButton} onClick={toggleMenu}>
-          {isMenuOpen ? <HiX size={32} /> : <HiMenu size={32} />}
-        </button>
+        <div style={{display:"flex", flexDirection:"row"}}>
+          <Link to="shopping-cart">
+            <FaCartPlus
+              className={styles.cartIcon}
+              size={26}
+              style={{
+                color: "black",
+                marginTop: "0.3rem",
+                marginRight: "2rem",
+              }}
+            />
+            <div className={styles.countDiv}>
+              <p className={styles.count}>{count}</p>
+            </div>
+          </Link>
+          <button className={styles.menuButton} onClick={toggleMenu}>
+            {isMenuOpen ? <HiX size={32} /> : <HiMenu size={32} />}
+          </button>
+        </div>
 
         <div
           className={`${styles.navLinks} ${

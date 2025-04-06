@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import styles from "./AddProduct.module.css";
+import styles from "./css/AddProduct.module.css";
 import api from "../constant/api";
 
 const AddProduct = () => {

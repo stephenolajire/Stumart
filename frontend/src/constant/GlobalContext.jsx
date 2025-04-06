@@ -15,6 +15,12 @@ export const GlobalProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [product, setProduct] = useState([])
   const [details, setDetails] = useState({})
+  const [cartItems, setCartItems] = useState([]);
+  const [count, setCount] = useState(0)
+
+  const getCartCode = () => {
+    return localStorage.getItem("cart_code");
+  };
 
   const auth = async () => {
     const token = localStorage.getItem("access");
@@ -113,6 +119,41 @@ export const GlobalProvider = ({ children }) => {
     }
   }
 
+  const generateCartCode = () => {
+    const code = Math.random().toString(36).substring(2, 10);
+    localStorage.setItem("cart_code", code);
+    return code;
+  };
+
+  const fetchCartData = async () => {
+      try {
+        setLoading(true);
+  
+        // Determine if we need to use cart_code parameter
+        const cartCode = getCartCode();
+        const params = cartCode ? { cart_code: cartCode } : {};
+  
+        const response = await api.get("cart/", { params });
+        // console.log("Cart Data:", response.data);
+        setCartItems(response.data.items || []);
+        setCount(response.data.count)
+        // console.log(response.data.count)
+        setLoading(false);
+      } catch (err) {
+        setError("Failed to load cart. Please try again.");
+        setLoading(false);
+        console.error("Error fetching cart:", err);
+      }
+    };
+
+    const incrementCount = () => {
+      setCount(count++)
+      fetchCartData()
+    }
+
+    useEffect(()=>{
+      fetchCartData()
+    }, [])
 
   return (
     <GlobalContext.Provider
@@ -131,6 +172,14 @@ export const GlobalProvider = ({ children }) => {
         fetchProduct,
         product,
         details,
+        generateCartCode,
+        cartItems,
+        getCartCode,
+        fetchCartData,
+        incrementCount,
+        count,
+        setError,
+        setCartItems,
       }}
     >
       {children}

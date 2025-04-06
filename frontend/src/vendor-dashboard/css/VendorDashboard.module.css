@@ -119,7 +119,7 @@
 }
 
 /* Overview section */
-.overviewGrid {
+.overviewGrid, .paymentSummary {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(32rem, 1fr));
   gap: 2rem;
@@ -131,7 +131,7 @@
   grid-column: span 2;
 }
 
-.statCard {
+.statCard, .summaryCard {
   background-color: var(--neutral-white);
   border-radius: 0.8rem;
   padding: 2rem;
@@ -140,6 +140,28 @@
   box-shadow: 0 0.2rem 0.8rem rgba(0, 0, 0, 0.05);
   transition: transform 0.2s ease;
 }
+
+.summaryCard {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.summaryCard p {
+  margin-top: 1rem;
+}
+
+/* .paymentSummary{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2rem;
+  background-color: var(--neutral-white);
+  border-radius: 0.8rem;
+  box-shadow: 0 0.2rem 0.8rem rgba(0, 0, 0, 0.05);
+  margin-bottom: 2rem;
+} */
 
 .statCard:hover {
   transform: translateY(-0.5rem);

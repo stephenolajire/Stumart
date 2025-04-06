@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Product, ProductImage, ProductSize, ProductColor
+from .models import *
 
 class ProductImageInline(admin.TabularInline):
     """Inline admin for additional product images."""
@@ -38,3 +38,21 @@ class ProductSizeAdmin(admin.ModelAdmin):
 class ProductColorAdmin(admin.ModelAdmin):
     """Admin panel configuration for ProductColor."""
     list_display = ('product', 'color', 'quantity')
+
+
+# Inline for CartItem
+class CartItemInline(admin.TabularInline):
+    model = CartItem
+    extra = 0  # Number of empty forms to display
+
+# Cart admin with inline CartItems
+@admin.register(Cart)
+class CartAdmin(admin.ModelAdmin):
+    list_display = ('user', 'cart_code', 'created_at')
+    inlines = [CartItemInline]
+
+# Optional: if you want to manage CartItems separately too
+@admin.register(CartItem)
+class CartItemAdmin(admin.ModelAdmin):
+    list_display = ('cart', 'product', 'quantity', 'color', 'size')
+

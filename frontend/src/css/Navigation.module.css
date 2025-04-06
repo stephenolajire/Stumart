@@ -9,6 +9,11 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+.cartIcon {
+  color: var(--text-primary);
+  display: none;
+}
+
 .container {
   width: 100%;
   margin: 0 auto;
@@ -89,8 +94,31 @@
   cursor: pointer;
 }
 
+.countDiv{
+  position: absolute;
+  background-color: var(--primary-500);
+  height: 2rem;
+  width: 2rem;
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  top: 2.8rem;
+  right: 6.4rem;
+}
+
+.count{
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: white;
+}
+
 @media screen and (max-width: 768px) {
   .menuButton {
+    display: block;
+  }
+
+  .cartIcon{
     display: block;
   }
 

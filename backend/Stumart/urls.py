@@ -10,4 +10,9 @@ urlpatterns = [
     path('create-products/', GetVendorView.as_view()),
     path('vendor-products/', ProductListCreateAPIView.as_view(), name='product-list-create'),
     path('vendor-product/<str:pk>/', ProductDetailAPIView.as_view(), name='product-detail'),
+    path('add-to-cart/', AddToCartView.as_view(), name='add-to-cart'),
+    path('update-cart-item/<int:item_id>/', UpdateCartItemView.as_view(), name='update-cart-item'),
+    path('remove-cart-item/<int:item_id>/', RemoveCartItemView.as_view(), name='remove-cart-item'),
+    path('clear-cart/', ClearCartView.as_view(), name='clear-cart'),
+    path('cart/', CartItemsView.as_view(), name='cart-items'),
 ]
