@@ -77,6 +77,7 @@ const ShoppingCart = () => {
             : item
         )
       );
+      fetchCartData()
     } catch (err) {
       setError("Failed to update quantity. Please try again.");
       console.error("Error updating quantity:", err);
@@ -94,6 +95,7 @@ const ShoppingCart = () => {
 
       // Update local state
       setCartItems(cartItems.filter((item) => item.id !== itemId));
+      fetchCartData();
     } catch (err) {
       setError("Failed to remove item. Please try again.");
       console.error("Error removing item:", err);
@@ -111,6 +113,7 @@ const ShoppingCart = () => {
 
       // Update local state
       setCartItems([]);
+      fetchCartData();
     } catch (err) {
       setError("Failed to clear cart. Please try again.");
       console.error("Error clearing cart:", err);
