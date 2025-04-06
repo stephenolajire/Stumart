@@ -2,8 +2,6 @@ import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { GlobalContext } from "../constant/GlobalContext";
 import Sidebar from "./Sidebar";
-// import TopBar from "./Topbar";
-import TopBar from "./Topbar";
 import Bar from "./Bar";
 import Overview from "./Overview";
 import Products from "./Products";
