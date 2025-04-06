@@ -96,19 +96,19 @@ DATABASES = {
 }
 
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': config('engine'),
-#         'NAME': config('name'),
-#         'USER': config('user'),
-#         'PASSWORD': config('password'),
-#         'HOST': config('host'),
-#         'PORT': config('port'),
-#         'OPTIONS': {
-#             'sslmode': 'require',
-#         }
-#     }
-# }
+DATABASES = {
+    'default': {
+        'ENGINE': config('engine'),
+        'NAME': config('name'),
+        'USER': config('user'),
+        'PASSWORD': config('password'),
+        'HOST': config('host'),
+        'PORT': config('port'),
+        'OPTIONS': {
+            'sslmode': 'require',
+        }
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -159,7 +159,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
-    "https://stumart-fxnz.onrender.com"
+    "https://stumart-fxnz.onrender.com",
+    "https://stumart-fe1z.onrender.com",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
