@@ -1,9 +1,5 @@
 from django.urls import path
-from .views import (
-    UserAPIView, StudentAPIView, VendorAPIView,
-    PickerAPIView, StudentPickerAPIView, ResendOTPView,
-    KYCVerificationView,VerificationViewSet
-)
+from .views import *
 
 app_name = 'users'
 
@@ -38,4 +34,9 @@ urlpatterns = [
     # KYC Verification URL
     path('verify-email/', VerificationViewSet.as_view(), name='verify-email'),
     path('kyc/', KYCVerificationView.as_view(), name='kyc-verification'),
+
+    # Forgot Password URL
+    path('request-otp/', RequestOTPView.as_view(), name='forgot-password'),
+    path('verify-otp/', VerifyOTPView.as_view(), name='verify-otp'),
+    path('reset-password/', SetNewPasswordView.as_view(), name='reset-password'),
 ]

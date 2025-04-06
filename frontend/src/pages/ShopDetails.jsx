@@ -42,13 +42,13 @@ const ShopDetails = () => {
         <div className={styles.shopInfo}>
           <h1>{details.business_name}</h1>
           <p className={styles.category}>{details.business_category}</p>
-          <div className={styles.rating}>⭐ {details.rating}</div>
-          <p className={styles.delivery}>🕒 15mins - 30mins</p>
           <p className={styles.description}>
             Discover quality {details.business_category} and excellence at{" "}
             {details.business_name}, your trusted destination for top{" "}
             {details.business_category} and services.
           </p>
+          <p className={styles.delivery}>🕒 15mins - 30mins</p>
+          <div className={styles.rating}>⭐ {details.rating}</div>
         </div>
       </div>
 

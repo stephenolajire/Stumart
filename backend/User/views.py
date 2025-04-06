@@ -8,11 +8,7 @@ from django.utils import timezone
 from rest_framework.decorators import action
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .models import User, Student, Vendor, Picker, StudentPicker, OTP, KYCVerification
-from .serializers import (
-    UserSerializer, StudentSerializer, VendorSerializer,
-    PickerSerializer, StudentPickerSerializer, KYCVerificationSerializer,
-    CustomTokenObtainPairSerializer
-)
+from .serializers import *
 from django.core.mail import send_mail
 from django.conf import settings
 from .models import OTP
@@ -355,3 +351,30 @@ class KYCVerificationView(APIView):
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
+
+
+class RequestOTPView(APIView):
+    def post(self, request):
+        serializer = SendOTPSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "OTP sent successfully"}, status=200)
+        return Response(serializer.errors, status=400)
+
+
+class VerifyOTPView(APIView):
+    def post(self, request):
+        serializer = VerifyOTPSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "OTP verified successfully"}, status=200)
+        return Response(serializer.errors, status=400)
+
+
+class SetNewPasswordView(APIView):
+    def post(self, request):
+        serializer = SetNewPasswordSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "Password updated successfully"}, status=200)
+        return Response(serializer.errors, status=400)

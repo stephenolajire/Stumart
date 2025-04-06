@@ -51,13 +51,14 @@ const Login = () => {
 
     try {
       const response = await api.post("/token/", formData);
-      const { access, user_type, is_verified, kyc_status, user_id } =
+      const { access, refresh, user_type, is_verified, kyc_status, user_id } =
         response.data;
 
       console.log(response.data);
 
-      // Store the token
+      // Store the tokens in local storage
       localStorage.setItem("access", access);
+      localStorage.setItem("refresh", refresh);
 
       // Set default auth header for future requests
       api.defaults.headers.common["Authorization"] = `Bearer ${access}`;

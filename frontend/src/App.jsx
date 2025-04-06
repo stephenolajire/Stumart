@@ -18,6 +18,9 @@ import { GlobalProvider } from "./constant/GlobalContext";
 import OtherService from "./pages/OtherService";
 import VendorDashboard from "./dashboard/VendorDashboard";
 import AddProduct from "./dashboard/AddProduct";
+import RequestOTPForm from "./forgot password/RequestOTPForm";
+import VerifyOTPForm from "./forgot password/VerifyOTPForm";
+import SetNewPasswordForm from "./forgot password/SetNewPasswordForm";
 
 function App() {
   return (
@@ -70,6 +73,9 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/forgot-password" element={<RequestOTPForm />} />
+          <Route path="/verify-otp" element={<VerifyOTPForm />} />
+          <Route path="/reset-password" element={<SetNewPasswordForm />} />
         </Routes>
       </Router>
     </GlobalProvider>

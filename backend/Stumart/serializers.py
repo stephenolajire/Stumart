@@ -8,6 +8,17 @@ from .models import (
 )
 import json
 from User.models import Vendor
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+class VendorSerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField()
+
+    class Meta:
+        model = Vendor
+        fields = ['id', 'user', 'business_category']
+
 
 class ProductSizeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -18,7 +29,7 @@ class ProductSizeSerializer(serializers.ModelSerializer):
 class ProductColorSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductColor
-        fields = ['id', 'color']
+        fields = ['id', 'color', 'quantity']
 
 
 class ProductImageSerializer(serializers.ModelSerializer):
@@ -28,33 +39,30 @@ class ProductImageSerializer(serializers.ModelSerializer):
 
 
 class ProductSerializer(serializers.ModelSerializer):
+    # Define related fields explicitly 
+    additional_images = ProductImageSerializer(many=True, read_only=True)
     sizes = ProductSizeSerializer(many=True, read_only=True)
     colors = ProductColorSerializer(many=True, read_only=True)
-    additional_images = ProductImageSerializer(many=True, read_only=True)
+    # vendor_name = serializers.SerializerMethodField()
     image_url = serializers.SerializerMethodField()
     
     class Meta:
         model = Product
         fields = [
-            'id', 
-            'name', 
-            'description', 
-            'price', 
-            'in_stock', 
-            'image', 
-            'gender',
-            'sizes',
-            'colors',
-            'image_url',
-            'additional_images',
-            'created_at',
-            'updated_at'
+            'id', 'name', 'description', 'price', 'in_stock',
+            'image', 'gender', 'created_at', 'updated_at',
+            'additional_images', 'sizes', 'colors', 'image_url',
         ]
-        read_only_fields = ['vendor']
+    
+    def get_vendor_name(self, obj):
+        # Return the vendor's name or business name if available
+        if hasattr(obj.vendor, 'vendor_profile'):
+            return obj.vendor.vendor_profile.business_name
+        return f"{obj.vendor.first_name} {obj.vendor.last_name}"
 
     def get_image_url(self, obj):
         return obj.image.url if obj.image else None
-
+    
 
 class ProductCreateSerializer(serializers.ModelSerializer):
     sizes = serializers.CharField(required=False)

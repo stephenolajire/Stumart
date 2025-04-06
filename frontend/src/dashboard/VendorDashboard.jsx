@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   FaHome,
@@ -16,123 +16,11 @@ import {
 } from "react-icons/fa";
 import styles from "./VendorDashboard.module.css";
 import Swal from "sweetalert2";
+import { GlobalContext } from "../constant/GlobalContext";
 
 // Placeholder for API (replace with your actual API)
 const api = {
   get: async (url) => {
-    // Mock data for example purposes
-    const mockData = {
-      "dashboard/stats": {
-        totalSales: 45620,
-        totalOrders: 278,
-        totalProducts: 64,
-        lowStock: 12,
-        totalRevenue: 45620,
-        pendingReviews: 8,
-        revenueData: [
-          { month: "Jan", value: 3200 },
-          { month: "Feb", value: 4500 },
-          { month: "Mar", value: 4200 },
-          { month: "Apr", value: 5100 },
-          { month: "May", value: 6200 },
-          { month: "Jun", value: 5800 },
-        ],
-        salesData: [
-          { month: "Jan", value: 42 },
-          { month: "Feb", value: 53 },
-          { month: "Mar", value: 48 },
-          { month: "Apr", value: 62 },
-          { month: "May", value: 73 },
-          { month: "Jun", value: 65 },
-        ],
-      },
-      products: [
-        {
-          id: 1,
-          name: "Handcrafted Vase",
-          price: 59.99,
-          stock: 18,
-          category: "Home Decor",
-          status: "active",
-        },
-        {
-          id: 2,
-          name: "Wooden Cutting Board",
-          price: 34.95,
-          stock: 24,
-          category: "Kitchen",
-          status: "active",
-        },
-        {
-          id: 3,
-          name: "Ceramic Coffee Mug",
-          price: 19.99,
-          stock: 8,
-          category: "Kitchen",
-          status: "low-stock",
-        },
-        {
-          id: 4,
-          name: "Leather Journal",
-          price: 29.95,
-          stock: 32,
-          category: "Stationery",
-          status: "active",
-        },
-        {
-          id: 5,
-          name: "Woven Basket",
-          price: 44.99,
-          stock: 5,
-          category: "Home Decor",
-          status: "low-stock",
-        },
-      ],
-      orders: [
-        {
-          id: 1001,
-          customer: "John Doe",
-          total: 94.94,
-          date: "2025-03-25",
-          status: "Delivered",
-          items: 2,
-        },
-        {
-          id: 1002,
-          customer: "Sarah Miller",
-          total: 149.97,
-          date: "2025-03-28",
-          status: "Processing",
-          items: 3,
-        },
-        {
-          id: 1003,
-          customer: "David Johnson",
-          total: 59.99,
-          date: "2025-03-29",
-          status: "Shipped",
-          items: 1,
-        },
-        {
-          id: 1004,
-          customer: "Emma Wilson",
-          total: 124.88,
-          date: "2025-03-30",
-          status: "Pending",
-          items: 4,
-        },
-        {
-          id: 1005,
-          customer: "Michael Brown",
-          total: 79.98,
-          date: "2025-03-31",
-          status: "Processing",
-          items: 2,
-        },
-      ],
-    };
-
-    return { data: mockData[url] };
   },
 };
 
@@ -230,6 +118,7 @@ const VendorDashboard = () => {
   const [filterStatus, setFilterStatus] = useState("all");
 
   const navigate = useNavigate();
+  const { auth } = useContext(GlobalContext);
 
   const handleLogout = () => {
    localStorage.removeItem('access')
@@ -251,23 +140,36 @@ const VendorDashboard = () => {
 
   useEffect(() => {
     fetchDashboardData();
+    auth()
   }, []);
 
-  const fetchDashboardData = async () => {
-    try {
-      const [statsRes, productsRes, ordersRes] = await Promise.all([
-        api.get("dashboard/stats"),
-        api.get("products"),
-        api.get("orders"),
-      ]);
+const fetchDashboardData = async () => {
+  try {
+    const [statsRes, productsRes, ordersRes] = await Promise.all([
+      api.get("dashboard/stats"),
+      api.get("vendor-products/"),
+      api.get("orders"),
+    ]);
 
-      setStats(statsRes.data);
-      setProducts(productsRes.data);
-      setOrders(ordersRes.data);
-    } catch (error) {
-      Swal.fire("Error", "Failed to fetch dashboard data", "error");
-    }
-  };
+    // Log all responses for debugging
+    // console.log("Stats Response:", statsRes);
+    // console.log("Products Response:", productsRes);
+    // console.log("Orders Response:", ordersRes);
+
+    // Log the data specifically
+    console.log("Stats Data:", statsRes.data);
+    console.log("Products Data:", productsRes.data);
+    console.log("Orders Data:", ordersRes.data);
+
+    setStats(statsRes.data);
+    setProducts(productsRes.data);
+    setOrders(ordersRes.data);
+  } catch (error) {
+    console.error("Dashboard Data Error:", error);
+    console.error("Error Response:", error.response);
+    Swal.fire("Error", "Failed to fetch dashboard data", "error");
+  }
+};
 
   const filterProducts = () => {
     if (!products) return [];

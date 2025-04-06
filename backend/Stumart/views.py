@@ -11,6 +11,7 @@ from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from .serializers import*
 from django.contrib.auth import get_user_model
 User = get_user_model()
+from rest_framework.renderers import JSONRenderer
 
 class ProductsView(APIView):
     def get(self, request, id):
@@ -170,10 +171,23 @@ class VendorsByOtherandSchoolView(APIView):
             )
         
 class ProductView(APIView):
-    def get (self, request, id):
-        product = Product.objects.get(id=id)
-        serializers = ProductSerializer
-        return Response(serializers.data, status=status.HTTP_200_OK)
+    def get(self, request, id=None):
+        if id:
+            try:
+                product = Product.objects.get(id=id)
+                # Get all related data
+                serializer = ProductSerializer(product)
+                return Response(serializer.data)
+            except Product.DoesNotExist:
+                return Response(
+                    {"error": "Product not found"}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+        else:
+            # Handle getting all products
+            products = Product.objects.all()
+            serializer = ProductSerializer(products, many=True)
+            return Response(serializer.data)
 
 
 class GetVendorView(APIView):
@@ -202,14 +216,14 @@ class GetVendorView(APIView):
 class ProductListCreateAPIView(APIView):
     """API endpoints for listing and creating products"""
     permission_classes = [IsAuthenticated]
-    parser_classes = [MultiPartParser, FormParser]
+    # parser_classes = [MultiPartParser, FormParser]
     
     def get(self, request, *args, **kwargs):
         """List all products for current vendor"""
         try:
             user = request.user
             vendor = Vendor.objects.get(user=user)
-            products = Product.objects.filter(vendor=vendor)
+            products = Product.objects.filter(vendor=user)
             serializer = ProductSerializer(products, many=True)
             return Response(serializer.data)
         except vendor.DoesNotExist:

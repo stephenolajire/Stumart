@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
-from .models import User, Student, Vendor, Picker, StudentPicker, KYCVerification
+from .models import *
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
@@ -164,3 +164,76 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data['kyc_status'] = kyc_status
 
         return data
+    
+
+class SendOTPSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        if not User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("No user found with this email.")
+        return value
+
+    def create(self, validated_data):
+        user = User.objects.get(email=validated_data['email'])
+
+        # Delete old unused OTPs
+        OTP.objects.filter(user=user, is_used=False).delete()
+
+        # Create new OTP
+        otp = OTP.objects.create(user=user)
+
+        # Send OTP via email (mock or actual)
+        self.send_email(user.email, otp.code)
+        return otp
+
+    def send_email(self, email, code):
+        # Use Django's email backend or a mock for testing
+        from django.core.mail import send_mail
+        send_mail(
+            "Your OTP Code",
+            f"Your OTP code is: {code}",
+            "noreply@stumart.com",  # from email
+            [email],
+        )
+
+
+class VerifyOTPSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    code = serializers.CharField(max_length=6)
+
+    def validate(self, data):
+        try:
+            user = User.objects.get(email=data['email'])
+            otp = OTP.objects.get(user=user, code=data['code'], is_used=False)
+        except (User.DoesNotExist, OTP.DoesNotExist):
+            raise serializers.ValidationError("Invalid email or OTP.")
+
+        if otp.expires_at < timezone.now():
+            raise serializers.ValidationError("OTP has expired.")
+
+        data['user'] = user
+        data['otp'] = otp
+        return data
+
+    def save(self):
+        otp = self.validated_data['otp']
+        otp.is_used = True
+        otp.save()
+        return self.validated_data['user']
+
+
+class SetNewPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True, min_length=6)
+
+    def validate(self, data):
+        if not User.objects.filter(email=data['email']).exists():
+            raise serializers.ValidationError("User not found.")
+        return data
+
+    def save(self):
+        user = User.objects.get(email=self.validated_data['email'])
+        user.set_password(self.validated_data['password'])
+        user.save()
+        return user

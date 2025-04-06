@@ -21,7 +21,7 @@ const ProductDetails = () => {
       <div className={styles.container}>
         <div className={styles.productGrid}>
           <div className={styles.imageSection}>
-            <img src={product.image} alt={product.name} />
+            <img src={product.image_url} alt={product.name} />
           </div>
 
           <div className={styles.infoSection}>
