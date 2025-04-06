@@ -147,9 +147,9 @@ export const GlobalProvider = ({ children }) => {
     };
 
     const incrementCount = () => {
-      setCount(count++)
-      fetchCartData()
-    }
+      setCount(prev => prev + 1); // Local increment for instant UI feedback
+   // Will update count with backend value
+    };
 
     useEffect(()=>{
       fetchCartData()
