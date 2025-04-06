@@ -4,6 +4,7 @@ import { GlobalContext } from "../constant/GlobalContext";
 import Sidebar from "./Sidebar";
 // import TopBar from "./Topbar";
 import TopBar from "./Topbar";
+import Bar from "./Bar";
 import Overview from "./Overview";
 import Products from "./Products";
 import Orders from "./Orders";
@@ -123,7 +124,7 @@ const VendorDashboard = () => {
     <div className={styles.dashboardContainer}>
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
       <div className={styles.mainContent}>
-        <TopBar activeTab={activeTab} />
+        <Bar activeTab={activeTab} />
         {renderContent()}
       </div>
     </div>
