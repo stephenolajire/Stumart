@@ -1,41 +1,11 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import styles from "../css/Checkout.module.css";
+import { GlobalContext } from "../constant/GlobalContext";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import api from "../constant/api";
 
 const Checkout = () => {
-  // Get cart items from previous page or context
-  const cartItems = [
-    {
-      id: 1,
-      name: "Artisan Gold Watch",
-      price: 1299,
-      quantity: 1,
-      image: "/api/placeholder/80/80",
-    },
-    {
-      id: 2,
-      name: "Luxury Leather Wallet",
-      price: 249,
-      quantity: 2,
-      image: "/api/placeholder/80/80",
-    },
-    {
-      id: 3,
-      name: "Premium Silk Scarf",
-      price: 189,
-      quantity: 1,
-      image: "/api/placeholder/80/80",
-    },
-  ];
-
-  // Calculate cart totals
-  const subtotal = cartItems.reduce(
-    (total, item) => total + item.price * item.quantity,
-    0
-  );
-  const shipping = 15;
-  const tax = subtotal * 0.08;
-  const total = subtotal + shipping + tax;
-
   // Form states
   const [formData, setFormData] = useState({
     firstName: "",
@@ -44,15 +14,24 @@ const Checkout = () => {
     phone: "",
     address: "",
     room: "",
-    // state: "",
-    // zipCode: "",
-    // country: "Nigeria",
-    // paymentMethod: "card",
-    // cardNumber: "",
-    // cardExpiry: "",
-    // cardCVV: "",
     saveInfo: false,
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const { cartItems, cartSummary, clearCart } = useContext(GlobalContext); // Access cart items, cart summary, and clearCart function
+  const navigate = useNavigate();
+
+  const goback = () => {
+    navigate(-1);
+  };
+
+  // Format currency
+  const formatCurrency = (amount) => {
+    return `₦${Number(amount)
+      .toFixed(2)
+      .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+  };
 
   // Handle input changes
   const handleInputChange = (e) => {
@@ -64,26 +43,68 @@ const Checkout = () => {
   };
 
   // Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Process checkout logic here
-    console.log("Checkout data:", formData);
-    alert("Order placed successfully!");
-  };
+    setLoading(true);
+    setError(null);
 
-  // Format currency
-  const formatCurrency = (amount) => {
-    return `N${amount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, "$&,")}`;
+    try {
+      // Step 1: Create order
+      const orderData = {
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
+        room_number: formData.room,
+        cart_items: cartItems.map((item) => item.id), // Pass cart item IDs
+        subtotal: cartSummary.subTotal,
+        shipping_fee: cartSummary.shippingFee,
+        tax: cartSummary.tax,
+        total: cartSummary.total,
+        vendors: cartSummary.vendors, // Include vendors information
+      };
+
+      // Create the order and get order ID
+      const orderResponse = await api.post("orders/create/", orderData);
+      const orderId = orderResponse.data.order_id;
+
+      // Step 2: Initialize payment with Paystack
+      const paymentData = {
+        order_id: orderId,
+        email: formData.email,
+        amount: cartSummary.total * 100, // Paystack requires amount in kobo (multiply by 100)
+        callback_url: `${window.location.origin}/payment/verify/`, // Frontend callback URL
+      };
+
+      const paymentResponse = await api.post(
+        "payment/initialize/",
+        paymentData
+      );
+
+      // Step 3: Redirect to Paystack payment page
+      window.location.href = paymentResponse.data.authorization_url;
+    } catch (err) {
+      console.error("Checkout error:", err);
+      setError(
+        err.response?.data?.error ||
+          "An error occurred during checkout. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className={styles.checkoutContainer}>
       <h2 className={styles.checkoutTitle}>Checkout</h2>
 
+      {error && <div className={styles.errorMessage}>{error}</div>}
+
       <div className={styles.checkoutContent}>
         {/* Checkout form */}
         <div className={styles.checkoutFormContainer}>
-          <form onSubmit={handleSubmit} className={styles.checkoutForm}>
+          <form className={styles.checkoutForm} onSubmit={handleSubmit}>
             <div className={styles.formSection}>
               <h3 className={styles.sectionTitle}>Contact Information</h3>
               <div className={styles.formRow}>
@@ -153,7 +174,7 @@ const Checkout = () => {
 
               <div className={styles.formRow}>
                 <div className={styles.formGroup}>
-                  <label htmlFor="city">Room Number</label>
+                  <label htmlFor="room">Room Number</label>
                   <input
                     type="text"
                     id="room"
@@ -163,122 +184,23 @@ const Checkout = () => {
                     required
                   />
                 </div>
-                {/* <div className={styles.formGroup}>
-                  <label htmlFor="state">State</label>
-                  <input
-                    type="text"
-                    id="state"
-                    name="state"
-                    value={formData.state}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div> */}
               </div>
             </div>
-
-            {/* <div className={styles.formSection}>
-              <h3 className={styles.sectionTitle}>Payment Method</h3>
-              <div className={styles.paymentMethods}>
-                <div className={styles.paymentMethod}>
-                  <input
-                    type="radio"
-                    id="card"
-                    name="paymentMethod"
-                    value="card"
-                    checked={formData.paymentMethod === "card"}
-                    onChange={handleInputChange}
-                  />
-                  <label htmlFor="card">Credit/Debit Card</label>
-                </div>
-                <div className={styles.paymentMethod}>
-                  <input
-                    type="radio"
-                    id="paypal"
-                    name="paymentMethod"
-                    value="paypal"
-                    checked={formData.paymentMethod === "paypal"}
-                    onChange={handleInputChange}
-                  />
-                  <label htmlFor="paypal">PayPal</label>
-                </div>
-                <div className={styles.paymentMethod}>
-                  <input
-                    type="radio"
-                    id="bank"
-                    name="paymentMethod"
-                    value="bank"
-                    checked={formData.paymentMethod === "bank"}
-                    onChange={handleInputChange}
-                  />
-                  <label htmlFor="bank">Bank Transfer</label>
-                </div>
-              </div>
-
-              {formData.paymentMethod === "card" && (
-                <div className={styles.cardDetails}>
-                  <div className={styles.formGroup}>
-                    <label htmlFor="cardNumber">Card Number</label>
-                    <input
-                      type="text"
-                      id="cardNumber"
-                      name="cardNumber"
-                      value={formData.cardNumber}
-                      onChange={handleInputChange}
-                      placeholder="**** **** **** ****"
-                      required
-                    />
-                  </div>
-
-                  <div className={styles.formRow}>
-                    <div className={styles.formGroup}>
-                      <label htmlFor="cardExpiry">Expiration Date</label>
-                      <input
-                        type="text"
-                        id="cardExpiry"
-                        name="cardExpiry"
-                        value={formData.cardExpiry}
-                        onChange={handleInputChange}
-                        placeholder="MM/YY"
-                        required
-                      />
-                    </div>
-                    <div className={styles.formGroup}>
-                      <label htmlFor="cardCVV">CVV</label>
-                      <input
-                        type="text"
-                        id="cardCVV"
-                        name="cardCVV"
-                        value={formData.cardCVV}
-                        onChange={handleInputChange}
-                        placeholder="***"
-                        required
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className={styles.saveInfo}>
-                <input
-                  type="checkbox"
-                  id="saveInfo"
-                  name="saveInfo"
-                  checked={formData.saveInfo}
-                  onChange={handleInputChange}
-                />
-                <label htmlFor="saveInfo">
-                  Save this information for next time
-                </label>
-              </div>
-            </div> */}
-
             <div className={styles.formActions}>
-              <button type="button" className={styles.backButton}>
+              <button
+                type="button"
+                className={styles.backButton}
+                onClick={goback}
+                disabled={loading}
+              >
                 Back to Cart
               </button>
-              <button type="submit" className={styles.placeOrderButton}>
-                Place Order
+              <button
+                type="submit"
+                className={styles.placeOrderButton}
+                disabled={loading}
+              >
+                {loading ? "Processing..." : "Place Order & Pay"}
               </button>
             </div>
           </form>
@@ -292,13 +214,13 @@ const Checkout = () => {
             {cartItems.map((item) => (
               <div key={item.id} className={styles.orderItem}>
                 <div className={styles.itemImage}>
-                  <img src={item.image} alt={item.name} />
+                  <img src={item.product_image} alt={item.product_name} />
                   <span className={styles.itemQuantity}>{item.quantity}</span>
                 </div>
                 <div className={styles.itemDetails}>
-                  <h4 className={styles.itemName}>{item.name}</h4>
+                  <h4 className={styles.itemName}>{item.product_name}</h4>
                   <span className={styles.itemPrice}>
-                    {formatCurrency(item.price)}
+                    {formatCurrency(Number(item.product_price))}
                   </span>
                 </div>
               </div>
@@ -308,25 +230,20 @@ const Checkout = () => {
           <div className={styles.summaryDetails}>
             <div className={styles.summaryRow}>
               <span>Subtotal</span>
-              <span>{formatCurrency(subtotal)}</span>
+              <span>{formatCurrency(cartSummary.subTotal)}</span>
             </div>
             <div className={styles.summaryRow}>
               <span>Shipping</span>
-              <span>{formatCurrency(shipping)}</span>
+              <span>{formatCurrency(cartSummary.shippingFee)}</span>
             </div>
             <div className={styles.summaryRow}>
               <span>Tax</span>
-              <span>{formatCurrency(tax)}</span>
+              <span>{formatCurrency(cartSummary.tax)}</span>
             </div>
             <div className={`${styles.summaryRow} ${styles.totalRow}`}>
               <span>Total</span>
-              <span>{formatCurrency(total)}</span>
+              <span>{formatCurrency(cartSummary.total)}</span>
             </div>
-          </div>
-
-          <div className={styles.promoCode}>
-            <input type="text" placeholder="Enter promo code" />
-            <button>Apply</button>
           </div>
         </div>
       </div>

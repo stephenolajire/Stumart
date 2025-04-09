@@ -4,6 +4,8 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator, MaxValueValidator
 User = get_user_model()
 from cloudinary.models import CloudinaryField
+from User.models import Vendor
+from django.utils.translation import gettext_lazy as _
 
 class Product(models.Model):
     """Base product model"""
@@ -91,12 +93,6 @@ class ProductColor(models.Model):
 
 class Cart(models.Model):
     """Model for user cart"""
-    user = models.ForeignKey(
-        User, 
-        on_delete=models.CASCADE, 
-        related_name="cart",
-        null=True, blank=True
-    )
     cart_code = models.CharField(max_length=100, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
@@ -125,3 +121,57 @@ class CartItem(models.Model):
     
     def __str__(self):
         return f"{self.product.name}"
+    
+
+class Order(models.Model):
+    order_number = models.CharField(max_length=20, unique=True)
+    user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100)
+    email = models.EmailField()
+    phone = models.CharField(max_length=15)
+    address = models.TextField()
+    room_number = models.CharField(max_length=100, blank=True, null=True)
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2)
+    shipping_fee = models.DecimalField(max_digits=10, decimal_places=2)
+    tax = models.DecimalField(max_digits=10, decimal_places=2)
+    total = models.DecimalField(max_digits=10, decimal_places=2)
+    order_status = models.CharField(max_length=20, default='PENDING')
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+
+    def __str__(self):
+        return self.order_number
+
+
+class OrderItem(models.Model):
+    order = models.ForeignKey(Order, related_name='order_items', on_delete=models.CASCADE)
+    product = models.ForeignKey('Product', on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField()
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE)
+    size = models.CharField(max_length=50, null=True, blank=True)  # New
+    color = models.CharField(max_length=50, null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.product.name} - {self.quantity}"
+
+
+class Transaction(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE)
+    transaction_id = models.CharField(max_length=255, unique=True)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.CharField(max_length=20, default='PENDING')
+    payment_method = models.CharField(max_length=50, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Transaction {self.transaction_id} - {self.status}"
+
+
+class Wallet(models.Model):
+    vendor = models.OneToOneField(Vendor, on_delete=models.CASCADE)
+    balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    def __str__(self):
+        return f"{self.vendor.name} Wallet"

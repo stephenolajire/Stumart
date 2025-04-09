@@ -1,5 +1,5 @@
 import { useContext, useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import Swal from "sweetalert2";
 import api from "../constant/api";
 import styles from "../css/Login.module.css";
@@ -7,6 +7,9 @@ import logo from "../assets/stumart.jpeg";
 import { GlobalContext } from "../constant/GlobalContext";
 
 const Login = () => {
+  const location = useLocation();
+  const from = location.state?.from?.pathname || "/";
+
 
   const {auth} = useContext(GlobalContext)
   const [formData, setFormData] = useState({
@@ -72,10 +75,11 @@ const Login = () => {
 
       // If user is a student and verified, navigate to home
       if (user_type === "student") {
-        navigate("/");
-        auth()
-        return;
-      }
+  auth();
+  navigate(from, { replace: true });
+  return;
+}
+
 
       // If user is picker, student picker, or vendor, handle KYC status
       if (["picker", "student picker", "vendor"].includes(user_type)) {

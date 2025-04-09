@@ -48,11 +48,44 @@ class CartItemInline(admin.TabularInline):
 # Cart admin with inline CartItems
 @admin.register(Cart)
 class CartAdmin(admin.ModelAdmin):
-    list_display = ('user', 'cart_code', 'created_at')
+    list_display = ('cart_code', 'created_at')
     inlines = [CartItemInline]
 
 # Optional: if you want to manage CartItems separately too
 @admin.register(CartItem)
 class CartItemAdmin(admin.ModelAdmin):
     list_display = ('cart', 'product', 'quantity', 'color', 'size')
+
+
+from django.contrib import admin
+from .models import Order, OrderItem, Transaction, Wallet
+
+@admin.register(Order)
+class OrderAdmin(admin.ModelAdmin):
+    list_display = ['order_number', 'user', 'first_name', 'last_name', 'email', 'total', 'order_status', 'created_at']
+    list_filter = ['order_status', 'created_at']
+    search_fields = ['order_number', 'email', 'first_name', 'last_name']
+    readonly_fields = ['order_number', 'created_at']
+
+
+@admin.register(OrderItem)
+class OrderItemAdmin(admin.ModelAdmin):
+    list_display = ['order', 'product', 'vendor', 'quantity', 'price', 'size', 'color']
+    list_filter = ['vendor', 'product']
+    search_fields = ['order__order_number', 'product__name']
+
+
+@admin.register(Transaction)
+class TransactionAdmin(admin.ModelAdmin):
+    list_display = ['transaction_id', 'order', 'amount', 'status', 'payment_method', 'created_at']
+    list_filter = ['status', 'payment_method']
+    search_fields = ['transaction_id', 'order__order_number']
+    readonly_fields = ['transaction_id', 'created_at']
+
+
+@admin.register(Wallet)
+class WalletAdmin(admin.ModelAdmin):
+    list_display = ['vendor', 'balance']
+    search_fields = ['vendor__name']
+    
 

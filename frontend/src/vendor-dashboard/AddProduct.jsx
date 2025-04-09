@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import styles from "./css/AddProduct.module.css";
 import api from "../constant/api";
+import Swal from "sweetalert2";
 
 const AddProduct = () => {
   const [product, setProduct] = useState({
@@ -389,6 +390,13 @@ const AddProduct = () => {
       const response = await api.post("vendor-products/", formData, {
         headers,
       });
+      if(response.status === 201) {
+        Swal.fire({
+          icon: "success",
+          title: "Product Added",
+          text: "Your product has been added successfully.",
+        });
+      }
 
       // Reset form on success
       resetForm();
@@ -508,12 +516,6 @@ const AddProduct = () => {
         </div>
       )}
 
-      {message.text && (
-        <div className={`${styles.message} ${styles[message.type]}`}>
-          {message.text}
-        </div>
-      )}
-
       <form
         className={styles.form}
         onSubmit={handleSubmit}
@@ -572,7 +574,7 @@ const AddProduct = () => {
         <div className={styles.formRow}>
           <div className={styles.formGroup}>
             <label htmlFor="price" className={styles.label}>
-              Price ($)*
+              Price (N)*
             </label>
             <input
               type="number"

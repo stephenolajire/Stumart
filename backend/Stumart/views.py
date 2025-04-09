@@ -12,7 +12,23 @@ from .serializers import*
 from django.contrib.auth import get_user_model
 User = get_user_model()
 from rest_framework.renderers import JSONRenderer
-from django.contrib.auth.models import AnonymousUser
+from django.http import JsonResponse
+from django.core.exceptions import ObjectDoesNotExist
+from django.conf import settings
+from decimal import Decimal
+import requests
+import json
+import uuid
+from django.conf import settings
+import requests
+from django.core.mail import EmailMultiAlternatives, send_mail
+from django.template.loader import render_to_string
+from xhtml2pdf import pisa
+from django.core.files.base import ContentFile
+from io import BytesIO
+from django.utils.timezone import now
+import logging
+logger = logging.getLogger(__name__)
 
 class ProductsView(APIView):
     def get(self, request, id):
@@ -335,50 +351,42 @@ class ProductDetailAPIView(APIView):
 
 class AddToCartView(APIView):
     permission_classes = [AllowAny]
-    
+
     def post(self, request, *args, **kwargs):
         data = request.data
         product_id = data.get("product_id")
         quantity = data.get("quantity", 1)
         size = data.get("size")
         color = data.get("color")
-        cart_code = data.get("cart_code")  # For guests
-        
+        cart_code = data.get("cart_code")
+
         if not product_id:
             return Response({"error": "Product is required."}, status=status.HTTP_400_BAD_REQUEST)
-        
+
+        if not cart_code:
+            return Response({"error": "Cart code is required."}, status=status.HTTP_400_BAD_REQUEST)
+
         try:
             product = Product.objects.get(id=product_id)
         except Product.DoesNotExist:
             return Response({"error": "Product not found."}, status=status.HTTP_404_NOT_FOUND)
-        
+
         # Check if the product belongs to a fashion business
-        vendor = product.vendor
         try:
-            vendor_profile = Vendor.objects.get(user=vendor)
+            vendor_profile = Vendor.objects.get(user=product.vendor)
             is_fashion = vendor_profile.business_category == 'fashion'
         except Vendor.DoesNotExist:
             is_fashion = False
-        
-        # Only require size and color for fashion products
+
         if is_fashion:
             if product.colors and not color:
                 return Response({"error": "Color is required for this fashion product."}, status=status.HTTP_400_BAD_REQUEST)
-            
             if product.sizes and not size:
                 return Response({"error": "Size is required for this fashion product."}, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Get or create cart for authenticated or guest user
-        user = request.user if not isinstance(request.user, AnonymousUser) else None
-        cart = None
-        
-        if user:
-            cart, _ = Cart.objects.get_or_create(user=user)
-        else:
-            if not cart_code:
-                return Response({"error": "Cart code is required for guests."}, status=status.HTTP_400_BAD_REQUEST)
-            cart, _ = Cart.objects.get_or_create(cart_code=cart_code, user=None)
-        
+
+        # Always use cart_code (no user)
+        cart, _ = Cart.objects.get_or_create(cart_code=cart_code)
+
         # Create cart item
         cart_item = CartItem.objects.create(
             cart=cart,
@@ -387,8 +395,9 @@ class AddToCartView(APIView):
             size=size if is_fashion else None,
             color=color if is_fashion else None
         )
-        
+
         return Response(CartItemSerializer(cart_item).data, status=status.HTTP_201_CREATED)
+
 
 
 # Update Cart Item Quantity
@@ -403,20 +412,11 @@ class UpdateCartItemView(APIView):
             user = request.user
             cart_code = request.query_params.get('cart_code')
             
-            # For authenticated users
-            if not isinstance(user, AnonymousUser):
-                if cart_item.cart.user != user:
-                    return Response(
-                        {"error": "You do not have permission to update this item."},
-                        status=status.HTTP_403_FORBIDDEN
-                    )
-            # For guest users
-            else:
-                if not cart_code or cart_item.cart.cart_code != cart_code:
-                    return Response(
-                        {"error": "Invalid cart code."},
-                        status=status.HTTP_403_FORBIDDEN
-                    )
+            if not cart_code or cart_item.cart.cart_code != cart_code:
+                return Response(
+                    {"error": "Invalid cart code."},
+                    status=status.HTTP_403_FORBIDDEN
+                )
             
             # Update quantity
             quantity = request.data.get('quantity')
@@ -453,23 +453,13 @@ class RemoveCartItemView(APIView):
             cart_item = CartItem.objects.get(id=item_id)
             
             # Security check: verify ownership
-            user = request.user
             cart_code = request.query_params.get('cart_code')
-            
-            # For authenticated users
-            if not isinstance(user, AnonymousUser):
-                if cart_item.cart.user != user:
-                    return Response(
-                        {"error": "You do not have permission to remove this item."},
-                        status=status.HTTP_403_FORBIDDEN
-                    )
-            # For guest users
-            else:
-                if not cart_code or cart_item.cart.cart_code != cart_code:
-                    return Response(
-                        {"error": "Invalid cart code."},
-                        status=status.HTTP_403_FORBIDDEN
-                    )
+        
+            if not cart_code or cart_item.cart.cart_code != cart_code:
+                return Response(
+                    {"error": "Invalid cart code."},
+                    status=status.HTTP_403_FORBIDDEN
+                )
             
             # Delete the cart item
             cart_item.delete()
@@ -493,19 +483,14 @@ class ClearCartView(APIView):
     
     def delete(self, request, *args, **kwargs):
         try:
-            user = request.user
             cart_code = request.query_params.get('cart_code')
             
-            # Get the appropriate cart
-            if not isinstance(user, AnonymousUser):
-                cart = Cart.objects.get(user=user)
-            else:
-                if not cart_code:
-                    return Response(
-                        {"error": "Cart code is required for guest users."},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-                cart = Cart.objects.get(cart_code=cart_code, user=None)
+            if not cart_code:
+                return Response(
+                    {"error": "Cart code is required for user."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            cart = Cart.objects.get(cart_code=cart_code)
             
             # Delete all cart items
             CartItem.objects.filter(cart=cart).delete()
@@ -523,78 +508,349 @@ class ClearCartView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-# Get Cart Items
-class CartItemsView(APIView):
-    permission_classes = [AllowAny]
-    
-    def get(self, request, *args, **kwargs):
-        try:
-            user = request.user
-            cart_code = request.query_params.get('cart_code')
+class CartItemsView(APIView): 
+    permission_classes = [AllowAny] 
+     
+    def get(self, request, *args, **kwargs): 
+        try: 
+            from decimal import Decimal
             
-            # Get the appropriate cart
-            cart = None
+            cart_code = request.query_params.get('cart_code') 
+             
+            # Get the appropriate cart 
+            cart = Cart.objects.filter(cart_code=cart_code).first() 
             
-            # Try to get cart by user if authenticated
-            if not isinstance(user, AnonymousUser):
-                try:
-                    cart = Cart.objects.filter(user=user).first()
-                    if not cart:
-                        # Create a new cart for authenticated user
-                        cart = Cart.objects.create(user=user)
-                except Exception as e:
-                    print(f"Error getting user cart: {str(e)}")
-            
-            # If no user cart found or user is anonymous, try cart_code
-            if not cart and cart_code:
-                try:
-                    # First try cart_code field
-                    cart = Cart.objects.filter(cart_code=cart_code).first()
-                    if not cart:
-                        # Then try code field if cart_code didn't work
-                        cart = Cart.objects.filter(code=cart_code).first()
-                except Exception as e:
-                    print(f"Error getting cart by code: {str(e)}")
-            
-            # If still no cart found
             if not cart:
-                if not isinstance(user, AnonymousUser):
-                    # Authenticated user but no cart - create one
-                    cart = Cart.objects.create(user=user)
-                elif cart_code:
-                    # Anonymous user with cart_code but no cart found
+                return Response(
+                    {"error": "Cart not found"},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+             
+            # Get all cart items for the cart
+            cart_items = CartItem.objects.filter(cart=cart).select_related('product', 'product__vendor') 
+             
+            # Serialize the cart items 
+            cart_item_serializer = CartItemSerializer(cart_items, many=True) 
+            
+            # Calculate subtotal
+            sub_total = sum(item.product.price * item.quantity for item in cart_items if hasattr(item.product, 'price'))
+            
+            # Get unique vendors from cart items
+            unique_vendors = set(item.product.vendor for item in cart_items if hasattr(item.product, 'vendor'))
+            num_vendors = len(unique_vendors)
+            
+            # Calculate shipping fee (300 per vendor) - convert to Decimal
+            shipping_fee = Decimal(300) * num_vendors
+            
+            # Calculate tax (5% of subtotal) - convert to Decimal
+            tax = sub_total * Decimal('0.05')
+            
+            # Calculate total
+            total = sub_total + shipping_fee + tax
+            
+            # Format response in the exact structure expected by frontend 
+            response_data = { 
+                "items": cart_item_serializer.data, 
+                "sub_total": sub_total,
+                "shipping_fee": shipping_fee,
+                "tax": tax,
+                "total": total,
+                "count": cart_items.count(),
+            } 
+             
+            return Response(response_data, status=status.HTTP_200_OK) 
+                 
+        except Exception as e: 
+            import traceback 
+            error_trace = traceback.format_exc() 
+            print(f"Error in CartView: {str(e)}") 
+            print(error_trace) 
+            return Response( 
+                {"error": f"An error occurred: {str(e)}"}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+class CreateOrderView(APIView):
+    permission_classes = [AllowAny]  # Or IsAuthenticated if you require login
+    
+    def post(self, request, *args, **kwargs):
+        try:
+            data = request.data
+            user = request.user if request.user.is_authenticated else None
+            
+            # Create order with user information
+            order = Order.objects.create(
+                user=user,
+                first_name=data.get('first_name'),
+                last_name=data.get('last_name'),
+                email=data.get('email'),
+                phone=data.get('phone'),
+                address=data.get('address'),
+                room_number=data.get('room_number'),
+                subtotal=Decimal(data.get('subtotal')),
+                shipping_fee=Decimal(data.get('shipping_fee')),
+                tax=Decimal(data.get('tax')),
+                total=Decimal(data.get('total')),
+                order_status='PENDING',
+                order_number=f"ORD-{uuid.uuid4().hex[:8].upper()}"
+            )
+            
+            # Get cart items
+            cart_items = CartItem.objects.filter(id__in=data.get('cart_items', []))
+            
+            # Create order items for each cart item
+            for cart_item in cart_items:
+                user_vendor = cart_item.product.vendor  # this is a User instance
+
+                # Try to get the related Vendor instance
+                vendor_instance = Vendor.objects.filter(user=user_vendor).first()
+
+                if not vendor_instance:
                     return Response(
-                        {"error": "Cart not found with the provided code."},
-                        status=status.HTTP_404_NOT_FOUND
-                    )
-                else:
-                    # Anonymous user without cart_code
-                    return Response(
-                        {"error": "Cart code is required for guest users."},
+                        {"error": f"No vendor profile found for {user_vendor.email}"},
                         status=status.HTTP_400_BAD_REQUEST
                     )
-            
-            # Get all cart items for the cart
-            cart_items = CartItem.objects.filter(cart=cart).select_related('product')
-            
-            # Serialize the cart items
-            cart_item_serializer = CartItemSerializer(cart_items, many=True)
-            
-            # Format response in the exact structure expected by frontend
-            response_data = {
-                "items": cart_item_serializer.data,
-                # You can add additional cart data here if needed
-                "total": sum(item.product.price * item.quantity for item in cart_items if hasattr(item.product, 'price')),
-                "count": cart_items.count()
-            }
-            
-            return Response(response_data, status=status.HTTP_200_OK)
+
+                OrderItem.objects.create(
+                    order=order,
+                    product=cart_item.product,
+                    quantity=cart_item.quantity,
+                    price=cart_item.product.price,
+                    vendor=vendor_instance
+                )
+            return Response({
+                'order_id': order.id,
+                'order_number': order.order_number,
+                'message': 'Order created successfully. Proceed to payment.'
+            }, status=status.HTTP_201_CREATED)
                 
         except Exception as e:
             import traceback
             error_trace = traceback.format_exc()
-            print(f"Error in CartView: {str(e)}")
+            print(f"Error in CreateOrderView: {str(e)}")
             print(error_trace)
+            return Response(
+                {"error": f"An error occurred: {str(e)}"}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class PaystackPaymentInitializeView(APIView):
+    permission_classes = [IsAuthenticated]  # Or IsAuthenticated if you require login
+    
+    def post(self, request, *args, **kwargs):
+        try:
+            data = request.data
+            order_id = data.get('order_id')
+            email = data.get('email')
+            amount = data.get('amount')  # amount in kobo (multiply by 100)
+            callback_url = data.get('callback_url')
+            
+            # Get the order
+            order = Order.objects.get(id=order_id)
+            
+            # Initialize Paystack payment
+            url = "https://api.paystack.co/transaction/initialize"
+            
+            headers = {
+                "Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}",
+                "Content-Type": "application/json"
+            }
+            
+            payload = {
+                "email": email,
+                "amount": amount,
+                "callback_url": callback_url,
+                "reference": f"ORD-{order.order_number}-{uuid.uuid4().hex[:8]}"
+            }
+            
+            response = requests.post(url, headers=headers, data=json.dumps(payload))
+            response_data = response.json()
+            
+            if response_data.get('status'):
+                # Create transaction record
+                transaction = Transaction.objects.create(
+                    order=order,
+                    transaction_id=response_data['data']['reference'],
+                    amount=order.total,
+                    status='PENDING'
+                )
+                
+                return Response({
+                    'status': 'success',
+                    'authorization_url': response_data['data']['authorization_url'],
+                    'reference': response_data['data']['reference']
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'status': 'failed',
+                    'message': response_data.get('message', 'Payment initialization failed')
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+        except Exception as e:
+            import traceback
+            error_trace = traceback.format_exc()
+            print(f"Error in PaystackPaymentInitializeView: {str(e)}")
+            print(error_trace)
+            return Response(
+                {"error": f"An error occurred: {str(e)}"}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class PaystackPaymentVerifyView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, *args, **kwargs):
+        try:
+            reference = request.query_params.get('reference')
+            url = f"https://api.paystack.co/transaction/verify/{reference}"
+            headers = {
+                "Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}",
+                "Content-Type": "application/json"
+            }
+
+            response = requests.get(url, headers=headers)
+            response_data = response.json()
+
+            if not response_data.get('status'):
+                return Response({
+                    'status': 'failed',
+                    'message': response_data.get('message', 'Payment verification failed')
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            transaction = Transaction.objects.filter(transaction_id=reference).first()
+
+            if not transaction:
+                return Response({
+                    'status': 'failed',
+                    'message': 'Transaction not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+
+            if response_data['data']['status'] != 'success':
+                transaction.status = 'FAILED'
+                transaction.save()
+                return Response({
+                    'status': 'failed',
+                    'message': 'Payment failed or was canceled'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Payment was successful
+            transaction.status = 'COMPLETED'
+            transaction.payment_method = 'PAYSTACK'
+            transaction.save()
+
+            order = transaction.order
+            order.order_status = 'PAID'
+            order.save()
+
+            order_items = OrderItem.objects.filter(order=order)
+            vendor_totals = {}
+            vendors_to_notify = set()
+
+            for item in order_items:
+                product = item.product
+                vendor = product.vendor
+                item_total = item.price * item.quantity
+
+                # Update main product stock
+                product.in_stock = max(product.in_stock - item.quantity, 0)
+                product.save()
+
+                # Update size and color stock
+                try:
+                    size_obj = ProductSize.objects.get(product=product, size=item.size)
+                    size_obj.in_stock = max(size_obj.quantity - item.quantity, 0)
+                    size_obj.save()
+
+                    color_obj = ProductColor.objects.get(product=product, color=item.color)
+                    color_obj.in_stock = max(color_obj.quantity - item.quantity, 0)
+                    color_obj.save()
+
+                    if color_obj.in_stock == 0  or size_obj.in_stock == 0:
+                        vendors_to_notify.add(vendor)
+                except ProductSize.DoesNotExist:
+                    pass
+
+                # Add to vendor wallet totals
+                if vendor.id in vendor_totals:
+                    vendor_totals[vendor.id] += item_total
+                else:
+                    vendor_totals[vendor.id] = item_total
+
+           # Update vendor wallets
+            # Update vendor wallets
+            for vendor_id, amount in vendor_totals.items():
+                try:
+                    # First check if vendor exists
+                    vendor = Vendor.objects.get(id=vendor_id)
+                    
+                    try:
+                        # Try to get the wallet
+                        wallet = Wallet.objects.get(vendor=vendor)
+                    except Wallet.DoesNotExist:
+                        # Create wallet if it doesn't exist
+                        wallet = Wallet.objects.create(vendor=vendor, balance=0)
+                    
+                    # Update balance
+                    wallet.balance += amount
+                    wallet.save()
+                except Vendor.DoesNotExist:
+                    # Log error if vendor doesn't exist
+                    logger.error(f"Vendor with ID {vendor_id} not found when processing payment")
+                    continue  # Skip this vendor and continue with others
+
+            # Notify vendors if product runs out of stock
+            for vendor in vendors_to_notify:
+                send_mail(
+                    subject="Product Out of Stock",
+                    message=(
+                        f"Dear {vendor.business_name},\n\n"
+                        "One or more of your products is now out of stock. "
+                        "Please restock to continue receiving orders."
+                    ),
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[vendor.user.email]
+                )
+
+            # Prepare receipt PDF
+            context = {
+                "order": order,
+                "order_items": order_items,
+                "current_year": now().year,
+            }
+            # print(BASE_DIR / 'templates/emails/receipt.html')
+
+            html_content = render_to_string("emails/receipt.html", context)
+
+            pdf_buffer = BytesIO()
+            pisa_status = pisa.CreatePDF(html_content, dest=pdf_buffer)
+
+            if pisa_status.err:
+                return Response({
+                    'status': 'error',
+                    'message': 'Could not generate receipt PDF.'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            # Email buyer receipt
+            email_subject = f"Your Order Receipt - #{order.order_number}"
+            email = EmailMultiAlternatives(
+                subject=email_subject,
+                body="Your order receipt is attached as a PDF.",
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[order.email],
+            )
+            email.attach_alternative(html_content, "text/html")
+            email.attach(f"receipt_{order.order_number}.pdf", pdf_buffer.getvalue(), "application/pdf")
+            email.send()
+
+            return Response({
+                'status': 'success',
+                'message': 'Payment verified successfully',
+                'order_number': order.order_number
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
             return Response(
                 {"error": f"An error occurred: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR

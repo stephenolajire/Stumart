@@ -17,6 +17,12 @@ export const GlobalProvider = ({ children }) => {
   const [details, setDetails] = useState({})
   const [cartItems, setCartItems] = useState([]);
   const [count, setCount] = useState(0)
+    const [cartSummary, setCartSummary] = useState({
+      subTotal: 0,
+      shippingFee: 0,
+      tax: 0,
+      total: 0,
+    });
 
   const getCartCode = () => {
     return localStorage.getItem("cart_code");
@@ -136,6 +142,12 @@ export const GlobalProvider = ({ children }) => {
         const response = await api.get("cart/", { params });
         // console.log("Cart Data:", response.data);
         setCartItems(response.data.items || []);
+        setCartSummary({
+          subTotal: response.data.sub_total || 0,
+          shippingFee: response.data.shipping_fee || 0,
+          tax: response.data.tax || 0,
+          total: response.data.total || 0,
+        }); 
         setCount(response.data.count)
         // console.log(response.data.count)
         setLoading(false);
@@ -180,6 +192,7 @@ export const GlobalProvider = ({ children }) => {
         count,
         setError,
         setCartItems,
+        cartSummary
       }}
     >
       {children}

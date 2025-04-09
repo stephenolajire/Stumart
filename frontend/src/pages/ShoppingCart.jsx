@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 // import axios from "axios";
 import api from "../constant/api";
 import { GlobalContext } from "../constant/GlobalContext";
+import { useNavigate } from "react-router-dom";
 
 const ShoppingCart = () => {
 //   const [cartItems, setCartItems] = useState([]);
@@ -30,25 +31,11 @@ const ShoppingCart = () => {
     return `N${amount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, "$&,")}`;
   };
 
-  // Fetch cart data
-//   const fetchCartData = async () => {
-//     try {
-//       setLoading(true);
+  const navigate = useNavigate();
 
-//       // Determine if we need to use cart_code parameter
-//       const cartCode = getCartCode();
-//       const params = cartCode ? { cart_code: cartCode } : {};
-
-//       const response = await api.get("cart/", { params });
-//       console.log("Cart Data:", response.data);
-//       setCartItems(response.data.items || []);
-//       setLoading(false);
-//     } catch (err) {
-//       setError("Failed to load cart. Please try again.");
-//       setLoading(false);
-//       console.error("Error fetching cart:", err);
-//     }
-//   };
+  const goBack = () => {
+    navigate(-1);
+  };
 
   // Handle quantity change
   const updateQuantity = async (itemId, newQuantity) => {
@@ -243,9 +230,9 @@ const ShoppingCart = () => {
             <button onClick={clearCart} className={styles.clearCartButton}>
               Clear Cart
             </button>
-            <Link to="/products" className={styles.continueShoppingButton}>
+            <button onClick={goBack} className={styles.continueShoppingButton}>
               Continue Shopping
-            </Link>
+            </button>
           </div>
 
           {/* Cart Summary */}

@@ -15,4 +15,7 @@ urlpatterns = [
     path('remove-cart-item/<int:item_id>/', RemoveCartItemView.as_view(), name='remove-cart-item'),
     path('clear-cart/', ClearCartView.as_view(), name='clear-cart'),
     path('cart/', CartItemsView.as_view(), name='cart-items'),
+    path('orders/create/', CreateOrderView.as_view(), name='order-create'),
+    path('payment/initialize/', PaystackPaymentInitializeView.as_view(), name='order-detail'),
+    path('payment/verify/', PaystackPaymentVerifyView.as_view(), name='order-detail'),
 ]

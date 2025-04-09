@@ -1,0 +1,114 @@
+.verificationContainer {
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 30px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.loadingState,
+.successState,
+.failedState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+}
+
+.spinner {
+  width: 60px;
+  height: 60px;
+  border: 5px solid #f3f3f3;
+  border-top: 5px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.checkmark,
+.errorMark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  font-size: 40px;
+  margin-bottom: 20px;
+}
+
+.checkmark {
+  background-color: #4caf50;
+  color: white;
+}
+
+.errorMark {
+  background-color: #f44336;
+  color: white;
+}
+
+.verificationContainer h2 {
+  font-size: 28px;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.verificationContainer p {
+  font-size: 16px;
+  color: #666;
+  margin-bottom: 30px;
+  max-width: 500px;
+}
+
+.actionButtons {
+  display: flex;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.viewOrderButton,
+.continueShoppingButton,
+.tryAgainButton {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.viewOrderButton {
+  background-color: #3498db;
+  color: white;
+}
+
+.viewOrderButton:hover {
+  background-color: #2980b9;
+}
+
+.continueShoppingButton {
+  background-color: #f8f9fa;
+  color: #333;
+  border: 1px solid #ddd;
+}
+
+.continueShoppingButton:hover {
+  background-color: #e9ecef;
+}
+
+.tryAgainButton {
+  background-color: #f44336;
+  color: white;
+}
+
+.tryAgainButton:hover {
+  background-color: #d32f2f;
+}

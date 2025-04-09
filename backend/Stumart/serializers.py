@@ -249,10 +249,50 @@ class CartSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Cart
-        fields = ['id', 'user', 'cart_code', 'items', 'total_price', 'item_count', 'created_at', 'updated_at']
+        fields = ['id', 'cart_code', 'items', 'total_price', 'item_count', 'created_at', 'updated_at']
         
     def get_total_price(self, obj):
         return sum(item.product.price * item.quantity for item in obj.cartitem_set.all())
         
     def get_item_count(self, obj):
         return sum(item.quantity for item in obj.cartitem_set.all())
+
+
+
+class OrderItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrderItem
+        fields = ['product', 'quantity', 'price', 'vendor', 'size', 'color']
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    order_items = OrderItemSerializer(many=True)
+
+    class Meta:
+        model = Order
+        fields = [
+            'id', 'order_number', 'user', 'first_name', 'last_name', 'email', 
+            'phone', 'address', 'room_number', 'subtotal', 'shipping_fee', 
+            'tax', 'total', 'order_status', 'order_items'
+        ]
+    
+    def create(self, validated_data):
+        order_items_data = validated_data.pop('order_items')
+        order = Order.objects.create(**validated_data)
+        
+        for item_data in order_items_data:
+            OrderItem.objects.create(order=order, **item_data)
+        
+        return order
+
+
+class TransactionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Transaction
+        fields = ['order', 'transaction_id', 'amount', 'status', 'payment_method']
+
+
+class WalletSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Wallet
+        fields = ['vendor', 'balance']

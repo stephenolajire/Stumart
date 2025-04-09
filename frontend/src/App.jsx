@@ -23,6 +23,8 @@ import VerifyOTPForm from "./forgot password/VerifyOTPForm";
 import SetNewPasswordForm from "./forgot password/SetNewPasswordForm";
 import ShoppingCart from "./pages/ShoppingCart";
 import Checkout from "./pages/Checkout";
+import OrderDetails from "./pages/OrderDetails";
+import PaymentVerification from "./pages/PaymentVerification";
 
 function App() {
   return (
@@ -39,8 +41,16 @@ function App() {
             <Route path="shop/:shopId" element={<ShopDetails />} />
             <Route path="product/:productId" element={<ProductDetails />} />
             <Route path="other-services" element={<OtherService />} />
-            <Route path="shopping-cart" element={<ShoppingCart/>}/>
-            <Route path="checkout" element={<Checkout/>}/>
+            <Route path="shopping-cart" element={<ShoppingCart />} />
+            <Route
+              path="checkout"
+              element={
+                <ProtectedRoute>
+                  <Checkout />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="order-details" element={<OrderDetails />} />
           </Route>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Signup />} />
@@ -61,6 +71,9 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          <Route path="/payment/verify" element={<PaymentVerification />} />
+
           <Route
             path="/vendor-dashboard"
             element={

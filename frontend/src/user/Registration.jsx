@@ -94,10 +94,17 @@ const Signup = () => {
 
     // Password validations
     if (!formData.password) {
-      newErrors.password = "Password is required";
-    } else if (formData.password.length < 8) {
-      newErrors.password = "Password must be at least 8 characters";
-    }
+  newErrors.password = "Password is required";
+} else if (formData.password.length < 8) {
+  newErrors.password = "Password must be at least 8 characters";
+} else if (
+  !/[A-Z]/.test(formData.password) ||         // no uppercase
+  !/[a-z]/.test(formData.password) ||         // no lowercase
+  !/[!@#$%^&*(),.?":{}|<>]/.test(formData.password) // no special char
+) {
+  newErrors.password = "Password must include uppercase, lowercase, and a special character";
+}
+
 
     if (!formData.confirmPassword) {
       newErrors.confirmPassword = "Please confirm your password";

@@ -1,40 +1,29 @@
 /* ProductDetails.module.css */
-
 .productDetails {
-  padding: 4rem 2rem;
-  background: var(--neutral-gray-50);
+  background-color: var(--neutral-gray-50);
   min-height: 100vh;
+  padding: 4rem 2rem;
   margin-top: 10rem;
-}
-
-.checkoutButton a {
-  color: white;
 }
 
 .container {
   max-width: 120rem;
   margin: 0 auto;
+  background-color: var(--neutral-white);
+  border-radius: 1rem;
+  box-shadow: 0 0.4rem 1.6rem rgba(0, 0, 0, 0.1);
+  overflow: hidden;
 }
 
 .productGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 4rem;
-  align-items: start;
+  gap: 3rem;
 }
 
-.loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 50vh;
-  font-size: 2.4rem;
-  color: var(--primary-500);
-}
-
-/* Image Section Styles */
+/* Image Section */
 .imageSection {
-  position: relative;
+  padding: 3rem;
   display: flex;
   flex-direction: column;
   gap: 2rem;
@@ -42,17 +31,18 @@
 
 .carousel {
   position: relative;
-  border-radius: 1rem;
+  border-radius: 0.8rem;
   overflow: hidden;
-  box-shadow: 0 0.4rem 1.2rem rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0.2rem 1rem rgba(0, 0, 0, 0.1);
+  aspect-ratio: 1 / 1;
+  background-color: var(--neutral-gray-50);
 }
 
 .carousel img {
   width: 100%;
-  height: 50rem;
-  object-fit: cover;
+  height: 100%;
+  object-fit: contain;
   display: block;
-  border-radius: 1rem;
 }
 
 .carouselControls {
@@ -67,23 +57,22 @@
 }
 
 .carouselButton {
-  background: rgba(255, 255, 255, 0.8);
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
   border: none;
   width: 4rem;
   height: 4rem;
   border-radius: 50%;
   display: flex;
-  justify-content: center;
   align-items: center;
-  font-size: 2rem;
-  color: var(--secondary-500);
+  justify-content: center;
   cursor: pointer;
+  font-size: 2rem;
   transition: all 0.3s ease;
 }
 
 .carouselButton:hover {
-  background: var(--primary-500);
-  color: var(--neutral-white);
+  background-color: var(--primary-500);
 }
 
 .carouselIndicators {
@@ -92,122 +81,121 @@
 }
 
 .indicator {
-  width: 1.2rem;
-  height: 1.2rem;
+  width: 1rem;
+  height: 1rem;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.5);
+  background-color: rgba(255, 255, 255, 0.5);
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .activeIndicator {
-  background: var(--primary-500);
+  background-color: var(--primary-500);
   transform: scale(1.2);
 }
 
 .thumbnailGallery {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
   gap: 1rem;
-  overflow-x: auto;
-  padding-bottom: 1rem;
 }
 
 .thumbnail {
-  width: 8rem;
-  height: 8rem;
-  border-radius: 0.8rem;
+  border-radius: 0.6rem;
   overflow: hidden;
   cursor: pointer;
+  border: 0.2rem solid transparent;
+  aspect-ratio: 1 / 1;
   transition: all 0.3s ease;
-  opacity: 0.7;
-  border: 2px solid transparent;
 }
 
 .thumbnail:hover {
-  opacity: 1;
-}
-
-.activeThumbnail {
-  opacity: 1;
-  border: 2px solid var(--primary-500);
+  transform: translateY(-0.3rem);
 }
 
 .thumbnail img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
 }
 
-/* Product Info Section */
+.activeThumbnail {
+  border-color: var(--primary-500);
+  transform: translateY(-0.3rem);
+}
+
+/* Info Section */
 .infoSection {
-  padding: 2rem;
-  background: var(--neutral-white);
-  border-radius: 1rem;
-  box-shadow: 0 0.4rem 1.2rem rgba(0, 0, 0, 0.05);
+  padding: 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
 }
 
 .infoSection h1 {
-  font-size: 3.2rem;
-  margin-bottom: 1.6rem;
-  color: var(--secondary-500);
+  font-size: var(--h3-desktop);
+  color: var(--text-primary);
+  margin-bottom: 1rem;
 }
 
 .price {
-  font-size: 3rem;
+  font-size: 3.2rem;
   font-weight: 700;
-  color: var(--primary-500);
-  margin-bottom: 2rem;
+  color: var(--primary-600);
 }
 
 .description {
   font-size: 1.6rem;
   line-height: 1.6;
-  color: var(--secondary-700);
-  margin-bottom: 2.4rem;
+  color: var(--text-tertiary);
+  margin-bottom: 2rem;
 }
 
 .shopInfo {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
-  padding-bottom: 1.6rem;
-  border-bottom: 1px solid var(--neutral-gray-200);
+  padding: 1.2rem 0;
+  border-top: 0.1rem solid var(--neutral-gray-200);
+  border-bottom: 0.1rem solid var(--neutral-gray-200);
 }
 
 .shopInfo h3 {
-  font-size: 1.8rem;
+  font-size: 1.6rem;
+  color: var(--text-secondary);
   font-weight: 600;
 }
 
 .rating {
   font-size: 1.6rem;
-  color: var(--secondary-700);
+  color: var(--text-tertiary);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 
 .outOfStock {
-  color: var(--error);
+  color: var(--error) !important;
   font-weight: 600;
 }
 
-/* Color and Size Options */
-.colorsSection,
-.sizesSection {
-  margin-bottom: 2.4rem;
+/* Colors Section */
+.colorsSection, .sizesSection {
+  margin-top: 1.6rem;
 }
 
-.colorsSection h3,
-.sizesSection h3 {
-  font-size: 1.8rem;
+.colorsSection h3, .sizesSection h3 {
+  font-size: 1.6rem;
   margin-bottom: 1.2rem;
+  color: var(--text-secondary);
 }
 
-.colorOptions,
-.sizeOptions {
+.colorOptions {
   display: flex;
   flex-wrap: wrap;
   gap: 1.2rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1.6rem;
 }
 
 .colorOption {
@@ -216,78 +204,86 @@
   gap: 0.8rem;
   padding: 0.8rem 1.2rem;
   border-radius: 0.6rem;
-  border: 1px solid var(--neutral-gray-200);
+  background-color: var(--neutral-gray-50);
   cursor: pointer;
   transition: all 0.3s ease;
+  border: 0.2rem solid transparent;
   font-size: 1.4rem;
 }
 
 .colorOption:hover {
-  border-color: var(--primary-500);
+  background-color: var(--neutral-gray-100);
 }
 
 .selectedColor {
   border-color: var(--primary-500);
-  background-color: rgba(218, 165, 32, 0.1);
+  background-color: var(--primary-100);
 }
 
 .colorSwatch {
-  display: block;
   width: 2rem;
   height: 2rem;
   border-radius: 50%;
-  border: 1px solid var(--neutral-gray-300);
+  border: 0.1rem solid var(--neutral-gray-300);
+}
+
+/* Sizes Section */
+.sizeOptions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.2rem;
+  margin-bottom: 1.6rem;
 }
 
 .sizeOption {
   padding: 0.8rem 1.6rem;
   border-radius: 0.6rem;
-  border: 1px solid var(--neutral-gray-200);
+  background-color: var(--neutral-gray-50);
   cursor: pointer;
   transition: all 0.3s ease;
+  border: 0.2rem solid transparent;
   font-size: 1.4rem;
   text-align: center;
+  min-width: 6rem;
 }
 
 .sizeOption:hover {
-  border-color: var(--primary-500);
+  background-color: var(--neutral-gray-100);
 }
 
 .selectedSize {
   border-color: var(--primary-500);
-  background-color: rgba(218, 165, 32, 0.1);
+  background-color: var(--primary-100);
 }
 
 /* Add to Cart Section */
 .addToCart {
   display: flex;
-  align-items: center;
-  gap: 2rem;
+  gap: 1.6rem;
   margin-top: 3rem;
 }
 
 .quantity {
   display: flex;
   align-items: center;
-  border: 1px solid var(--neutral-gray-300);
+  border: 0.1rem solid var(--neutral-gray-300);
   border-radius: 0.6rem;
   overflow: hidden;
 }
 
 .quantity button {
+  background-color: var(--neutral-gray-100);
+  border: none;
   width: 4rem;
   height: 4rem;
-  border: none;
-  background: var(--neutral-gray-100);
-  color: var(--secondary-500);
   font-size: 2rem;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .quantity button:hover:not(:disabled) {
-  background: var(--primary-500);
-  color: var(--neutral-white);
+  background-color: var(--primary-100);
+  color: var(--primary-700);
 }
 
 .quantity button:disabled {
@@ -296,88 +292,147 @@
 }
 
 .quantity span {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 4rem;
-  height: 4rem;
-  font-size: 1.6rem;
+  padding: 0 2rem;
+  font-size: 1.8rem;
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 5rem;
 }
 
 .addButton {
-  flex: 1;
-  padding: 1.2rem 2.4rem;
-  background: var(--primary-500);
-  color: var(--neutral-white);
+  background-color: var(--primary-500);
+  color: white;
   border: none;
+  height: 4rem;
   border-radius: 0.6rem;
   font-size: 1.6rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
+  flex: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.1rem;
 }
 
 .addButton:hover:not(:disabled) {
-  background: var(--primary-600);
+  background-color: var(--primary-600);
 }
 
-.disabledButton {
-  background: var(--neutral-gray-300);
+.disabledButton, .addButton:disabled {
+  background-color: var(--neutral-gray-300);
   cursor: not-allowed;
 }
 
-/* Responsive Design */
+.loading {
+  text-align: center;
+  font-size: 1.8rem;
+  padding: 6rem 0;
+  color: var(--text-tertiary);
+  background-color: var(--neutral-white);
+  min-height: 50vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Responsive Styles */
 @media screen and (max-width: 992px) {
   .productGrid {
     grid-template-columns: 1fr;
-    gap: 3rem;
   }
   
-  .carousel img {
-    height: 40rem;
+  .imageSection {
+    padding: 2rem;
+  }
+  
+  .infoSection {
+    padding: 2rem;
   }
 }
 
 @media screen and (max-width: 768px) {
   .productDetails {
-    padding: 2rem 1.5rem;
+    padding: 2rem 1rem;
   }
   
-  .carousel img {
-    height: 30rem;
+  .imageSection {
+    padding: 1.5rem;
   }
   
-  .addToCart {
-    flex-direction: column;
-    align-items: stretch;
+  .infoSection {
+    padding: 1.5rem;
   }
   
-  .quantity {
-    width: 100%;
-    justify-content: space-between;
+  .infoSection h1 {
+    font-size: var(--h3-mobile);
+  }
+  
+  .price {
+    font-size: 2.8rem;
+  }
+  
+  .thumbnailGallery {
+    grid-template-columns: repeat(auto-fill, minmax(6rem, 1fr));
+  }
+  
+  .carouselControls {
+    padding: 0 1rem;
+    bottom: 1rem;
+  }
+  
+  .carouselButton {
+    width: 3.2rem;
+    height: 3.2rem;
+    font-size: 1.6rem;
+  }
+
+  .addButton {
+    height: 4rem;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .productDetails {
+    padding: 1rem 0.5rem;
+  }
+
+  .addButton {
+    height: 4rem;
+  }
+  
+  .imageSection, .infoSection {
+    padding: 1rem;
   }
   
   .shopInfo {
     flex-direction: column;
     align-items: flex-start;
-    gap: 1rem;
-  }
-}
-
-@media screen and (max-width: 480px) {
-  .carousel img {
-    height: 50rem;
-  }
-  
-  .colorOptions,
-  .sizeOptions {
     gap: 0.8rem;
   }
   
-  .colorOption,
-  .sizeOption {
-    padding: 0.6rem 1rem;
-    font-size: 1.2rem;
+  .colorOptions, .sizeOptions {
+    gap: 0.8rem;
+  }
+  
+  .addToCart {
+    flex-direction: column;
+  }
+  
+  .quantity {
+    width: 100%;
+  }
+  
+  .quantity button {
+    width: 4rem;
+  }
+  
+  .quantity span {
+    flex: 1;
+  }
+  
+  .thumbnailGallery {
+    grid-template-columns: repeat(4, 1fr);
   }
 }
