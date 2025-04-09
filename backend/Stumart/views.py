@@ -821,7 +821,7 @@ class PaystackPaymentVerifyView(APIView):
             }
             # print(BASE_DIR / 'templates/emails/receipt.html')
 
-            html_content = render_to_string("emails/receipt.html", context)
+            html_content = render_to_string("email/receipts.html", context)
 
             pdf_buffer = BytesIO()
             pisa_status = pisa.CreatePDF(html_content, dest=pdf_buffer)
