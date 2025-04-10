@@ -347,6 +347,11 @@
                             <td class="text-right">Total:</td>
                             <td class="price text-right">₦{{ order.total|floatformat:2 }}</td>
                         </tr>
+                        <tr class="total-row">
+                            <td colspan="3"></td>
+                            <td class="text-right">Tax:</td>
+                            <td class="price text-right">₦{{ order.tax|floatformat:2 }}</td>
+                        </tr>
                     </tbody>
                 </table>
                 
