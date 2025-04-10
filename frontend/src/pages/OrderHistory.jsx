@@ -131,7 +131,8 @@ const OrderHistory = () => {
                 <div className={style.shippingDetails}>
                   <h3>Shipping Details</h3>
                   <p>
-                    <strong>Name:</strong> {order.shipping.first_name} {order.shipping.last_name}
+                    <strong>Name:</strong> {order.shipping.first_name}{" "}
+                    {order.shipping.last_name}
                   </p>
                   <p>
                     <strong>Email:</strong> {order.shipping.email}
@@ -174,7 +175,7 @@ const OrderHistory = () => {
                           {item.color && <p>Color: {item.color}</p>}
                           <div className={style.itemPriceQty}>
                             <p className={style.itemPrice}>
-                              ${item.price.toFixed(2)}
+                              ₦{item.price.toFixed(2)}
                             </p>
                             <p className={style.itemQty}>
                               Qty: {item.quantity}
