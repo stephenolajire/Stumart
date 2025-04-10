@@ -120,8 +120,6 @@ const ShoppingCart = () => {
     <div className={styles.cartContainer}>
       <h2 className={styles.cartTitle}>Your Shopping Cart</h2>
 
-      {error && <div className={styles.errorMessage}>{error}</div>}
-
       {cartItems.length === 0 ? (
         <div className={styles.emptyCart}>
           <p className={styles.emptyMessage}>Your cart is empty</p>
