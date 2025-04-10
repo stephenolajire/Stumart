@@ -1014,25 +1014,28 @@ class OrderDetailView(APIView):
         
 
 class OrderHistoryView(APIView):
-    def get (self, requests):
+    def get(self, request):  # changed from 'requests' to 'request'
         """Get all orders for the authenticated user"""
         try:
-            user = requests.user
+            user = request.user
             
             # Get all orders for the user
             orders = Order.objects.filter(user=user).order_by('-created_at')
             
-            # Format the order data
             order_data = []
             for order in orders:
                 order_items = OrderItem.objects.filter(order=order)
                 
                 items_data = []
                 for item in order_items:
+                    image_url = None
+                    if item.product.image:
+                        image_url = request.build_absolute_uri(item.product.image.url)
+
                     product_data = {
                         'id': item.product.id,
                         'name': item.product.name,
-                        'image': str(item.product.image) if item.product.image else None
+                        'image': image_url
                     }
                     
                     items_data.append({
@@ -1044,7 +1047,7 @@ class OrderHistoryView(APIView):
                         'color': item.color,
                         'vendor': item.vendor.business_name if item.vendor else None
                     })
-                
+
                 order_data.append({
                     'id': order.id,
                     'order_number': order.order_number,
@@ -1054,11 +1057,20 @@ class OrderHistoryView(APIView):
                     'total': float(order.total),
                     'order_status': order.order_status,
                     'created_at': order.created_at,
-                    'order_items': items_data
+                    'order_items': items_data,
+                    'shipping': {
+                        'address': order.address,
+                        'room_number': order.room_number,
+                        'phone': order.phone,
+                        'email': order.email,
+                        'first_name': order.first_name,
+                        'last_name': order.last_name,
+                    }
                 })
             
             return Response(order_data, status=200)
         
         except Exception as e:
             return Response({'error': str(e)}, status=400)
+
     

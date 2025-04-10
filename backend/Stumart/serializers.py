@@ -301,6 +301,7 @@ class WalletSerializer(serializers.ModelSerializer):
 class OrderDetailSerializer(serializers.ModelSerializer):
     order_items = OrderItemSerializer(many=True, read_only=True)
     transaction = serializers.SerializerMethodField()
+    image_url = serializers.SerializerMethodField()
     
     class Meta:
         model = Order
@@ -308,8 +309,16 @@ class OrderDetailSerializer(serializers.ModelSerializer):
             'id', 'order_number', 'user', 'first_name', 'last_name',
             'email', 'phone', 'address', 'room_number', 'subtotal',
             'shipping_fee', 'tax', 'total', 'order_status', 'created_at',
-            'order_items', 'transaction'
+            'order_items', 'transaction', 'image_url'
         ]
+
+    def get_image_url(self, obj):
+        request = self.context.get('request')
+        if obj.order_items.exists():
+            product = obj.order_items.first().product
+            if product.image:
+                return request.build_absolute_uri(product.image.url)
+        return None
     
     def get_transaction(self, obj):
         try:
