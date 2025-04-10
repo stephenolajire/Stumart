@@ -38,6 +38,7 @@ const PaymentVerification = () => {
 
           // Clear the cart from localStorage after successful payment
           localStorage.removeItem("cart_code");
+          window.location.reload()
         } else {
           setVerificationStatus("failed");
         }
