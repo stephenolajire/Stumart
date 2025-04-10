@@ -29,6 +29,7 @@ from io import BytesIO
 from django.utils.timezone import now
 import logging
 logger = logging.getLogger(__name__)
+from rest_framework import generics
 
 class ProductsView(APIView):
     def get(self, request, id):
@@ -941,4 +942,29 @@ class PaystackPaymentVerifyView(APIView):
             return Response(
                 {"error": f"An error occurred: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+
+class OrderDetailView(generics.RetrieveAPIView):
+    serializer_class = OrderDetailSerializer
+    lookup_field = 'order_number'
+    
+    def get_queryset(self):
+        # If user is authenticated, show their orders
+        if self.request.user.is_authenticated:
+            return Order.objects.filter(user=self.request.user)
+        
+        # If user is not authenticated, use the order number from URL
+        # This allows customers to view their order after payment without logging in
+        return Order.objects.all()
+    
+    def retrieve(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data)
+        except:
+            return Response(
+                {"error": "Order not found"}, 
+                status=status.HTTP_404_NOT_FOUND
             )

@@ -296,3 +296,24 @@ class WalletSerializer(serializers.ModelSerializer):
     class Meta:
         model = Wallet
         fields = ['vendor', 'balance']
+
+
+class OrderDetailSerializer(serializers.ModelSerializer):
+    order_items = OrderItemSerializer(many=True, read_only=True)
+    transaction = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Order
+        fields = [
+            'id', 'order_number', 'user', 'first_name', 'last_name',
+            'email', 'phone', 'address', 'room_number', 'subtotal',
+            'shipping_fee', 'tax', 'total', 'order_status', 'created_at',
+            'order_items', 'transaction'
+        ]
+    
+    def get_transaction(self, obj):
+        try:
+            transaction = Transaction.objects.get(order=obj)
+            return TransactionSerializer(transaction).data
+        except Transaction.DoesNotExist:
+            return None

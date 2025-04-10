@@ -73,6 +73,7 @@ function App() {
           />
 
           <Route path="/payment/verify" element={<PaymentVerification />} />
+          <Route path="/orders/:orderNumber" element={<OrderDetails/>} />
 
           <Route
             path="/vendor-dashboard"

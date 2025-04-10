@@ -18,4 +18,5 @@ urlpatterns = [
     path('orders/create/', CreateOrderView.as_view(), name='order-create'),
     path('payment/initialize/', PaystackPaymentInitializeView.as_view(), name='order-detail'),
     path('payment/verify/', PaystackPaymentVerifyView.as_view(), name='order-detail'),
+    path('orders/<str:order_number>/', OrderDetailView.as_view(), name='order-detail'),
 ]
