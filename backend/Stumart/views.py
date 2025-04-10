@@ -763,7 +763,7 @@ class PaystackPaymentVerifyView(APIView):
                     else:
                         vendor_totals[item.vendor.id] = item_total
 
-            # Process product stock updates
+            # Process product stock updates with improved error handling
             for item in order_items:
                 product = item.product
                 
@@ -777,13 +777,14 @@ class PaystackPaymentVerifyView(APIView):
                         size_obj = ProductSize.objects.get(product=product, size=item.size)
                         size_obj.quantity = max(size_obj.quantity - item.quantity, 0)
                         size_obj.save()
+                        logger.info(f"Updated size inventory for product {product.id}, size {item.size}, new quantity: {size_obj.quantity}")
                         
                         # Check if out of stock notification is needed
                         if size_obj.quantity == 0 and hasattr(item, 'vendor') and item.vendor is not None:
                             if item.vendor not in notified_vendors:
                                 notified_vendors.add(item.vendor)
                     except ProductSize.DoesNotExist:
-                        pass
+                        logger.warning(f"Size {item.size} not found for product {product.id}")
                 
                 # Update color stock if applicable
                 if hasattr(item, 'color') and item.color:
@@ -791,8 +792,9 @@ class PaystackPaymentVerifyView(APIView):
                         color_obj = ProductColor.objects.get(product=product, color=item.color)
                         color_obj.quantity = max(color_obj.quantity - item.quantity, 0)
                         color_obj.save()
+                        logger.info(f"Updated color inventory for product {product.id}, color {item.color}, new quantity: {color_obj.quantity}")
                     except ProductColor.DoesNotExist:
-                        pass
+                        logger.warning(f"Color {item.color} not found for product {product.id}")
             
             # Send out of stock notifications
             for vendor in notified_vendors:
@@ -807,6 +809,7 @@ class PaystackPaymentVerifyView(APIView):
                         from_email=settings.DEFAULT_FROM_EMAIL,
                         recipient_list=[vendor.user.email]
                     )
+                    logger.info(f"Sent out-of-stock notification to vendor {vendor.id}")
                 except Exception as e:
                     logger.error(f"Failed to send out-of-stock email to vendor {vendor.id}: {str(e)}")
 
@@ -820,11 +823,12 @@ class PaystackPaymentVerifyView(APIView):
                     )
                     wallet.balance += amount
                     wallet.save()
+                    logger.info(f"Updated wallet for vendor {vendor_id}, new balance: {wallet.balance}")
                 except Vendor.DoesNotExist:
                     logger.error(f"Vendor with ID {vendor_id} not found when processing payment")
                     continue
 
-            # Send order notifications to all vendors
+            # Send order notifications to all vendors - improved implementation
             for vendor in vendors_to_notify:
                 try:
                     # Filter items for this specific vendor
@@ -834,29 +838,34 @@ class PaystackPaymentVerifyView(APIView):
                     for item in order_items:
                         if hasattr(item, 'vendor') and item.vendor is not None and item.vendor.id == vendor.id:
                             # Ensure price is a valid number
-                            if item.price is None:
-                                item.price = 0
+                            item_price = item.price if item.price is not None else 0
                                 
-                            # Calculate the total for each item (use subtotal to match template)
-                            item.subtotal = item.price * item.quantity
+                            # Calculate the total for each item
+                            item_subtotal = item_price * item.quantity
+                            
+                            # Add calculated subtotal as a property to the item for template use
+                            item.subtotal = item_subtotal
                             
                             # Add to vendor total
-                            vendor_total += item.subtotal
+                            vendor_total += item_subtotal
                             
                             vendor_items.append(item)
                     
                     if vendor_items:
+                        # Create complete context for template
                         vendor_context = {
                             "order": order,
-                            "vendor_items": vendor_items,  # Make sure to use vendor_items, not order_items
+                            "vendor_items": vendor_items,
                             "vendor": vendor,
                             "current_year": now().year,
-                            "total": vendor_total,  # Add the total sum to the context
+                            "total": vendor_total,
                             "dashboard_url": f"{settings.FRONTEND_URL}/vendor/dashboard/orders/{order.order_number}"
                         }
                         
+                        # Render HTML email template
                         vendor_html_content = render_to_string("email/ordered.html", vendor_context)
                         
+                        # Create and send email with both HTML and text versions
                         vendor_email = EmailMultiAlternatives(
                             subject=f"New Order Received - #{order.order_number}",
                             body=f"You have received a new order #{order.order_number}.",
@@ -865,14 +874,18 @@ class PaystackPaymentVerifyView(APIView):
                         )
                         vendor_email.attach_alternative(vendor_html_content, "text/html")
                         vendor_email.send()
+                        
+                        logger.info(f"Order notification sent to vendor {vendor.id} for order {order.order_number}")
                 except Exception as e:
-                    logger.error(f"Error sending notification to vendor {vendor.id}: {str(e)}")
+                    logger.error(f"Error sending notification to vendor {vendor.id}: {str(e)}", exc_info=True)
+                    continue  # Continue with other vendors even if one fails
 
             # Delete the cart after successful payment
             if cart_code:
                 try:
                     cart = Cart.objects.get(cart_code=cart_code)
                     cart.delete()
+                    logger.info(f"Deleted cart {cart_code} after successful payment")
                 except Cart.DoesNotExist:
                     logger.warning(f"Cart with code {cart_code} not found for deletion after payment")
                 except Exception as e:
@@ -883,10 +896,10 @@ class PaystackPaymentVerifyView(APIView):
                 # Process order items to add total
                 for item in order_items:
                     # Ensure price is a valid number
-                    if item.price is None:
-                        item.price = 0
+                    item_price = item.price if item.price is not None else 0
+                    
                     # Calculate the total for each item
-                    item.total = item.price * item.quantity
+                    item.total = item_price * item.quantity
                 
                 context = {
                     "order": order,
@@ -912,8 +925,10 @@ class PaystackPaymentVerifyView(APIView):
                 email.attach_alternative(html_content, "text/html")
                 email.attach(f"receipt_{order.order_number}.pdf", pdf_buffer.getvalue(), "application/pdf")
                 email.send()
+                
+                logger.info(f"Sent receipt email to customer {order.email} for order {order.order_number}")
             except Exception as e:
-                logger.error(f"Error with receipt generation or sending: {str(e)}")
+                logger.error(f"Error with receipt generation or sending: {str(e)}", exc_info=True)
 
             return Response({
                 'status': 'success',
