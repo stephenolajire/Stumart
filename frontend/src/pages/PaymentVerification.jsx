@@ -9,7 +9,6 @@ const PaymentVerification = () => {
   const [orderDetails, setOrderDetails] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
-  localStorage.getItem("cart_code")
 
   useEffect(() => {
     const verifyPayment = async () => {
@@ -18,14 +17,17 @@ const PaymentVerification = () => {
         const urlParams = new URLSearchParams(location.search);
         const reference = urlParams.get("reference");
 
+        // Get cart_code from localStorage
+        const cart_code = localStorage.getItem("cart_code");
+
         if (!reference) {
           setVerificationStatus("failed");
           return;
         }
 
-        // Call the backend to verify the payment
+        // Call the backend to verify the payment, including cart_code
         const response = await api.get(
-          `payment/verify/?reference=${reference}`
+          `payment/verify/?reference=${reference}&cart_code=${cart_code}`
         );
 
         if (response.data.status === "success") {
@@ -33,6 +35,9 @@ const PaymentVerification = () => {
           setOrderDetails({
             orderNumber: response.data.order_number,
           });
+
+          // Clear the cart from localStorage after successful payment
+          localStorage.removeItem("cart_code");
         } else {
           setVerificationStatus("failed");
         }

@@ -704,6 +704,7 @@ class PaystackPaymentVerifyView(APIView):
     def get(self, request, *args, **kwargs):
         try:
             reference = request.query_params.get('reference')
+            cart_code = request.query_params.get('cart_code')
             url = f"https://api.paystack.co/transaction/verify/{reference}"
             headers = {
                 "Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}",
@@ -747,10 +748,12 @@ class PaystackPaymentVerifyView(APIView):
             order_items = OrderItem.objects.filter(order=order)
             vendor_totals = {}
             vendors_to_notify = set()
+            notified_vendors = set()  # Track which vendors we've already notified
 
             for item in order_items:
                 product = item.product
                 vendor = product.vendor
+                vendors_to_notify.add(vendor)  # Add all vendors to be notified
                 item_total = item.price * item.quantity
 
                 # Update main product stock
@@ -760,16 +763,30 @@ class PaystackPaymentVerifyView(APIView):
                 # Update size and color stock
                 try:
                     size_obj = ProductSize.objects.get(product=product, size=item.size)
-                    size_obj.in_stock = max(size_obj.quantity - item.quantity, 0)
+                    size_obj.quantity = max(size_obj.quantity - item.quantity, 0)
                     size_obj.save()
 
                     color_obj = ProductColor.objects.get(product=product, color=item.color)
-                    color_obj.in_stock = max(color_obj.quantity - item.quantity, 0)
+                    color_obj.quantity = max(color_obj.quantity - item.quantity, 0)
                     color_obj.save()
 
-                    if color_obj.in_stock == 0  or size_obj.in_stock == 0:
-                        vendors_to_notify.add(vendor)
+                    if color_obj.quantity == 0 or size_obj.quantity == 0:
+                        if vendor not in notified_vendors:
+                            # Send out of stock notification
+                            send_mail(
+                                subject="Product Out of Stock",
+                                message=(
+                                    f"Dear {vendor.business_name},\n\n"
+                                    "One or more of your products is now out of stock. "
+                                    "Please restock to continue receiving orders."
+                                ),
+                                from_email=settings.DEFAULT_FROM_EMAIL,
+                                recipient_list=[vendor.user.email]
+                            )
+                            notified_vendors.add(vendor)
                 except ProductSize.DoesNotExist:
+                    pass
+                except ProductColor.DoesNotExist:
                     pass
 
                 # Add to vendor wallet totals
@@ -778,7 +795,6 @@ class PaystackPaymentVerifyView(APIView):
                 else:
                     vendor_totals[vendor.id] = item_total
 
-           # Update vendor wallets
             # Update vendor wallets
             for vendor_id, amount in vendor_totals.items():
                 try:
@@ -800,26 +816,46 @@ class PaystackPaymentVerifyView(APIView):
                     logger.error(f"Vendor with ID {vendor_id} not found when processing payment")
                     continue  # Skip this vendor and continue with others
 
-            # Notify vendors if product runs out of stock
+            # Send order notifications to all vendors whose products were ordered
             for vendor in vendors_to_notify:
-                send_mail(
-                    subject="Product Out of Stock",
-                    message=(
-                        f"Dear {vendor.business_name},\n\n"
-                        "One or more of your products is now out of stock. "
-                        "Please restock to continue receiving orders."
-                    ),
+                # Get items specific to this vendor
+                vendor_items = [item for item in order_items if item.product.vendor.id == vendor.id]
+                
+                # Prepare context for the vendor email
+                vendor_context = {
+                    "order": order,
+                    "order_items": vendor_items,
+                    "vendor": vendor,
+                    "current_year": now().year,
+                }
+                
+                # Render the HTML content
+                vendor_html_content = render_to_string("email/ordered.html", vendor_context)
+                
+                # Send email to the vendor
+                vendor_email = EmailMultiAlternatives(
+                    subject=f"New Order Received - #{order.order_number}",
+                    body=f"You have received a new order #{order.order_number}.",
                     from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[vendor.user.email]
+                    to=[vendor.user.email],
                 )
+                vendor_email.attach_alternative(vendor_html_content, "text/html")
+                vendor_email.send()
 
-            # Prepare receipt PDF
+            # Delete the cart after successful payment
+            if cart_code:
+                try:
+                    cart = Cart.objects.get(cart_code=cart_code)
+                    cart.delete()  # This will delete the cart and all related cart items due to CASCADE
+                except Cart.DoesNotExist:
+                    logger.warning(f"Cart with code {cart_code} not found for deletion after payment")
+
+            # Prepare receipt PDF for the customer
             context = {
                 "order": order,
                 "order_items": order_items,
                 "current_year": now().year,
             }
-            # print(BASE_DIR / 'templates/emails/receipt.html')
 
             html_content = render_to_string("email/receipts.html", context)
 

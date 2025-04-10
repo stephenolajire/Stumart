@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Order Notification</title>
+    <style>
+        :root {
+            /* Primary Colors - Brownish Gold */
+            --primary-100: #fdf6e9;
+            --primary-200: #f9e5bb;
+            --primary-300: #f4d08d;
+            --primary-400: #efbb5f;
+            --primary-500: #daa520; /* Main brand color - Golden Brown */
+            --primary-600: #b38517;
+            --primary-700: #8c660f;
+            --primary-800: #664807;
+            --primary-900: #402c04;
+
+            /* Secondary Colors - Black */
+            --secondary-100: #e6e6e6;
+            --secondary-200: #cccccc;
+            --secondary-300: #b3b3b3;
+            --secondary-400: #999999;
+            --secondary-500: #000000; /* Pure Black */
+            --secondary-600: #1a1a1a;
+            --secondary-700: #333333;
+            --secondary-800: #4d4d4d;
+            --secondary-900: #666666;
+
+            /* Neutral Colors */
+            --neutral-white: #ffffff;
+            --neutral-gray-50: #f9fafb;
+            --neutral-gray-100: #f3f4f6;
+            --neutral-gray-200: #e5e7eb;
+            --neutral-gray-300: #d1d5db;
+            --neutral-gray-400: #9ca3af;
+
+            /* State Colors */
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --info: #3b82f6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', 'Poppins', Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--secondary-600);
+            background-color: var(--neutral-gray-100);
+            font-size: 16px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .notification {
+            background-color: var(--neutral-white);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            text-align: center;
+            padding: 24px 20px;
+            background-color: var(--primary-500);
+            color: var(--neutral-white);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            color: var(--neutral-white);
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .logo {
+            margin-bottom: 16px;
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--neutral-white);
+        }
+
+        .content {
+            padding: 24px;
+        }
+
+        .greeting {
+            font-size: 18px;
+            margin-bottom: 16px;
+            color: var(--secondary-600);
+        }
+
+        .order-info {
+            background-color: var(--neutral-gray-50);
+            border-radius: 6px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+
+        .order-info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .order-info-label {
+            font-weight: 600;
+            color: var(--secondary-700);
+        }
+
+        .order-info-value {
+            color: var(--secondary-800);
+        }
+
+        .section-title {
+            font-size: 20px;
+            margin-bottom: 16px;
+            color: var(--primary-600);
+            border-bottom: 2px solid var(--primary-200);
+            padding-bottom: 8px;
+        }
+
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 24px;
+        }
+
+        .items-table th {
+            background-color: var(--primary-100);
+            text-align: left;
+            padding: 12px;
+            font-weight: 600;
+            color: var(--primary-700);
+            border-bottom: 2px solid var(--primary-300);
+        }
+
+        .items-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--neutral-gray-200);
+            color: var(--secondary-700);
+        }
+
+        .items-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .price {
+            font-family: 'Courier New', monospace;
+        }
+
+        .total-row {
+            background-color: var(--primary-100);
+            font-weight: 700;
+        }
+
+        .total-row td {
+            color: var(--primary-700);
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .shipping-info {
+            background-color: var(--neutral-gray-50);
+            border-radius: 6px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+
+        .shipping-info h3 {
+            font-size: 18px;
+            margin-bottom: 12px;
+            color: var(--secondary-600);
+        }
+
+        .shipping-detail {
+            margin-bottom: 8px;
+            color: var(--secondary-700);
+        }
+
+        .shipping-detail span {
+            font-weight: 600;
+            color: var(--secondary-700);
+            margin-right: 8px;
+        }
+
+        .action-button {
+            display: block;
+            text-align: center;
+            background-color: var(--primary-500);
+            color: var(--neutral-white);
+            padding: 12px 24px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 600;
+            margin: 24px auto;
+            max-width: 250px;
+        }
+
+        .stock-warning {
+            background-color: var(--warning);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin-top: 4px;
+            display: inline-block;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 24px;
+            background-color: var(--neutral-gray-50);
+            color: var(--secondary-600);
+            font-size: 14px;
+            border-top: 1px solid var(--neutral-gray-200);
+        }
+
+        .footer p {
+            margin-bottom: 8px;
+        }
+
+        @media screen and (max-width: 600px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .content {
+                padding: 16px;
+            }
+            
+            .items-table th, 
+            .items-table td {
+                padding: 8px;
+                font-size: 14px;
+            }
+            
+            .section-title {
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="notification">
+            <div class="header">
+                <div class="logo">STUMART</div>
+                <h1>New Order Notification</h1>
+                <p>You have received a new order</p>
+            </div>
+            
+            <div class="content">
+                <p class="greeting">Hello {{ vendor.business_name }},</p>
+                
+                <p>You have received a new order on Stumart. Please process this order as soon as possible.</p>
+                
+                <div class="order-info">
+                    <div class="order-info-row">
+                        <div class="order-info-label">Order Number:</div>
+                        <div class="order-info-value">{{ order.order_number }}</div>
+                    </div>
+                    <div class="order-info-row">
+                        <div class="order-info-label">Order Date:</div>
+                        <div class="order-info-value">{{ order.created_at|date:"F j, Y" }}</div>
+                    </div>
+                    <div class="order-info-row">
+                        <div class="order-info-label">Payment Status:</div>
+                        <div class="order-info-value">PAID</div>
+                    </div>
+                </div>
+                
+                <h2 class="section-title">Ordered Items</h2>
+                <table class="items-table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Details</th>
+                            <th>Qty</th>
+                            <th class="text-right">Price</th>
+                            <th class="text-right">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in vendor_items %}
+                        <tr>
+                            <td>{{ item.product.name }}</td>
+                            <td>
+                                {% if item.size %}Size: {{ item.size }}{% endif %}
+                                {% if item.color %}<br>Color: {{ item.color }}{% endif %}
+                                {% if item.product.in_stock <= 5 %}
+                                <div class="stock-warning">Low Stock: {{ item.product.in_stock }} left</div>
+                                {% endif %}
+                            </td>
+                            <td>{{ item.quantity }}</td>
+                            <td class="price text-right">₦{{ item.price|floatformat:2 }}</td>
+                            <td class="price text-right">₦{{ item.price|floatformat:2 }}</td>
+                        </tr>
+                        {% endfor %}
+                        
+                        <tr class="total-row">
+                            <td colspan="3"></td>
+                            <td class="text-right">Total:</td>
+                            <td class="price text-right">₦{{ vendor_total|floatformat:2 }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <h2 class="section-title">Shipping Information</h2>
+                <div class="shipping-info">
+                    <h3>Deliver to:</h3>
+                    <div class="shipping-detail">
+                        <span>Name:</span> {{ order.first_name }} {{ order.last_name }}
+                    </div>
+                    <div class="shipping-detail">
+                        <span>Address:</span> {{ order.address }}
+                    </div>
+                    <div class="shipping-detail">
+                        <span>City:</span> {{ order.city }}
+                    </div>
+                    <div class="shipping-detail">
+                        <span>State:</span> {{ order.state }}
+                    </div>
+                    <div class="shipping-detail">
+                        <span>Phone:</span> {{ order.phone }}
+                    </div>
+                </div>
+                
+                <p>Please prepare this order for shipping as soon as possible. Your wallet balance has been updated with this order amount.</p>
+                
+                <a href="{{ dashboard_url }}" class="action-button">View Order Details</a>
+                
+                <p>If you have any questions or concerns, please contact our vendor support team.</p>
+            </div>
+            
+            <div class="footer">
+                <p>&copy; {{ current_year }} Stumart. All rights reserved.</p>
+                <p>You are receiving this email because you are a registered vendor on Stumart.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
