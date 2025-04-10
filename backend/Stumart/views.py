@@ -617,7 +617,9 @@ class CreateOrderView(APIView):
                     product=cart_item.product,
                     quantity=cart_item.quantity,
                     price=cart_item.product.price,
-                    vendor=vendor_instance
+                    vendor=vendor_instance,
+                    color=cart_item.color if hasattr(cart_item, 'color') else None,
+                    size=cart_item.size if hasattr(cart_item, 'size') else None
                 )
             return Response({
                 'order_id': order.id,

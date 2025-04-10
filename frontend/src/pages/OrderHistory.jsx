@@ -131,20 +131,20 @@ const OrderHistory = () => {
                 <div className={style.shippingDetails}>
                   <h3>Shipping Details</h3>
                   <p>
-                    <strong>Name:</strong> {order.first_name} {order.last_name}
+                    <strong>Name:</strong> {order.shipping.first_name} {order.last_name}
                   </p>
                   <p>
-                    <strong>Email:</strong> {order.email}
+                    <strong>Email:</strong> {order.shipping.email}
                   </p>
                   <p>
-                    <strong>Phone:</strong> {order.phone}
+                    <strong>Phone:</strong> {order.shipping.phone}
                   </p>
                   <p>
-                    <strong>Address:</strong> {order.address}
+                    <strong>Address:</strong> {order.shipping.address}
                   </p>
                   {order.room_number && (
                     <p>
-                      <strong>Room/Apt:</strong> {order.room_number}
+                      <strong>Room/Apt:</strong> {order.shipping.room_number}
                     </p>
                   )}
                 </div>
