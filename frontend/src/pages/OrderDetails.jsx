@@ -1,3 +1,4 @@
+// OrderDetails.js
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -38,7 +39,9 @@ export default function OrderDetails() {
       }
     };
 
-    fetchOrderDetails();
+    if (orderNumber) {
+      fetchOrderDetails();
+    }
   }, [orderNumber]);
 
   const toggleSection = (section) => {
@@ -80,7 +83,7 @@ export default function OrderDetails() {
   }
 
   // Calculate total items
-  const totalItems = orderData.items.reduce(
+  const totalItems = orderData.order_items.reduce(
     (sum, item) => sum + item.quantity,
     0
   );
@@ -160,11 +163,10 @@ export default function OrderDetails() {
                   </div>
                   <div className={styles.itemPrice}>
                     <p className={styles.priceValue}>
-                      ${Number(item.price).toFixed(2)}
+                      ${item.price.toFixed(2)}
                     </p>
                     <p className={styles.priceSubtotal}>
-                      Subtotal: $
-                      {(Number(item.price) * item.quantity).toFixed(2)}
+                      Subtotal: ${(item.price * item.quantity).toFixed(2)}
                     </p>
                   </div>
                 </div>
@@ -197,7 +199,7 @@ export default function OrderDetails() {
                 <p className={styles.infoValue}>Standard Delivery</p>
                 <p className={`${styles.infoLabel} ${styles.mt4}`}>Cost</p>
                 <p className={styles.infoValue}>
-                  ${Number(orderData.shipping_fee).toFixed(2)}
+                  ${orderData.shipping_fee.toFixed(2)}
                 </p>
               </div>
               <div>
@@ -257,25 +259,25 @@ export default function OrderDetails() {
                 <div className={styles.summaryRow}>
                   <p className={styles.summaryLabel}>Subtotal</p>
                   <p className={styles.summaryValue}>
-                    ${Number(orderData.subtotal).toFixed(2)}
+                    ${orderData.subtotal.toFixed(2)}
                   </p>
                 </div>
                 <div className={styles.summaryRow}>
                   <p className={styles.summaryLabel}>Shipping</p>
                   <p className={styles.summaryValue}>
-                    ${Number(orderData.shipping_fee).toFixed(2)}
+                    ${orderData.shipping_fee.toFixed(2)}
                   </p>
                 </div>
                 <div className={styles.summaryRow}>
                   <p className={styles.summaryLabel}>Tax</p>
                   <p className={styles.summaryValue}>
-                    ${Number(orderData.tax).toFixed(2)}
+                    ${orderData.tax.toFixed(2)}
                   </p>
                 </div>
                 <div className={styles.totalRow}>
                   <p className={styles.totalLabel}>Total</p>
                   <p className={styles.totalValue}>
-                    ${Number(orderData.total).toFixed(2)}
+                    ${orderData.total.toFixed(2)}
                   </p>
                 </div>
               </div>

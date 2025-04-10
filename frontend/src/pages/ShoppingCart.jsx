@@ -113,7 +113,7 @@ const ShoppingCart = () => {
   }, []);
 
   if (loading) {
-    return <div className={styles.loading}>Loading your cart...</div>;
+    return <div style={{paddingTop:"10rem"}} className={styles.loading}>Loading your cart...</div>;
   }
 
   return (

@@ -945,26 +945,69 @@ class PaystackPaymentVerifyView(APIView):
             )
         
 
-class OrderDetailView(generics.RetrieveAPIView):
-    serializer_class = OrderDetailSerializer
-    lookup_field = 'order_number'
-    
-    def get_queryset(self):
-        # If user is authenticated, show their orders
-        if self.request.user.is_authenticated:
-            return Order.objects.filter(user=self.request.user)
-        
-        # If user is not authenticated, use the order number from URL
-        # This allows customers to view their order after payment without logging in
-        return Order.objects.all()
-    
-    def retrieve(self, request, *args, **kwargs):
+class OrderDetailView(APIView):
+    def get (request, order_number):
+        """Get details for a specific order by order number"""
         try:
-            instance = self.get_object()
-            serializer = self.get_serializer(instance)
-            return Response(serializer.data)
-        except:
-            return Response(
-                {"error": "Order not found"}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
+            # Try to find the order
+            order = get_object_or_404(Order, order_number=order_number)
+            
+            # Get all order items
+            order_items = OrderItem.objects.filter(order=order)
+            
+            # Try to get the transaction
+            try:
+                transaction = Transaction.objects.get(order=order)
+                transaction_data = {
+                    'transaction_id': transaction.transaction_id,
+                    'amount': float(transaction.amount),
+                    'status': transaction.status,
+                    'payment_method': transaction.payment_method,
+                    'created_at': transaction.created_at
+                }
+            except Transaction.DoesNotExist:
+                transaction_data = None
+            
+            # Format the order items
+            items_data = []
+            for item in order_items:
+                product_data = {
+                    'id': item.product.id,
+                    'name': item.product.name,
+                    'image': str(item.product.image) if item.product.image else None
+                }
+                
+                items_data.append({
+                    'id': item.id,
+                    'product': product_data,
+                    'quantity': item.quantity,
+                    'price': float(item.price),
+                    'size': item.size,
+                    'color': item.color,
+                    'vendor': item.vendor.user.username if item.vendor else None
+                })
+            
+            # Build the response
+            response_data = {
+                'id': order.id,
+                'order_number': order.order_number,
+                'first_name': order.first_name,
+                'last_name': order.last_name,
+                'email': order.email,
+                'phone': order.phone,
+                'address': order.address,
+                'room_number': order.room_number,
+                'subtotal': float(order.subtotal),
+                'shipping_fee': float(order.shipping_fee),
+                'tax': float(order.tax),
+                'total': float(order.total),
+                'order_status': order.order_status,
+                'created_at': order.created_at,
+                'order_items': items_data,
+                'transaction': transaction_data
+            }
+            
+            return Response(response_data)
+        
+        except Exception as e:
+            return Response({'error': str(e)}, status=400)
