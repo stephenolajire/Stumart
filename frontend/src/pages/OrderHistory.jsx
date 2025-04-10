@@ -131,7 +131,7 @@ const OrderHistory = () => {
                 <div className={style.shippingDetails}>
                   <h3>Shipping Details</h3>
                   <p>
-                    <strong>Name:</strong> {order.shipping.first_name} {order.last_name}
+                    <strong>Name:</strong> {order.shipping.first_name} {order.shipping.last_name}
                   </p>
                   <p>
                     <strong>Email:</strong> {order.shipping.email}
@@ -142,7 +142,7 @@ const OrderHistory = () => {
                   <p>
                     <strong>Address:</strong> {order.shipping.address}
                   </p>
-                  {order.room_number && (
+                  {order.shipping.room_number && (
                     <p>
                       <strong>Room/Apt:</strong> {order.shipping.room_number}
                     </p>
@@ -168,7 +168,7 @@ const OrderHistory = () => {
                         <div className={style.itemDetails}>
                           <h4>{item.product.name}</h4>
                           <p className={style.itemVendor}>
-                            Sold by: {item.vendor.business_name}
+                            Sold by: {item.vendor}
                           </p>
                           {item.size && <p>Size: {item.size}</p>}
                           {item.color && <p>Color: {item.color}</p>}
