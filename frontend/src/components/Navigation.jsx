@@ -31,7 +31,7 @@ const Navigation = () => {
           <img className={styles.imgLogo} src={logo} alt="StuMart" />
         </NavLink>
 
-        <div style={{display:"flex", flexDirection:"row"}}>
+        <div style={{ display: "flex", flexDirection: "row" }}>
           <Link to="shopping-cart">
             <FaCartPlus
               className={styles.cartIcon}
@@ -101,6 +101,18 @@ const Navigation = () => {
           >
             Contact Us
           </NavLink>
+
+          {isAuthenticated && (
+            <NavLink
+              to="/order-history"
+              className={({ isActive }) =>
+                isActive ? `${styles.link} ${styles.activeLink}` : styles.link
+              }
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Orders
+            </NavLink>
+          )}
 
           {isAuthenticated ? (
             <div className={styles.authButtons}>

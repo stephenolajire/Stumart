@@ -25,6 +25,7 @@ import ShoppingCart from "./pages/ShoppingCart";
 import Checkout from "./pages/Checkout";
 import OrderDetails from "./pages/OrderDetails";
 import PaymentVerification from "./pages/PaymentVerification";
+import OrderHistory from "./pages/OrderHistory";
 
 function App() {
   return (
@@ -42,6 +43,9 @@ function App() {
             <Route path="product/:productId" element={<ProductDetails />} />
             <Route path="other-services" element={<OtherService />} />
             <Route path="shopping-cart" element={<ShoppingCart />} />
+            <Route path="order-history" element={<ProtectedRoute>
+              <OrderHistory />
+            </ProtectedRoute>} />
             <Route
               path="checkout"
               element={

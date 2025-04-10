@@ -1011,3 +1011,54 @@ class OrderDetailView(APIView):
         
         except Exception as e:
             return Response({'error': str(e)}, status=400)
+        
+
+class OrderHistoryView(APIView):
+    def get (self, requests):
+        """Get all orders for the authenticated user"""
+        try:
+            user = requests.user
+            
+            # Get all orders for the user
+            orders = Order.objects.filter(user=user).order_by('-created_at')
+            
+            # Format the order data
+            order_data = []
+            for order in orders:
+                order_items = OrderItem.objects.filter(order=order)
+                
+                items_data = []
+                for item in order_items:
+                    product_data = {
+                        'id': item.product.id,
+                        'name': item.product.name,
+                        'image': str(item.product.image) if item.product.image else None
+                    }
+                    
+                    items_data.append({
+                        'id': item.id,
+                        'product': product_data,
+                        'quantity': item.quantity,
+                        'price': float(item.price),
+                        'size': item.size,
+                        'color': item.color,
+                        'vendor': item.vendor.business_name if item.vendor else None
+                    })
+                
+                order_data.append({
+                    'id': order.id,
+                    'order_number': order.order_number,
+                    'subtotal': float(order.subtotal),
+                    'shipping_fee': float(order.shipping_fee),
+                    'tax': float(order.tax),
+                    'total': float(order.total),
+                    'order_status': order.order_status,
+                    'created_at': order.created_at,
+                    'order_items': items_data
+                })
+            
+            return Response(order_data, status=200)
+        
+        except Exception as e:
+            return Response({'error': str(e)}, status=400)
+    
