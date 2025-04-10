@@ -1,5 +1,6 @@
 // OrderHistory.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { useReactToPrint } from "react-to-print";
 import api from "../constant/api";
 import style from "../css/OrderHistory.module.css";
 
@@ -8,13 +9,13 @@ const OrderHistory = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [expandedOrder, setExpandedOrder] = useState(null);
+  const printRefs = useRef({});
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
         const response = await api.get("orders/");
         setOrders(response.data);
-        console.log(response.data);
         setLoading(false);
       } catch (err) {
         setError("Failed to load your order history. Please try again later.");
@@ -56,6 +57,10 @@ const OrderHistory = () => {
       day: "numeric",
     }).format(date);
   };
+
+  const handlePrint = useReactToPrint({
+    content: () => printRefs.current[expandedOrder],
+  });
 
   if (loading) {
     return (
@@ -117,7 +122,7 @@ const OrderHistory = () => {
                   {order.order_status}
                 </div>
                 <div className={style.orderTotal}>
-                  <span>Total:</span> ${order.total.toFixed(2)}
+                  <span>Total:</span> ₦{order.total.toFixed(2)}
                 </div>
               </div>
 
@@ -127,7 +132,10 @@ const OrderHistory = () => {
             </div>
 
             {expandedOrder === order.order_number && (
-              <div className={style.orderDetails}>
+              <div
+                className={style.orderDetails}
+                ref={(el) => (printRefs.current[order.order_number] = el)}
+              >
                 <div className={style.shippingDetails}>
                   <h3>Shipping Details</h3>
                   <p>
@@ -189,29 +197,36 @@ const OrderHistory = () => {
                 <div className={style.orderSummaryTotals}>
                   <div className={style.summaryLine}>
                     <span>Subtotal:</span>
-                    <span>${order.subtotal.toFixed(2)}</span>
+                    <span>₦{order.subtotal.toFixed(2)}</span>
                   </div>
                   <div className={style.summaryLine}>
                     <span>Shipping:</span>
-                    <span>${order.shipping_fee.toFixed(2)}</span>
+                    <span>₦{order.shipping_fee.toFixed(2)}</span>
                   </div>
                   <div className={style.summaryLine}>
                     <span>Tax:</span>
-                    <span>${order.tax.toFixed(2)}</span>
+                    <span>₦{order.tax.toFixed(2)}</span>
                   </div>
                   <div className={`${style.summaryLine} ${style.total}`}>
                     <span>Total:</span>
-                    <span>${order.total.toFixed(2)}</span>
+                    <span>₦{order.total.toFixed(2)}</span>
                   </div>
                 </div>
 
-                {order.order_status.toUpperCase() === "PENDING" && (
-                  <div className={style.orderActions}>
+                <div className={style.orderActions}>
+                  {order.order_status.toUpperCase() === "PENDING" ? (
                     <button className={style.cancelOrderBtn}>
                       Cancel Order
                     </button>
-                  </div>
-                )}
+                  ) : (
+                    <button
+                      className={style.cancelOrderBtn}
+                      onClick={handlePrint}
+                    >
+                      Print Receipt
+                    </button>
+                  )}
+                </div>
               </div>
             )}
           </div>
