@@ -23,8 +23,8 @@ from django.conf import settings
 import requests
 from django.core.mail import EmailMultiAlternatives, send_mail
 from django.template.loader import render_to_string
-from xhtml2pdf import pisa
-from django.core.files.base import ContentFile
+from django.http import HttpResponse
+from weasyprint import HTML
 from io import BytesIO
 from django.utils.timezone import now
 import logging
@@ -829,16 +829,30 @@ class PaystackPaymentVerifyView(APIView):
                 try:
                     # Filter items for this specific vendor
                     vendor_items = []
+                    vendor_total = 0  # Initialize total for this vendor
+                    
                     for item in order_items:
                         if hasattr(item, 'vendor') and item.vendor is not None and item.vendor.id == vendor.id:
+                            # Ensure price is a valid number
+                            if item.price is None:
+                                item.price = 0
+                                
+                            # Calculate the total for each item (use subtotal to match template)
+                            item.subtotal = item.price * item.quantity
+                            
+                            # Add to vendor total
+                            vendor_total += item.subtotal
+                            
                             vendor_items.append(item)
                     
                     if vendor_items:
                         vendor_context = {
                             "order": order,
-                            "order_items": vendor_items,
+                            "vendor_items": vendor_items,  # Make sure to use vendor_items, not order_items
                             "vendor": vendor,
                             "current_year": now().year,
+                            "total": vendor_total,  # Add the total sum to the context
+                            "dashboard_url": f"{settings.FRONTEND_URL}/vendor/dashboard/orders/{order.order_number}"
                         }
                         
                         vendor_html_content = render_to_string("email/ordered.html", vendor_context)
@@ -866,6 +880,14 @@ class PaystackPaymentVerifyView(APIView):
 
             # Prepare receipt PDF for the customer
             try:
+                # Process order items to add total
+                for item in order_items:
+                    # Ensure price is a valid number
+                    if item.price is None:
+                        item.price = 0
+                    # Calculate the total for each item
+                    item.total = item.price * item.quantity
+                
                 context = {
                     "order": order,
                     "order_items": order_items,
@@ -874,23 +896,22 @@ class PaystackPaymentVerifyView(APIView):
 
                 html_content = render_to_string("email/receipts.html", context)
 
+                # Generate PDF with WeasyPrint
                 pdf_buffer = BytesIO()
-                pisa_status = pisa.CreatePDF(html_content, dest=pdf_buffer)
+                HTML(string=html_content).write_pdf(pdf_buffer)
+                pdf_buffer.seek(0)  # Reset buffer position to the beginning
 
-                if not pisa_status.err:
-                    # Email buyer receipt
-                    email_subject = f"Your Order Receipt - #{order.order_number}"
-                    email = EmailMultiAlternatives(
-                        subject=email_subject,
-                        body="Your order receipt is attached as a PDF.",
-                        from_email=settings.DEFAULT_FROM_EMAIL,
-                        to=[order.email],
-                    )
-                    email.attach_alternative(html_content, "text/html")
-                    email.attach(f"receipt_{order.order_number}.pdf", pdf_buffer.getvalue(), "application/pdf")
-                    email.send()
-                else:
-                    logger.error("Error generating PDF receipt")
+                # Email buyer receipt
+                email_subject = f"Your Order Receipt - #{order.order_number}"
+                email = EmailMultiAlternatives(
+                    subject=email_subject,
+                    body="Your order receipt is attached as a PDF.",
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    to=[order.email],
+                )
+                email.attach_alternative(html_content, "text/html")
+                email.attach(f"receipt_{order.order_number}.pdf", pdf_buffer.getvalue(), "application/pdf")
+                email.send()
             except Exception as e:
                 logger.error(f"Error with receipt generation or sending: {str(e)}")
 

@@ -303,7 +303,7 @@
                         <span>Phone:</span> {{ order.phone }}
                     </div>
                     <div class="customer-detail">
-                        <span>Shipping Address:</span> {{ order.address }}, {{ order.city }}, {{ order.state }}
+                        <span>Shipping Address:</span> {{ order.address }}
                     </div>
                 </div>
                 
@@ -328,14 +328,14 @@
                             </td>
                             <td>{{ item.quantity }}</td>
                             <td class="price text-right">₦{{ item.price|floatformat:2 }}</td>
-                            <td class="price text-right">₦{{ item.price|floatformat:2 }}</td>
+                            <td class="price text-right">₦{{ item.total|floatformat:2 }}</td>
                         </tr>
                         {% endfor %}
                         
                         <tr class="subtotal-row">
                             <td colspan="3"></td>
                             <td class="text-right">Subtotal:</td>
-                            <td class="price text-right">₦{{ order.total_price|floatformat:2 }}</td>
+                            <td class="price text-right">₦{{ order.subtotal|floatformat:2 }}</td>
                         </tr>
                         <tr>
                             <td colspan="3"></td>
@@ -345,7 +345,7 @@
                         <tr class="total-row">
                             <td colspan="3"></td>
                             <td class="text-right">Total:</td>
-                            <td class="price text-right">₦{{ order.total_price|floatformat:2 }}</td>
+                            <td class="price text-right">₦{{ order.total|floatformat:2 }}</td>
                         </tr>
                     </tbody>
                 </table>
