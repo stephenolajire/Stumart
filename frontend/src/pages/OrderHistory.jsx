@@ -1,7 +1,7 @@
 // OrderHistory.jsx
 import React, { useState, useEffect } from "react";
 import api from "../constant/api";
-import "../css/OrderHistory.module.css";
+import style from "../css/OrderHistory.module.css";
 
 const OrderHistory = () => {
   const [orders, setOrders] = useState([]);
@@ -25,27 +25,23 @@ const OrderHistory = () => {
   }, []);
 
   const toggleOrderDetails = (orderId) => {
-    if (expandedOrder === orderId) {
-      setExpandedOrder(null); // collapse if already expanded
-    } else {
-      setExpandedOrder(orderId); // expand this order
-    }
+    setExpandedOrder((prev) => (prev === orderId ? null : orderId));
   };
 
   const getStatusClass = (status) => {
     switch (status.toUpperCase()) {
       case "PENDING":
-        return "status-pending";
+        return style.statusPending;
       case "PROCESSING":
-        return "status-processing";
+        return style.statusProcessing;
       case "SHIPPED":
-        return "status-shipped";
+        return style.statusShipped;
       case "DELIVERED":
-        return "status-delivered";
+        return style.statusDelivered;
       case "CANCELLED":
-        return "status-cancelled";
-       case "COMPLETED":
-            return "status-completed";
+        return style.statusCancelled;
+      case "COMPLETED":
+        return style.statusCompleted;
       default:
         return "";
     }
@@ -62,76 +58,76 @@ const OrderHistory = () => {
 
   if (loading) {
     return (
-      <div className="order-history-container">
-        <div className="loading-spinner">Loading your orders...</div>
+      <div className={style.orderHistoryContainer}>
+        <div className={style.loadingSpinner}>Loading your orders...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="order-history-container">
-        <div className="error-message">{error}</div>
+      <div className={style.orderHistoryContainer}>
+        <div className={style.errorMessage}>{error}</div>
       </div>
     );
   }
 
   if (orders.length === 0) {
     return (
-      <div className="order-history-container">
-        <div className="empty-orders">
+      <div className={style.orderHistoryContainer}>
+        <div className={style.emptyOrders}>
           <h2>No Orders Yet</h2>
           <p>
             You haven't placed any orders yet. Start shopping to see your orders
             here!
           </p>
-          <button className="shop-now-btn">Shop Now</button>
+          <button className={style.shopNowBtn}>Shop Now</button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="order-history-container">
-      <h1 className="order-history-title">My Orders</h1>
+    <div className={style.orderHistoryContainer}>
+      <h1 className={style.orderHistoryTitle}>My Orders</h1>
 
-      <div className="orders-list">
+      <div className={style.ordersList}>
         {orders.map((order) => (
-          <div className="order-card" key={order.order_number}>
+          <div className={style.orderCard} key={order.order_number}>
             <div
-              className="order-header"
+              className={style.orderHeader}
               onClick={() => toggleOrderDetails(order.order_number)}
             >
-              <div className="order-summary">
-                <div className="order-number">
+              <div className={style.orderSummary}>
+                <div className={style.orderNumber}>
                   <span>Order #:</span> {order.order_number}
                 </div>
-                <div className="order-date">
+                <div className={style.orderDate}>
                   <span>Date:</span> {formatDate(order.created_at)}
                 </div>
               </div>
 
-              <div className="order-status-price">
+              <div className={style.orderStatusPrice}>
                 <div
-                  className={`order-status ${getStatusClass(
+                  className={`${style.orderStatus} ${getStatusClass(
                     order.order_status
                   )}`}
                 >
                   {order.order_status}
                 </div>
-                <div className="order-total">
+                <div className={style.orderTotal}>
                   <span>Total:</span> ${order.total.toFixed(2)}
                 </div>
               </div>
 
-              <div className="expand-icon">
+              <div className={style.expandIcon}>
                 {expandedOrder === order.order_number ? "−" : "+"}
               </div>
             </div>
 
             {expandedOrder === order.order_number && (
-              <div className="order-details">
-                <div className="shipping-details">
+              <div className={style.orderDetails}>
+                <div className={style.shippingDetails}>
                   <h3>Shipping Details</h3>
                   <p>
                     <strong>Name:</strong> {order.first_name} {order.last_name}
@@ -152,62 +148,66 @@ const OrderHistory = () => {
                   )}
                 </div>
 
-                <div className="order-items-container">
+                <div className={style.orderItemsContainer}>
                   <h3>Order Items</h3>
                   {order.order_items &&
                     order.order_items.map((item) => (
-                      <div className="order-item" key={item.id}>
-                        <div className="item-image">
+                      <div className={style.orderItem} key={item.id}>
+                        <div className={style.itemImage}>
                           {item.product.image ? (
                             <img
                               src={item.product.image}
                               alt={item.product.name}
                             />
                           ) : (
-                            <div className="no-image">No Image</div>
+                            <div className={style.noImage}>No Image</div>
                           )}
                         </div>
 
-                        <div className="item-details">
+                        <div className={style.itemDetails}>
                           <h4>{item.product.name}</h4>
-                          <p className="item-vendor">
+                          <p className={style.itemVendor}>
                             Sold by: {item.vendor.business_name}
                           </p>
                           {item.size && <p>Size: {item.size}</p>}
                           {item.color && <p>Color: {item.color}</p>}
-                          <div className="item-price-qty">
-                            <p className="item-price">
+                          <div className={style.itemPriceQty}>
+                            <p className={style.itemPrice}>
                               ${item.price.toFixed(2)}
                             </p>
-                            <p className="item-qty">Qty: {item.quantity}</p>
+                            <p className={style.itemQty}>
+                              Qty: {item.quantity}
+                            </p>
                           </div>
                         </div>
                       </div>
                     ))}
                 </div>
 
-                <div className="order-summary-totals">
-                  <div className="summary-line">
+                <div className={style.orderSummaryTotals}>
+                  <div className={style.summaryLine}>
                     <span>Subtotal:</span>
                     <span>${order.subtotal.toFixed(2)}</span>
                   </div>
-                  <div className="summary-line">
+                  <div className={style.summaryLine}>
                     <span>Shipping:</span>
                     <span>${order.shipping_fee.toFixed(2)}</span>
                   </div>
-                  <div className="summary-line">
+                  <div className={style.summaryLine}>
                     <span>Tax:</span>
                     <span>${order.tax.toFixed(2)}</span>
                   </div>
-                  <div className="summary-line total">
+                  <div className={`${style.summaryLine} ${style.total}`}>
                     <span>Total:</span>
                     <span>${order.total.toFixed(2)}</span>
                   </div>
                 </div>
 
                 {order.order_status.toUpperCase() === "PENDING" && (
-                  <div className="order-actions">
-                    <button className="cancel-order-btn">Cancel Order</button>
+                  <div className={style.orderActions}>
+                    <button className={style.cancelOrderBtn}>
+                      Cancel Order
+                    </button>
                   </div>
                 )}
               </div>
