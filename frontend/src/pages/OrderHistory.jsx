@@ -14,6 +14,7 @@ const OrderHistory = () => {
       try {
         const response = await api.get("orders/");
         setOrders(response.data);
+        console.log(response.data);
         setLoading(false);
       } catch (err) {
         setError("Failed to load your order history. Please try again later.");
