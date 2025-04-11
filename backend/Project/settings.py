@@ -96,9 +96,9 @@ WSGI_APPLICATION = 'Project.wsgi.application'
 #     }
 # }
 
-# DATABASES = {
-#     "default": dj_database_url.parse(config("external_url"))
-# }
+DATABASES = {
+    "default": dj_database_url.parse(config("external_url"))
+}
 
 
 # DATABASES = {
