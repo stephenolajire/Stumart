@@ -865,47 +865,7 @@ class PaystackPaymentVerifyView(APIView):
                         logger.error(f"Vendor with ID {vendor_id} not found when processing payment")
                         continue
 
-                # Prepare customer receipt PDF that will be reused
-                customer_pdf_buffer = None
-                try:
-                    # Process order items to add total
-                    for item in order_items:
-                        # Ensure price is a valid number
-                        item_price = item.price if item.price is not None else 0
-                        
-                        # Calculate the total for each item
-                        item.total = item_price * item.quantity
-                    
-                    context = {
-                        "order": order,
-                        "order_items": order_items,
-                        "current_year": now().year,
-                    }
-
-                    html_content = render_to_string("email/receipts.html", context)
-
-                    # Generate PDF with WeasyPrint
-                    customer_pdf_buffer = BytesIO()
-                    HTML(string=html_content).write_pdf(customer_pdf_buffer)
-                    customer_pdf_buffer.seek(0)  # Reset buffer position to the beginning
-
-                    # Email buyer receipt
-                    email_subject = f"Your Order Receipt - #{order.order_number}"
-                    email = EmailMultiAlternatives(
-                        subject=email_subject,
-                        body="Your order receipt is attached as a PDF.",
-                        from_email=settings.DEFAULT_FROM_EMAIL,
-                        to=[order.email],
-                    )
-                    email.attach_alternative(html_content, "text/html")
-                    email.attach(f"receipt_{order.order_number}.pdf", customer_pdf_buffer.getvalue(), "application/pdf")
-                    email.send()
-                    
-                    logger.info(f"Sent receipt email to customer {order.email} for order {order.order_number}")
-                except Exception as e:
-                    logger.error(f"Error with customer receipt generation or sending: {str(e)}", exc_info=True)
-
-                # Send order notifications to all vendors with PDF receipts
+                # Send order notifications to all vendors - improved implementation
                 for vendor in vendors_to_notify:
                     try:
                         # Filter items for this specific vendor
@@ -942,22 +902,7 @@ class PaystackPaymentVerifyView(APIView):
                             # Render HTML email template
                             vendor_html_content = render_to_string("email/ordered.html", vendor_context)
                             
-                            # Create vendor-specific PDF receipt
-                            vendor_pdf_buffer = BytesIO()
-                            # Create a vendor-specific receipt template that only shows their items
-                            vendor_receipt_context = {
-                                "order": order,
-                                "order_items": vendor_items,  # Only include this vendor's items
-                                "current_year": now().year,
-                                "is_vendor": True,
-                                "vendor": vendor,
-                                "vendor_total": vendor_total
-                            }
-                            vendor_receipt_html = render_to_string("email/vendor_receipt.html", vendor_receipt_context)
-                            HTML(string=vendor_receipt_html).write_pdf(vendor_pdf_buffer)
-                            vendor_pdf_buffer.seek(0)
-                            
-                            # Create and send email with both HTML and text versions, including PDF
+                            # Create and send email with both HTML and text versions
                             vendor_email = EmailMultiAlternatives(
                                 subject=f"New Order Received - #{order.order_number}",
                                 body=f"You have received a new order #{order.order_number}.",
@@ -965,25 +910,9 @@ class PaystackPaymentVerifyView(APIView):
                                 to=[vendor.user.email],
                             )
                             vendor_email.attach_alternative(vendor_html_content, "text/html")
-                            
-                            # Attach vendor-specific PDF receipt
-                            vendor_email.attach(
-                                f"vendor_receipt_{order.order_number}.pdf", 
-                                vendor_pdf_buffer.getvalue(), 
-                                "application/pdf"
-                            )
-                            
-                            # Also attach a copy of the full customer receipt if we have it
-                            if customer_pdf_buffer:
-                                vendor_email.attach(
-                                    f"customer_receipt_{order.order_number}.pdf",
-                                    customer_pdf_buffer.getvalue(),
-                                    "application/pdf"
-                                )
-                                
                             vendor_email.send()
                             
-                            logger.info(f"Order notification with PDFs sent to vendor {vendor.id} for order {order.order_number}")
+                            logger.info(f"Order notification sent to vendor {vendor.id} for order {order.order_number}")
                     except Exception as e:
                         logger.error(f"Error sending notification to vendor {vendor.id}: {str(e)}", exc_info=True)
                         continue  # Continue with other vendors even if one fails
@@ -998,6 +927,45 @@ class PaystackPaymentVerifyView(APIView):
                         logger.warning(f"Cart with code {cart_code} not found for deletion after payment")
                     except Exception as e:
                         logger.error(f"Error deleting cart {cart_code}: {str(e)}")
+
+                # Prepare receipt PDF for the customer
+                try:
+                    # Process order items to add total
+                    for item in order_items:
+                        # Ensure price is a valid number
+                        item_price = item.price if item.price is not None else 0
+                        
+                        # Calculate the total for each item
+                        item.total = item_price * item.quantity
+                    
+                    context = {
+                        "order": order,
+                        "order_items": order_items,
+                        "current_year": now().year,
+                    }
+
+                    html_content = render_to_string("email/receipts.html", context)
+
+                    # Generate PDF with WeasyPrint
+                    pdf_buffer = BytesIO()
+                    HTML(string=html_content).write_pdf(pdf_buffer)
+                    pdf_buffer.seek(0)  # Reset buffer position to the beginning
+
+                    # Email buyer receipt
+                    email_subject = f"Your Order Receipt - #{order.order_number}"
+                    email = EmailMultiAlternatives(
+                        subject=email_subject,
+                        body="Your order receipt is attached as a PDF.",
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        to=[order.email],
+                    )
+                    email.attach_alternative(html_content, "text/html")
+                    email.attach(f"receipt_{order.order_number}.pdf", pdf_buffer.getvalue(), "application/pdf")
+                    email.send()
+                    
+                    logger.info(f"Sent receipt email to customer {order.email} for order {order.order_number}")
+                except Exception as e:
+                    logger.error(f"Error with receipt generation or sending: {str(e)}", exc_info=True)
 
             return Response({
                 'status': 'success',
