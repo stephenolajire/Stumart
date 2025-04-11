@@ -20,6 +20,7 @@ import json
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.http import HttpResponse
+from decimal import Decimal
 
 class DashboardStatsView(views.APIView):
     permission_classes = [IsAuthenticated]
@@ -245,52 +246,62 @@ class PaymentViewSet(viewsets.ReadOnlyModelViewSet):
     
     @action(detail=False, methods=['get'])
     def summary(self, request):
-        vendor = request.user.vendor_profile
-        vendor_orders = Order.objects.filter(order_items__vendor=vendor)
+        try:
+            vendor = request.user.vendor_profile
+        except Vendor.DoesNotExist:
+            return Response({"error": "Vendor profile not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        # Find orders containing items from this vendor
+        vendor_order_items = OrderItem.objects.filter(vendor=vendor)
+        vendor_orders = Order.objects.filter(order_items__in=vendor_order_items).distinct()
         
         # Get transaction amounts for these orders
         transactions = Transaction.objects.filter(order__in=vendor_orders)
+        wallet_balance = Wallet.objects.get(vendor=vendor).balance
         
         # Calculate stats
-        total_amount = transactions.aggregate(Sum('amount'))['amount__sum'] or 0
+        total_amount = vendor_orders.aggregate(Sum('subtotal'))['subtotal__sum'] or 0
         paid_amount = transactions.filter(status='PAID').aggregate(Sum('amount'))['amount__sum'] or 0
         pending_amount = transactions.filter(status__in=['PENDING', 'PROCESSING']).aggregate(Sum('amount'))['amount__sum'] or 0
         
         return Response({
-            'total_amount': total_amount,
-            'paid_amount': paid_amount,
-            'pending_amount': pending_amount,
+            'total_amount': float(total_amount),  # Convert Decimal to float for JSON
+            'paid_amount': float(wallet_balance),
+            'pending_amount': float(pending_amount),
             'total_transactions': transactions.count()
         })
     
     @action(detail=False, methods=['post'])
     def withdraw(self, request):
-        vendor = request.user
+        try:
+            vendor = request.user.vendor_profile
+        except Vendor.DoesNotExist:
+            return Response({"error": "Vendor profile not found"}, status=status.HTTP_404_NOT_FOUND)
         
         try:
             wallet = Wallet.objects.get(vendor=vendor)
         except Wallet.DoesNotExist:
-            return Response({"error": "Wallet not found"}, status=404)
+            return Response({"error": "Wallet not found"}, status=status.HTTP_404_NOT_FOUND)
         
         # Validate withdrawal amount
         amount = request.data.get('amount')
         if not amount:
-            return Response({"error": "Amount is required"}, status=400)
+            return Response({"error": "Amount is required"}, status=status.HTTP_400_BAD_REQUEST)
         
         try:
             amount = float(amount)
         except ValueError:
-            return Response({"error": "Invalid amount format"}, status=400)
+            return Response({"error": "Invalid amount format"}, status=status.HTTP_400_BAD_REQUEST)
         
         if wallet.balance < amount:
-            return Response({"error": "Insufficient balance"}, status=400)
+            return Response({"error": "Insufficient balance"}, status=status.HTTP_400_BAD_REQUEST)
         
         # Generate a unique reference for this withdrawal
         reference = f"WDR-{uuid.uuid4().hex[:10]}"
         
         # Check if bank details are available
-        if not vendor.account_number or not vendor.bank_name or not vendor.account_name:
-            return Response({"error": "Bank account details are incomplete"}, status=400)
+        if not vendor.bank_name or not vendor.account_number or not vendor.account_name:
+            return Response({"error": "Bank account details are incomplete"}, status=status.HTTP_400_BAD_REQUEST)
         
         # Create withdrawal record
         withdrawal = Withdrawal.objects.create(
@@ -300,133 +311,183 @@ class PaymentViewSet(viewsets.ReadOnlyModelViewSet):
             status="PROCESSING"
         )
         
-        # First, verify if vendor has a recipient code already
-        if not hasattr(vendor, 'paystack_recipient_code') or not vendor.paystack_recipient_code:
-            # Need to create a recipient first
-            recipient = self.create_paystack_recipient(vendor)
-            if not recipient:
-                withdrawal.status = "FAILED"
-                withdrawal.notes = "Failed to create transfer recipient"
-                withdrawal.save()
-                return Response({"error": "Could not create transfer recipient"}, status=400)
-            
-            vendor.paystack_recipient_code = recipient
-            vendor.save()
+        # For real payment processing with Paystack, you'd use the code you already have
+        # But for testing or if you're not yet integrated with Paystack, you could simplify:
         
-        # Process withdrawal through Paystack
-        headers = {
-            "Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}",
-            "Content-Type": "application/json"
-        }
+        # Deduct the amount from wallet
+        wallet.balance -= Decimal(str(amount))
+        wallet.save()
         
-        payload = {
-            "source": "balance",
-            "amount": int(amount * 100),  # Paystack uses kobo/cents
-            "recipient": vendor.paystack_recipient_code,
-            "reason": f"Vendor withdrawal - {reference}"
-        }
-        
-        try:
-            # Make API request to Paystack
-            response = requests.post(
-                f"{settings.PAYSTACK_BASE_URL}/transfer",
-                json=payload,
-                headers=headers
-            )
-            
-            response_data = response.json()
-            
-            if response.status_code in [200, 201] and response_data.get('status'):
-                # Update withdrawal record with Paystack reference
-                withdrawal.payment_reference = response_data['data']['transfer_code']
-                withdrawal.status = "PROCESSING"  # Paystack transfers are async
-                withdrawal.save()
-                
-                # Deduct the amount from wallet
-                wallet.balance -= amount
-                wallet.save()
-                
-                return Response({
-                    "success": "Withdrawal request submitted successfully",
-                    "reference": reference,
-                    "status": "processing"
-                })
-            else:
-                # Log the error
-                withdrawal.status = "FAILED"
-                withdrawal.notes = f"Paystack Error: {response_data.get('message')}"
-                withdrawal.save()
-                
-                return Response({
-                    "error": "Payment processor error",
-                    "message": response_data.get('message', 'Unknown error')
-                }, status=400)
-                
-        except Exception as e:
-            # Handle exceptions
-            withdrawal.status = "FAILED"
-            withdrawal.notes = f"System Error: {str(e)}"
-            withdrawal.save()
-            
-            return Response({
-                "error": "Failed to process withdrawal",
-                "message": "An unexpected error occurred"
-            }, status=500)
+        return Response({
+            "success": "Withdrawal request submitted successfully",
+            "reference": reference,
+            "status": "processing"
+        })
     
-    def create_paystack_recipient(self, vendor):
-        """Create a Paystack recipient for transfers"""
-        bank_code = self.get_bank_code(vendor.bank_name)
+    # @action(detail=False, methods=['post'])
+    # def withdraw(self, request):
+    #     vendor = request.user
         
-        if not bank_code:
-            return None
+    #     try:
+    #         wallet = Wallet.objects.get(vendor=vendor)
+    #     except Wallet.DoesNotExist:
+    #         return Response({"error": "Wallet not found"}, status=404)
         
-        headers = {
-            "Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}",
-            "Content-Type": "application/json"
-        }
+    #     # Validate withdrawal amount
+    #     amount = request.data.get('amount')
+    #     if not amount:
+    #         return Response({"error": "Amount is required"}, status=400)
         
-        payload = {
-            "type": "nuban",
-            "name": vendor.account_name,
-            "account_number": vendor.account_number,
-            "bank_code": bank_code,
-            "currency": "NGN"  # Adjust based on your currency
-        }
+    #     try:
+    #         amount = float(amount)
+    #     except ValueError:
+    #         return Response({"error": "Invalid amount format"}, status=400)
         
-        try:
-            response = requests.post(
-                f"{settings.PAYSTACK_BASE_URL}/transferrecipient",
-                json=payload,
-                headers=headers
-            )
+    #     if wallet.balance < amount:
+    #         return Response({"error": "Insufficient balance"}, status=400)
+        
+    #     # Generate a unique reference for this withdrawal
+    #     reference = f"WDR-{uuid.uuid4().hex[:10]}"
+        
+    #     # Check if bank details are available
+    #     if not vendor.account_number or not vendor.bank_name or not vendor.account_name:
+    #         return Response({"error": "Bank account details are incomplete"}, status=400)
+        
+    #     # Create withdrawal record
+    #     withdrawal = Withdrawal.objects.create(
+    #         vendor=vendor,
+    #         amount=amount,
+    #         reference=reference,
+    #         status="PROCESSING"
+    #     )
+        
+    #     # First, verify if vendor has a recipient code already
+    #     if not hasattr(vendor, 'paystack_recipient_code') or not vendor.paystack_recipient_code:
+    #         # Need to create a recipient first
+    #         recipient = self.create_paystack_recipient(vendor)
+    #         if not recipient:
+    #             withdrawal.status = "FAILED"
+    #             withdrawal.notes = "Failed to create transfer recipient"
+    #             withdrawal.save()
+    #             return Response({"error": "Could not create transfer recipient"}, status=400)
             
-            if response.status_code == 201:
-                return response.json()['data']['recipient_code']
-        except Exception:
-            pass
+    #         vendor.paystack_recipient_code = recipient
+    #         vendor.save()
         
-        return None
+    #     # Process withdrawal through Paystack
+    #     headers = {
+    #         "Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}",
+    #         "Content-Type": "application/json"
+    #     }
+        
+    #     payload = {
+    #         "source": "balance",
+    #         "amount": int(amount * 100),  # Paystack uses kobo/cents
+    #         "recipient": vendor.paystack_recipient_code,
+    #         "reason": f"Vendor withdrawal - {reference}"
+    #     }
+        
+    #     try:
+    #         # Make API request to Paystack
+    #         response = requests.post(
+    #             f"{settings.PAYSTACK_BASE_URL}/transfer",
+    #             json=payload,
+    #             headers=headers
+    #         )
+            
+    #         response_data = response.json()
+            
+    #         if response.status_code in [200, 201] and response_data.get('status'):
+    #             # Update withdrawal record with Paystack reference
+    #             withdrawal.payment_reference = response_data['data']['transfer_code']
+    #             withdrawal.status = "PROCESSING"  # Paystack transfers are async
+    #             withdrawal.save()
+                
+    #             # Deduct the amount from wallet
+    #             wallet.balance -= amount
+    #             wallet.save()
+                
+    #             return Response({
+    #                 "success": "Withdrawal request submitted successfully",
+    #                 "reference": reference,
+    #                 "status": "processing"
+    #             })
+    #         else:
+    #             # Log the error
+    #             withdrawal.status = "FAILED"
+    #             withdrawal.notes = f"Paystack Error: {response_data.get('message')}"
+    #             withdrawal.save()
+                
+    #             return Response({
+    #                 "error": "Payment processor error",
+    #                 "message": response_data.get('message', 'Unknown error')
+    #             }, status=400)
+                
+    #     except Exception as e:
+    #         # Handle exceptions
+    #         withdrawal.status = "FAILED"
+    #         withdrawal.notes = f"System Error: {str(e)}"
+    #         withdrawal.save()
+            
+    #         return Response({
+    #             "error": "Failed to process withdrawal",
+    #             "message": "An unexpected error occurred"
+    #         }, status=500)
     
-    def get_bank_code(self, bank_name):
-        """Maps bank name to Paystack bank code"""
-        # This is a simplified example - in production you should use a more complete mapping
-        # or fetch the list dynamically from Paystack's API
-        bank_codes = {
-            "Access Bank": "044",
-            "Guaranty Trust Bank": "058",
-            "First Bank of Nigeria": "011",
-            "United Bank for Africa": "033",
-            "Zenith Bank": "057",
-            # Add more banks as needed
-        }
+    # def create_paystack_recipient(self, vendor):
+    #     """Create a Paystack recipient for transfers"""
+    #     bank_code = self.get_bank_code(vendor.bank_name)
         
-        # Case insensitive lookup with fallback
-        for name, code in bank_codes.items():
-            if bank_name.lower() in name.lower():
-                return code
+    #     if not bank_code:
+    #         return None
         
-        # If no match is found
-        return None 
+    #     headers = {
+    #         "Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}",
+    #         "Content-Type": "application/json"
+    #     }
+        
+    #     payload = {
+    #         "type": "nuban",
+    #         "name": vendor.account_name,
+    #         "account_number": vendor.account_number,
+    #         "bank_code": bank_code,
+    #         "currency": "NGN"  # Adjust based on your currency
+    #     }
+        
+    #     try:
+    #         response = requests.post(
+    #             f"{settings.PAYSTACK_BASE_URL}/transferrecipient",
+    #             json=payload,
+    #             headers=headers
+    #         )
+            
+    #         if response.status_code == 201:
+    #             return response.json()['data']['recipient_code']
+    #     except Exception:
+    #         pass
+        
+    #     return None
+    
+    # def get_bank_code(self, bank_name):
+    #     """Maps bank name to Paystack bank code"""
+    #     # This is a simplified example - in production you should use a more complete mapping
+    #     # or fetch the list dynamically from Paystack's API
+    #     bank_codes = {
+    #         "Access Bank": "044",
+    #         "Guaranty Trust Bank": "058",
+    #         "First Bank of Nigeria": "011",
+    #         "United Bank for Africa": "033",
+    #         "Zenith Bank": "057",
+    #         # Add more banks as needed
+    #     }
+        
+    #     # Case insensitive lookup with fallback
+    #     for name, code in bank_codes.items():
+    #         if bank_name.lower() in name.lower():
+    #             return code
+        
+    #     # If no match is found
+    #     return None 
 
 @csrf_exempt
 @require_POST

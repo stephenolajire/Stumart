@@ -30,6 +30,8 @@ const Payments = () => {
       ]);
 
       setPayments(paymentsData);
+      console.log("Payments Data:", paymentsData);
+      console.log("Payment Summary Data:", summaryData);
       setPaymentStats(summaryData);
     } catch (error) {
       console.error("Payments data fetch error:", error);
@@ -53,7 +55,7 @@ const Payments = () => {
         if (parseFloat(value) <= 0) {
           return "Amount must be greater than zero!";
         }
-        if (parseFloat(value) > paymentStats.paid_amount) {
+        if (parseFloat(value) > paymentStats.total_amount) {
           return "Amount exceeds available balance!";
         }
       },
@@ -63,9 +65,10 @@ const Payments = () => {
           await vendorApi.requestWithdrawal(parseFloat(result.value));
           Swal.fire(
             "Success",
-            "Withdrawal request submitted successfully",
+            "Withdrawal successful",
             "success"
           );
+          window.location.reload();
         } catch (error) {
           console.error("Withdrawal error:", error);
           Swal.fire(
@@ -127,14 +130,14 @@ const Payments = () => {
   // Helper function to safely format numbers
   const formatAmount = (amount) => {
     // Check if amount is a number or can be converted to one
-    if (amount === null || amount === undefined) return "$0.00";
+    if (amount === null || amount === undefined) return "₦0.00";
 
     const numAmount = typeof amount === "number" ? amount : Number(amount);
 
     // Check if conversion resulted in a valid number
-    if (isNaN(numAmount)) return "$0.00";
+    if (isNaN(numAmount)) return "₦0.00";
 
-    return `$${numAmount.toFixed(2)}`;
+    return `₦${numAmount.toFixed(2)}`;
   };
 
   if (isLoading) {
@@ -183,7 +186,7 @@ const Payments = () => {
           </p>
         </div>
         <div className={styles.summaryCard}>
-          <h5>Paid Amount</h5>
+          <h5>Wallet Balance</h5>
           <p className={styles.summaryValue}>
             {formatAmount(paymentStats.paid_amount)}
           </p>

@@ -114,7 +114,7 @@ const vendorApi = {
 
   getPaymentSummary: async () => {
     try {
-      const response = await api.get("payments/");
+      const response = await api.get("/payments/summary/");
       return response.data;
       console.log("Payment Summary:", response.data);
     } catch (error) {
@@ -124,7 +124,7 @@ const vendorApi = {
 
   requestWithdrawal: async (amount) => {
     try {
-      const response = await api.post("payments/", { amount });
+      const response = await api.post("payments/withdraw/", { amount });
       return response.data;
     } catch (error) {
       throw error;
