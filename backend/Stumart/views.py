@@ -638,6 +638,69 @@ class CreateOrderView(APIView):
             )
 
 
+class PaystackPaymentInitializeView(APIView):
+    permission_classes = [IsAuthenticated]  # Or IsAuthenticated if you require login
+    
+    def post(self, request, *args, **kwargs):
+        try:
+            data = request.data
+            order_id = data.get('order_id')
+            email = data.get('email')
+            amount = data.get('amount')  # amount in kobo (multiply by 100)
+            callback_url = data.get('callback_url')
+            
+            # Get the order
+            order = Order.objects.get(id=order_id)
+            
+            # Initialize Paystack payment
+            url = "https://api.paystack.co/transaction/initialize"
+            
+            headers = {
+                "Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}",
+                "Content-Type": "application/json"
+            }
+            
+            payload = {
+                "email": email,
+                "amount": amount,
+                "callback_url": callback_url,
+                "reference": f"ORD-{order.order_number}-{uuid.uuid4().hex[:8]}"
+            }
+            
+            response = requests.post(url, headers=headers, data=json.dumps(payload))
+            response_data = response.json()
+            
+            if response_data.get('status'):
+                # Create transaction record
+                transaction = Transaction.objects.create(
+                    order=order,
+                    transaction_id=response_data['data']['reference'],
+                    amount=order.total,
+                    status='PENDING'
+                )
+                
+                return Response({
+                    'status': 'success',
+                    'authorization_url': response_data['data']['authorization_url'],
+                    'reference': response_data['data']['reference']
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'status': 'failed',
+                    'message': response_data.get('message', 'Payment initialization failed')
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+        except Exception as e:
+            import traceback
+            error_trace = traceback.format_exc()
+            print(f"Error in PaystackPaymentInitializeView: {str(e)}")
+            print(error_trace)
+            return Response(
+                {"error": f"An error occurred: {str(e)}"}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
 class PaystackPaymentVerifyView(APIView):
     permission_classes = [AllowAny]
 
