@@ -16,7 +16,7 @@ const Overview = ({ stats }) => {
     <div className={styles.overviewGrid}>
       <StatCard
         title="Total Revenue"
-        value={`$${stats.totalRevenue?.toLocaleString() || "0"}`}
+        value={`₦${stats.totalRevenue?.toLocaleString() || "0"}`}
         icon={<FaChartBar />}
         color="var(--primary-500)"
       />

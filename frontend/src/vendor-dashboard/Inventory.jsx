@@ -190,7 +190,7 @@ const Inventory = ({ products, onUpdateStock }) => {
                 <tr key={product.id}>
                   <td className={styles.productName}>{product.name}</td>
                   <td>{product.category}</td>
-                  <td>${product.price}</td>
+                  <td>₦{product.price}</td>
                   <td>
                     {product.stock === 0 ? (
                       <span className={styles.outOfStock}>

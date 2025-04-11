@@ -73,7 +73,7 @@ const Products = ({ products, onDeleteProduct }) => {
             {filterProducts().map((product) => (
               <tr key={product.id}>
                 <td className={styles.productName}>{product.name}</td>
-                <td>${product.price}</td>
+                <td>₦{product.price}</td>
                 <td>{product.category}</td>
                 <td>{product.in_stock}</td>
                 <td>

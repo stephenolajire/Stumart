@@ -84,7 +84,7 @@ const Orders = ({ orders }) => {
                   {order.shipping?.first_name} {order.shipping?.last_name}
                 </td>
                 <td>{new Date(order.created_at).toLocaleDateString()}</td>
-                <td>${(order.total / 100).toFixed(2)}</td>
+                <td>₦{(order.total / 100).toFixed(2)}</td>
                 <td>{order.order_items?.length || 0}</td>
                 <td>
                   <span
