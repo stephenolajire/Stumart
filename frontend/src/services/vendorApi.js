@@ -8,6 +8,7 @@ const vendorApi = {
     try {
       const response = await api.get("/dashboard/stats/");
       return response.data;
+      console.log("Dashboard Stats:", response.data);
     } catch (error) {
       throw error;
     }
@@ -18,6 +19,7 @@ const vendorApi = {
     try {
       const response = await api.get("/vendor-items/");
       return response.data;
+      console.log("Products:", response.data);
     } catch (error) {
       throw error;
     }
@@ -27,6 +29,7 @@ const vendorApi = {
     try {
       const response = await api.post("/vendor-items/", productData);
       return response.data;
+      console.log("Created Product:", response.data);
     } catch (error) {
       throw error;
     }
@@ -58,6 +61,7 @@ const vendorApi = {
     try {
       const response = await api.get("/orders/");
       return response.data;
+      console.log("Orders:", response.data);
     } catch (error) {
       throw error;
     }
@@ -79,6 +83,7 @@ const vendorApi = {
     try {
       const response = await api.get("/inventory/");
       return response.data;
+      console.log("Inventory:", response.data);
     } catch (error) {
       throw error;
     }
@@ -100,6 +105,7 @@ const vendorApi = {
     try {
       const response = await api.get("/payments/");
       return response.data;
+      console.log("Payments:", response.data);
     } catch (error) {
       throw error;
     }
@@ -109,6 +115,7 @@ const vendorApi = {
     try {
       const response = await api.get("/payments/summary/");
       return response.data;
+      console.log("Payment Summary:", response.data);
     } catch (error) {
       throw error;
     }
