@@ -49,7 +49,7 @@ const PaymentVerification = () => {
     };
 
     verifyPayment();
-  }, [location.search]);
+  }, []);
 
   const handleContinueShopping = () => {
     navigate(-1);
