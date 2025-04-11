@@ -7,9 +7,13 @@ const Orders = ({ orders }) => {
   const [searchTerm, setSearchTerm] = useState("");
 
   const getOrderStatusClass = (status) => {
+    if (!status) return ""; // Check if status is null or undefined
+
     switch (status.toLowerCase()) {
       case "delivered":
         return styles.statusDelivered;
+      case "paid":
+        return styles.statusPaid;
       case "processing":
         return styles.statusProcessing;
       case "shipped":
@@ -22,11 +26,14 @@ const Orders = ({ orders }) => {
   };
 
   const filteredOrders = orders.filter((order) => {
+    const customerName =
+      order.shipping?.first_name + " " + order.shipping?.last_name;
     const matchesSearch =
-      order.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.id.toString().includes(searchTerm);
+      customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.order_number?.includes(searchTerm);
     const matchesStatus =
-      filterStatus === "all" || order.status.toLowerCase() === filterStatus;
+      filterStatus === "all" ||
+      (order.order_status && order.order_status.toLowerCase() === filterStatus);
     return matchesSearch && matchesStatus;
   });
 
@@ -42,6 +49,7 @@ const Orders = ({ orders }) => {
           >
             <option value="all">All Orders</option>
             <option value="pending">Pending</option>
+            <option value="paid">Paid</option>
             <option value="processing">Processing</option>
             <option value="shipped">Shipped</option>
             <option value="delivered">Delivered</option>
@@ -71,18 +79,20 @@ const Orders = ({ orders }) => {
           <tbody>
             {filteredOrders.map((order) => (
               <tr key={order.id}>
-                <td className={styles.orderId}>#{order.id}</td>
-                <td>{order.customer_name}</td>
+                <td className={styles.orderId}>{order.order_number}</td>
+                <td>
+                  {order.shipping?.first_name} {order.shipping?.last_name}
+                </td>
                 <td>{new Date(order.created_at).toLocaleDateString()}</td>
-                <td>${order.total}</td>
-                <td>{order.items_count}</td>
+                <td>${(order.total / 100).toFixed(2)}</td>
+                <td>{order.order_items?.length || 0}</td>
                 <td>
                   <span
                     className={`${styles.status} ${getOrderStatusClass(
-                      order.status
+                      order.order_status
                     )}`}
                   >
-                    {order.status}
+                    {order.order_status || "N/A"}
                   </span>
                 </td>
                 <td>

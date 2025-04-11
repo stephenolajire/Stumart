@@ -92,7 +92,7 @@ const Payments = () => {
       const paymentDate = new Date(payment.date);
       const matchesSearch =
         payment.customer?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        payment.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        payment.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         payment.invoice?.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesPeriod =
@@ -108,7 +108,9 @@ const Payments = () => {
   };
 
   const getStatusClass = (status) => {
-    switch (status) {
+    if (!status) return "";
+
+    switch (status.toLowerCase()) {
       case "paid":
         return styles.statusDelivered;
       case "processing":
@@ -122,6 +124,19 @@ const Payments = () => {
     }
   };
 
+  // Helper function to safely format numbers
+  const formatAmount = (amount) => {
+    // Check if amount is a number or can be converted to one
+    if (amount === null || amount === undefined) return "$0.00";
+
+    const numAmount = typeof amount === "number" ? amount : Number(amount);
+
+    // Check if conversion resulted in a valid number
+    if (isNaN(numAmount)) return "$0.00";
+
+    return `$${numAmount.toFixed(2)}`;
+  };
+
   if (isLoading) {
     return <div className={styles.loading}>Loading payments data...</div>;
   }
@@ -130,7 +145,7 @@ const Payments = () => {
     <div className={styles.paymentsSection}>
       <div className={styles.sectionHeader}>
         <h2>Payment Management</h2>
-        <div>
+        <div className={styles.actionPayments}>
           <button
             style={{ backgroundColor: "black" }}
             className={styles.addButton}
@@ -164,19 +179,19 @@ const Payments = () => {
         <div className={styles.summaryCard}>
           <h5>Total Revenue</h5>
           <p className={styles.summaryValue}>
-            ${paymentStats.total_amount.toFixed(2)}
+            {formatAmount(paymentStats.total_amount)}
           </p>
         </div>
         <div className={styles.summaryCard}>
           <h5>Paid Amount</h5>
           <p className={styles.summaryValue}>
-            ${paymentStats.paid_amount.toFixed(2)}
+            {formatAmount(paymentStats.paid_amount)}
           </p>
         </div>
         <div className={styles.summaryCard}>
           <h5>Pending Amount</h5>
           <p className={styles.summaryValue}>
-            ${paymentStats.pending_amount.toFixed(2)}
+            {formatAmount(paymentStats.pending_amount)}
           </p>
         </div>
       </div>
@@ -240,7 +255,7 @@ const Payments = () => {
                 <td>{payment.customer}</td>
                 <td>{payment.invoice}</td>
                 <td className={styles.amountCell}>
-                  ${payment.amount.toFixed(2)}
+                  {formatAmount(payment.amount)}
                 </td>
                 <td>{payment.source}</td>
                 <td>
@@ -249,7 +264,7 @@ const Payments = () => {
                       payment.status
                     )}`}
                   >
-                    {payment.status.toUpperCase()}
+                    {payment.status ? payment.status.toUpperCase() : "N/A"}
                   </span>
                 </td>
                 <td>
@@ -262,17 +277,25 @@ const Payments = () => {
                           html: `
                           <div style="text-align: left;">
                             <p><strong>Customer:</strong> ${
-                              payment.customer
+                              payment.customer || "N/A"
                             }</p>
-                            <p><strong>Amount:</strong> $${payment.amount.toFixed(
-                              2
+                            <p><strong>Amount:</strong> ${formatAmount(
+                              payment.amount
                             )}</p>
                             <p><strong>Date:</strong> ${new Date(
                               payment.date
                             ).toLocaleDateString()}</p>
-                            <p><strong>Status:</strong> ${payment.status.toUpperCase()}</p>
-                            <p><strong>Invoice:</strong> ${payment.invoice}</p>
-                            <p><strong>Source:</strong> ${payment.source}</p>
+                            <p><strong>Status:</strong> ${
+                              payment.status
+                                ? payment.status.toUpperCase()
+                                : "N/A"
+                            }</p>
+                            <p><strong>Invoice:</strong> ${
+                              payment.invoice || "N/A"
+                            }</p>
+                            <p><strong>Source:</strong> ${
+                              payment.source || "N/A"
+                            }</p>
                           </div>
                         `,
                           icon: "info",

@@ -6,29 +6,26 @@
     <title>New Order Notification</title>
     <style>
       :root {
-        /* Primary Colors - Brownish Gold */
         --primary-100: #fdf6e9;
         --primary-200: #f9e5bb;
         --primary-300: #f4d08d;
         --primary-400: #efbb5f;
-        --primary-500: #daa520; /* Main brand color - Golden Brown */
+        --primary-500: #daa520;
         --primary-600: #b38517;
         --primary-700: #8c660f;
         --primary-800: #664807;
         --primary-900: #402c04;
 
-        /* Secondary Colors - Black */
         --secondary-100: #e6e6e6;
         --secondary-200: #cccccc;
         --secondary-300: #b3b3b3;
         --secondary-400: #999999;
-        --secondary-500: #000000; /* Pure Black */
+        --secondary-500: #000000;
         --secondary-600: #1a1a1a;
         --secondary-700: #333333;
         --secondary-800: #4d4d4d;
         --secondary-900: #666666;
 
-        /* Neutral Colors */
         --neutral-white: #ffffff;
         --neutral-gray-50: #f9fafb;
         --neutral-gray-100: #f3f4f6;
@@ -36,7 +33,6 @@
         --neutral-gray-300: #d1d5db;
         --neutral-gray-400: #9ca3af;
 
-        /* State Colors */
         --success: #22c55e;
         --warning: #f59e0b;
         --error: #ef4444;
@@ -309,9 +305,9 @@
               <tr>
                 <td>{{ item.product.name }}</td>
                 <td>
-                  {% if item.size %}Size: {{ item.size }}{% endif %} {% if
-                  item.color %}<br />Color: {{ item.color }}{% endif %} {% if
-                  item.product.in_stock <= 5 %}
+                  {% if item.size %}Size: {{ item.size }}{% endif %}
+                  {% if item.color %}<br />Color: {{ item.color }}{% endif %}
+                  {% if item.product.in_stock <= 5 %}
                   <div class="stock-warning">
                     Low Stock: {{ item.product.in_stock }} left
                   </div>
@@ -326,7 +322,6 @@
                 </td>
               </tr>
               {% endfor %}
-
               <tr class="total-row">
                 <td colspan="3"></td>
                 <td class="text-right">Total:</td>
@@ -354,9 +349,7 @@
             wallet balance has been updated with this order amount.
           </p>
 
-          <a href="{{ dashboard_url }}" class="action-button"
-            >View Order Details</a
-          >
+          <a href="{{ dashboard_url }}" class="action-button">View Order Details</a>
 
           <p>
             If you have any questions or concerns, please contact our vendor

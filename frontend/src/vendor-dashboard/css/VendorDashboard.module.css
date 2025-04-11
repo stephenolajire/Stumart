@@ -69,11 +69,9 @@
   flex: 1;
   margin-left: 24rem;
   padding: 2rem;
-  /* overflow-x: scroll; */
-}
-
-.dataTable {
-    overflow-x: auto;
+  width: calc(100% - 24rem); /* Subtract sidebar width */
+  box-sizing: border-box;
+  overflow-x: hidden; /* Prevent horizontal scrolling of the whole content */
 }
 
 .logout {
@@ -119,7 +117,7 @@
 }
 
 /* Overview section */
-.overviewGrid, .paymentSummary {
+.overviewGrid{
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(32rem, 1fr));
   gap: 2rem;
@@ -131,7 +129,7 @@
   grid-column: span 2;
 }
 
-.statCard, .summaryCard {
+.statCard{
   background-color: var(--neutral-white);
   border-radius: 0.8rem;
   padding: 2rem;
@@ -141,27 +139,6 @@
   transition: transform 0.2s ease;
 }
 
-.summaryCard {
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-}
-
-.summaryCard p {
-  margin-top: 1rem;
-}
-
-/* .paymentSummary{
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 2rem;
-  background-color: var(--neutral-white);
-  border-radius: 0.8rem;
-  box-shadow: 0 0.2rem 0.8rem rgba(0, 0, 0, 0.05);
-  margin-bottom: 2rem;
-} */
 
 .statCard:hover {
   transform: translateY(-0.5rem);
@@ -246,62 +223,14 @@
   color: var(--text-secondary);
 }
 
-/* Products section */
-.sectionHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-}
-
-.sectionHeader h2 {
-  font-size: var(--h4-desktop);
-  margin: 0;
-}
-
-.addButton {
-  background-color: var(--primary-500);
-  color: white;
-  border: none;
-  padding: 1rem 2rem;
-  border-radius: 0.4rem;
-  font-size: 1.4rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.addButton:hover {
-  background-color: var(--primary-600);
-}
-
-.filters {
-  display: flex;
-  margin-bottom: 2rem;
-  gap: 1rem;
-}
-
-.filterSelect {
-  padding: 1rem;
-  border: 1px solid var(--neutral-gray-300);
-  border-radius: 0.4rem;
-  background-color: var(--neutral-white);
-  font-size: 1.4rem;
-}
-
-.searchInput {
-  flex: 1;
-  padding: 1rem;
-  border: 1px solid var(--neutral-gray-300);
-  border-radius: 0.4rem;
-  font-size: 1.4rem;
-}
-
+/* Tables */
 .tableContainer {
+  width: 100%;
+  overflow-x: auto; /* Creates horizontal scrolling */
+  margin-bottom: 3rem;
   background-color: var(--neutral-white);
-  border-radius: 0.8rem;
-  overflow: hidden;
-  box-shadow: 0 0.2rem 0.8rem rgba(0, 0, 0, 0.05);
+  border-radius: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .dataTable {
@@ -311,133 +240,615 @@
 
 .dataTable th {
   background-color: var(--neutral-gray-100);
-  color: var(--text-secondary);
   text-align: left;
   padding: 1.5rem;
   font-size: 1.4rem;
+  color: var(--text-tertiary);
+  font-weight: 600;
+  min-width: 10rem; /* Prevent excessive column squishing */
 }
 
 .dataTable td {
   padding: 1.5rem;
-  border-top: 1px solid var(--neutral-gray-200);
+  border-bottom: 1px solid var(--neutral-gray-200);
   font-size: 1.4rem;
+  min-width: 10rem; /* Prevent excessive column squishing */
+}
+
+.dataTable tr:last-child td {
+  border-bottom: none;
+}
+
+.dataTable tr:hover {
+  background-color: var(--neutral-gray-50);
 }
 
 .productName {
-  font-weight: 600;
-  color: var(--primary-600);
+  font-weight: 500;
+  color: var(--text-primary);
 }
 
-.orderId {
-  font-weight: 600;
-  color: var(--secondary-700);
+.sortableHeader {
+  cursor: pointer;
 }
 
+.sortableHeader:hover {
+  background-color: var(--neutral-gray-200);
+}
+
+/* Status Indicators */
 .status {
-  display: inline-block;
-  padding: 0.6rem 1.2rem;
+  padding: 0.5rem 1rem;
   border-radius: 2rem;
   font-size: 1.2rem;
   font-weight: 600;
-  text-transform: uppercase;
-}
-
-.active {
-  background-color: var(--success);
-  color: white;
-}
-
-.low-stock {
-  background-color: var(--warning);
-  color: white;
+  display: inline-block;
 }
 
 .statusPending {
-  background-color: var(--warning);
-  color: white;
+  background-color: rgba(245, 158, 11, 0.15);
+  color: var(--warning);
 }
 
-.statusProcessing {
-  background-color: var(--info);
-  color: white;
+.statusPaid, .statusDelivered, .statusInStock {
+  background-color: rgba(34, 197, 94, 0.15);
+  color: var(--success);
 }
 
-.statusShipped {
-  background-color: var(--primary-500);
-  color: white;
-}
-
-.statusDelivered {
-  background-color: var(--success);
-  color: white;
-}
-
-.actions {
-  display: flex;
-  gap: 0.8rem;
-}
-
-.actions button {
-  border: none;
-  background: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 3.2rem;
-  height: 3.2rem;
-  border-radius: 0.4rem;
-  transition: all 0.2s;
-}
-
-.viewButton {
+.statusProcessing, .statusShipped {
+  background-color: rgba(59, 130, 246, 0.15);
   color: var(--info);
-  background-color: rgba(59, 130, 246, 0.1);
 }
 
-.viewButton:hover {
-  background-color: rgba(59, 130, 246, 0.2);
-}
-
-.editButton {
-  color: var(--primary-500);
-  background-color: rgba(218, 165, 32, 0.1);
-}
-
-.editButton:hover {
-  background-color: rgba(218, 165, 32, 0.2);
-}
-
-.deleteButton {
+.statusFailed, .statusOutOfStock, .statusLowStock {
+  background-color: rgba(239, 68, 68, 0.15);
   color: var(--error);
-  background-color: rgba(239, 68, 68, 0.1);
 }
 
-.deleteButton:hover {
-  background-color: rgba(239, 68, 68, 0.2);
+/* Filters and Search */
+.filters {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
-.updateButton {
-  background-color: var(--primary-500);
-  color: white;
-  border: none;
-  padding: 0.8rem 1.2rem;
-  border-radius: 0.4rem;
-  font-size: 1.3rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.updateButton:hover {
-  background-color: var(--primary-600);
-}
-
-/* Order filters */
-.orderFilters {
+.filterGroup {
   display: flex;
   gap: 1rem;
 }
+
+.filterSelect {
+  padding: 1rem 1.5rem;
+  border: 1px solid var(--neutral-gray-300);
+  border-radius: 0.5rem;
+  font-size: 1.4rem;
+  color: var(--text-primary);
+  background-color: var(--neutral-white);
+  outline: none;
+  min-width: 15rem;
+}
+
+.searchContainer {
+  position: relative;
+  flex: 1;
+  max-width: 40rem;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 1.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--neutral-gray-400);
+}
+
+.searchInput {
+  width: 100%;
+  padding: 1rem 1.5rem 1rem 4rem;
+  border: 1px solid var(--neutral-gray-300);
+  border-radius: 0.5rem;
+  font-size: 1.4rem;
+  color: var(--text-primary);
+  background-color: var(--neutral-white);
+  outline: none;
+}
+
+.searchInput:focus {
+  border-color: var(--primary-500);
+}
+
+
+/* Inventory Section */
+.inventorySection, .paymentsSection, .reviewsSection, .settingsContainer {
+  margin-bottom: 3rem;
+}
+
+.inventorySummary, .paymentSummary, .reviewsSummary {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.summaryCard {
+  background-color: var(--neutral-white);
+  border-radius: 1rem;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  text-align: center;
+}
+
+.summaryCard h3, .summaryCard h5 {
+  font-size: 1.6rem;
+  color: var(--text-tertiary);
+  margin-bottom: 1rem;
+}
+
+.summaryValue {
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.outOfStock, .lowStock, .inStock {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.outOfStock {
+  color: var(--error);
+}
+
+.lowStock {
+  color: var(--warning);
+}
+
+.inStock {
+  color: var(--success);
+}
+
+
+/* Payments Section */
+.amountCell {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Reviews Section */
+.reviewCard {
+  background-color: var(--neutral-white);
+  border-radius: 1rem;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-bottom: 2rem;
+}
+
+.reviewHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.reviewInfo h3 {
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+}
+
+.starsContainer {
+  display: flex;
+  gap: 0.3rem;
+  margin-bottom: 0.5rem;
+}
+
+.starFilled {
+  color: var(--warning);
+}
+
+.starEmpty {
+  color: var(--neutral-gray-300);
+}
+
+.reviewMeta {
+  text-align: right;
+}
+
+.customerName {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.reviewDate {
+  font-size: 1.3rem;
+  color: var(--text-tertiary);
+}
+
+.reviewContent {
+  font-size: 1.5rem;
+  line-height: 1.5;
+  margin-bottom: 1.5rem;
+  cursor: pointer;
+  position: relative;
+  max-height: 6rem;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.reviewContent.expanded {
+  max-height: 100rem;
+}
+
+.responseContainer {
+  background-color: var(--neutral-gray-50);
+  border-radius: 0.8rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.responseHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--text-secondary);
+}
+
+.responseContent {
+  font-size: 1.4rem;
+  line-height: 1.5;
+}
+
+.reviewActions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.replyButton, .editReplyButton {
+  padding: 0.8rem 1.5rem;
+  border-radius: 0.5rem;
+  font-size: 1.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  cursor: pointer;
+  border: none;
+  font-weight: 500;
+}
+
+.replyButton {
+  background-color: var(--primary-500);
+  color: var(--neutral-white);
+}
+
+.replyButton:hover {
+  background-color: var(--primary-600);
+}
+
+.editReplyButton {
+  background-color: var(--neutral-gray-200);
+  color: var(--text-secondary);
+}
+
+.editReplyButton:hover {
+  background-color: var(--neutral-gray-300);
+}
+
+.ratingDisplay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.ratingNumber {
+  font-size: 3.2rem;
+  font-weight: 700;
+  color: var(--primary-500);
+  margin-bottom: 0.5rem;
+}
+
+/* Settings Section */
+.settingsLayout {
+  display: flex;
+  gap: 3rem;
+  background-color: var(--neutral-white);
+  border-radius: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  flex-wrap: wrap;
+}
+
+.settingsSidebar {
+  width: 25rem;
+  background-color: var(--neutral-gray-100);
+  padding: 2rem 0;
+}
+
+.settingsTabs {
+  list-style: none;
+}
+
+.settingsTab {
+  display: flex;
+  align-items: center;
+  padding: 1.2rem 2rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text-tertiary);
+}
+
+.settingsTab:hover {
+  background-color: var(--neutral-gray-200);
+}
+
+.settingsTab.activeTab {
+  background-color: var(--neutral-white);
+  color: var(--primary-500);
+  font-weight: 600;
+  border-left: 3px solid var(--primary-500);
+}
+
+.tabIcon {
+  margin-right: 1.2rem;
+  font-size: 1.8rem;
+}
+
+.settingsContent {
+  flex: 1;
+  padding: 3rem;
+}
+
+.settingsForm {
+  max-width: 60rem;
+}
+
+.formGroup {
+  margin-bottom: 2rem;
+}
+
+.formGroup label {
+  display: block;
+  font-size: 1.4rem;
+  font-weight: 500;
+  margin-bottom: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.formInput, .formTextarea {
+  width: 100%;
+  padding: 1.2rem;
+  border: 1px solid var(--neutral-gray-300);
+  border-radius: 0.5rem;
+  font-size: 1.5rem;
+  color: var(--text-primary);
+  background-color: var(--neutral-white);
+  outline: none;
+}
+
+.formInput:focus, .formTextarea:focus {
+  border-color: var(--primary-500);
+}
+
+.formInput:disabled {
+  background-color: var(--neutral-gray-100);
+  cursor: not-allowed;
+}
+
+.formHelper {
+  font-size: 1.2rem;
+  color: var(--text-tertiary);
+  margin-top: 0.5rem;
+  display: block;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.checkbox {
+  margin-right: 1rem;
+  width: 1.8rem;
+  height: 1.8rem;
+  cursor: pointer;
+}
+
+.fileUpload {
+  position: relative;
+}
+
+.fileInput {
+  position: absolute;
+  width: 0.1px;
+  height: 0.1px;
+  opacity: 0;
+  overflow: hidden;
+  z-index: -1;
+}
+
+.fileLabel {
+  display: inline-block;
+  padding: 1.2rem;
+  background-color: var(--neutral-gray-100);
+  border: 1px solid var(--neutral-gray-300);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  width: 100%;
+  font-size: 1.5rem;
+  color: var(--text-tertiary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.fileLabel:hover {
+  background-color: var(--neutral-gray-200);
+}
+
+.saveButton {
+  background-color: var(--primary-500);
+  color: var(--neutral-white);
+  border: none;
+  padding: 1.2rem 2rem;
+  border-radius: 0.5rem;
+  font-size: 1.6rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin-top: 3rem;
+}
+
+.saveButton:hover {
+  background-color: var(--primary-600);
+}
+
+.logout {
+  background-color: var(--error);
+  color: var(--neutral-white);
+  border: none;
+  padding: 1.5rem 3rem;
+  border-radius: 0.5rem;
+  font-size: 1.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  margin: 3rem auto;
+  display: block;
+  transition: background-color 0.2s ease;
+}
+
+.logout:hover {
+  opacity: 0.9;
+}
+
+
+.saveButton {
+  background-color: var(--primary-500);
+  color: var(--neutral-white);
+  border: none;
+  padding: 1.2rem 2rem;
+  border-radius: 0.5rem;
+  font-size: 1.6rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin-top: 3rem;
+}
+
+.saveButton:hover {
+  background-color: var(--primary-600);
+}
+
+.logout {
+  background-color: var(--error);
+  color: var(--neutral-white);
+  border: none;
+  padding: 1.5rem 3rem;
+  border-radius: 0.5rem;
+  font-size: 1.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  margin: 3rem auto;
+  display: block;
+  transition: background-color 0.2s ease;
+}
+
+.logout:hover {
+  opacity: 0.9;
+}
+
+/* Action Buttons */
+.actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.viewButton, .editButton, .deleteButton {
+  padding: 0.8rem 1.2rem;
+  border-radius: 0.5rem;
+  font-size: 1.3rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  border: none;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.viewButton {
+  background-color: var(--neutral-gray-100);
+  color: var(--text-secondary);
+}
+
+.viewButton:hover {
+  background-color: var(--neutral-gray-200);
+}
+
+.editButton {
+  background-color: rgba(59, 130, 246, 0.15);
+  color: var(--info);
+}
+
+.editButton:hover {
+  background-color: rgba(59, 130, 246, 0.25);
+}
+
+.deleteButton {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: var(--error);
+}
+
+.deleteButton:hover {
+  background-color: rgba(239, 68, 68, 0.25);
+}
+
+.updateStockButton {
+  background-color: var(--primary-500);
+  color: var(--neutral-white);
+  padding: 0.8rem 1.2rem;
+  border-radius: 0.5rem;
+  font-size: 1.3rem;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+
+.addButton {
+  background-color: var(--primary-500);
+  color: var(--neutral-white);
+  border: none;
+  padding: 1rem 1.5rem;
+  border-radius: 0.5rem;
+  font-size: 1.4rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.addButton svg {
+  margin-right: 0.8rem;
+}
+
+.addButton:hover {
+  background-color: var(--primary-600);
+}
+
 
 /* Placeholder section */
 .placeholderSection {
@@ -456,6 +867,14 @@
 .placeholderSection p {
   font-size: 1.6rem;
   color: var(--text-tertiary);
+}
+
+.actionPayments {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
 }
 
 /* Media queries for responsive design */
@@ -485,6 +904,7 @@
   
   .mainContent {
     margin-left: 7rem;
+    width: calc(100% - 7rem); /* Adjust for smaller sidebar */
   }
   
   .overviewGrid {
