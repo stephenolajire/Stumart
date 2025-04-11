@@ -362,3 +362,54 @@
     font-size: var(--h3-mobile);
   }
 }
+
+
+/* Add these styles to your OrderHistory.module.css file */
+.pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+  align-items: center;
+  gap: 1rem;
+}
+
+.paginationButton {
+  padding: 0.5rem 1rem;
+  border: 1px solid #ddd;
+  background-color: #f8f8f8;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.paginationButton:hover:not(:disabled) {
+  background-color: #e8e8e8;
+}
+
+.paginationButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pageNumbers {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.pageNumber {
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ddd;
+  cursor: pointer;
+  border-radius: 4px;
+  background-color: #fff;
+}
+
+.activePage {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}

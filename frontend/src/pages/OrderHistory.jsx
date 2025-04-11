@@ -9,6 +9,8 @@ const OrderHistory = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [expandedOrder, setExpandedOrder] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [ordersPerPage] = useState(5);
   const printRefs = useRef({});
 
   useEffect(() => {
@@ -58,9 +60,21 @@ const OrderHistory = () => {
     }).format(date);
   };
 
-  const handlePrint = useReactToPrint({
-    content: () => printRefs.current[expandedOrder],
-  });
+  // Fix: Create a separate print handler for each order
+  const handlePrint = (orderId) => {
+    const printHandler = useReactToPrint({
+      content: () => printRefs.current[orderId],
+    });
+    printHandler();
+  };
+
+  // Pagination logic
+  const indexOfLastOrder = currentPage * ordersPerPage;
+  const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+  const currentOrders = orders.slice(indexOfFirstOrder, indexOfLastOrder);
+  const totalPages = Math.ceil(orders.length / ordersPerPage);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   if (loading) {
     return (
@@ -98,7 +112,7 @@ const OrderHistory = () => {
       <h1 className={style.orderHistoryTitle}>My Orders</h1>
 
       <div className={style.ordersList}>
-        {orders.map((order) => (
+        {currentOrders.map((order) => (
           <div className={style.orderCard} key={order.order_number}>
             <div
               className={style.orderHeader}
@@ -221,7 +235,7 @@ const OrderHistory = () => {
                   ) : (
                     <button
                       className={style.cancelOrderBtn}
-                      onClick={handlePrint}
+                      onClick={() => handlePrint(order.order_number)}
                     >
                       Print Receipt
                     </button>
@@ -232,6 +246,43 @@ const OrderHistory = () => {
           </div>
         ))}
       </div>
+
+      {/* Pagination Component */}
+      {totalPages > 1 && (
+        <div className={style.pagination}>
+          <button
+            onClick={() => paginate(currentPage - 1)}
+            disabled={currentPage === 1}
+            className={style.paginationButton}
+          >
+            &laquo; Prev
+          </button>
+
+          <div className={style.pageNumbers}>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+              (number) => (
+                <button
+                  key={number}
+                  onClick={() => paginate(number)}
+                  className={`${style.pageNumber} ${
+                    currentPage === number ? style.activePage : ""
+                  }`}
+                >
+                  {number}
+                </button>
+              )
+            )}
+          </div>
+
+          <button
+            onClick={() => paginate(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className={style.paginationButton}
+          >
+            Next &raquo;
+          </button>
+        </div>
+      )}
     </div>
   );
 };
