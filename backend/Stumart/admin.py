@@ -88,4 +88,8 @@ class WalletAdmin(admin.ModelAdmin):
     list_display = ['vendor', 'balance']
     search_fields = ['vendor__name']
     
+# admin.site.register(Order)
+# admin.site.register(OrderItem)
+# admin.site.register(Transaction)
+# admin.site.register(Wallet)
 

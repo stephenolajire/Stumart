@@ -106,7 +106,7 @@ const Inventory = ({ products, onUpdateStock }) => {
     <div className={styles.inventorySection}>
       <div className={styles.sectionHeader}>
         <h2>Inventory Management</h2>
-        <button className={styles.addButton}>Bulk Update</button>
+        {/* <button className={styles.addButton}>Bulk Update</button> */}
       </div>
 
       <div className={styles.inventorySummary}>

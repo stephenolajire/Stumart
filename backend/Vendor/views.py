@@ -253,7 +253,7 @@ class PaymentViewSet(viewsets.ReadOnlyModelViewSet):
     
     @action(detail=False, methods=['post'])
     def withdraw(self, request):
-        vendor = request.user.vendor_profile
+        vendor = request.user
         
         try:
             wallet = Wallet.objects.get(vendor=vendor)

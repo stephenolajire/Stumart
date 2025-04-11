@@ -123,7 +123,7 @@ const vendorApi = {
 
   requestWithdrawal: async (amount) => {
     try {
-      const response = await api.post("/payments/withdraw/", { amount });
+      const response = await api.post("payments/", { amount });
       return response.data;
     } catch (error) {
       throw error;

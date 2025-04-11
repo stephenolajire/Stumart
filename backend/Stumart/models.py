@@ -172,6 +172,7 @@ class Transaction(models.Model):
 class Wallet(models.Model):
     vendor = models.OneToOneField(Vendor, on_delete=models.CASCADE)
     balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
-    def __str__(self):
-        return self.balance
+    # def __str__(self):
+    #     return self.id
