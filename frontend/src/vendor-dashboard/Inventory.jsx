@@ -5,18 +5,23 @@ import {
   FaCheck,
   FaEdit,
 } from "react-icons/fa";
+import Swal from "sweetalert2";
 import styles from "./css/VendorDashboard.module.css";
 
-const Inventory = ({ products }) => {
+const Inventory = ({ products, onUpdateStock }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [sortBy, setSortBy] = useState("name");
   const [sortDirection, setSortDirection] = useState("asc");
 
   // Calculate inventory metrics
-  const totalItems = products.length;
-  const lowStockItems = products.filter((p) => p.stock < 10).length;
-  const outOfStockItems = products.filter((p) => p.stock === 0).length;
+  const totalItems = products ? products.length : 0;
+  const lowStockItems = products
+    ? products.filter((p) => p.stock < 10 && p.stock > 0).length
+    : 0;
+  const outOfStockItems = products
+    ? products.filter((p) => p.stock === 0).length
+    : 0;
 
   const handleSort = (column) => {
     if (sortBy === column) {
@@ -25,6 +30,25 @@ const Inventory = ({ products }) => {
       setSortBy(column);
       setSortDirection("asc");
     }
+  };
+
+  const handleUpdateStock = (productId, currentStock) => {
+    Swal.fire({
+      title: "Update Stock",
+      input: "number",
+      inputLabel: "Enter new stock quantity",
+      inputValue: currentStock,
+      showCancelButton: true,
+      inputValidator: (value) => {
+        if (!value || parseInt(value) < 0) {
+          return "Please enter a valid stock quantity";
+        }
+      },
+    }).then((result) => {
+      if (result.isConfirmed) {
+        onUpdateStock(productId, parseInt(result.value));
+      }
+    });
   };
 
   const getSortedProducts = () => {
@@ -82,7 +106,7 @@ const Inventory = ({ products }) => {
     <div className={styles.inventorySection}>
       <div className={styles.sectionHeader}>
         <h2>Inventory Management</h2>
-        <button className={styles.addButton}>Update Inventory</button>
+        <button className={styles.addButton}>Bulk Update</button>
       </div>
 
       <div className={styles.inventorySummary}>
@@ -191,7 +215,12 @@ const Inventory = ({ products }) => {
                   </td>
                   <td>
                     <div className={styles.actions}>
-                      <button className={styles.updateStockButton}>
+                      <button
+                        className={styles.updateStockButton}
+                        onClick={() =>
+                          handleUpdateStock(product.id, product.stock)
+                        }
+                      >
                         <FaEdit /> Update Stock
                       </button>
                     </div>

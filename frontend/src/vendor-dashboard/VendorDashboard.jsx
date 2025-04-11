@@ -12,13 +12,7 @@ import styles from "./css/VendorDashboard.module.css";
 import Swal from "sweetalert2";
 import Inventory from "./Inventory";
 import Settings from "./Settings";
-
-// Placeholder for API (replace with your actual API)
-const api = {
-  get: async (url) => {
-    // Implement your API call logic here
-  },
-};
+import vendorApi from "../services/vendorApi"
 
 const VendorDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -34,6 +28,7 @@ const VendorDashboard = () => {
   });
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const navigate = useNavigate();
   const { auth } = useContext(GlobalContext);
@@ -51,28 +46,31 @@ const VendorDashboard = () => {
   }, []);
 
   const fetchDashboardData = async () => {
+    setIsLoading(true);
     try {
-      const [statsRes, productsRes, ordersRes] = await Promise.all([
-        api.get("dashboard/stats"),
-        api.get("vendor-products/"),
-        api.get("orders"),
+      const [statsData, productsData, ordersData] = await Promise.all([
+        vendorApi.getDashboardStats(),
+        vendorApi.getProducts(),
+        vendorApi.getOrders(),
       ]);
 
-      console.log("Stats Data:", statsRes.data);
-      console.log("Products Data:", productsRes.data);
-      console.log("Orders Data:", ordersRes.data);
+      console.log("Stats Data:", statsData);
+      console.log("Products Data:", productsData);
+      console.log("Orders Data:", ordersData);
 
-      setStats(statsRes.data);
-      setProducts(productsRes.data);
-      setOrders(ordersRes.data);
+      setStats(statsData);
+      setProducts(productsData);
+      setOrders(ordersData);
     } catch (error) {
       console.error("Dashboard Data Error:", error);
       console.error("Error Response:", error.response);
       Swal.fire("Error", "Failed to fetch dashboard data", "error");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleDeleteProduct = (id) => {
+  const handleDeleteProduct = async (id) => {
     Swal.fire({
       title: "Are you sure?",
       text: "You won't be able to revert this!",
@@ -81,15 +79,51 @@ const VendorDashboard = () => {
       confirmButtonColor: "var(--error)",
       cancelButtonColor: "var(--neutral-gray-400)",
       confirmButtonText: "Yes, delete it!",
-    }).then((result) => {
+    }).then(async (result) => {
       if (result.isConfirmed) {
-        setProducts(products.filter((product) => product.id !== id));
-        Swal.fire("Deleted!", "Your product has been deleted.", "success");
+        try {
+          await vendorApi.deleteProduct(id);
+          setProducts(products.filter((product) => product.id !== id));
+          Swal.fire("Deleted!", "Your product has been deleted.", "success");
+        } catch (error) {
+          console.error("Delete Error:", error);
+          Swal.fire("Error", "Failed to delete product", "error");
+        }
       }
     });
   };
 
+  const handleUpdateStock = async (productId, newStock) => {
+    try {
+      await vendorApi.updateStock(productId, newStock);
+      setProducts(
+        products.map((product) =>
+          product.id === productId ? { ...product, stock: newStock } : product
+        )
+      );
+      Swal.fire("Updated!", "Stock has been updated.", "success");
+    } catch (error) {
+      console.error("Update Stock Error:", error);
+      Swal.fire("Error", "Failed to update stock", "error");
+    }
+  };
+
+  const handleRespondToReview = async (reviewId, response) => {
+    try {
+      await vendorApi.respondToReview(reviewId, response);
+      // You would need to update the Reviews component to reflect this change
+      Swal.fire("Success", "Response submitted", "success");
+    } catch (error) {
+      console.error("Review Response Error:", error);
+      Swal.fire("Error", "Failed to submit response", "error");
+    }
+  };
+
   const renderContent = () => {
+    if (isLoading) {
+      return <div className={styles.loading}>Loading...</div>;
+    }
+
     switch (activeTab) {
       case "overview":
         return <Overview stats={stats} />;
@@ -100,11 +134,13 @@ const VendorDashboard = () => {
       case "orders":
         return <Orders orders={orders} />;
       case "inventory":
-        return <Inventory products={products} />;
+        return (
+          <Inventory products={products} onUpdateStock={handleUpdateStock} />
+        );
       case "payments":
         return <Payments />;
       case "reviews":
-        return <Reviews/>;
+        return <Reviews onRespondToReview={handleRespondToReview} />;
       case "settings":
         return <Settings />;
       case "logout":

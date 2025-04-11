@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'User',
     'Stumart',
+    'Vendor',
     'cloudinary_storage',
     'cloudinary',
 ]

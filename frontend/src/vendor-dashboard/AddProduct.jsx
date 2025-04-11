@@ -574,7 +574,7 @@ const AddProduct = () => {
         <div className={styles.formRow}>
           <div className={styles.formGroup}>
             <label htmlFor="price" className={styles.label}>
-              Price (N)*
+              Price (₦)*
             </label>
             <input
               type="number"

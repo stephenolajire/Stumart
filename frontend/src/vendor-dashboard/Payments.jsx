@@ -1,97 +1,99 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaSearch, FaDownload, FaEye } from "react-icons/fa";
+import Swal from "sweetalert2";
+import vendorApi from "../services/vendorApi";
 import styles from "./css/VendorDashboard.module.css";
 
 const Payments = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [periodFilter, setPeriodFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [payments, setPayments] = useState([]);
+  const [paymentStats, setPaymentStats] = useState({
+    total_amount: 0,
+    paid_amount: 0,
+    pending_amount: 0,
+    total_transactions: 0,
+  });
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Mock payment data
-  const payments = [
-    {
-      id: "PAY-001",
-      date: "2025-03-28",
-      amount: 1250.75,
-      status: "paid",
-      source: "Online Store",
-      customer: "Jane Smith",
-      invoice: "INV-2835",
-    },
-    {
-      id: "PAY-002",
-      date: "2025-03-20",
-      amount: 850.5,
-      status: "paid",
-      source: "Mobile App",
-      customer: "Robert Johnson",
-      invoice: "INV-2830",
-    },
-    {
-      id: "PAY-003",
-      date: "2025-03-15",
-      amount: 2100.0,
-      status: "paid",
-      source: "Online Store",
-      customer: "Sarah Williams",
-      invoice: "INV-2821",
-    },
-    {
-      id: "PAY-004",
-      date: "2025-03-10",
-      amount: 320.25,
-      status: "processing",
-      source: "Mobile App",
-      customer: "Thomas Brown",
-      invoice: "INV-2819",
-    },
-    {
-      id: "PAY-005",
-      date: "2025-03-05",
-      amount: 1580.9,
-      status: "pending",
-      source: "Online Store",
-      customer: "Emily Davis",
-      invoice: "INV-2812",
-    },
-    {
-      id: "PAY-006",
-      date: "2025-02-25",
-      amount: 760.3,
-      status: "failed",
-      source: "Mobile App",
-      customer: "Michael Wilson",
-      invoice: "INV-2805",
-    },
-  ];
+  useEffect(() => {
+    fetchPayments();
+  }, []);
 
-  // Calculate payment stats
-  const totalAmount = payments.reduce(
-    (sum, payment) => sum + payment.amount,
-    0
-  );
-  const pendingAmount = payments
-    .filter(
-      (payment) =>
-        payment.status === "pending" || payment.status === "processing"
-    )
-    .reduce((sum, payment) => sum + payment.amount, 0);
-  const paidAmount = payments
-    .filter((payment) => payment.status === "paid")
-    .reduce((sum, payment) => sum + payment.amount, 0);
-  const totalPayments = payments.length;
+  const fetchPayments = async () => {
+    setIsLoading(true);
+    try {
+      const [paymentsData, summaryData] = await Promise.all([
+        vendorApi.getPayments(),
+        vendorApi.getPaymentSummary(),
+      ]);
+
+      setPayments(paymentsData);
+      setPaymentStats(summaryData);
+    } catch (error) {
+      console.error("Payments data fetch error:", error);
+      Swal.fire("Error", "Failed to fetch payment data", "error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleWithdraw = () => {
+    Swal.fire({
+      title: "Request Withdrawal",
+      input: "number",
+      inputLabel: "Enter amount to withdraw",
+      inputPlaceholder: "Enter amount",
+      showCancelButton: true,
+      inputValidator: (value) => {
+        if (!value) {
+          return "You need to enter an amount!";
+        }
+        if (parseFloat(value) <= 0) {
+          return "Amount must be greater than zero!";
+        }
+        if (parseFloat(value) > paymentStats.paid_amount) {
+          return "Amount exceeds available balance!";
+        }
+      },
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await vendorApi.requestWithdrawal(parseFloat(result.value));
+          Swal.fire(
+            "Success",
+            "Withdrawal request submitted successfully",
+            "success"
+          );
+        } catch (error) {
+          console.error("Withdrawal error:", error);
+          Swal.fire(
+            "Error",
+            error.response?.data?.error || "Failed to process withdrawal",
+            "error"
+          );
+        }
+      }
+    });
+  };
 
   const filterPayments = () => {
+    if (!payments) return [];
+
     const now = new Date();
-    const thirtyDaysAgo = new Date(now.setDate(now.getDate() - 30));
-    const sevenDaysAgo = new Date(now.setDate(now.getDate() - 7));
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(now.getDate() - 30);
+
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(now.getDate() - 7);
 
     return payments.filter((payment) => {
       const paymentDate = new Date(payment.date);
       const matchesSearch =
-        payment.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        payment.customer?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         payment.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        payment.invoice.toLowerCase().includes(searchTerm.toLowerCase());
+        payment.invoice?.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesPeriod =
         periodFilter === "all" ||
@@ -120,16 +122,34 @@ const Payments = () => {
     }
   };
 
+  if (isLoading) {
+    return <div className={styles.loading}>Loading payments data...</div>;
+  }
+
   return (
     <div className={styles.paymentsSection}>
       <div className={styles.sectionHeader}>
         <h2>Payment Management</h2>
         <div>
-          <button style={{backgroundColor:"black"}} className={styles.addButton}>
+          <button
+            style={{ backgroundColor: "black" }}
+            className={styles.addButton}
+            onClick={() =>
+              Swal.fire(
+                "Export",
+                "Export functionality will be implemented soon",
+                "info"
+              )
+            }
+          >
             <FaDownload /> Export Payments
           </button>
-          <button style={{marginLeft:"1rem"}} className={styles.addButton}>
-            <FaDownload /> Withdraw 
+          <button
+            style={{ marginLeft: "1rem" }}
+            className={styles.addButton}
+            onClick={handleWithdraw}
+          >
+            <FaDownload /> Withdraw
           </button>
         </div>
       </div>
@@ -137,19 +157,27 @@ const Payments = () => {
       <div className={styles.paymentSummary}>
         <div className={styles.summaryCard}>
           <h5>Total Payments</h5>
-          <p className={styles.summaryValue}>{totalPayments}</p>
+          <p className={styles.summaryValue}>
+            {paymentStats.total_transactions}
+          </p>
         </div>
         <div className={styles.summaryCard}>
           <h5>Total Revenue</h5>
-          <p className={styles.summaryValue}>${totalAmount.toFixed(2)}</p>
+          <p className={styles.summaryValue}>
+            ${paymentStats.total_amount.toFixed(2)}
+          </p>
         </div>
         <div className={styles.summaryCard}>
           <h5>Paid Amount</h5>
-          <p className={styles.summaryValue}>${paidAmount.toFixed(2)}</p>
+          <p className={styles.summaryValue}>
+            ${paymentStats.paid_amount.toFixed(2)}
+          </p>
         </div>
         <div className={styles.summaryCard}>
           <h5>Pending Amount</h5>
-          <p className={styles.summaryValue}>${pendingAmount.toFixed(2)}</p>
+          <p className={styles.summaryValue}>
+            ${paymentStats.pending_amount.toFixed(2)}
+          </p>
         </div>
       </div>
 
@@ -226,7 +254,31 @@ const Payments = () => {
                 </td>
                 <td>
                   <div className={styles.actions}>
-                    <button className={styles.viewButton}>
+                    <button
+                      className={styles.viewButton}
+                      onClick={() =>
+                        Swal.fire({
+                          title: `Payment Details: ${payment.id}`,
+                          html: `
+                          <div style="text-align: left;">
+                            <p><strong>Customer:</strong> ${
+                              payment.customer
+                            }</p>
+                            <p><strong>Amount:</strong> $${payment.amount.toFixed(
+                              2
+                            )}</p>
+                            <p><strong>Date:</strong> ${new Date(
+                              payment.date
+                            ).toLocaleDateString()}</p>
+                            <p><strong>Status:</strong> ${payment.status.toUpperCase()}</p>
+                            <p><strong>Invoice:</strong> ${payment.invoice}</p>
+                            <p><strong>Source:</strong> ${payment.source}</p>
+                          </div>
+                        `,
+                          icon: "info",
+                        })
+                      }
+                    >
                       <FaEye /> View
                     </button>
                   </div>

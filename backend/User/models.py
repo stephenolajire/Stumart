@@ -119,6 +119,8 @@ class Vendor(models.Model):
     bank_name = models.CharField(max_length=100)
     account_number = models.CharField(max_length=10)
     account_name = models.CharField(max_length=100)
+    # Add to your vendor model
+    paystack_recipient_code = models.CharField(max_length=100, null=True, blank=True)
 
     def __str__(self):
         return f"Vendor: {self.business_name}"

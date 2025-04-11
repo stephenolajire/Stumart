@@ -23,7 +23,7 @@ const Orders = ({ orders }) => {
 
   const filteredOrders = orders.filter((order) => {
     const matchesSearch =
-      order.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.id.toString().includes(searchTerm);
     const matchesStatus =
       filterStatus === "all" || order.status.toLowerCase() === filterStatus;
@@ -72,10 +72,10 @@ const Orders = ({ orders }) => {
             {filteredOrders.map((order) => (
               <tr key={order.id}>
                 <td className={styles.orderId}>#{order.id}</td>
-                <td>{order.customer}</td>
-                <td>{new Date(order.date).toLocaleDateString()}</td>
+                <td>{order.customer_name}</td>
+                <td>{new Date(order.created_at).toLocaleDateString()}</td>
                 <td>${order.total}</td>
-                <td>{order.items}</td>
+                <td>{order.items_count}</td>
                 <td>
                   <span
                     className={`${styles.status} ${getOrderStatusClass(

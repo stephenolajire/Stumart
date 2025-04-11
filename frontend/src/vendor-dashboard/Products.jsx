@@ -15,10 +15,20 @@ const Products = ({ products, onDeleteProduct }) => {
         .includes(searchTerm.toLowerCase());
       const matchesStatus =
         filterStatus === "all" ||
-        (filterStatus === "low-stock" && product.status === "low-stock") ||
-        (filterStatus === "active" && product.status === "active");
+        (filterStatus === "low-stock" && product.in_stock < 10) ||
+        (filterStatus === "active" && product.in_stock >= 10);
       return matchesSearch && matchesStatus;
     });
+  };
+
+  const getStatusLabel = (stock) => {
+    if (stock < 10) return "LOW STOCK";
+    return "IN STOCK";
+  };
+
+  const getStatusClass = (stock) => {
+    if (stock < 10) return styles.statusLowStock;
+    return styles.statusInStock;
   };
 
   return (
@@ -65,12 +75,14 @@ const Products = ({ products, onDeleteProduct }) => {
                 <td className={styles.productName}>{product.name}</td>
                 <td>${product.price}</td>
                 <td>{product.category}</td>
-                <td>{product.stock}</td>
+                <td>{product.in_stock}</td>
                 <td>
                   <span
-                    className={`${styles.status} ${styles[product.status]}`}
+                    className={`${styles.status} ${getStatusClass(
+                      product.in_stock
+                    )}`}
                   >
-                    {product.status === "low-stock" ? "LOW STOCK" : "IN STOCK"}
+                    {getStatusLabel(product.in_stock)}
                   </span>
                 </td>
                 <td>
@@ -78,9 +90,11 @@ const Products = ({ products, onDeleteProduct }) => {
                     <button className={styles.viewButton}>
                       <FaEye />
                     </button>
-                    <button className={styles.editButton}>
-                      <FaEdit />
-                    </button>
+                    <Link to={`/edit-product/${product.id}`}>
+                      <button className={styles.editButton}>
+                        <FaEdit />
+                      </button>
+                    </Link>
                     <button
                       className={styles.deleteButton}
                       onClick={() => onDeleteProduct(product.id)}
