@@ -33,23 +33,27 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    customer = serializers.SerializerMethodField()
-    items = serializers.SerializerMethodField()
-    status = serializers.CharField(source='order_status')
-    date = serializers.DateTimeField(source='created_at')
+    order_items = serializers.SerializerMethodField()
     
     class Meta:
         model = Order
-        fields = ['id', 'order_number', 'customer', 'date', 'total', 'items', 'status']
+        fields = [
+            'id', 'order_number', 'first_name', 'last_name', 'email', 
+            'address', 'subtotal', 'shipping_fee', 'tax', 'total',
+            'order_status', 'created_at', 'order_items'
+        ]
     
-    def get_customer(self, obj):
-        return f"{obj.first_name} {obj.last_name}"
-    
-    def get_items(self, obj):
+    def get_order_items(self, obj):
+        # Get vendor from context
         vendor = self.context.get('vendor')
-        # Filter order items by vendor
+        if not vendor:
+            return []
+            
+        # Filter order items to only show this vendor's items
         vendor_items = obj.order_items.filter(vendor=vendor)
-        return vendor_items.count()
+        
+        # Serialize the items
+        return OrderItemSerializer(vendor_items, many=True).data
 
 
 class TransactionSerializer(serializers.ModelSerializer):

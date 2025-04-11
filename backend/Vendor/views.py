@@ -168,32 +168,44 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
-        vendor = self.request.user.vendor_profile
-        # Get orders containing items from this vendor
-        orders = Order.objects.filter(order_items__vendor=vendor).distinct()
-        return orders
+        # Get the vendor profile associated with the current user
+        try:
+            vendor = self.request.user.vendor_profile
+        except Vendor.DoesNotExist:
+            return Order.objects.none()  # Return empty queryset if not a vendor
+            
+        # Find all order items belonging to this vendor
+        vendor_order_items = OrderItem.objects.filter(vendor=vendor)
+        
+        # Get the distinct orders containing these items
+        order_ids = vendor_order_items.values_list('order', flat=True).distinct()
+        
+        # Return these orders with prefetched related data for efficiency
+        return Order.objects.filter(id__in=order_ids).prefetch_related(
+            'order_items',
+            'order_items__product'
+        ).select_related('user')
     
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        context['vendor'] = self.request.user.vendor_profile
+        # Add vendor to context for filtering in serializer
+        try:
+            context['vendor'] = self.request.user.vendor_profile
+        except Vendor.DoesNotExist:
+            pass
         return context
     
-    @action(detail=True, methods=['post'])
-    def update_status(self, request, pk=None):
-        order = self.get_object()
-        status = request.data.get('status')
-        if not status:
-            return Response({"error": "Status is required"}, status=400)
-        
-        # Only update items belonging to this vendor
+    def retrieve(self, request, *args, **kwargs):
+        """Custom retrieve to ensure we're only showing vendor's items"""
+        instance = self.get_object()
         vendor = request.user.vendor_profile
-        items = order.order_items.filter(vendor=vendor)
         
-        for item in items:
-            # Logic to update item status goes here
-            pass
-        
-        return Response({"success": "Order status updated"})
+        # Check if this order contains any items from this vendor
+        if not instance.order_items.filter(vendor=vendor).exists():
+            return Response({"error": "Order not found"}, status=404)
+            
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
 
 
 class InventoryViewSet(viewsets.ViewSet):

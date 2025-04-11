@@ -64,6 +64,7 @@ const vendorApi = {
       console.log("Orders:", response.data);
     } catch (error) {
       throw error;
+      console.error("Error fetching orders:", error);
     }
   },
 
