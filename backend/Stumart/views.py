@@ -902,15 +902,22 @@ class PaystackPaymentVerifyView(APIView):
                             # Render HTML email template
                             vendor_html_content = render_to_string("email/ordered.html", vendor_context)
                             
-                            # Create and send email with both HTML and text versions
-                            vendor_email = EmailMultiAlternatives(
-                                subject=f"New Order Received - #{order.order_number}",
-                                body=f"You have received a new order #{order.order_number}.",
+                            # Generate PDF with WeasyPrint
+                            pdf_buffer = BytesIO()
+                            HTML(string=vendor_html_content).write_pdf(pdf_buffer)
+                            pdf_buffer.seek(0)  # Reset buffer position to the beginning
+
+                            # Email buyer receipt
+                            email_subject = f"Your Order Receipt - #{order.order_number}"
+                            email = EmailMultiAlternatives(
+                                subject=email_subject,
+                                body="Your order receipt is attached as a PDF.",
                                 from_email=settings.DEFAULT_FROM_EMAIL,
                                 to=[vendor.user.email],
                             )
-                            vendor_email.attach_alternative(vendor_html_content, "text/html")
-                            vendor_email.send()
+                            email.attach_alternative(vendor_html_content, "text/html")
+                            email.attach(f"receipt_{order.order_number}.pdf", pdf_buffer.getvalue(), "application/pdf")
+                            email.send()
                             
                             logger.info(f"Order notification sent to vendor {vendor.id} for order {order.order_number}")
                     except Exception as e:
