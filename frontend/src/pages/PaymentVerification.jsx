@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import axios from "axios";
 import styles from "../css/PaymentVerification.module.css";
 import api from "../constant/api";
 
@@ -17,6 +16,16 @@ const PaymentVerification = () => {
         const urlParams = new URLSearchParams(location.search);
         const reference = urlParams.get("reference");
 
+        // Check if this payment was already verified
+        const verifiedReference = localStorage.getItem("verified_reference");
+        if (reference && verifiedReference === reference) {
+          setVerificationStatus("success");
+          setOrderDetails({
+            orderNumber: localStorage.getItem("verified_order_number"),
+          });
+          return; // Skip API call if already verified
+        }
+
         // Get cart_code from localStorage
         const cart_code = localStorage.getItem("cart_code");
 
@@ -31,14 +40,23 @@ const PaymentVerification = () => {
         );
 
         if (response.data.status === "success") {
+          // Store verification data in localStorage
+          localStorage.setItem("verified_reference", reference);
+          localStorage.setItem(
+            "verified_order_number",
+            response.data.order_number
+          );
+
+          // Clear the cart from localStorage after successful payment
+          localStorage.removeItem("cart_code");
+
+          // Update state with order details
           setVerificationStatus("success");
           setOrderDetails({
             orderNumber: response.data.order_number,
           });
 
-          // Clear the cart from localStorage after successful payment
-          localStorage.removeItem("cart_code");
-          window.location.reload()
+          // Removed the window.location.reload() that was causing multiple verifications
         } else {
           setVerificationStatus("failed");
         }
@@ -49,7 +67,15 @@ const PaymentVerification = () => {
     };
 
     verifyPayment();
-  }, []);
+
+    // Cleanup function when component unmounts
+    return () => {
+      // We can choose to keep or remove the verification data
+      // Uncomment these if you want to clear on unmount:
+      // localStorage.removeItem("verified_reference");
+      // localStorage.removeItem("verified_order_number");
+    };
+  }, [location.search]); // Added location.search as dependency to re-run if URL changes
 
   const handleContinueShopping = () => {
     navigate(-1);

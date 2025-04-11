@@ -638,69 +638,6 @@ class CreateOrderView(APIView):
             )
 
 
-class PaystackPaymentInitializeView(APIView):
-    permission_classes = [IsAuthenticated]  # Or IsAuthenticated if you require login
-    
-    def post(self, request, *args, **kwargs):
-        try:
-            data = request.data
-            order_id = data.get('order_id')
-            email = data.get('email')
-            amount = data.get('amount')  # amount in kobo (multiply by 100)
-            callback_url = data.get('callback_url')
-            
-            # Get the order
-            order = Order.objects.get(id=order_id)
-            
-            # Initialize Paystack payment
-            url = "https://api.paystack.co/transaction/initialize"
-            
-            headers = {
-                "Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}",
-                "Content-Type": "application/json"
-            }
-            
-            payload = {
-                "email": email,
-                "amount": amount,
-                "callback_url": callback_url,
-                "reference": f"ORD-{order.order_number}-{uuid.uuid4().hex[:8]}"
-            }
-            
-            response = requests.post(url, headers=headers, data=json.dumps(payload))
-            response_data = response.json()
-            
-            if response_data.get('status'):
-                # Create transaction record
-                transaction = Transaction.objects.create(
-                    order=order,
-                    transaction_id=response_data['data']['reference'],
-                    amount=order.total,
-                    status='PENDING'
-                )
-                
-                return Response({
-                    'status': 'success',
-                    'authorization_url': response_data['data']['authorization_url'],
-                    'reference': response_data['data']['reference']
-                }, status=status.HTTP_200_OK)
-            else:
-                return Response({
-                    'status': 'failed',
-                    'message': response_data.get('message', 'Payment initialization failed')
-                }, status=status.HTTP_400_BAD_REQUEST)
-                
-        except Exception as e:
-            import traceback
-            error_trace = traceback.format_exc()
-            print(f"Error in PaystackPaymentInitializeView: {str(e)}")
-            print(error_trace)
-            return Response(
-                {"error": f"An error occurred: {str(e)}"}, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
-
 class PaystackPaymentVerifyView(APIView):
     permission_classes = [AllowAny]
 
@@ -709,6 +646,31 @@ class PaystackPaymentVerifyView(APIView):
             reference = request.query_params.get('reference')
             cart_code = request.query_params.get('cart_code')  # Get cart_code from query params
             
+            # Check if reference is valid
+            if not reference:
+                return Response({
+                    'status': 'failed',
+                    'message': 'Reference parameter is required'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Get transaction first to check if already processed
+            transaction = Transaction.objects.filter(transaction_id=reference).first()
+            
+            if not transaction:
+                return Response({
+                    'status': 'failed',
+                    'message': 'Transaction not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+                
+            # Idempotency check - if transaction is already completed, don't process again
+            if transaction.status == 'COMPLETED':
+                return Response({
+                    'status': 'success',
+                    'message': 'Payment already verified',
+                    'order_number': transaction.order.order_number
+                }, status=status.HTTP_200_OK)
+            
+            # Only verify with Paystack if transaction hasn't been completed
             url = f"https://api.paystack.co/transaction/verify/{reference}"
             headers = {
                 "Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}",
@@ -724,14 +686,6 @@ class PaystackPaymentVerifyView(APIView):
                     'message': response_data.get('message', 'Payment verification failed')
                 }, status=status.HTTP_400_BAD_REQUEST)
 
-            transaction = Transaction.objects.filter(transaction_id=reference).first()
-
-            if not transaction:
-                return Response({
-                    'status': 'failed',
-                    'message': 'Transaction not found'
-                }, status=status.HTTP_404_NOT_FOUND)
-
             if response_data['data']['status'] != 'success':
                 transaction.status = 'FAILED'
                 transaction.save()
@@ -740,198 +694,247 @@ class PaystackPaymentVerifyView(APIView):
                     'message': 'Payment failed or was canceled'
                 }, status=status.HTTP_400_BAD_REQUEST)
 
-            # Payment was successful
-            transaction.status = 'COMPLETED'
-            transaction.payment_method = 'PAYSTACK'
-            transaction.save()
-
-            order = transaction.order
-            order.order_status = 'PAID'
-            order.save()
-
-            order_items = OrderItem.objects.filter(order=order)
-            vendor_totals = {}
-            vendors_to_notify = set()
-            notified_vendors = set()
-
-            # First, collect all the vendors to avoid the join error
-            for item in order_items:
-                if hasattr(item, 'vendor') and item.vendor is not None:
-                    vendors_to_notify.add(item.vendor)
-                    
-                    # Add to vendor wallet totals
-                    item_total = item.price * item.quantity
-                    if item.vendor.id in vendor_totals:
-                        vendor_totals[item.vendor.id] += item_total
-                    else:
-                        vendor_totals[item.vendor.id] = item_total
-
-            # Process product stock updates with improved error handling
-            for item in order_items:
-                product = item.product
-                
-                # Update main product stock
-                product.in_stock = max(product.in_stock - item.quantity, 0)
-                product.save()
-
-                # Update size stock if applicable
-                if hasattr(item, 'size') and item.size:
-                    try:
-                        size_obj = ProductSize.objects.get(product=product, size=item.size)
-                        size_obj.quantity = max(size_obj.quantity - item.quantity, 0)
-                        size_obj.save()
-                        logger.info(f"Updated size inventory for product {product.id}, size {item.size}, new quantity: {size_obj.quantity}")
-                        
-                        # Check if out of stock notification is needed
-                        if size_obj.quantity == 0 and hasattr(item, 'vendor') and item.vendor is not None:
-                            if item.vendor not in notified_vendors:
-                                notified_vendors.add(item.vendor)
-                    except ProductSize.DoesNotExist:
-                        logger.warning(f"Size {item.size} not found for product {product.id}")
-                
-                # Update color stock if applicable
-                if hasattr(item, 'color') and item.color:
-                    try:
-                        color_obj = ProductColor.objects.get(product=product, color=item.color)
-                        color_obj.quantity = max(color_obj.quantity - item.quantity, 0)
-                        color_obj.save()
-                        logger.info(f"Updated color inventory for product {product.id}, color {item.color}, new quantity: {color_obj.quantity}")
-                    except ProductColor.DoesNotExist:
-                        logger.warning(f"Color {item.color} not found for product {product.id}")
+            # Payment was successful - use transaction to prevent race conditions
+            from django.db import transaction as db_transaction
             
-            # Send out of stock notifications
-            for vendor in notified_vendors:
-                try:
-                    send_mail(
-                        subject="Product Out of Stock",
-                        message=(
-                            f"Dear {vendor.business_name},\n\n"
-                            "One or more of your products is now out of stock. "
-                            "Please restock to continue receiving orders."
-                        ),
-                        from_email=settings.DEFAULT_FROM_EMAIL,
-                        recipient_list=[vendor.user.email]
-                    )
-                    logger.info(f"Sent out-of-stock notification to vendor {vendor.id}")
-                except Exception as e:
-                    logger.error(f"Failed to send out-of-stock email to vendor {vendor.id}: {str(e)}")
+            with db_transaction.atomic():
+                # Lock the transaction record for update
+                transaction_obj = Transaction.objects.select_for_update().get(id=transaction.id)
+                
+                # Double-check transaction status after lock
+                if transaction_obj.status == 'COMPLETED':
+                    return Response({
+                        'status': 'success',
+                        'message': 'Payment already verified',
+                        'order_number': transaction_obj.order.order_number
+                    }, status=status.HTTP_200_OK)
+                
+                transaction_obj.status = 'COMPLETED'
+                transaction_obj.payment_method = 'PAYSTACK'
+                transaction_obj.save()
 
-            # Update vendor wallets - with better error handling
-            for vendor_id, amount in vendor_totals.items():
-                try:
-                    vendor = Vendor.objects.get(id=vendor_id)
-                    wallet, created = Wallet.objects.get_or_create(
-                        vendor=vendor,
-                        defaults={'balance': 0}
-                    )
-                    wallet.balance += amount
-                    wallet.save()
-                    logger.info(f"Updated wallet for vendor {vendor_id}, new balance: {wallet.balance}")
-                except Vendor.DoesNotExist:
-                    logger.error(f"Vendor with ID {vendor_id} not found when processing payment")
-                    continue
+                order = transaction_obj.order
+                
+                # Check if order is already paid
+                if order.order_status != 'PAID':
+                    order.order_status = 'PAID'
+                    order.save()
 
-            # Send order notifications to all vendors - improved implementation
-            for vendor in vendors_to_notify:
-                try:
-                    # Filter items for this specific vendor
-                    vendor_items = []
-                    vendor_total = 0  # Initialize total for this vendor
-                    
-                    for item in order_items:
-                        if hasattr(item, 'vendor') and item.vendor is not None and item.vendor.id == vendor.id:
-                            # Ensure price is a valid number
-                            item_price = item.price if item.price is not None else 0
-                                
-                            # Calculate the total for each item
-                            item_subtotal = item_price * item.quantity
-                            
-                            # Add calculated subtotal as a property to the item for template use
-                            item.subtotal = item_subtotal
-                            
-                            # Add to vendor total
-                            vendor_total += item_subtotal
-                            
-                            vendor_items.append(item)
-                    
-                    if vendor_items:
-                        # Create complete context for template
-                        vendor_context = {
-                            "order": order,
-                            "vendor_items": vendor_items,
-                            "vendor": vendor,
-                            "current_year": now().year,
-                            "total": vendor_total,
-                            "dashboard_url": f"{settings.FRONTEND_URL}/vendor/dashboard/orders/{order.order_number}"
-                        }
-                        
-                        # Render HTML email template
-                        vendor_html_content = render_to_string("email/ordered.html", vendor_context)
-                        
-                        # Create and send email with both HTML and text versions
-                        vendor_email = EmailMultiAlternatives(
-                            subject=f"New Order Received - #{order.order_number}",
-                            body=f"You have received a new order #{order.order_number}.",
-                            from_email=settings.DEFAULT_FROM_EMAIL,
-                            to=[vendor.user.email],
-                        )
-                        vendor_email.attach_alternative(vendor_html_content, "text/html")
-                        vendor_email.send()
-                        
-                        logger.info(f"Order notification sent to vendor {vendor.id} for order {order.order_number}")
-                except Exception as e:
-                    logger.error(f"Error sending notification to vendor {vendor.id}: {str(e)}", exc_info=True)
-                    continue  # Continue with other vendors even if one fails
+                order_items = OrderItem.objects.filter(order=order)
+                vendor_totals = {}
+                vendors_to_notify = set()
+                notified_vendors = set()
 
-            # Delete the cart after successful payment
-            if cart_code:
-                try:
-                    cart = Cart.objects.get(cart_code=cart_code)
-                    cart.delete()
-                    logger.info(f"Deleted cart {cart_code} after successful payment")
-                except Cart.DoesNotExist:
-                    logger.warning(f"Cart with code {cart_code} not found for deletion after payment")
-                except Exception as e:
-                    logger.error(f"Error deleting cart {cart_code}: {str(e)}")
-
-            # Prepare receipt PDF for the customer
-            try:
-                # Process order items to add total
+                # First, collect all the vendors to avoid the join error
                 for item in order_items:
-                    # Ensure price is a valid number
-                    item_price = item.price if item.price is not None else 0
+                    if hasattr(item, 'vendor') and item.vendor is not None:
+                        vendors_to_notify.add(item.vendor)
+                        
+                        # Add to vendor wallet totals
+                        item_total = item.price * item.quantity
+                        if item.vendor.id in vendor_totals:
+                            vendor_totals[item.vendor.id] += item_total
+                        else:
+                            vendor_totals[item.vendor.id] = item_total
+
+                # Process product stock updates with improved error handling
+                for item in order_items:
+                    product = item.product
                     
-                    # Calculate the total for each item
-                    item.total = item_price * item.quantity
+                    # Update main product stock
+                    product.in_stock = max(product.in_stock - item.quantity, 0)
+                    product.save()
+
+                    # Update size stock if applicable
+                    if hasattr(item, 'size') and item.size:
+                        try:
+                            size_obj = ProductSize.objects.get(product=product, size=item.size)
+                            size_obj.quantity = max(size_obj.quantity - item.quantity, 0)
+                            size_obj.save()
+                            logger.info(f"Updated size inventory for product {product.id}, size {item.size}, new quantity: {size_obj.quantity}")
+                            
+                            # Check if out of stock notification is needed
+                            if size_obj.quantity == 0 and hasattr(item, 'vendor') and item.vendor is not None:
+                                if item.vendor not in notified_vendors:
+                                    notified_vendors.add(item.vendor)
+                        except ProductSize.DoesNotExist:
+                            logger.warning(f"Size {item.size} not found for product {product.id}")
+                    
+                    # Update color stock if applicable
+                    if hasattr(item, 'color') and item.color:
+                        try:
+                            color_obj = ProductColor.objects.get(product=product, color=item.color)
+                            color_obj.quantity = max(color_obj.quantity - item.quantity, 0)
+                            color_obj.save()
+                            logger.info(f"Updated color inventory for product {product.id}, color {item.color}, new quantity: {color_obj.quantity}")
+                        except ProductColor.DoesNotExist:
+                            logger.warning(f"Color {item.color} not found for product {product.id}")
                 
-                context = {
-                    "order": order,
-                    "order_items": order_items,
-                    "current_year": now().year,
-                }
+                # Send out of stock notifications
+                for vendor in notified_vendors:
+                    try:
+                        send_mail(
+                            subject="Product Out of Stock",
+                            message=(
+                                f"Dear {vendor.business_name},\n\n"
+                                "One or more of your products is now out of stock. "
+                                "Please restock to continue receiving orders."
+                            ),
+                            from_email=settings.DEFAULT_FROM_EMAIL,
+                            recipient_list=[vendor.user.email]
+                        )
+                        logger.info(f"Sent out-of-stock notification to vendor {vendor.id}")
+                    except Exception as e:
+                        logger.error(f"Failed to send out-of-stock email to vendor {vendor.id}: {str(e)}")
 
-                html_content = render_to_string("email/receipts.html", context)
+                # Update vendor wallets - with better error handling
+                for vendor_id, amount in vendor_totals.items():
+                    try:
+                        vendor = Vendor.objects.get(id=vendor_id)
+                        wallet, created = Wallet.objects.get_or_create(
+                            vendor=vendor,
+                            defaults={'balance': 0}
+                        )
+                        wallet.balance += amount
+                        wallet.save()
+                        logger.info(f"Updated wallet for vendor {vendor_id}, new balance: {wallet.balance}")
+                    except Vendor.DoesNotExist:
+                        logger.error(f"Vendor with ID {vendor_id} not found when processing payment")
+                        continue
 
-                # Generate PDF with WeasyPrint
-                pdf_buffer = BytesIO()
-                HTML(string=html_content).write_pdf(pdf_buffer)
-                pdf_buffer.seek(0)  # Reset buffer position to the beginning
+                # Prepare customer receipt PDF that will be reused
+                customer_pdf_buffer = None
+                try:
+                    # Process order items to add total
+                    for item in order_items:
+                        # Ensure price is a valid number
+                        item_price = item.price if item.price is not None else 0
+                        
+                        # Calculate the total for each item
+                        item.total = item_price * item.quantity
+                    
+                    context = {
+                        "order": order,
+                        "order_items": order_items,
+                        "current_year": now().year,
+                    }
 
-                # Email buyer receipt
-                email_subject = f"Your Order Receipt - #{order.order_number}"
-                email = EmailMultiAlternatives(
-                    subject=email_subject,
-                    body="Your order receipt is attached as a PDF.",
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    to=[order.email],
-                )
-                email.attach_alternative(html_content, "text/html")
-                email.attach(f"receipt_{order.order_number}.pdf", pdf_buffer.getvalue(), "application/pdf")
-                email.send()
-                
-                logger.info(f"Sent receipt email to customer {order.email} for order {order.order_number}")
-            except Exception as e:
-                logger.error(f"Error with receipt generation or sending: {str(e)}", exc_info=True)
+                    html_content = render_to_string("email/receipts.html", context)
+
+                    # Generate PDF with WeasyPrint
+                    customer_pdf_buffer = BytesIO()
+                    HTML(string=html_content).write_pdf(customer_pdf_buffer)
+                    customer_pdf_buffer.seek(0)  # Reset buffer position to the beginning
+
+                    # Email buyer receipt
+                    email_subject = f"Your Order Receipt - #{order.order_number}"
+                    email = EmailMultiAlternatives(
+                        subject=email_subject,
+                        body="Your order receipt is attached as a PDF.",
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        to=[order.email],
+                    )
+                    email.attach_alternative(html_content, "text/html")
+                    email.attach(f"receipt_{order.order_number}.pdf", customer_pdf_buffer.getvalue(), "application/pdf")
+                    email.send()
+                    
+                    logger.info(f"Sent receipt email to customer {order.email} for order {order.order_number}")
+                except Exception as e:
+                    logger.error(f"Error with customer receipt generation or sending: {str(e)}", exc_info=True)
+
+                # Send order notifications to all vendors with PDF receipts
+                for vendor in vendors_to_notify:
+                    try:
+                        # Filter items for this specific vendor
+                        vendor_items = []
+                        vendor_total = 0  # Initialize total for this vendor
+                        
+                        for item in order_items:
+                            if hasattr(item, 'vendor') and item.vendor is not None and item.vendor.id == vendor.id:
+                                # Ensure price is a valid number
+                                item_price = item.price if item.price is not None else 0
+                                    
+                                # Calculate the total for each item
+                                item_subtotal = item_price * item.quantity
+                                
+                                # Add calculated subtotal as a property to the item for template use
+                                item.subtotal = item_subtotal
+                                
+                                # Add to vendor total
+                                vendor_total += item_subtotal
+                                
+                                vendor_items.append(item)
+                        
+                        if vendor_items:
+                            # Create complete context for template
+                            vendor_context = {
+                                "order": order,
+                                "vendor_items": vendor_items,
+                                "vendor": vendor,
+                                "current_year": now().year,
+                                "total": vendor_total,
+                                "dashboard_url": f"{settings.FRONTEND_URL}/vendor/dashboard/orders/{order.order_number}"
+                            }
+                            
+                            # Render HTML email template
+                            vendor_html_content = render_to_string("email/ordered.html", vendor_context)
+                            
+                            # Create vendor-specific PDF receipt
+                            vendor_pdf_buffer = BytesIO()
+                            # Create a vendor-specific receipt template that only shows their items
+                            vendor_receipt_context = {
+                                "order": order,
+                                "order_items": vendor_items,  # Only include this vendor's items
+                                "current_year": now().year,
+                                "is_vendor": True,
+                                "vendor": vendor,
+                                "vendor_total": vendor_total
+                            }
+                            vendor_receipt_html = render_to_string("email/vendor_receipt.html", vendor_receipt_context)
+                            HTML(string=vendor_receipt_html).write_pdf(vendor_pdf_buffer)
+                            vendor_pdf_buffer.seek(0)
+                            
+                            # Create and send email with both HTML and text versions, including PDF
+                            vendor_email = EmailMultiAlternatives(
+                                subject=f"New Order Received - #{order.order_number}",
+                                body=f"You have received a new order #{order.order_number}.",
+                                from_email=settings.DEFAULT_FROM_EMAIL,
+                                to=[vendor.user.email],
+                            )
+                            vendor_email.attach_alternative(vendor_html_content, "text/html")
+                            
+                            # Attach vendor-specific PDF receipt
+                            vendor_email.attach(
+                                f"vendor_receipt_{order.order_number}.pdf", 
+                                vendor_pdf_buffer.getvalue(), 
+                                "application/pdf"
+                            )
+                            
+                            # Also attach a copy of the full customer receipt if we have it
+                            if customer_pdf_buffer:
+                                vendor_email.attach(
+                                    f"customer_receipt_{order.order_number}.pdf",
+                                    customer_pdf_buffer.getvalue(),
+                                    "application/pdf"
+                                )
+                                
+                            vendor_email.send()
+                            
+                            logger.info(f"Order notification with PDFs sent to vendor {vendor.id} for order {order.order_number}")
+                    except Exception as e:
+                        logger.error(f"Error sending notification to vendor {vendor.id}: {str(e)}", exc_info=True)
+                        continue  # Continue with other vendors even if one fails
+
+                # Delete the cart after successful payment
+                if cart_code:
+                    try:
+                        cart = Cart.objects.get(cart_code=cart_code)
+                        cart.delete()
+                        logger.info(f"Deleted cart {cart_code} after successful payment")
+                    except Cart.DoesNotExist:
+                        logger.warning(f"Cart with code {cart_code} not found for deletion after payment")
+                    except Exception as e:
+                        logger.error(f"Error deleting cart {cart_code}: {str(e)}")
 
             return Response({
                 'status': 'success',
