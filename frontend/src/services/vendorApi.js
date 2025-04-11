@@ -113,7 +113,7 @@ const vendorApi = {
 
   getPaymentSummary: async () => {
     try {
-      const response = await api.get("/payments/summary/");
+      const response = await api.get("payments/");
       return response.data;
       console.log("Payment Summary:", response.data);
     } catch (error) {
