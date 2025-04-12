@@ -6,6 +6,12 @@
   font-size: 1.6rem;
 }
 
+.flex{
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
 /* Sidebar styles */
 .sidebar {
   width: 24rem;
@@ -936,5 +942,8 @@
 
   .addButton {
     width: 100%;
+  }
+  .logo {
+    display: none;
   }
 }

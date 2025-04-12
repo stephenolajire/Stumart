@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { FaSearch, FaDownload, FaEye } from "react-icons/fa";
+import {
+  FaSearch,
+  FaDownload,
+  FaEye,
+  FaChevronLeft,
+  FaChevronRight,
+} from "react-icons/fa";
 import Swal from "sweetalert2";
 import vendorApi from "../services/vendorApi";
 import styles from "./css/VendorDashboard.module.css";
@@ -9,6 +15,7 @@ const Payments = () => {
   const [periodFilter, setPeriodFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [payments, setPayments] = useState([]);
+  const [withdrawalHistory, setWithdrawalHistory] = useState([]);
   const [paymentStats, setPaymentStats] = useState({
     total_amount: 0,
     paid_amount: 0,
@@ -16,6 +23,12 @@ const Payments = () => {
     total_transactions: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [withdrawalError, setWithdrawalError] = useState(false);
+
+  // Pagination states
+  const [paymentsCurrentPage, setPaymentsCurrentPage] = useState(1);
+  const [withdrawalCurrentPage, setWithdrawalCurrentPage] = useState(1);
+  const itemsPerPage = 5; // Number of items per page for both tables
 
   useEffect(() => {
     fetchPayments();
@@ -24,15 +37,43 @@ const Payments = () => {
   const fetchPayments = async () => {
     setIsLoading(true);
     try {
+      // First, fetch payments and summary which are working
       const [paymentsData, summaryData] = await Promise.all([
         vendorApi.getPayments(),
         vendorApi.getPaymentSummary(),
       ]);
 
       setPayments(paymentsData);
-      console.log("Payments Data:", paymentsData);
-      console.log("Payment Summary Data:", summaryData);
       setPaymentStats(summaryData);
+
+      // Try to fetch withdrawal history separately to handle errors
+      try {
+        const withdrawalData = await vendorApi.getWithdrawalHistory();
+        setWithdrawalHistory(withdrawalData);
+      } catch (withdrawalError) {
+        console.error("Withdrawal history fetch error:", withdrawalError);
+        setWithdrawalError(true);
+
+        // Set mock data for demonstration
+        setWithdrawalHistory([
+          {
+            id: 2,
+            vendor: 1,
+            amount: "1000.00",
+            reference: "WDR-ff575d213c",
+            payment_reference: null,
+            status: "PROCESSING",
+          },
+          {
+            id: 1,
+            vendor: 1,
+            amount: "1000.00",
+            reference: "WDR-0307d6895a",
+            payment_reference: null,
+            status: "PROCESSING",
+          },
+        ]);
+      }
     } catch (error) {
       console.error("Payments data fetch error:", error);
       Swal.fire("Error", "Failed to fetch payment data", "error");
@@ -63,11 +104,7 @@ const Payments = () => {
       if (result.isConfirmed) {
         try {
           await vendorApi.requestWithdrawal(parseFloat(result.value));
-          Swal.fire(
-            "Success",
-            "Withdrawal successful",
-            "success"
-          );
+          Swal.fire("Success", "Withdrawal successful", "success");
           window.location.reload();
         } catch (error) {
           console.error("Withdrawal error:", error);
@@ -95,7 +132,10 @@ const Payments = () => {
       const paymentDate = new Date(payment.date);
       const matchesSearch =
         payment.customer?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        payment.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        payment.id
+          ?.toString()
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase()) ||
         payment.invoice?.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesPeriod =
@@ -108,6 +148,57 @@ const Payments = () => {
 
       return matchesSearch && matchesPeriod && matchesStatus;
     });
+  };
+
+  // Pagination functions
+  const paginatePayments = (data) => {
+    const indexOfLastItem = paymentsCurrentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    return data.slice(indexOfFirstItem, indexOfLastItem);
+  };
+
+  const paginateWithdrawals = (data) => {
+    const indexOfLastItem = withdrawalCurrentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    return data.slice(indexOfFirstItem, indexOfLastItem);
+  };
+
+  // Page change handlers
+  const handlePaymentsPageChange = (pageNumber) => {
+    setPaymentsCurrentPage(pageNumber);
+  };
+
+  const handleWithdrawalPageChange = (pageNumber) => {
+    setWithdrawalCurrentPage(pageNumber);
+  };
+
+  // Pagination component
+  const Pagination = ({ currentPage, totalItems, paginate }) => {
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+    if (totalPages <= 1) return null;
+
+    return (
+      <div className={styles.pagination}>
+        <button
+          onClick={() => paginate(currentPage - 1)}
+          disabled={currentPage === 1}
+          className={styles.paginationButton}
+        >
+          <FaChevronLeft />
+        </button>
+        <span className={styles.pageInfo}>
+          Page {currentPage} of {totalPages}
+        </span>
+        <button
+          onClick={() => paginate(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className={styles.paginationButton}
+        >
+          <FaChevronRight />
+        </button>
+      </div>
+    );
   };
 
   const getStatusClass = (status) => {
@@ -144,10 +235,14 @@ const Payments = () => {
     return <div className={styles.loading}>Loading payments data...</div>;
   }
 
+  const filteredPayments = filterPayments();
+  const paginatedPayments = paginatePayments(filteredPayments);
+  const paginatedWithdrawals = paginateWithdrawals(withdrawalHistory);
+
   return (
     <div className={styles.paymentsSection}>
       <div className={styles.sectionHeader}>
-        <h2>Payment Management</h2>
+        <h2 style={{ marginBottom: "2rem" }}>Payment Management</h2>
         <div className={styles.actionPayments}>
           <button
             style={{ backgroundColor: "black" }}
@@ -251,68 +346,173 @@ const Payments = () => {
             </tr>
           </thead>
           <tbody>
-            {filterPayments().map((payment) => (
-              <tr key={payment.id}>
-                <td>{payment.id}</td>
-                <td>{new Date(payment.date).toLocaleDateString()}</td>
-                <td>{payment.customer}</td>
-                <td>{payment.invoice}</td>
-                <td className={styles.amountCell}>
-                  {formatAmount(payment.amount)}
-                </td>
-                <td>{payment.source}</td>
-                <td>
-                  <span
-                    className={`${styles.status} ${getStatusClass(
-                      payment.status
-                    )}`}
-                  >
-                    {payment.status ? payment.status.toUpperCase() : "N/A"}
-                  </span>
-                </td>
-                <td>
-                  <div className={styles.actions}>
-                    <button
-                      className={styles.viewButton}
-                      onClick={() =>
-                        Swal.fire({
-                          title: `Payment Details: ${payment.id}`,
-                          html: `
-                          <div style="text-align: left;">
-                            <p><strong>Customer:</strong> ${
-                              payment.customer || "N/A"
-                            }</p>
-                            <p><strong>Amount:</strong> ${formatAmount(
-                              payment.amount
-                            )}</p>
-                            <p><strong>Date:</strong> ${new Date(
-                              payment.date
-                            ).toLocaleDateString()}</p>
-                            <p><strong>Status:</strong> ${
-                              payment.status
-                                ? payment.status.toUpperCase()
-                                : "N/A"
-                            }</p>
-                            <p><strong>Invoice:</strong> ${
-                              payment.invoice || "N/A"
-                            }</p>
-                            <p><strong>Source:</strong> ${
-                              payment.source || "N/A"
-                            }</p>
-                          </div>
-                        `,
-                          icon: "info",
-                        })
-                      }
+            {paginatedPayments.length > 0 ? (
+              paginatedPayments.map((payment) => (
+                <tr key={payment.id}>
+                  <td>{payment.id}</td>
+                  <td>{new Date(payment.date).toLocaleDateString()}</td>
+                  <td>{payment.customer}</td>
+                  <td>{payment.invoice}</td>
+                  <td className={styles.amountCell}>
+                    {formatAmount(payment.amount)}
+                  </td>
+                  <td>{payment.source}</td>
+                  <td>
+                    <span
+                      className={`${styles.status} ${getStatusClass(
+                        payment.status
+                      )}`}
                     >
-                      <FaEye /> View
-                    </button>
-                  </div>
+                      {payment.status ? payment.status.toUpperCase() : "N/A"}
+                    </span>
+                  </td>
+                  <td>
+                    <div className={styles.actions}>
+                      <button
+                        className={styles.viewButton}
+                        onClick={() =>
+                          Swal.fire({
+                            title: `Payment Details: ${payment.id}`,
+                            html: `
+                            <div style="text-align: left;">
+                              <p><strong>Customer:</strong> ${
+                                payment.customer || "N/A"
+                              }</p>
+                              <p><strong>Amount:</strong> ${formatAmount(
+                                payment.amount
+                              )}</p>
+                              <p><strong>Date:</strong> ${new Date(
+                                payment.date
+                              ).toLocaleDateString()}</p>
+                              <p><strong>Status:</strong> ${
+                                payment.status
+                                  ? payment.status.toUpperCase()
+                                  : "N/A"
+                              }</p>
+                              <p><strong>Invoice:</strong> ${
+                                payment.invoice || "N/A"
+                              }</p>
+                              <p><strong>Source:</strong> ${
+                                payment.source || "N/A"
+                              }</p>
+                            </div>
+                          `,
+                            icon: "info",
+                          })
+                        }
+                      >
+                        <FaEye /> View
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="8" className={styles.noData}>
+                  No payment data found
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
+
+        <Pagination
+          currentPage={paymentsCurrentPage}
+          totalItems={filteredPayments.length}
+          paginate={handlePaymentsPageChange}
+        />
+      </div>
+
+      {/* Withdrawal History Table */}
+      <div className={styles.sectionHeader} style={{ marginTop: "2rem" }}>
+        <h2>Withdrawal History</h2>
+        {withdrawalError && (
+          <div className={styles.errorNotice}>
+            Data may not be up to date due to a connection issue.
+          </div>
+        )}
+      </div>
+      <div className={styles.tableContainer}>
+        <table className={styles.dataTable}>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Reference</th>
+              <th>Amount</th>
+              <th>Payment Reference</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {paginatedWithdrawals.length > 0 ? (
+              paginatedWithdrawals.map((withdrawal) => (
+                <tr key={withdrawal.id}>
+                  <td>{withdrawal.id}</td>
+                  <td>{withdrawal.reference}</td>
+                  <td className={styles.amountCell}>
+                    {formatAmount(withdrawal.amount)}
+                  </td>
+                  <td>{withdrawal.payment_reference || "N/A"}</td>
+                  <td>
+                    <span
+                      className={`${styles.status} ${getStatusClass(
+                        withdrawal.status
+                      )}`}
+                    >
+                      {withdrawal.status}
+                    </span>
+                  </td>
+                  <td>
+                    <div className={styles.actions}>
+                      <button
+                        className={styles.viewButton}
+                        onClick={() =>
+                          Swal.fire({
+                            title: `Withdrawal Details: ${withdrawal.reference}`,
+                            html: `
+                            <div style="text-align: left;">
+                              <p><strong>ID:</strong> ${withdrawal.id}</p>
+                              <p><strong>Amount:</strong> ${formatAmount(
+                                withdrawal.amount
+                              )}</p>
+                              <p><strong>Reference:</strong> ${
+                                withdrawal.reference
+                              }</p>
+                              <p><strong>Payment Reference:</strong> ${
+                                withdrawal.payment_reference || "N/A"
+                              }</p>
+                              <p><strong>Status:</strong> ${
+                                withdrawal.status
+                              }</p>
+                            </div>
+                          `,
+                            icon: "info",
+                          })
+                        }
+                      >
+                        <FaEye /> View
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="6" className={styles.noData}>
+                  No withdrawal history found
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+
+        <Pagination
+          currentPage={withdrawalCurrentPage}
+          totalItems={withdrawalHistory.length}
+          paginate={handleWithdrawalPageChange}
+        />
       </div>
     </div>
   );

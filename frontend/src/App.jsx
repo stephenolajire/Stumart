@@ -26,6 +26,7 @@ import Checkout from "./pages/Checkout";
 import OrderDetails from "./pages/OrderDetails";
 import PaymentVerification from "./pages/PaymentVerification";
 import OrderHistory from "./pages/OrderHistory";
+import StudentProfile from "./user/StudentProfile";
 
 function App() {
   return (
@@ -43,9 +44,14 @@ function App() {
             <Route path="product/:productId" element={<ProductDetails />} />
             <Route path="other-services" element={<OtherService />} />
             <Route path="shopping-cart" element={<ShoppingCart />} />
-            <Route path="order-history" element={<ProtectedRoute>
-              <OrderHistory />
-            </ProtectedRoute>} />
+            <Route
+              path="order-history"
+              element={
+                <ProtectedRoute>
+                  <OrderHistory />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="checkout"
               element={
@@ -55,6 +61,14 @@ function App() {
               }
             />
             <Route path="order-details" element={<OrderDetails />} />
+            <Route
+              path="profile"
+              element={
+                <ProtectedRoute>
+                  <StudentProfile />
+                </ProtectedRoute>
+              }
+            />
           </Route>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Signup />} />
@@ -77,7 +91,7 @@ function App() {
           />
 
           <Route path="/payment/verify" element={<PaymentVerification />} />
-          <Route path="/orders/:orderNumber" element={<OrderDetails/>} />
+          <Route path="/orders/:orderNumber" element={<OrderDetails />} />
 
           <Route
             path="/vendor-dashboard"

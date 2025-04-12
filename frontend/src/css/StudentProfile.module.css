@@ -1,0 +1,308 @@
+/* StudentProfile.module.css */
+
+.profileContainer {
+  max-width: 100rem;
+  margin: 0 auto;
+  padding: 2rem;
+  margin-top: 10rem;
+}
+
+.profileTitle {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2rem;
+  color: var(--text-primary);
+  font-size: var(--h3-desktop);
+}
+
+.titleIcon {
+  margin-right: 1rem;
+  color: var(--primary-500);
+}
+
+.loading {
+  text-align: center;
+  padding: 4rem;
+  font-size: 2rem;
+  color: var(--text-secondary);
+}
+
+.errorAlert, .successAlert {
+  padding: 1.2rem;
+  border-radius: 0.8rem;
+  margin-bottom: 2rem;
+  font-size: 1.6rem;
+}
+
+.errorAlert {
+  background-color: #fee2e2;
+  color: var(--error);
+  border: 1px solid #fecaca;
+}
+
+.successAlert {
+  background-color: #d1fae5;
+  color: var(--success);
+  border: 1px solid #a7f3d0;
+}
+
+.profileCard {
+  background-color: var(--neutral-white);
+  border-radius: 1.2rem;
+  box-shadow: 0 0.4rem 1.2rem rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.profileHeader {
+  display: flex;
+  align-items: center;
+  padding: 2.4rem;
+  background-color: var(--primary-100);
+  border-bottom: 1px solid var(--neutral-gray-200);
+}
+
+.profileImageContainer {
+  margin-right: 2.4rem;
+  flex-shrink: 0;
+}
+
+.profileImage {
+  width: 12rem;
+  height: 12rem;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--primary-500);
+  background-color: var(--neutral-gray-100);
+}
+
+.imageUploadContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.currentImage {
+  margin-bottom: 1rem;
+}
+
+.uploadButton {
+  background-color: var(--primary-500);
+  color: white;
+  padding: 0.8rem 1.6rem;
+  border-radius: 0.6rem;
+  cursor: pointer;
+  font-size: 1.4rem;
+  text-align: center;
+  transition: background-color 0.2s;
+}
+
+.uploadButton:hover {
+  background-color: var(--primary-600);
+}
+
+.profileInfo {
+  flex-grow: 1;
+}
+
+.studentName {
+  font-size: var(--h4-desktop);
+  margin-bottom: 0.8rem;
+  color: var(--text-primary);
+}
+
+.studentEmail {
+  font-size: 1.6rem;
+  color: var(--text-tertiary);
+  margin-bottom: 1.6rem;
+}
+
+.editButton {
+  display: inline-flex;
+  align-items: center;
+  background-color: var(--primary-500);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 0.6rem;
+  font-size: 1.4rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.editButton:hover {
+  background-color: var(--primary-600);
+}
+
+.editButton svg {
+  margin-right: 0.8rem;
+}
+
+.profileDetails {
+  padding: 2.4rem;
+}
+
+.detailsSection {
+  margin-bottom: 2.4rem;
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.6rem;
+  color: var(--text-primary);
+  font-size: var(--h5-desktop);
+  border-bottom: 1px solid var(--neutral-gray-200);
+  padding-bottom: 1rem;
+}
+
+.sectionIcon {
+  margin-right: 1rem;
+  color: var(--primary-500);
+}
+
+.detailRow {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 1.6rem;
+}
+
+.detailItem {
+  flex: 1 0 45%;
+  margin-bottom: 1.2rem;
+  min-width: 25rem;
+}
+
+.detailLabel {
+  font-weight: 600;
+  color: var(--text-tertiary);
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 1.4rem;
+}
+
+.detailValue {
+  font-size: 1.6rem;
+  color: var(--text-primary);
+}
+
+.profileForm {
+  padding: 2.4rem;
+}
+
+.formRow {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 1.6rem;
+  gap: 2rem;
+}
+
+.formGroup {
+  flex: 1;
+  min-width: 25rem;
+  margin-bottom: 1.6rem;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 1.4rem;
+}
+
+.formGroup input {
+  width: 100%;
+  padding: 1.2rem;
+  border: 1px solid var(--neutral-gray-300);
+  border-radius: 0.6rem;
+  font-size: 1.6rem;
+  transition: border-color 0.2s;
+}
+
+.formGroup input:focus {
+  outline: none;
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 2px var(--primary-200);
+}
+
+.formButtons {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 2.4rem;
+  gap: 1.6rem;
+}
+
+.saveButton, .cancelButton {
+  display: inline-flex;
+  align-items: center;
+  padding: 1rem 2rem;
+  border-radius: 0.6rem;
+  font-size: 1.4rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 600;
+}
+
+.saveButton {
+  background-color: var(--primary-500);
+  color: white;
+  border: none;
+}
+
+.saveButton:hover:not(:disabled) {
+  background-color: var(--primary-600);
+}
+
+.saveButton:disabled {
+  background-color: var(--neutral-gray-300);
+  cursor: not-allowed;
+}
+
+.cancelButton {
+  background-color: white;
+  color: var(--text-tertiary);
+  border: 1px solid var(--neutral-gray-300);
+}
+
+.cancelButton:hover {
+  background-color: var(--neutral-gray-100);
+}
+
+.saveButton svg, .cancelButton svg {
+  margin-right: 0.8rem;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 768px) {
+  .profileHeader {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .profileImageContainer {
+    margin-right: 0;
+    margin-bottom: 2rem;
+  }
+  
+  .formRow {
+    flex-direction: column;
+    gap: 0;
+  }
+  
+  .formGroup {
+    min-width: 100%;
+  }
+  
+  .detailItem {
+    min-width: 100%;
+  }
+  
+  .formButtons {
+    flex-direction: column;
+  }
+  
+  .saveButton, .cancelButton {
+    width: 100%;
+    justify-content: center;
+  }
+}

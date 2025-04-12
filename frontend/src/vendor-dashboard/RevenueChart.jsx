@@ -16,7 +16,7 @@ const RevenueChart = ({ data }) => (
             backgroundColor: "var(--primary-500)",
           }}
         >
-          <span className={styles.barValue}>${item.value}</span>
+          <span className={styles.barValue}>₦{item.value}</span>
         </div>
       ))}
     </div>

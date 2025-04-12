@@ -40,7 +40,7 @@ const Orders = ({ orders }) => {
   return (
     <div className={styles.ordersSection}>
       <div className={styles.sectionHeader}>
-        <h2>Order Management</h2>
+        <h2 style={{ marginBottom: "2rem" }}>Order Management</h2>
         <div className={styles.orderFilters}>
           <select
             className={styles.filterSelect}
@@ -81,10 +81,10 @@ const Orders = ({ orders }) => {
               <tr key={order.id}>
                 <td className={styles.orderId}>{order.order_number}</td>
                 <td>
-                  {order.shipping?.first_name} {order.shipping?.last_name}
+                  {order.first_name} {order.last_name}
                 </td>
                 <td>{new Date(order.created_at).toLocaleDateString()}</td>
-                <td>₦{(order.total / 100).toFixed(2)}</td>
+                <td>₦{order.subtotal}</td>
                 <td>{order.order_items?.length || 0}</td>
                 <td>
                   <span

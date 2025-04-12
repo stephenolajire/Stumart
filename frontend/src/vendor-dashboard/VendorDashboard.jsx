@@ -29,6 +29,7 @@ const VendorDashboard = () => {
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [withdrawHistory, setWithrawalHistory] = useState([]);
 
   const navigate = useNavigate();
   const { auth } = useContext(GlobalContext);
@@ -48,19 +49,17 @@ const VendorDashboard = () => {
   const fetchDashboardData = async () => {
     setIsLoading(true);
     try {
-      const [statsData, productsData, ordersData] = await Promise.all([
+      const [statsData, productsData, ordersData, withdrawData] = await Promise.all([
         vendorApi.getDashboardStats(),
         vendorApi.getProducts(),
         vendorApi.getOrders(),
       ]);
 
-      console.log("Stats Data:", statsData);
-      console.log("Products Data:", productsData);
-      console.log("Orders Data:", ordersData);
-
       setStats(statsData);
       setProducts(productsData);
       setOrders(ordersData);
+      console.log("Orders Data:", ordersData);
+      setWithrawalHistory(withdrawData);
     } catch (error) {
       console.error("Dashboard Data Error:", error);
       console.error("Error Response:", error.response);

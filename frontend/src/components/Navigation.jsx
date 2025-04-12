@@ -114,6 +114,18 @@ const Navigation = () => {
             </NavLink>
           )}
 
+          {isAuthenticated && (
+            <NavLink
+              to="/profile"
+              className={({ isActive }) =>
+                isActive ? `${styles.link} ${styles.activeLink}` : styles.link
+              }
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Profile
+            </NavLink>
+          )}
+
           {isAuthenticated ? (
             <div className={styles.authButtons}>
               <NavLink className={styles.buttonFilled} onClick={handleLogout}>

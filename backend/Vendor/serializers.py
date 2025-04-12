@@ -2,7 +2,7 @@
 from rest_framework import serializers
 from User.models import Vendor
 from Stumart.models import Product, Order, OrderItem, Transaction, Wallet
-from .models import VendorStats, VendorRevenueData, VendorSalesData, ProductReview
+from .models import VendorStats, VendorRevenueData, VendorSalesData, ProductReview, Withdrawal
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -108,3 +108,11 @@ class DashboardStatsSerializer(serializers.Serializer):
     pendingReviews = serializers.IntegerField()
     revenueData = RevenueDataSerializer(many=True)
     salesData = SalesDataSerializer(many=True)
+
+
+class WithdrawalSerializer(serializers.ModelSerializer):
+    # vendor = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Withdrawal
+        fields = ['id', 'vendor', 'amount', 'reference', 'payment_reference', 'status', 'created_at']

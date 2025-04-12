@@ -7,11 +7,12 @@ from django.db.models import Sum, Count, Q
 from django.utils import timezone
 from datetime import datetime, timedelta
 from User.models import Vendor
+from rest_framework.views import APIView
 from Stumart.models import Product, Order, OrderItem, Transaction, Wallet
 from .models import VendorStats, VendorRevenueData, VendorSalesData, ProductReview, Withdrawal
 from .serializers import (
     ProductSerializer, OrderSerializer, TransactionSerializer, 
-    ReviewSerializer, DashboardStatsSerializer
+    ReviewSerializer, DashboardStatsSerializer, WithdrawalSerializer
 )
 import requests
 from django.conf import settings
@@ -164,48 +165,14 @@ class ProductViewSet(viewsets.ModelViewSet):
         serializer.save(vendor=self.request.user)
 
 
-class OrderViewSet(viewsets.ReadOnlyModelViewSet):
-    serializer_class = OrderSerializer
-    permission_classes = [IsAuthenticated]
-    
-    def get_queryset(self):
-        # Get the vendor profile associated with the current user
-        try:
-            vendor = self.request.user.vendor_profile
-        except Vendor.DoesNotExist:
-            return Order.objects.none()  # Return empty queryset if not a vendor
-            
-        # Find all order items belonging to this vendor
-        vendor_order_items = OrderItem.objects.filter(vendor=vendor)
-        
-        # Get the distinct orders containing these items
-        order_ids = vendor_order_items.values_list('order', flat=True).distinct()
-        
-        # Return these orders with prefetched related data for efficiency
-        return Order.objects.filter(id__in=order_ids).prefetch_related(
-            'order_items',
-            'order_items__product'
-        ).select_related('user')
-    
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        # Add vendor to context for filtering in serializer
-        try:
-            context['vendor'] = self.request.user.vendor_profile
-        except Vendor.DoesNotExist:
-            pass
-        return context
-    
-    def retrieve(self, request, *args, **kwargs):
-        """Custom retrieve to ensure we're only showing vendor's items"""
-        instance = self.get_object()
+class OrderView(APIView):
+    def get(self, request):
         vendor = request.user.vendor_profile
+        # Get all orders that contain items from this vendor
+        order_items = OrderItem.objects.filter(vendor=vendor)
+        orders = Order.objects.filter(order_items__in=order_items).distinct()
         
-        # Check if this order contains any items from this vendor
-        if not instance.order_items.filter(vendor=vendor).exists():
-            return Response({"error": "Order not found"}, status=404)
-            
-        serializer = self.get_serializer(instance)
+        serializer = OrderSerializer(orders, many=True, context={'vendor': vendor})
         return Response(serializer.data)
 
 
@@ -323,6 +290,17 @@ class PaymentViewSet(viewsets.ReadOnlyModelViewSet):
             "reference": reference,
             "status": "processing"
         })
+    @action(detail=False, methods=['get'])
+    def withdrawal_history(self, request):
+        vendor = request.user.vendor_profile
+        
+        # Get all withdrawals for this vendor
+        withdrawals = Withdrawal.objects.filter(vendor=vendor).order_by('-created_at')
+        
+        # Serialize the data
+        serializer = WithdrawalSerializer(withdrawals, many=True)
+        
+        return Response(serializer.data)
     
     # @action(detail=False, methods=['post'])
     # def withdraw(self, request):
@@ -544,3 +522,22 @@ class ReviewViewSet(viewsets.ModelViewSet):
         review.save()
         
         return Response({"success": "Response added to review"})
+    
+
+class VendorDetailsView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        vendor = request.user.vendor_profile
+        user = request.user
+        image = user.profile_pic
+        image_url= image.url if image else None
+        
+        # Get vendor details
+        vendor_details = {
+            'id': vendor.id,
+            'name': vendor.business_name,
+            'image': image_url,
+        }
+        
+        return Response(vendor_details)

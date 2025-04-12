@@ -378,3 +378,95 @@ class SetNewPasswordView(APIView):
             serializer.save()
             return Response({"message": "Password updated successfully"}, status=200)
         return Response(serializer.errors, status=400)
+    
+
+class StudentDetailsView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """Get the student profile for the currently authenticated user"""
+        user = request.user
+        
+        # Get the student profile associated with the user
+        try:
+            student = Student.objects.get(user=user)
+        except Student.DoesNotExist:
+            return Response({"error": "Student profile not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        # Combine user and student data
+        user_data = UserSerializer(user).data
+        student_data = StudentSerializer(student).data
+        image = user.profile_pic
+        image_url = image.url if image else None
+        
+        # Prepare combined response
+        response_data = {
+            'user': user_data,
+            'matric_number': student_data.get('matric_number', ''),
+            'department': student_data.get('department', ''),
+            'profile_image': image_url
+        }
+        
+        return Response(response_data)
+
+class UpdateStudentProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def patch(self, request):
+        """Update the student profile for the currently authenticated user"""
+        user = request.user
+        
+        try:
+            student = Student.objects.get(user=user)
+        except Student.DoesNotExist:
+            return Response({"error": "Student profile not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        # Extract data for user model fields
+        user_data = {
+            'first_name': request.data.get('first_name', user.first_name),
+            'last_name': request.data.get('last_name', user.last_name),
+            'phone_number': request.data.get('phone_number', user.phone_number),
+            'state': request.data.get('state', user.state),
+            'institution': request.data.get('institution', user.institution)
+        }
+        
+        # Extract data for student model fields
+        student_data = {
+            'matric_number': request.data.get('matric_number', student.matric_number),
+            'department': request.data.get('department', student.department)
+        }
+        
+        # Handle profile picture update
+        if 'profile_pic' in request.FILES:
+            user.profile_pic = request.FILES['profile_pic']
+        
+        # Update user model
+        user_serializer = UserSerializer(user, data=user_data, partial=True)
+        if user_serializer.is_valid():
+            user_serializer.save()
+        else:
+            return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Update student model
+        student_serializer = StudentSerializer(student, data=student_data, partial=True)
+        if student_serializer.is_valid():
+            student_serializer.save()
+        else:
+            return Response(student_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Prepare combined response similar to the get method
+        response_data = {
+            'user': {
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'email': user.email,
+                'phone_number': user.phone_number,
+                'state': user.state,
+                'institution': user.institution,
+                'profile_pic': user.profile_pic.url if user.profile_pic else None
+            },
+            'matric_number': student.matric_number,
+            'department': student.department
+        }
+        
+        return Response(response_data)

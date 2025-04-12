@@ -33,29 +33,34 @@ const Products = ({ products, onDeleteProduct }) => {
 
   return (
     <div className={styles.productsSection}>
-      <div className={styles.sectionHeader}>
-        <h2>Product Management</h2>
-        <Link to="/add-product">
-          <button className={styles.addButton}>Add New Product</button>
-        </Link>
-      </div>
-      <div className={styles.filters}>
-        <select
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          className={styles.filterSelect}
-        >
-          <option value="all">All Products</option>
-          <option value="active">In Stock</option>
-          <option value="low-stock">Low Stock</option>
-        </select>
-        <input
-          type="search"
-          placeholder="Search products..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className={styles.searchInput}
-        />
+      <h2 style={{marginBottom:"2rem"}}>Product Management</h2>
+      <div className={styles.flex}>
+        <div className={styles.sectionHeader}>
+          <Link to="/add-product">
+            <button className={styles.addButton}>Add New Product</button>
+          </Link>
+        </div>
+        <div className={styles.filters}>
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className={styles.filterSelect}
+          >
+            <option value="all">All Products</option>
+            <option value="active">In Stock</option>
+            <option value="low-stock">Low Stock</option>
+          </select>
+        </div>
+        <div className={styles.searchContainer}> 
+          <input
+            style={{width:"100%"}}
+            type="search"
+            placeholder="Search products..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className={styles.searchInput}
+          />
+        </div>
       </div>
       <div className={styles.tableContainer}>
         <table className={styles.dataTable}>

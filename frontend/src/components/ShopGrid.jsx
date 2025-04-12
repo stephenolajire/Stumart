@@ -19,6 +19,8 @@ const ShopGrid = ({ shops }) => {
               <div className={styles.shopInfo}>
                 <h3>{shop.business_name}</h3>
                 <p className={styles.category}>{shop.business_category}</p>
+                <p className={styles.category}>{shop.user.state}</p>
+                <p className={styles.category}>{shop.user.institution}</p>
                 <div className={styles.rating}>⭐ {shop.rating}</div>
                 <p className={styles.delivery}>🕒 15mins - 30mins</p>
               </div>

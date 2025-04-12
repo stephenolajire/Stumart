@@ -59,7 +59,7 @@ const vendorApi = {
   // Orders
   getOrders: async () => {
     try {
-      const response = await api.get("/orders/");
+      const response = await api.get("vendor-orders/");
       return response.data;
       console.log("Orders:", response.data);
     } catch (error) {
@@ -106,7 +106,7 @@ const vendorApi = {
     try {
       const response = await api.get("/payments/");
       return response.data;
-      console.log("Payments:", response.data);
+      // console.log("Payments:", response.data);
     } catch (error) {
       throw error;
     }
@@ -116,7 +116,7 @@ const vendorApi = {
     try {
       const response = await api.get("/payments/summary/");
       return response.data;
-      console.log("Payment Summary:", response.data);
+      // console.log("Payment Summary:", response.data);
     } catch (error) {
       throw error;
     }
@@ -125,6 +125,15 @@ const vendorApi = {
   requestWithdrawal: async (amount) => {
     try {
       const response = await api.post("payments/withdraw/", { amount });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  getWithdrawalHistory: async () => {
+    try {
+      const response = await api.get("payments/withdrawal_history/");
       return response.data;
     } catch (error) {
       throw error;

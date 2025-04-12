@@ -152,7 +152,7 @@ const Reviews = () => {
   return (
     <div className={styles.reviewsSection}>
       <div className={styles.sectionHeader}>
-        <h2>Reviews & Ratings</h2>
+        <h2 style={{ marginBottom: "2rem" }}>Reviews & Ratings</h2>
       </div>
 
       <div className={styles.reviewsSummary}>

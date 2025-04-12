@@ -12,6 +12,8 @@ urlpatterns = [
     path('students/', StudentAPIView.as_view(), name='student-list'),
     path('students/<int:pk>/', StudentAPIView.as_view(), name='student-detail'),
     path('students/filter/', StudentAPIView.as_view(), name='student-filter'),  # For department filtering
+    path('student-details/', StudentDetailsView.as_view(), name='student-details'),
+    path('update-student-profile/', UpdateStudentProfileView.as_view(), name='update-student-profile'),
     
     # Vendor URLs
     path('vendors/', VendorAPIView.as_view(), name='vendor-list'),

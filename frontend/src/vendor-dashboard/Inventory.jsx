@@ -105,7 +105,7 @@ const Inventory = ({ products, onUpdateStock }) => {
   return (
     <div className={styles.inventorySection}>
       <div className={styles.sectionHeader}>
-        <h2>Inventory Management</h2>
+        <h2 style={{marginBottom:"2rem"}}>Inventory Management</h2>
         {/* <button className={styles.addButton}>Bulk Update</button> */}
       </div>
 
@@ -159,13 +159,6 @@ const Inventory = ({ products, onUpdateStock }) => {
                 {sortBy === "name" && (sortDirection === "asc" ? "▲" : "▼")}
               </th>
               <th
-                onClick={() => handleSort("category")}
-                className={styles.sortableHeader}
-              >
-                Category{" "}
-                {sortBy === "category" && (sortDirection === "asc" ? "▲" : "▼")}
-              </th>
-              <th
                 onClick={() => handleSort("price")}
                 className={styles.sortableHeader}
               >
@@ -189,7 +182,6 @@ const Inventory = ({ products, onUpdateStock }) => {
               return (
                 <tr key={product.id}>
                   <td className={styles.productName}>{product.name}</td>
-                  <td>{product.category}</td>
                   <td>₦{product.price}</td>
                   <td>
                     {product.stock === 0 ? (

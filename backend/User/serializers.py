@@ -7,16 +7,21 @@ from .models import *
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     # confirm_password = serializers.CharField(write_only=True, required=True)
+    image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = ('id', 'email', 'username', 'password', 
                  'first_name', 'last_name', 'phone_number', 'user_type', 
-                 'profile_pic', 'state', 'institution')
+                 'profile_pic', 'state', 'institution','image_url')
         extra_kwargs = {
             'first_name': {'required': True},
             'last_name': {'required': True}
         }
+    def get_image_url(self, obj):
+        if obj.profile_pic:
+            return obj.profile_pic.url
+        return None
 
     def validate(self, attrs):
         # if attrs['password'] != attrs['confirm_password']:
