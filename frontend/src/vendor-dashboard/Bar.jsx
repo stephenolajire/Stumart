@@ -33,7 +33,7 @@ const Bar = ({ activeTab }) => {
   const getDetails = async () => {
     try {
       const response = await api.get("/vendor-details/");
-      console.log(response.data);
+      // console.log(response.data);
       setDetails(response.data);
     } catch (error) {
       console.error("Error fetching vendor details:", error);
