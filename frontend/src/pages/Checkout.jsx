@@ -68,6 +68,7 @@ const Checkout = () => {
       // Create the order and get order ID
       const orderResponse = await api.post("orders/create/", orderData);
       const orderId = orderResponse.data.order_id;
+      localStorage.setItem("order_id", orderId); // Store order ID in localStorage
 
       // Step 2: Initialize payment with Paystack
       const paymentData = {

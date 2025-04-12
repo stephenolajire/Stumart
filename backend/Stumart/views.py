@@ -730,7 +730,7 @@ class PaystackPaymentVerifyView(APIView):
                 return Response({
                     'status': 'success',
                     'message': 'Payment already verified',
-                    'order_number': transaction.order.order_number
+                    'order_number': order.order_number
                 }, status=status.HTTP_200_OK)
             
             # Only verify with Paystack if transaction hasn't been completed
@@ -769,7 +769,7 @@ class PaystackPaymentVerifyView(APIView):
                     return Response({
                         'status': 'success',
                         'message': 'Payment already verified',
-                        'order_number': transaction_obj.order.order_number
+                        'order_number': order.order_number
                     }, status=status.HTTP_200_OK)
                 
                 transaction_obj.status = 'COMPLETED'
