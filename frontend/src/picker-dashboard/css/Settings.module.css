@@ -1,0 +1,341 @@
+/* Settings.module.css */
+.settingsContainer {
+  padding: 2.4rem;
+  color: var(--text-primary);
+  max-width: 120rem;
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: 2.4rem;
+}
+
+.header h2 {
+  font-size: var(--h4-desktop);
+  color: var(--text-primary);
+  margin-bottom: 0.8rem;
+}
+
+.header p {
+  font-size: 1.6rem;
+  color: var(--text-tertiary);
+}
+
+.form {
+  background-color: var(--neutral-white);
+  border-radius: 1.2rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.section {
+  padding: 2.4rem;
+  border-bottom: 1px solid var(--neutral-gray-200);
+}
+
+.section h3 {
+  font-size: 1.8rem;
+  margin-bottom: 2rem;
+  color: var(--text-primary);
+}
+
+.profileImageSection {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2.4rem;
+}
+
+.profileImageContainer {
+  width: 8rem;
+  height: 8rem;
+  border-radius: 50%;
+  overflow: hidden;
+  background-color: var(--neutral-gray-200);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 2.4rem;
+}
+
+.profileImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profileImagePlaceholder {
+  font-size: 3.2rem;
+  color: var(--neutral-gray-400);
+}
+
+.profileImageUpload p {
+  margin-top: 0.8rem;
+  font-size: 1.4rem;
+  color: var(--text-tertiary);
+}
+
+.uploadButton {
+  display: inline-block;
+  padding: 0.8rem 1.6rem;
+  background-color: var(--primary-500);
+  color: white;
+  border-radius: 0.4rem;
+  font-size: 1.4rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.uploadButton:hover {
+  background-color: var(--primary-600);
+}
+
+.fileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.fieldGroup {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.6rem;
+  margin-bottom: 1.6rem;
+}
+
+@media (min-width: 768px) {
+  .fieldGroup {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.formField {
+  margin-bottom: 1.6rem;
+}
+
+.formField label {
+  display: flex;
+  align-items: center;
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin-bottom: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.fieldIcon {
+  margin-right: 0.8rem;
+  color: var(--primary-500);
+}
+
+.formField input, 
+.formField select {
+  width: 100%;
+  padding: 1.2rem;
+  border: 1px solid var(--neutral-gray-300);
+  border-radius: 0.6rem;
+  font-size: 1.6rem;
+  color: var(--text-primary);
+  background-color: var(--neutral-white);
+  transition: border-color 0.2s;
+}
+
+.formField input:focus, 
+.formField select:focus {
+  outline: none;
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 2px rgba(218, 165, 32, 0.1);
+}
+
+.readonlyField {
+  background-color: var(--neutral-gray-100) !important;
+  cursor: not-allowed;
+}
+
+.toggleField {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.2rem 0;
+}
+
+.toggleLabel {
+  flex: 1;
+}
+
+.toggleLabel label {
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.4rem;
+  display: block;
+}
+
+.toggleLabel p {
+  font-size: 1.4rem;
+  color: var(--text-tertiary);
+}
+
+.toggleSwitch {
+  position: relative;
+  display: inline-block;
+  width: 5rem;
+  height: 2.6rem;
+  cursor: pointer;
+}
+
+.toggleSwitch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggleSlider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.4rem;
+  color: var(--primary-500);
+}
+
+.toggleIcon {
+  transition: 0.2s;
+}
+
+.verificationStatus {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2.4rem;
+  background-color: var(--neutral-gray-50);
+}
+
+.verificationLabel h4 {
+  font-size: 1.6rem;
+  margin-bottom: 0.4rem;
+}
+
+.verificationLabel p {
+  font-size: 1.4rem;
+  color: var(--text-tertiary);
+}
+
+.verificationBadgeVerified,
+.verificationBadgePending {
+  padding: 0.6rem 1.2rem;
+  border-radius: 2rem;
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+.verificationBadgeVerified {
+  background-color: rgba(34, 197, 94, 0.1);
+  color: var(--success);
+}
+
+.verificationBadgePending {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: var(--warning);
+}
+
+.formActions {
+  padding: 2.4rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.saveButton {
+  padding: 1.2rem 2.4rem;
+  background-color: var(--primary-500);
+  color: white;
+  border: none;
+  border-radius: 0.6rem;
+  font-size: 1.6rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.saveButton:hover:not(:disabled) {
+  background-color: var(--primary-600);
+}
+
+.saveButton:disabled {
+  background-color: var(--neutral-gray-300);
+  cursor: not-allowed;
+}
+
+.errorMessage,
+.successMessage {
+  margin-bottom: 2rem;
+  padding: 1.6rem;
+  border-radius: 0.6rem;
+  font-size: 1.6rem;
+  font-weight: 500;
+}
+
+.errorMessage {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--error);
+}
+
+.successMessage {
+  background-color: rgba(34, 197, 94, 0.1);
+  color: var(--success);
+}
+
+.loader {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 20rem;
+  font-size: 1.8rem;
+  color: var(--text-tertiary);
+}
+
+/* Media Queries */
+@media screen and (max-width: 768px) {
+  .settingsContainer {
+    padding: 1.6rem;
+  }
+
+  .header h2 {
+    font-size: var(--h4-mobile);
+  }
+  
+  .section {
+    padding: 1.6rem;
+  }
+  
+  .profileImageSection {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .profileImageContainer {
+    margin-right: 0;
+    margin-bottom: 1.6rem;
+  }
+  
+  .toggleField {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .toggleLabel {
+    margin-bottom: 1.2rem;
+  }
+  
+  .verificationStatus {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .verificationLabel {
+    margin-bottom: 1.2rem;
+  }
+}

@@ -1,17 +1,134 @@
-/* DashboardLayout.module.css */
-.dashboardLayout {
+/* src/components/PickerDashboard/PickerDashboard.module.css */
+
+.dashboardContainer {
   display: flex;
+  min-height: 100vh;
+  font-size: 1.6rem;
+  background-color: var(--neutral-gray-50);
+}
+
+.sidebar {
+  width: 25rem;
+  background-color: var(--neutral-white);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+  z-index: 10;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  overflow-y: auto;
 }
 
 .content {
   flex: 1;
-  margin-left: 250px;
   padding: 2rem;
-  background-color: var(--neutral-gray-50);
-  min-height: 100vh;
-  transition: margin-left 0.3s ease;
 }
 
-.contentCollapsed {
-  margin-left: 70px;
+.mobileMenuButton {
+  display: none;
+  position: fixed;
+  top: 1.5rem;
+  left: 1.5rem;
+  background-color: var(--primary-500);
+  color: var(--neutral-white);
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.4rem;
+  cursor: pointer;
+  z-index: 20;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+@media screen and (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    left: -30rem;
+    transition: left 0.3s ease;
+    box-shadow: 5px 0 15px rgba(0, 0, 0, 0.1);
+  }
+  
+  .sidebarOpen {
+    left: 0;
+  }
+  
+  .mobileMenuButton {
+    display: flex;
+  }
+  
+  .content {
+    padding-top: 7rem;
+  }
+}
+
+/* Common card style used across components */
+.card {
+  background-color: var(--neutral-white);
+  border-radius: 0.8rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+.cardTitle {
+  font-size: var(--h5-desktop);
+  margin-bottom: 1.5rem;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Badge styles used across components */
+.badge {
+  font-size: 1.2rem;
+  padding: 0.5rem 1rem;
+  border-radius: 2rem;
+  font-weight: 500;
+}
+
+.badgePending {
+  background-color: var(--warning);
+  color: var(--neutral-white);
+}
+
+.badgeActive {
+  background-color: var(--info);
+  color: var(--neutral-white);
+}
+
+.badgeCompleted {
+  background-color: var(--success);
+  color: var(--neutral-white);
+}
+
+/* Button styles */
+.button {
+  padding: 1rem 2rem;
+  border-radius: 0.5rem;
+  border: none;
+  font-size: 1.4rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.buttonPrimary {
+  background-color: var(--primary-500);
+  color: var(--neutral-white);
+}
+
+.buttonPrimary:hover {
+  background-color: var(--primary-600);
+}
+
+.buttonSecondary {
+  background-color: var(--neutral-gray-200);
+  color: var(--secondary-700);
+}
+
+.buttonSecondary:hover {
+  background-color: var(--neutral-gray-300);
 }

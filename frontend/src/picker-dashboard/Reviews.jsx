@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from "react";
+// Reviews.jsx
+import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Star } from "lucide-react";
-import styles from "./Reviews.module.css";
+import styles from "./css/Reviews.module.css";
+import { FaStar, FaStarHalfAlt } from "react-icons/fa";
+import api from "../constant/api";
 
 const Reviews = () => {
   const [reviewsData, setReviewsData] = useState({
@@ -10,76 +12,97 @@ const Reviews = () => {
     reviews: [],
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const fetchReviews = async () => {
       try {
-        const response = await axios.get("/api/picker/reviews/");
+        setLoading(true);
+        const response = await api.get("reviews/", {});
         setReviewsData(response.data);
         setLoading(false);
-      } catch (error) {
-        console.error("Error fetching reviews:", error);
+      } catch (err) {
+        setError("Failed to load reviews");
         setLoading(false);
+        console.error(err);
       }
     };
 
     fetchReviews();
   }, []);
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
   const renderStars = (rating) => {
-    return Array(5)
-      .fill(0)
-      .map((_, index) => (
-        <Star
-          key={index}
-          size={20}
-          fill={index < rating ? "currentColor" : "none"}
-          stroke={index < rating ? "currentColor" : "currentColor"}
-        />
-      ));
+    const stars = [];
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+
+    for (let i = 0; i < fullStars; i++) {
+      stars.push(<FaStar key={`full-${i}`} className={styles.star} />);
+    }
+
+    if (hasHalfStar) {
+      stars.push(<FaStarHalfAlt key="half" className={styles.star} />);
+    }
+
+    const emptyStars = 5 - stars.length;
+    for (let i = 0; i < emptyStars; i++) {
+      stars.push(<FaStar key={`empty-${i}`} className={styles.emptyStar} />);
+    }
+
+    return stars;
   };
 
+  if (loading) {
+    return <div className={styles.loader}>Loading reviews...</div>;
+  }
+
+  if (error) {
+    return <div className={styles.error}>{error}</div>;
+  }
+
   return (
-    <div className={styles.container}>
+    <div className={styles.reviewsContainer}>
       <div className={styles.header}>
-        <h1>Reviews & Ratings</h1>
+        <h2>Reviews and Ratings</h2>
+        <p>See what customers are saying about your service</p>
       </div>
 
-      <div className={styles.ratingOverview}>
-        <div className={styles.averageRating}>
-          <div className={styles.ratingValue}>
+      <div className={styles.statsCard}>
+        <div className={styles.ratingWrapper}>
+          <div className={styles.ratingNumber}>
             {reviewsData.average_rating.toFixed(1)}
           </div>
-          <div className={styles.ratingLabel}>Average Rating</div>
+          <div className={styles.starsContainer}>
+            {renderStars(reviewsData.average_rating)}
+          </div>
         </div>
-        <div className={styles.reviewsCount}>
-          <div className={styles.countValue}>{reviewsData.total_reviews}</div>
-          <div className={styles.countLabel}>Total Reviews</div>
+        <div className={styles.totalReviews}>
+          <span>{reviewsData.total_reviews}</span> total reviews
         </div>
       </div>
 
       <div className={styles.reviewsList}>
-        {reviewsData.reviews.map((review) => (
-          <div key={review.id} className={styles.reviewCard}>
-            <div className={styles.reviewHeader}>
-              <div className={styles.reviewerInfo}>
-                <h3>{review.customer_name}</h3>
-                <div className={styles.orderNumber}>
-                  Order #{review.order_number}
+        {reviewsData.reviews.length > 0 ? (
+          reviewsData.reviews.map((review) => (
+            <div key={review.id} className={styles.reviewCard}>
+              <div className={styles.reviewHeader}>
+                <div className={styles.customerInfo}>
+                  <h4>{review.customer_name}</h4>
+                  <span className={styles.orderNumber}>
+                    Order: {review.order_number}
+                  </span>
                 </div>
+                <div className={styles.reviewDate}>{review.date}</div>
               </div>
-              <div className={styles.ratingStars}>
+              <div className={styles.reviewRating}>
                 {renderStars(review.rating)}
               </div>
+              <p className={styles.comment}>{review.comment}</p>
             </div>
-            <div className={styles.reviewComment}>{review.comment}</div>
-            <div className={styles.reviewDate}>{review.date}</div>
-          </div>
-        ))}
+          ))
+        ) : (
+          <div className={styles.noReviews}>No reviews yet.</div>
+        )}
       </div>
     </div>
   );

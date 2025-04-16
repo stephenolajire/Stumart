@@ -21,77 +21,93 @@ class PickerDashboardView(APIView):
     
     def get(self, request):
         user = request.user
-        
+
         # Check if the user is a picker or student picker
         if user.user_type not in ['picker', 'student_picker']:
             return Response({"error": "Only pickers can access this dashboard"}, 
-                           status=status.HTTP_403_FORBIDDEN)
-        
+                            status=status.HTTP_403_FORBIDDEN)
+
         # Get picker model based on user type
-        if user.user_type == 'picker':
-            picker_profile = user.picker_profile
-        else:
-            picker_profile = user.student_picker_profile
-        
-        # Get available orders count (orders in user's institution that are pending pickup)
+        picker_profile = user.picker_profile if user.user_type == 'picker' else user.student_picker_profile
+
+        # ✅ Get available orders count
         available_orders = Order.objects.filter(
-            order_status='PAID',
-            # Filter orders where vendor is in the same institution as the picker
-            user__vendor_profile__user__institution=user.institution
+            id__in=OrderItem.objects.filter(
+                vendor__user__institution=user.institution,
+                order__order_status='PAID'
+            ).values_list('order_id', flat=True).distinct()
         ).count()
-        
-        # Get active deliveries count (orders being delivered by this picker)
-        active_deliveries = Order.objects.filter(
-            order_status='IN_TRANSIT',
-            picker=user
-        ).count()
-        
-        # Calculate total earnings
-        completed_orders = Order.objects.filter(
-            order_status='DELIVERED',
-            picker=user
+
+        # ✅ Active deliveries
+        active_delivery_ids = OrderItem.objects.filter(
+            order__order_status='IN_TRANSIT',
+            order__picker=user,
+            vendor__user__institution=user.institution
+        ).values_list('order_id', flat=True).distinct()
+
+        active_deliveries = Order.objects.filter(id__in=active_delivery_ids).count()
+
+        # ✅ Total earnings (shipping fees for completed deliveries)
+        completed_order_items = OrderItem.objects.filter(
+            order__order_status='DELIVERED',
+            order__picker=user,
+            vendor__user__institution=user.institution
         )
-        
-        total_earnings = completed_orders.aggregate(
-            total=Sum('shipping_fee')
-        )['total'] or 0
-        
-        # Get recent orders (both available and active)
+
+        completed_order_ids = completed_order_items.values_list('order_id', flat=True).distinct()
+        completed_orders = Order.objects.filter(id__in=completed_order_ids)
+        total_earnings = completed_orders.aggregate(total=Sum('shipping_fee'))['total'] or 0
+
+        # ✅ Recent Orders
         recent_orders = []
-        
-        # Available orders in the picker's institution
-        available = Order.objects.filter(
-            order_status='PENDING',
-            user__vendor_profile__user__institution=user.institution
-        ).order_by('-created_at')[:5]
-        
-        for order in available:
+
+        # Available Orders (PAID)
+        available_order_ids = OrderItem.objects.filter(
+            order__order_status='PAID',
+            vendor__user__institution=user.institution
+        ).values_list('order_id', flat=True).distinct()
+
+        available_orders_qs = Order.objects.filter(id__in=available_order_ids).order_by('-created_at')[:5]
+
+        for order in available_orders_qs:
+            vendor_name = (
+                order.order_items.first().vendor.business_name
+                if order.order_items.exists() else "Unknown"
+            )
             recent_orders.append({
                 'id': order.id,
                 'order_number': order.order_number,
-                'vendor_name': order.user.vendor_profile.business_name if hasattr(order.user, 'vendor_profile') else "Unknown",
+                'vendor_name': vendor_name,
                 'delivery_location': f"{order.address}, Room: {order.room_number}" if order.room_number else order.address,
                 'status': 'Pending'
             })
-        
-        # Active orders for this picker
-        active = Order.objects.filter(
-            order_status='IN_TRANSIT',
-            picker=user
-        ).order_by('-created_at')[:5]
-        
-        for order in active:
+
+        # Active Orders (IN_TRANSIT)
+        active_order_ids = OrderItem.objects.filter(
+            order__order_status='IN_TRANSIT',
+            order__picker=user,
+            vendor__user__institution=user.institution
+        ).values_list('order_id', flat=True).distinct()
+
+        active_orders_qs = Order.objects.filter(id__in=active_order_ids).order_by('-created_at')[:5]
+
+        for order in active_orders_qs:
+            vendor_name = (
+                order.order_items.first().vendor.business_name
+                if order.order_items.exists() else "Unknown"
+            )
             recent_orders.append({
                 'id': order.id,
                 'order_number': order.order_number,
-                'vendor_name': order.user.vendor_profile.business_name if hasattr(order.user, 'vendor_profile') else "Unknown",
+                'vendor_name': vendor_name,
                 'delivery_location': f"{order.address}, Room: {order.room_number}" if order.room_number else order.address,
                 'status': 'In Progress'
             })
-        
-        # Sort recent orders by creation date
+
+        # Sort by most recent
         recent_orders = sorted(recent_orders, key=lambda x: x['id'], reverse=True)[:5]
-        
+
+        # ✅ Final Response
         response_data = {
             'stats': {
                 'availableOrders': available_orders,
@@ -101,8 +117,9 @@ class PickerDashboardView(APIView):
             },
             'recent_orders': recent_orders
         }
-        
+
         return Response(response_data)
+
 
 
 class AvailableOrdersView(APIView):
@@ -122,8 +139,10 @@ class AvailableOrdersView(APIView):
         
         # Base query - get orders that are pending and in the same institution
         base_query = Order.objects.filter(
-            order_status='PENDING',
-            user__vendor_profile__user__institution=user.institution
+            id__in=OrderItem.objects.filter(
+                vendor__user__institution=user.institution,
+                order__order_status='PAID'
+            ).values_list('order_id', flat=True).distinct()
         )
         
         # Apply filters
@@ -140,7 +159,8 @@ class AvailableOrdersView(APIView):
         orders_data = []
         for order in available_orders:
             # Get vendor details
-            vendor = order.user.vendor_profile if hasattr(order.user, 'vendor_profile') else None
+            response = OrderItem.objects.get(order=order)
+            vendor = response.vendor
             vendor_name = vendor.business_name if vendor else "Unknown"
             
             # Get order items
@@ -153,18 +173,13 @@ class AvailableOrdersView(APIView):
                     'price': float(item.price)
                 })
             
-            # Calculate distance (this would normally use geo-location)
-            # For now, we'll use a placeholder value
-            distance = round(random.uniform(0.5, 5.0), 1)  # Random distance between 0.5 and 5 km
-            
             orders_data.append({
                 'id': order.id,
                 'order_number': order.order_number,
                 'vendor_name': vendor_name,
                 'pickup_location': f"{vendor.user.institution}, {vendor.user.state}" if vendor else "Unknown",
                 'delivery_location': f"{order.address}, Room: {order.room_number}" if order.room_number else order.address,
-                'distance': distance,
-                'total': float(order.total),
+                'total': float(order.subtotal),
                 'shipping_fee': float(order.shipping_fee),
                 'items': items
             })
@@ -184,22 +199,23 @@ class AvailableOrdersView(APIView):
         
         # Get the order
         try:
-            order = Order.objects.get(id=order_id, order_status='PENDING')
+            order = Order.objects.get(id=order_id, order_status='PAID')
         except Order.DoesNotExist:
             return Response({"error": "Order not found or already accepted"}, 
                            status=status.HTTP_404_NOT_FOUND)
         
+        order_vendor =  OrderItem.objects.get(order=order)
+        vendor = order_vendor.vendor
+        
         # Check if order is in the same institution
-        if order.user.vendor_profile.user.institution != user.institution:
+        if vendor.user.institution != user.institution:
             return Response({"error": "You can only accept orders from your institution"}, 
                            status=status.HTTP_403_FORBIDDEN)
         
         # Update order status and assign picker
         order.order_status = 'IN_TRANSIT'
-        if user.user_type == 'picker':
+        if user.user_type == 'picker' or 'student_picker':
             order.picker = user
-        else:
-            order.student_picker = user
         
         order.save()
         
@@ -233,6 +249,7 @@ class MyDeliveriesView(APIView):
                 order_status='DELIVERED',
                 picker = user,
             ).order_by('-created_at')
+
         
         # Prepare detailed response data
         deliveries_data = []

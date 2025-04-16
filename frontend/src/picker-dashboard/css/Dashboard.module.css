@@ -1,6 +1,6 @@
-/* src/components/PickerDashboard/Earnings/Earnings.module.css */
+/* src/components/PickerDashboard/Dashboard/Dashboard.module.css */
 
-.earnings {
+.dashboard {
   padding: 1rem;
 }
 
@@ -10,39 +10,9 @@
   color: var(--text-primary);
 }
 
-.periodFilters {
-  display: flex;
-  gap: 1.5rem;
-  margin-bottom: 2.5rem;
-  flex-wrap: wrap;
-}
-
-.periodButton {
-  padding: 1rem 2rem;
-  border: 1px solid var(--neutral-gray-300);
-  background-color: var(--neutral-white);
-  border-radius: 3rem;
-  font-size: 1.4rem;
-  font-weight: 500;
-  color: var(--text-tertiary);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.periodButton:hover {
-  border-color: var(--primary-500);
-  color: var(--primary-500);
-}
-
-.periodButton.active {
-  background-color: var(--primary-500);
-  border-color: var(--primary-500);
-  color: var(--neutral-white);
-}
-
-.statsCards {
+.statsContainer {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 2rem;
   margin-bottom: 3rem;
 }
@@ -90,33 +60,94 @@
   color: var(--text-tertiary);
 }
 
-.chartCard {
+.recentOrdersCard {
   background-color: var(--neutral-white);
   border-radius: 1rem;
   padding: 2rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-.chartTitle {
+.cardTitle {
   font-size: var(--h5-desktop);
   margin-bottom: 2rem;
   color: var(--text-primary);
 }
 
-.chartContainer {
-  height: 300px;
-  width: 100%;
-}
-
-.noChartData {
+.noOrders {
   text-align: center;
-  padding: 5rem 0;
+  padding: 3rem 0;
   color: var(--text-tertiary);
   font-size: 1.6rem;
 }
 
+.recentOrdersList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.orderItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-radius: 0.8rem;
+  background-color: var(--neutral-gray-50);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.orderItem:hover {
+  background-color: var(--primary-100);
+  transform: translateX(3px);
+}
+
+.orderInfo h4 {
+  font-size: 1.6rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+.vendorName {
+  font-size: 1.4rem;
+  color: var(--text-tertiary);
+  margin-bottom: 0.3rem;
+}
+
+.location {
+  font-size: 1.3rem;
+  color: var(--text-tertiary);
+}
+
+.orderStatus {
+  display: flex;
+  align-items: center;
+}
+
+.badge {
+  font-size: 1.2rem;
+  padding: 0.5rem 1rem;
+  border-radius: 2rem;
+  font-weight: 500;
+}
+
+.badgePending {
+  background-color: var(--warning);
+  color: var(--neutral-white);
+}
+
+.badgeActive {
+  background-color: var(--info);
+  color: var(--neutral-white);
+}
+
+.badgeCompleted {
+  background-color: var(--success);
+  color: var(--neutral-white);
+}
+
 @media screen and (max-width: 1024px) {
-  .statsCards {
+  .statsContainer {
     grid-template-columns: repeat(2, 1fr);
   }
 }
@@ -126,7 +157,7 @@
     font-size: var(--h3-mobile);
   }
   
-  .statsCards {
+  .statsContainer {
     grid-template-columns: 1fr;
   }
   
@@ -142,9 +173,5 @@
   
   .statInfo h3 {
     font-size: 2rem;
-  }
-  
-  .chartCard {
-    padding: 1.5rem;
   }
 }

@@ -28,7 +28,7 @@ import PaymentVerification from "./pages/PaymentVerification";
 import OrderHistory from "./pages/OrderHistory";
 import StudentProfile from "./user/StudentProfile";
 import DashboardLayout from "./picker-dashboard/DashoardLayout";
-import HomePage from "./picker-dashboard/HomePage";
+import HomePage from "./picker-dashboard/Dashboard";
 import AvailableOrders from "./picker-dashboard/AvailableOrders";
 import MyDeliveries from "./picker-dashboard/MyDeliveries";
 

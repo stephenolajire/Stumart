@@ -1,24 +1,29 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+// src/components/PickerDashboard/AvailableOrders/AvailableOrders.jsx
+import React, { useState, useEffect } from "react";
 import styles from "./css/AvailableOrders.module.css";
+import { FaFilter, FaMapMarkerAlt, FaStore, FaBoxOpen } from "react-icons/fa";
+import axios from "axios";
 import api from "../constant/api";
 
-const AvailableOrders = () => {
+const AvailableOrders = ({ onOrderSelect }) => {
   const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchAvailableOrders = async () => {
       try {
-        const response = await api.get("/available-orders/", {
-          params: { filter },
-        });
+        setIsLoading(true);
+        // Replace with your actual API endpoint
+        const response = await api.get(
+          `available-orders?filter=${filter}`
+        );
         setOrders(response.data);
-        setLoading(false);
+        console.log(response.data)
       } catch (error) {
         console.error("Error fetching available orders:", error);
-        setLoading(false);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -27,94 +32,121 @@ const AvailableOrders = () => {
 
   const handleAcceptOrder = async (orderId) => {
     try {
-      await api.post(`/orders/${orderId}/accept/`);
-      // Remove the accepted order from the list
-      setOrders(orders.filter((order) => order.id !== orderId));
+      // Replace with your actual API endpoint
+      await axios.post(`/api/picker/available-orders/${orderId}`);
+      // After accepting, redirect to my deliveries or refresh the list
+      alert("Order accepted successfully!");
     } catch (error) {
       console.error("Error accepting order:", error);
+      alert("Failed to accept order. Please try again.");
     }
   };
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+  // For demonstration purposes using mock data
+  
+
+  // Use mock data for now
+  const displayOrders = isLoading ? [] : orders.length ? orders : " ";
 
   return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <h1>Available Orders</h1>
-      </div>
+    <div className={styles.availableOrders}>
+      <h1 className={styles.pageTitle}>Available Orders</h1>
 
-      <div className={styles.filters}>
-        <select
-          className={styles.filterSelect}
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
+      <div className={styles.filtersContainer}>
+        <button
+          className={`${styles.filterButton} ${
+            filter === "all" ? styles.active : ""
+          }`}
+          onClick={() => setFilter("all")}
         >
-          <option value="all">All Orders</option>
-          <option value="nearby">Nearby Orders</option>
-          <option value="high_value">High Value Orders</option>
-        </select>
+          All Orders
+        </button>
+        <button
+          className={`${styles.filterButton} ${
+            filter === "nearby" ? styles.active : ""
+          }`}
+          onClick={() => setFilter("nearby")}
+        >
+          Nearby
+        </button>
+        <button
+          className={`${styles.filterButton} ${
+            filter === "high_value" ? styles.active : ""
+          }`}
+          onClick={() => setFilter("high_value")}
+        >
+          High Value
+        </button>
       </div>
 
-      {orders.length > 0 ? (
-        orders.map((order) => (
-          <div key={order.id} className={styles.orderCard}>
-            <div className={styles.orderHeader}>
-              <h3>Order #{order.order_number}</h3>
-              <span>₦{order.total.toFixed(2)}</span>
-            </div>
-
-            <div className={styles.orderDetails}>
-              <div className={styles.detailRow}>
-                <span className={styles.detailLabel}>Vendor:</span>
-                <span className={styles.detailValue}>{order.vendor_name}</span>
-              </div>
-              <div className={styles.detailRow}>
-                <span className={styles.detailLabel}>Pickup Location:</span>
-                <span className={styles.detailValue}>
-                  {order.pickup_location}
-                </span>
-              </div>
-              <div className={styles.detailRow}>
-                <span className={styles.detailLabel}>Delivery Location:</span>
-                <span className={styles.detailValue}>
-                  {order.delivery_location}
-                </span>
-              </div>
-              <div className={styles.detailRow}>
-                <span className={styles.detailLabel}>Distance:</span>
-                <span className={styles.detailValue}>{order.distance} km</span>
-              </div>
-              <div className={styles.detailRow}>
-                <span className={styles.detailLabel}>Delivery Fee:</span>
-                <span className={styles.detailValue}>
-                  ₦{order.shipping_fee.toFixed(2)}
-                </span>
-              </div>
-            </div>
-
-            <div className={styles.orderItems}>
-              <h4>Order Items ({order.items.length})</h4>
-              {order.items.map((item) => (
-                <div key={item.id} className={styles.itemRow}>
-                  <span>{item.product_name}</span>
-                  <span>x{item.quantity}</span>
-                </div>
-              ))}
-            </div>
-
-            <button
-              className={`${styles.actionButton} ${styles.acceptButton}`}
-              onClick={() => handleAcceptOrder(order.id)}
-            >
-              Accept Order
-            </button>
-          </div>
-        ))
+      {isLoading ? (
+        <div className={styles.loading}>Loading available orders...</div>
+      ) : displayOrders.length === 0 ? (
+        <div className={styles.noOrders}>No available orders found.</div>
       ) : (
-        <div className={styles.noOrders}>
-          <p>No available orders at the moment.</p>
+        <div className={styles.ordersList}>
+          {displayOrders.map((order) => (
+            <div key={order.id} className={styles.orderCard}>
+              <div className={styles.orderHeader}>
+                <h3>{order.order_number}</h3>
+                <span className={styles.shippingFee}>
+                  ₦{order.shipping_fee} Fee
+                </span>
+              </div>
+
+              <div className={styles.vendorInfo}>
+                <FaStore className={styles.infoIcon} />
+                <span>{order.vendor_name}</span>
+              </div>
+
+              <div className={styles.locationInfo}>
+                <div className={styles.location}>
+                  <FaMapMarkerAlt className={styles.infoIcon} />
+                  <span>Pickup: {order.pickup_location}</span>
+                </div>
+                <div className={styles.location}>
+                  <FaMapMarkerAlt className={styles.infoIcon} />
+                  <span>Deliver to: {order.delivery_location}</span>
+                </div>
+              </div>
+
+              <div className={styles.itemsList}>
+                <h4>
+                  <FaBoxOpen className={styles.infoIcon} /> Order Items (
+                  {order.items.length})
+                </h4>
+                <ul>
+                  {order.items.map((item) => (
+                    <li key={item.id}>
+                      <span>
+                        {item.product_name} x{item.quantity}
+                      </span>
+                      <span>₦{item.price.toLocaleString()}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className={styles.orderTotal}>
+                  <span>Order Total:</span>
+                  <span>₦{order.total.toLocaleString()}</span>
+                </div>
+              </div>
+
+              <div className={styles.orderActions}>
+                <button
+                  className={styles.viewButton}
+                  onClick={() => onOrderSelect(order.id)}
+                >
+                  View Details
+                </button>
+                <button
+                  className={styles.acceptButton}
+                  onClick={() => handleAcceptOrder(order.id)}
+                >
+                  Accept Order
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
