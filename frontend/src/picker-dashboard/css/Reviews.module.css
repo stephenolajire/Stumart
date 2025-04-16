@@ -1,0 +1,99 @@
+.container {
+  padding: 2rem;
+}
+
+.header {
+  margin-bottom: 2rem;
+}
+
+.ratingOverview {
+  background-color: var(--neutral-white);
+  border-radius: 1rem;
+  padding: 2rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  margin-bottom: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+}
+
+.averageRating {
+  text-align: center;
+}
+
+.ratingValue {
+  font-size: 5rem;
+  font-weight: 700;
+  color: var(--primary-500);
+  line-height: 1;
+}
+
+.ratingLabel {
+  font-size: 1.6rem;
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+}
+
+.reviewsCount {
+  text-align: center;
+}
+
+.countValue {
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.countLabel {
+  font-size: 1.6rem;
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+}
+
+.reviewsList {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+.reviewCard {
+  background-color: var(--neutral-white);
+  border-radius: 1rem;
+  padding: 2rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.reviewHeader {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.reviewerInfo h3 {
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+}
+
+.orderNumber {
+  font-size: 1.4rem;
+  color: var(--text-tertiary);
+}
+
+.ratingStars {
+  display: flex;
+  gap: 0.3rem;
+  color: var(--warning);
+  font-size: 2rem;
+}
+
+.reviewComment {
+  font-size: 1.6rem;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+
+.reviewDate {
+  font-size: 1.4rem;
+  color: var(--text-tertiary);
+  text-align: right;
+}

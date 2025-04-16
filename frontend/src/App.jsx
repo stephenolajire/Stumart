@@ -27,6 +27,10 @@ import OrderDetails from "./pages/OrderDetails";
 import PaymentVerification from "./pages/PaymentVerification";
 import OrderHistory from "./pages/OrderHistory";
 import StudentProfile from "./user/StudentProfile";
+import DashboardLayout from "./picker-dashboard/DashoardLayout";
+import HomePage from "./picker-dashboard/HomePage";
+import AvailableOrders from "./picker-dashboard/AvailableOrders";
+import MyDeliveries from "./picker-dashboard/MyDeliveries";
 
 function App() {
   return (
@@ -109,6 +113,22 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/picker" element={<DashboardLayout />} />
+          <Route path="/picker/dashboard" element={<HomePage />} />
+          <Route
+            path="/picker/available-orders"
+            element={<AvailableOrders />}
+          />
+          <Route path="/picker/my-deliveries" element={<MyDeliveries/>} />
+          <Route
+            path="/picker/available-orders"
+            element={<AvailableOrders />}
+          />
+          <Route
+            path="/picker/available-orders"
+            element={<AvailableOrders />}
+          />
+
           <Route path="/forgot-password" element={<RequestOTPForm />} />
           <Route path="/verify-otp" element={<VerifyOTPForm />} />
           <Route path="/reset-password" element={<SetNewPasswordForm />} />

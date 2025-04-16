@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'User',
     'Stumart',
     'Vendor',
+    'Picker',
     'cloudinary_storage',
     'cloudinary',
 ]

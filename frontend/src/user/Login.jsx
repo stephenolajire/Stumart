@@ -10,8 +10,7 @@ const Login = () => {
   const location = useLocation();
   const from = location.state?.from?.pathname || "/";
 
-
-  const {auth} = useContext(GlobalContext)
+  const { auth } = useContext(GlobalContext);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -75,14 +74,13 @@ const Login = () => {
 
       // If user is a student and verified, navigate to home
       if (user_type === "student") {
-  auth();
-  navigate(from, { replace: true });
-  return;
-}
-
+        auth();
+        navigate(from, { replace: true });
+        return;
+      }
 
       // If user is picker, student picker, or vendor, handle KYC status
-      if (["picker", "student picker", "vendor"].includes(user_type)) {
+      if (["picker", "student_picker", "vendor"].includes(user_type)) {
         if (!kyc_status || kyc_status === "rejected") {
           Swal.fire({
             icon: "warning",
@@ -100,9 +98,13 @@ const Login = () => {
           return;
         }
 
-        if (kyc_status === "approved") {
+        if (kyc_status === "approved" && user_type==="vendor") {
           navigate("/vendor-dashboard");
-          auth()
+          auth();
+          return;
+        }else{
+          navigate('/picker')
+          auth();
           return;
         }
       }

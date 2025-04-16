@@ -27,6 +27,7 @@ from User.views import CustomTokenObtainPairView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/', include('Picker.urls')),
     path('api/', include('User.urls')),
     path('api/', include('Stumart.urls')),
     path('api/', include('Vendor.urls')),
