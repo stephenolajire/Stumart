@@ -256,7 +256,7 @@
   justify-content: flex-end;
 }
 
-.cancelOrderBtn {
+.cancelOrderBtn, .confirmOrderBtn {
   background-color: transparent;
   color: var(--error);
   border: 1px solid var(--error);
@@ -265,6 +265,12 @@
   font-size: 1.4rem;
   cursor: pointer;
   transition: all 0.3s ease;
+}
+
+.confirmOrderBtn {
+  background-color: var(--success);
+  color: var(--neutral-white);
+  border: none;
 }
 
 .cancelOrderBtn:hover {
@@ -371,6 +377,13 @@
   margin-top: 2rem;
   align-items: center;
   gap: 1rem;
+}
+
+.orderActions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2rem;
 }
 
 .paginationButton {

@@ -10,21 +10,23 @@ import Reviews from "./Reviews";
 import Settings from "./Settings";
 import OrderDetail from "./OrderDetail";
 import { IoMenuOutline } from "react-icons/io5";
+import { useNavigate } from "react-router-dom";
 
 const DashboardLayout = () => {
   const [activeView, setActiveView] = useState("dashboard");
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-
+  const navigate = useNavigate();
   const handleViewChange = (view) => {
     setActiveView(view);
     setIsMobileSidebarOpen(false);
   };
 
-  const handleOrderSelect = (orderId) => {
-    setSelectedOrderId(orderId);
-    setActiveView("orderDetail");
-  };
+  // const handleOrderSelect = (orderId) => {
+  //   setSelectedOrderId(orderId);
+  //   setActiveView("orderDetail");
+  //   navigate("/order-detail")
+  // };
 
   const handleBackToOrders = () => {
     setSelectedOrderId(null);
@@ -34,11 +36,11 @@ const DashboardLayout = () => {
   const renderContent = () => {
     switch (activeView) {
       case "dashboard":
-        return <Dashboard onOrderSelect={handleOrderSelect} />;
+        return <Dashboard />;
       case "availableOrders":
-        return <AvailableOrders onOrderSelect={handleOrderSelect} />;
+        return <AvailableOrders />;
       case "myDeliveries":
-        return <MyDeliveries onOrderSelect={handleOrderSelect} />;
+        return <MyDeliveries />;
       case "earnings":
         return <Earnings />;
       case "reviews":

@@ -13,6 +13,7 @@ import {
   FaToggleOff,
   FaMoneyBillWave,
 } from "react-icons/fa";
+import api from "../constant/api";
 
 const Settings = () => {
   const [profileData, setProfileData] = useState({
@@ -45,7 +46,7 @@ const Settings = () => {
     const fetchProfileData = async () => {
       try {
         setLoading(true);
-        const response = await axios.get("settings/", {});
+        const response = await api.get("settings/", {});
 
         setProfileData(response.data);
         setImagePreview(response.data.profile_pic);

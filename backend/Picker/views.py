@@ -12,6 +12,7 @@ from datetime import timedelta
 from Stumart.models import Order, OrderItem, Transaction
 from User.models import User, Picker, StudentPicker, KYCVerification
 from .serializers import *
+from .models import*
 
 class PickerDashboardView(APIView):
     """
@@ -54,9 +55,15 @@ class PickerDashboardView(APIView):
             vendor__user__institution=user.institution
         )
 
+        try:
+            wallet = PickerWallet.objects.get(picker=user)
+            total_earnings = wallet.amount if wallet.amount else 0
+        except PickerWallet.DoesNotExist:
+            # No wallet exists for this user yet
+            total_earnings = 0
+
         completed_order_ids = completed_order_items.values_list('order_id', flat=True).distinct()
-        completed_orders = Order.objects.filter(id__in=completed_order_ids)
-        total_earnings = completed_orders.aggregate(total=Sum('shipping_fee'))['total'] or 0
+
 
         # ✅ Recent Orders
         recent_orders = []
@@ -284,6 +291,7 @@ class MyDeliveriesView(APIView):
         Mark an order as delivered
         """
         user = request.user
+        print(order_id)
         
         # Check if the user is a picker or student picker
         if user.user_type not in ['picker', 'student_picker']:
@@ -304,6 +312,14 @@ class MyDeliveriesView(APIView):
         # Update order status
         order.order_status = 'DELIVERED'
         order.save()
+
+        if user.user_type == 'student':
+            wallet = PickerWallet.create(
+                amount=order.shipping_fee,
+                picker=user
+            )
+
+            wallet.save()
         
         # Update picker statistics
         if user.user_type == 'picker':
@@ -324,17 +340,15 @@ class EarningsView(APIView):
     API view for showing picker earnings
     """
     permission_classes = [IsAuthenticated]
-    
+
     def get(self, request):
         user = request.user
         period = request.query_params.get('period', 'week')
-        
-        # Check if the user is a picker or student picker
+
         if user.user_type not in ['picker', 'student_picker']:
-            return Response({"error": "Only pickers can access this page"}, 
-                           status=status.HTTP_403_FORBIDDEN)
-        
-        # Define date ranges based on period
+            return Response({"error": "Only pickers can access this page"},
+                            status=status.HTTP_403_FORBIDDEN)
+
         now = timezone.now()
         if period == 'week':
             start_date = now - timedelta(days=7)
@@ -342,58 +356,54 @@ class EarningsView(APIView):
             start_date = now - timedelta(days=30)
         elif period == 'year':
             start_date = now - timedelta(days=365)
-        else:  # all time
-            start_date = None
-        
-        # Base query
-        base_query = Order.objects.filter(
-            Q(order_status='DELIVERED') &
-            (Q(picker=user) | Q(student_picker=user))
-        )
-        
-        # Apply date filter if needed
+        else:
+            start_date = None  # All time
+
+        # Define base queryset
+        base_query = Order.objects.filter(picker=user)
         if start_date:
             base_query = base_query.filter(created_at__gte=start_date)
-        
-        # Get total earnings
+
+        # Get total earnings and order count
         earnings_data = base_query.aggregate(
             total_earnings=Sum('shipping_fee'),
             order_count=Count('id')
         )
-        
-        # Get earnings breakdown by day
+
+        # Wallet balance
+        wallet = PickerWallet.objects.get(picker=user)
+        amount = wallet.amount
+
+        # Daily earnings breakdown
         daily_earnings = []
         if period in ['week', 'month']:
-            # Number of days to look back
             days_back = 7 if period == 'week' else 30
-            
+
             for i in range(days_back, -1, -1):
                 day = now - timedelta(days=i)
                 day_start = day.replace(hour=0, minute=0, second=0, microsecond=0)
                 day_end = day.replace(hour=23, minute=59, second=59, microsecond=999999)
-                
-                # Get orders for this day
-                day_earnings = base_query.filter(
-                    created_at__gte=day_start,
-                    created_at__lte=day_end
+
+                day_total = base_query.filter(
+                    created_at__range=(day_start, day_end)
                 ).aggregate(
                     daily_total=Sum('shipping_fee')
                 )['daily_total'] or 0
-                
+
                 daily_earnings.append({
                     'date': day_start.strftime('%Y-%m-%d'),
-                    'amount': float(day_earnings)
+                    'amount': float(day_total)
                 })
-        
-        # Prepare response
+
         response_data = {
+            'wallet_balance': float(amount),
             'total_earnings': float(earnings_data['total_earnings'] or 0),
             'order_count': earnings_data['order_count'] or 0,
             'average_per_order': float(earnings_data['total_earnings'] / earnings_data['order_count']) if earnings_data['order_count'] else 0,
             'period': period,
             'daily_earnings': daily_earnings
         }
-        
+
         return Response(response_data)
 
 
@@ -576,9 +586,8 @@ class OrderDetailView(APIView):
             
             # Check if the order is in the same institution or assigned to this picker
             if not (
-                (order.user.vendor_profile.user.institution == user.institution) or
-                (order.picker == user) or 
-                (order.student_picker == user)
+                order.picker == user or
+                order.picker.institution == order.user.institution
             ):
                 return Response({"error": "You don't have permission to view this order"}, 
                               status=status.HTTP_403_FORBIDDEN)
@@ -587,10 +596,6 @@ class OrderDetailView(APIView):
             return Response({"error": "Order not found"}, 
                           status=status.HTTP_404_NOT_FOUND)
         
-        # Get vendor details
-        vendor = order.user.vendor_profile if hasattr(order.user, 'vendor_profile') else None
-        vendor_name = vendor.business_name if vendor else "Unknown"
-        vendor_phone = vendor.user.phone_number if vendor and vendor.user else "Unknown"
         
         # Get customer details
         customer_name = f"{order.first_name} {order.last_name}"
@@ -607,6 +612,10 @@ class OrderDetailView(APIView):
                 'size': item.size,
                 'color': item.color
             })
+
+        for vendor in OrderItem.objects.filter(order=order):
+            vendor_name = vendor.vendor.business_name if vendor.vendor else "Unknown"
+            vendor_phone = vendor.vendor.user.phone_number if vendor.vendor and vendor.vendor.user else "Unknown"
         
         # Prepare response
         order_data = {
@@ -615,7 +624,7 @@ class OrderDetailView(APIView):
             'vendor': {
                 'name': vendor_name,
                 'phone': vendor_phone,
-                'location': f"{vendor.user.institution}, {vendor.user.state}" if vendor and vendor.user else "Unknown"
+                'location': f"{vendor.vendor.user.institution}, {vendor.vendor.user.state}" if vendor and vendor.vendor else "Unknown"
             },
             'customer': {
                 'name': customer_name,
@@ -635,3 +644,44 @@ class OrderDetailView(APIView):
         }
         
         return Response(order_data)
+    
+
+class ConfirmDeliveryView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, id):
+        user = request.user
+
+        try: 
+            if user.user_type != 'student':
+                return Response("You are not permitted", status=status.HTTP_401_UNAUTHORIZED)
+            
+            order = Order.objects.get(id=id)
+            picker = order.picker
+
+            if order.order_status == "DELIVERED":
+                # First, update order status to COMPLETED
+                order.order_status = "COMPLETED"
+                order.save()
+                
+                # Try to get existing wallet or create a new one
+                wallet, created = PickerWallet.objects.get_or_create(picker=picker)
+                
+                if not created:
+                    # If wallet exists, convert current amount to float, add shipping fee, and save
+                    current_amount = float(wallet.amount) if wallet.amount else 0
+                    wallet.amount = str(current_amount + order.shipping_fee)
+                else:
+                    # If wallet was just created, set the amount
+                    wallet.amount = str(order.shipping_fee)
+                
+                wallet.save()
+
+                return Response("Order has been delivered successfully", status=status.HTTP_200_OK)
+            else:
+                return Response("Order is not in DELIVERED status", status=status.HTTP_400_BAD_REQUEST)
+            
+        except Order.DoesNotExist:
+            return Response("Order does not exist", status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response(f"Error: {str(e)}", status=status.HTTP_500_INTERNAL_SERVER_ERROR)

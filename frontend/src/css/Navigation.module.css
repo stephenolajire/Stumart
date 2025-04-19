@@ -114,6 +114,10 @@
   color: white;
 }
 
+.cartdesktop{
+  margin-left: 3rem;
+}
+
 @media screen and (max-width: 768px) {
   .menuButton {
     display: block;

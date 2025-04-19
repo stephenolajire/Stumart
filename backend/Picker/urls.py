@@ -8,7 +8,7 @@ urlpatterns = [
     
     # Available Orders
     path('available-orders/', views.AvailableOrdersView.as_view(), name='available_orders'),
-    path('orders/<int:order_id>/accept/', views.AvailableOrdersView.as_view(), name='accept_order'),
+    path('available-orders/<int:order_id>/accept/', views.AvailableOrdersView.as_view(), name='accept_order'),
     
     # My Deliveries
     path('my-deliveries/', views.MyDeliveriesView.as_view(), name='my_deliveries'),
@@ -25,4 +25,7 @@ urlpatterns = [
     
     # Settings
     path('settings/', views.SettingsView.as_view(), name='settings'),
+
+    # confirm order
+    path('confirm/<int:id>/', views.ConfirmDeliveryView.as_view(), name="confirm-order")
 ]

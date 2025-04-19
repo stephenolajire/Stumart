@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useReactToPrint } from "react-to-print";
 import api from "../constant/api";
 import style from "../css/OrderHistory.module.css";
+import Swal from "sweetalert2"; // Add this import
 
 const OrderHistory = () => {
   const [orders, setOrders] = useState([]);
@@ -19,6 +20,7 @@ const OrderHistory = () => {
         const response = await api.get("orders/");
         setOrders(response.data);
         setLoading(false);
+        console.log(response.data)
       } catch (err) {
         setError("Failed to load your order history. Please try again later.");
         setLoading(false);
@@ -30,6 +32,38 @@ const OrderHistory = () => {
 
   const toggleOrderDetails = (orderId) => {
     setExpandedOrder((prev) => (prev === orderId ? null : orderId));
+  };
+
+  const handleMarkAsDelivered = async (orderId) => {
+    try {
+      // Use the actual orderId parameter instead of the 'order' object
+      await api.post(`confirm/${orderId}/`, {
+        status: "DELIVERED",
+      });
+
+      // Update the local state to reflect the change
+      setOrders((prevOrders) =>
+        prevOrders.map((order) =>
+          order.order_number === orderId
+            ? { ...order, order_status: "DELIVERED" }
+            : order
+        )
+      );
+
+      Swal.fire({
+        icon: "success",
+        text: "Thank you for your patronage!",
+        title: "Order Delivered",
+      });
+      window.location.reload()
+    } catch (error) {
+      console.error("Error marking order as delivered:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Status Error",
+        text: "Order status failed, pls try again later",
+      });
+    }
   };
 
   const getStatusClass = (status) => {
@@ -228,6 +262,14 @@ const OrderHistory = () => {
                 </div>
 
                 <div className={style.orderActions}>
+                  {order.order_status.toUpperCase() === "DELIVERED" && (
+                    <button
+                      className={style.confirmOrderBtn}
+                      onClick={() => handleMarkAsDelivered(order.id)}
+                    >
+                      Confirm
+                    </button>
+                  )}
                   {order.order_status.toUpperCase() === "PENDING" ? (
                     <button className={style.cancelOrderBtn}>
                       Cancel Order

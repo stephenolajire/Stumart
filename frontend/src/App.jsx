@@ -31,6 +31,8 @@ import DashboardLayout from "./picker-dashboard/DashoardLayout";
 import HomePage from "./picker-dashboard/Dashboard";
 import AvailableOrders from "./picker-dashboard/AvailableOrders";
 import MyDeliveries from "./picker-dashboard/MyDeliveries";
+import Earnings from "./picker-dashboard/Earnings";
+import OrderDetail from "./picker-dashboard/OrderDetail";
 
 function App() {
   return (
@@ -121,12 +123,12 @@ function App() {
           />
           <Route path="/picker/my-deliveries" element={<MyDeliveries/>} />
           <Route
-            path="/picker/available-orders"
-            element={<AvailableOrders />}
+            path="/earnings"
+            element={<Earnings />}
           />
           <Route
-            path="/picker/available-orders"
-            element={<AvailableOrders />}
+            path="/order-detail/:orderId"
+            element={<OrderDetail />}
           />
 
           <Route path="/forgot-password" element={<RequestOTPForm />} />

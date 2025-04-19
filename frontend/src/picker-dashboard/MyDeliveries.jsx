@@ -1,10 +1,11 @@
-// src/components/PickerDashboard/MyDeliveries/MyDeliveries.jsx
 import React, { useState, useEffect } from "react";
 import styles from "./css/MyDeliveries.module.css";
 import { FaMapMarkerAlt, FaUser, FaBox, FaCheck } from "react-icons/fa";
 import api from "../constant/api";
+import Swal from "sweetalert2";
+import { Link } from "react-router-dom";
 
-const MyDeliveries = ({ onOrderSelect }) => {
+const MyDeliveries = () => {
   const [deliveries, setDeliveries] = useState([]);
   const [activeTab, setActiveTab] = useState("active");
   const [isLoading, setIsLoading] = useState(true);
@@ -13,10 +14,7 @@ const MyDeliveries = ({ onOrderSelect }) => {
     const fetchDeliveries = async () => {
       try {
         setIsLoading(true);
-        // Replace with your actual API endpoint
-        const response = await api.get(
-          `my-deliveries?status=${activeTab}`
-        );
+        const response = await api.get(`my-deliveries?status=${activeTab}`);
         setDeliveries(response.data);
       } catch (error) {
         console.error("Error fetching deliveries:", error);
@@ -30,8 +28,7 @@ const MyDeliveries = ({ onOrderSelect }) => {
 
   const handleMarkAsDelivered = async (orderId) => {
     try {
-      // Replace with your actual API endpoint
-      await api.post(`my-deliveries/${orderId}`, {
+      await api.post(`orders/${orderId}/deliver/`, {
         status: "DELIVERED",
       });
 
@@ -40,13 +37,20 @@ const MyDeliveries = ({ onOrderSelect }) => {
         prevDeliveries.filter((delivery) => delivery.id !== orderId)
       );
 
-      alert("Order marked as delivered successfully!");
+      Swal.fire({
+        icon: "success", // Fixed: Added quotes around success
+        text: "Thank you for an amazing job. Go on to accept more orders",
+        title: "Order Delivered",
+      });
     } catch (error) {
       console.error("Error marking order as delivered:", error);
-      alert("Failed to update order status. Please try again.");
+      Swal.fire({
+        icon: "error", // Fixed: Added quotes around error
+        title: "Status Error",
+        text: "Order status failed, pls try again later",
+      });
     }
   };
-
 
   return (
     <div className={styles.myDeliveries}>
@@ -144,12 +148,9 @@ const MyDeliveries = ({ onOrderSelect }) => {
                 </div>
 
                 <div className={styles.deliveryActions}>
-                  <button
-                    className={styles.viewButton}
-                    onClick={() => onOrderSelect(delivery.id)}
-                  >
-                    View Details
-                  </button>
+                  <Link to={`/order-detail/${delivery.id}`}>
+                    <button className={styles.viewButton}>View Details</button>
+                  </Link>
 
                   {delivery.status === "IN_TRANSIT" && (
                     <button

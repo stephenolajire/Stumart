@@ -14,6 +14,7 @@ import {
   FaTruck,
   FaCheckCircle,
 } from "react-icons/fa";
+import api from "../constant/api";
 
 const OrderDetails = () => {
   const { orderId } = useParams();
@@ -28,12 +29,7 @@ const OrderDetails = () => {
     const fetchOrderDetails = async () => {
       try {
         setLoading(true);
-        const token = localStorage.getItem("accessToken");
-        const response = await axios.get(`/api/picker/orders/${orderId}/`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const response = await api.get(`orders/${orderId}/`, {});
         setOrderData(response.data);
         setLoading(false);
       } catch (err) {
@@ -51,16 +47,7 @@ const OrderDetails = () => {
   const handleAcceptOrder = async () => {
     try {
       setProcessingAction(true);
-      const token = localStorage.getItem("accessToken");
-      await axios.post(
-        `/api/picker/available-orders/${orderId}/`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      await api.post(`available-orders/${orderId}/accept/`, {});
 
       setSuccessMessage("Order accepted successfully! Refreshing...");
 
