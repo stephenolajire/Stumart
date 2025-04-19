@@ -279,27 +279,27 @@ class MyDeliveriesView(APIView):
         
         return Response(deliveries_data)
     
-    # def post(self, request, order_id):
-    #     """
-    #     Mark an order as delivered
-    #     """
-    #     user = request.user
+    def post(self, request, order_id):
+        """
+        Mark an order as delivered
+        """
+        user = request.user
         
-    #     # Check if the user is a picker or student picker
-    #     if user.user_type not in ['picker', 'student_picker']:
-    #         return Response({"error": "Only pickers can update deliveries"}, 
-    #                        status=status.HTTP_403_FORBIDDEN)
+        # Check if the user is a picker or student picker
+        if user.user_type not in ['picker', 'student_picker']:
+            return Response({"error": "Only pickers can update deliveries"}, 
+                           status=status.HTTP_403_FORBIDDEN)
         
-    #     # Get the order
-    #     try:
-    #         order = Order.objects.get(
-    #             id=order_id,
-    #             Q(order_status='IN_TRANSIT') &
-    #             (Q(picker=user) | Q(student_picker=user))
-    #         )
-    #     except Order.DoesNotExist:
-    #         return Response({"error": "Order not found or not in transit"}, 
-    #                        status=status.HTTP_404_NOT_FOUND)
+        # Get the order
+        try:
+            order = Order.objects.get(
+                id=order_id,
+                order_status = 'IN_TRANSIT',
+                picker =  user
+            )
+        except Order.DoesNotExist:
+            return Response({"error": "Order not found or not in transit"}, 
+                           status=status.HTTP_404_NOT_FOUND)
         
         # Update order status
         order.order_status = 'DELIVERED'
