@@ -1,0 +1,125 @@
+/* Payments.module.css */
+.container {
+  width: 100%;
+}
+
+.filterSection {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.filterSection h3 {
+  font-size: var(--h4-desktop);
+  color: var(--text-primary);
+}
+
+.filters {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.searchInput input {
+  padding: 1rem;
+  border: 1px solid var(--neutral-gray-200);
+  border-radius: 0.5rem;
+  font-size: 1.4rem;
+  min-width: 25rem;
+}
+
+.statusFilter select {
+  padding: 1rem;
+  border: 1px solid var(--neutral-gray-200);
+  border-radius: 0.5rem;
+  font-size: 1.4rem;
+  background-color: var(--neutral-white);
+  min-width: 15rem;
+}
+
+.transactionsTable {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.transactionsTable table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.transactionsTable th {
+  background-color: var(--neutral-gray-100);
+  padding: 1.2rem 1rem;
+  text-align: left;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+}
+
+.transactionsTable td {
+  padding: 1.2rem 1rem;
+  border-bottom: 1px solid var(--neutral-gray-200);
+  font-size: 1.4rem;
+  color: var(--text-secondary);
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border-radius: 2rem;
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.statusSuccess {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.statusPending {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.statusFailed {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.loading, .error, .noTransactions {
+  padding: 2rem;
+  text-align: center;
+  font-size: 1.6rem;
+  color: var(--text-secondary);
+}
+
+.error {
+  color: var(--error);
+}
+
+/* Responsive styles */
+@media screen and (max-width: 768px) {
+  .filterSection {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .searchInput input,
+  .statusFilter select {
+    width: 100%;
+    min-width: auto;
+  }
+  
+  .transactionsTable th,
+  .transactionsTable td {
+    padding: 1rem 0.8rem;
+    font-size: 1.2rem;
+  }
+  
+  .filterSection h3 {
+    font-size: var(--h4-mobile);
+  }
+}

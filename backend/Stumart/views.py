@@ -545,6 +545,9 @@ class CartItemsView(APIView):
             
             # Calculate tax (5% of subtotal) - convert to Decimal
             tax = sub_total * Decimal('0.05')
+
+            print(unique_vendors)
+            print(shipping_fee)
             
             # Calculate total
             total = sub_total + shipping_fee + tax

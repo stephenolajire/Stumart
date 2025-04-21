@@ -1,0 +1,152 @@
+/* VendorWallets.module.css */
+.container {
+  width: 100%;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.header h3 {
+  font-size: var(--h4-desktop);
+  color: var(--text-primary);
+}
+
+.searchContainer {
+  flex-grow: 1;
+  max-width: 50rem;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 1rem;
+  border: 1px solid var(--neutral-gray-200);
+  border-radius: 0.5rem;
+  font-size: 1.4rem;
+}
+
+.payoutSection {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--neutral-gray-50);
+  padding: 1.5rem;
+  border-radius: 0.8rem;
+  margin-bottom: 2rem;
+}
+
+.payoutInfo {
+  display: flex;
+  gap: 2rem;
+  font-size: 1.4rem;
+}
+
+.payoutButton {
+  background-color: var(--primary-500);
+  color: var(--neutral-white);
+  border: none;
+  border-radius: 0.5rem;
+  padding: 1rem 2rem;
+  font-size: 1.4rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.payoutButton:hover:not(:disabled) {
+  background-color: var(--primary-600);
+}
+
+.payoutButton:disabled {
+  background-color: var(--neutral-gray-300);
+  cursor: not-allowed;
+}
+
+.walletsTable {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.walletsTable table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.walletsTable th {
+  background-color: var(--neutral-gray-100);
+  padding: 1.2rem 1rem;
+  text-align: left;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+}
+
+.walletsTable td {
+  padding: 1.2rem 1rem;
+  border-bottom: 1px solid var(--neutral-gray-200);
+  font-size: 1.4rem;
+  color: var(--text-secondary);
+}
+
+.vendorName {
+  font-weight: 500;
+}
+
+.balance {
+  font-weight: 600;
+  color: var(--primary-600);
+}
+
+.bankDetails p {
+  margin-bottom: 0.3rem;
+}
+
+.loading, .error, .noWallets {
+  padding: 2rem;
+  text-align: center;
+  font-size: 1.6rem;
+  color: var(--text-secondary);
+}
+
+.error {
+  color: var(--error);
+}
+
+/* Responsive styles */
+@media screen and (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .searchContainer {
+    width: 100%;
+    max-width: none;
+  }
+
+  .payoutSection {
+    flex-direction: column;
+    gap: 1.5rem;
+    align-items: flex-start;
+  }
+
+  .payoutInfo {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .walletsTable th,
+  .walletsTable td {
+    padding: 1rem 0.8rem;
+    font-size: 1.2rem;
+  }
+  
+  .header h3 {
+    font-size: var(--h4-mobile);
+  }
+}

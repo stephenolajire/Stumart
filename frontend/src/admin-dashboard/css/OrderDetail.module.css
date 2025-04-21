@@ -1,0 +1,272 @@
+/* OrderDetail.module.css */
+.container {
+  width: 100%;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.backButton {
+  background: transparent;
+  border: none;
+  color: var(--primary-600);
+  font-size: 1.4rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.header h3 {
+  font-size: var(--h4-desktop);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.orderSummary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(30rem, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.summarySection {
+  border: 1px solid var(--neutral-gray-200);
+  border-radius: 0.8rem;
+  padding: 1.5rem;
+}
+
+.summarySection h4 {
+  margin: 0 0 1.5rem 0;
+  font-size: var(--h5-desktop);
+  color: var(--text-primary);
+}
+
+.summaryContent {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.4rem;
+}
+
+.label {
+  font-weight: 500;
+  color: var(--text-tertiary);
+}
+
+.total {
+  font-weight: 600;
+  color: var(--primary-600);
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border-radius: 2rem;
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.statusCompleted {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.statusPending {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.statusProcessing {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.statusShipped {
+  background-color: #e0e7ff;
+  color: #3730a3;
+}
+
+.statusCancelled {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.updateSection {
+  margin-bottom: 3rem;
+  padding: 1.5rem;
+  border: 1px solid var(--neutral-gray-200);
+  border-radius: 0.8rem;
+}
+
+.updateSection h4 {
+  margin: 0 0 1.5rem 0;
+  font-size: var(--h5-desktop);
+  color: var(--text-primary);
+}
+
+.statusUpdate {
+  display: flex;
+  gap: 1rem;
+}
+
+.statusUpdate select {
+  padding: 1rem;
+  border: 1px solid var(--neutral-gray-200);
+  border-radius: 0.5rem;
+  font-size: 1.4rem;
+  flex: 1;
+}
+
+.updateButton {
+  background-color: var(--primary-500);
+  color: var(--neutral-white);
+  border: none;
+  border-radius: 0.5rem;
+  padding: 1rem 2rem;
+  font-size: 1.4rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.updateButton:hover:not(:disabled) {
+  background-color: var(--primary-600);
+}
+
+.updateButton:disabled {
+  background-color: var(--neutral-gray-300);
+  cursor: not-allowed;
+}
+
+.itemsSection {
+  margin-bottom: 3rem;
+}
+
+.itemsSection h4 {
+  margin: 0 0 1.5rem 0;
+  font-size: var(--h5-desktop);
+  color: var(--text-primary);
+}
+
+.itemsTable {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.itemsTable table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.itemsTable th {
+  background-color: var(--neutral-gray-100);
+  padding: 1.2rem 1rem;
+  text-align: left;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+}
+
+.itemsTable td {
+  padding: 1.2rem 1rem;
+  border-bottom: 1px solid var(--neutral-gray-200);
+  font-size: 1.4rem;
+  color: var(--text-secondary);
+}
+
+.itemAttr {
+  display: block;
+  font-size: 1.2rem;
+  color: var(--text-tertiary);
+  margin-top: 0.5rem;
+}
+
+.summaryLabel {
+  text-align: right;
+  font-weight: 500;
+}
+
+.totalRow {
+  background-color: var(--neutral-gray-50);
+}
+
+.grandTotal {
+  font-weight: 700;
+  font-size: 1.6rem;
+  color: var(--primary-700);
+}
+
+.transactionSection {
+  padding: 1.5rem;
+  border: 1px solid var(--neutral-gray-200);
+  border-radius: 0.8rem;
+}
+
+.transactionSection h4 {
+  margin: 0 0 1.5rem 0;
+  font-size: var(--h5-desktop);
+  color: var(--text-primary);
+}
+
+.transactionDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.success {
+  color: var(--success);
+  font-weight: 500;
+}
+
+.pending {
+  color: var(--warning);
+  font-weight: 500;
+}
+
+.loading, .error {
+  padding: 2rem;
+  text-align: center;
+  font-size: 1.6rem;
+}
+
+.error {
+  color: var(--error);
+}
+
+/* Responsive styles */
+@media screen and (max-width: 768px) {
+  .orderSummary {
+    grid-template-columns: 1fr;
+  }
+  
+  .statusUpdate {
+    flex-direction: column;
+  }
+  
+  .itemsTable td,
+  .itemsTable th {
+    padding: 1rem 0.8rem;
+    font-size: 1.2rem;
+  }
+  
+  .header h3 {
+    font-size: var(--h4-mobile);
+  }
+  
+  .summarySection h4,
+  .updateSection h4,
+  .itemsSection h4,
+  .transactionSection h4 {
+    font-size: var(--h5-mobile);
+  }
+}

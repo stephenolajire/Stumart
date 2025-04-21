@@ -1,0 +1,122 @@
+.sidebar {
+  width: 240px;
+  background-color: var(--secondary-500);
+  color: var(--neutral-white);
+  height: 100vh;
+  transition: width 0.3s ease;
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar.collapsed {
+  width: 60px;
+}
+
+.sidebarHeader {
+  padding: 2rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 70px;
+}
+
+.logoText {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--primary-500);
+}
+
+.logoText span {
+  font-weight: 400;
+  color: var(--neutral-white);
+  font-size: 1.4rem;
+}
+
+.logoIcon {
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: var(--primary-500);
+}
+
+.sidebarNav {
+  flex: 1;
+  overflow-y: auto;
+  padding-top: 1rem;
+}
+
+.navList {
+  list-style: none;
+  padding: 0;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  padding: 1.2rem 1.5rem;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: var(--neutral-gray-300);
+  width: 100%;
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.navItem:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--neutral-white);
+}
+
+.navItem.active {
+  background-color: var(--primary-800);
+  color: var(--primary-400);
+  border-left: 3px solid var(--primary-500);
+}
+
+.icon {
+  font-size: 1.8rem;
+  width: 30px;
+  text-align: center;
+}
+
+.label {
+  margin-left: 1rem;
+  font-size: 1.4rem;
+}
+
+.sidebarFooter {
+  padding: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.logoutButton {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: var(--neutral-gray-300);
+  width: 100%;
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.logoutButton:hover {
+  color: var(--error);
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    z-index: 100;
+    transform: translateX(-100%);
+  }
+  
+  .sidebar.collapsed {
+    transform: translateX(0);
+    width: 60px;
+  }
+}

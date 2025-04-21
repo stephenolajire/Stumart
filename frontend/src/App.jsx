@@ -33,6 +33,8 @@ import AvailableOrders from "./picker-dashboard/AvailableOrders";
 import MyDeliveries from "./picker-dashboard/MyDeliveries";
 import Earnings from "./picker-dashboard/Earnings";
 import OrderDetail from "./picker-dashboard/OrderDetail";
+import AdminDashboard from "./admin-dashboard/AdminDashboard";
+import AdminOrderDetail from "./admin-dashboard/OrderDetail";
 
 function App() {
   return (
@@ -115,21 +117,31 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="/picker" element={<DashboardLayout />} />
+          <Route
+            path="/picker"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard"
+            element={
+              <ProtectedRoute>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/picker/dashboard" element={<HomePage />} />
           <Route
             path="/picker/available-orders"
             element={<AvailableOrders />}
           />
-          <Route path="/picker/my-deliveries" element={<MyDeliveries/>} />
-          <Route
-            path="/earnings"
-            element={<Earnings />}
-          />
-          <Route
-            path="/order-detail/:orderId"
-            element={<OrderDetail />}
-          />
+          <Route path="/picker/my-deliveries" element={<MyDeliveries />} />
+          <Route path="/earnings" element={<Earnings />} />
+          <Route path="/order-detail/:orderId" element={<OrderDetail />} />
+          <Route path="/admin-order-detail/:orderId" element={<AdminOrderDetail />} />
 
           <Route path="/forgot-password" element={<RequestOTPForm />} />
           <Route path="/verify-otp" element={<VerifyOTPForm />} />

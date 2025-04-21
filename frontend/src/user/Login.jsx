@@ -53,7 +53,7 @@ const Login = () => {
 
     try {
       const response = await api.post("/token/", formData);
-      const { access, refresh, user_type, is_verified, kyc_status, user_id } =
+      const { access, refresh, user_type, is_verified, kyc_status, user_id, is_admin } =
         response.data;
 
       console.log(response.data);
@@ -73,11 +73,18 @@ const Login = () => {
       }
 
       // If user is a student and verified, navigate to home
+      if ( user_type== 'admin' && is_admin== true) {
+        navigate("/admin-dashboard");
+        auth();
+        return;
+      }
+
       if (user_type === "student") {
         auth();
         navigate(from, { replace: true });
         return;
       }
+
 
       // If user is picker, student picker, or vendor, handle KYC status
       if (["picker", "student_picker", "vendor"].includes(user_type)) {

@@ -1,0 +1,211 @@
+.pickersContainer {
+  display: flex;
+  flex-direction: column;
+}
+
+.headerSection {
+  margin-bottom: 2rem;
+}
+
+.sectionTitle {
+  font-size: var(--h4-desktop);
+  margin-bottom: 1.5rem;
+  color: var(--text-primary);
+}
+
+.filterSection {
+  background-color: var(--neutral-white);
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  margin-bottom: 2rem;
+}
+
+.searchForm {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.searchInput {
+  flex: 1;
+  padding: 1rem;
+  border: 1px solid var(--neutral-gray-200);
+  border-radius: 4px;
+  font-size: 1.4rem;
+}
+
+.searchButton {
+  background-color: var(--primary-500);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0 2rem;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.filterControls {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.filterSelect {
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--neutral-gray-200);
+  border-radius: 4px;
+  font-size: 1.4rem;
+  flex: 1;
+}
+
+.clearButton {
+  background-color: var(--neutral-gray-100);
+  color: var(--text-secondary);
+  border: 1px solid var(--neutral-gray-200);
+  border-radius: 4px;
+  padding: 0 1.5rem;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.tableContainer {
+  background-color: var(--neutral-white);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  overflow: auto;
+}
+
+.pickersTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1.4rem;
+}
+
+.pickersTable th,
+.pickersTable td {
+  padding: 1.2rem 1.5rem;
+  text-align: left;
+  border-bottom: 1px solid var(--neutral-gray-100);
+}
+
+.pickersTable th {
+  background-color: var(--neutral-gray-50);
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.typeBadge, .availableBadge, .verifiedBadge {
+  display: inline-block;
+  padding: 0.4rem 0.8rem;
+  border-radius: 16px;
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.picker {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: var(--info);
+}
+
+.student_picker {
+  background-color: rgba(34, 197, 94, 0.1);
+  color: var(--success);
+}
+
+.available {
+  background-color: rgba(34, 197, 94, 0.1);
+  color: var(--success);
+}
+
+.unavailable {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--error);
+}
+
+.verified {
+  background-color: rgba(34, 197, 94, 0.1);
+  color: var(--success);
+}
+
+.unverified {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: var(--warning);
+}
+
+.ratingContainer {
+  display: flex;
+  align-items: center;
+}
+
+.ratingValue {
+  font-weight: 600;
+  color: var(--primary-600);
+}
+
+.actionButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.actionButton {
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-size: 1.2rem;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.makeAvailable {
+  background-color: rgba(34, 197, 94, 0.1);
+  color: var(--success);
+}
+
+.makeUnavailable {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--error);
+}
+
+.verify {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: var(--info);
+}
+
+.noData {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+
+.error {
+  background-color: var(--error);
+  color: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  font-size: 1.6rem;
+}
+
+@media (max-width: 1024px) {
+  .pickersTable {
+    font-size: 1.2rem;
+  }
+  
+  .filterControls {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 768px) {
+  .searchForm {
+    flex-direction: column;
+  }
+  
+  .tableContainer {
+    overflow-x: auto;
+  }
+}

@@ -253,7 +253,7 @@ class MyDeliveriesView(APIView):
             ).order_by('-created_at')
         elif delivery_status == 'completed':
             deliveries = Order.objects.filter(
-                order_status='DELIVERED',
+                order_status='COMPLETED',
                 picker = user,
             ).order_by('-created_at')
 

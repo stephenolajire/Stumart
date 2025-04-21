@@ -10,26 +10,15 @@ const ShoppingCart = () => {
 //   const [cartItems, setCartItems] = useState([]);
 //   const [loading, setLoading] = useState(true);
 //   const [error, setError] = useState(null);
-  const {cartItems, fetchCartData, loading, error, getCartCode, setError,setCartItems} = useContext(GlobalContext)
+  const {cartItems, cartSummary, fetchCartData, loading, error, getCartCode, setError,setCartItems} = useContext(GlobalContext)
 
   // Calculate cart totals
   const subtotal = cartItems.reduce(
     (total, item) => total + parseFloat(item.product_price) * item.quantity,
     0
   );
-  const shipping = cartItems.length > 0 ? 300 : 0;
-  const tax = subtotal * 0.03;
-  const total = subtotal + shipping + tax;
 
-  // Get cart code from localStorage if user is not authenticated
-//   const getCartCode = () => {
-//     return localStorage.getItem("cart_code");
-//   };
-
-  // Format currency
-  const formatCurrency = (amount) => {
-    return `N${amount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, "$&,")}`;
-  };
+  console.log (cartSummary)
 
   const navigate = useNavigate();
 
@@ -165,7 +154,7 @@ const ShoppingCart = () => {
                 {/* Item Price */}
                 <div className={styles.itemPrice}>
                   <span className={styles.mobileLabel}>Price:</span>
-                  <span>{formatCurrency(parseFloat(item.product_price))}</span>
+                  <span>{item.product_price}</span>
                 </div>
 
                 {/* Item Quantity */}
@@ -194,7 +183,7 @@ const ShoppingCart = () => {
                 {/* Item Subtotal */}
                 <div className={styles.itemSubtotal}>
                   <span className={styles.mobileLabel}>Subtotal:</span>
-                  <span>{formatCurrency(parseFloat(item.total_price))}</span>
+                  <span>{cartSummary.subtotal}</span>
                 </div>
 
                 {/* Remove Button */}
@@ -239,22 +228,22 @@ const ShoppingCart = () => {
 
             <div className={styles.summaryRow}>
               <span>Subtotal</span>
-              <span>{formatCurrency(subtotal)}</span>
+              <span>{cartSummary.subTotal}</span>
             </div>
 
             <div className={styles.summaryRow}>
               <span>Shipping</span>
-              <span>{formatCurrency(shipping)}</span>
+              <span>{cartSummary.shippingFee}</span>
             </div>
 
             <div className={styles.summaryRow}>
               <span>Tax</span>
-              <span>{formatCurrency(tax)}</span>
+              <span>{cartSummary.tax}</span>
             </div>
 
             <div className={`${styles.summaryRow} ${styles.totalRow}`}>
               <span>Total</span>
-              <span>{formatCurrency(total)}</span>
+              <span>{cartSummary.total}</span>
             </div>
 
             <button className={styles.checkoutButton}>

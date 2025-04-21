@@ -142,6 +142,7 @@ export const GlobalProvider = ({ children }) => {
         const response = await api.get("cart/", { params });
         // console.log("Cart Data:", response.data);
         setCartItems(response.data.items || []);
+        // console.log(response.data)
         setCartSummary({
           subTotal: response.data.sub_total || 0,
           shippingFee: response.data.shipping_fee || 0,
@@ -192,7 +193,7 @@ export const GlobalProvider = ({ children }) => {
         count,
         setError,
         setCartItems,
-        cartSummary
+        cartSummary,
       }}
     >
       {children}

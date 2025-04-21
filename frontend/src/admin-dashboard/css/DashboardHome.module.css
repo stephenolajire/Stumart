@@ -1,0 +1,49 @@
+.dashboardContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.sectionTitle {
+  font-size: var(--h4-desktop);
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
+.statsSection {
+  background-color: var(--neutral-white);
+  border-radius: 8px;
+  padding: 2rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.subTitle {
+  font-size: var(--h6-desktop);
+  margin-bottom: 1.5rem;
+  color: var(--text-secondary);
+}
+
+.cardsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 2rem;
+}
+
+.error {
+  background-color: var(--error);
+  color: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  font-size: 1.6rem;
+}
+
+@media (max-width: 768px) {
+  .cardsGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .statsSection {
+    padding: 1.5rem;
+  }
+}

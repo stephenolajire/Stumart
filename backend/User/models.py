@@ -36,6 +36,7 @@ class CustomUserManager(BaseUserManager):
 class User(AbstractUser):
     USER_TYPE_CHOICES = (
         ('student', 'Student'),
+        ('admin', 'ADMIN'),
         ('vendor', 'Vendor'),
         ('picker', 'Picker'),
         ('student_picker', 'Student Picker'),
@@ -66,7 +67,7 @@ class User(AbstractUser):
             self.username = self.email
         if self.is_superuser:
             # Set default values for superuser
-            self.user_type = 'student'  # Set a default user type
+            self.user_type = 'admin'  # Set a default user type
             self.phone_number = '00000000000'  # Set a default phone number
             self.state = 'Default'
             self.institution = 'Default'
