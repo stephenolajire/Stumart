@@ -737,7 +737,7 @@ class PaystackPaymentVerifyView(APIView):
                 return Response({
                     'status': 'success',
                     'message': 'Payment already verified',
-                    'order_number': order.order_number
+                    # 'order_number': order.order_number
                 }, status=status.HTTP_200_OK)
             
             # Only verify with Paystack if transaction hasn't been completed
@@ -930,6 +930,56 @@ class PaystackPaymentVerifyView(APIView):
                     except Exception as e:
                         logger.error(f"Error sending notification to vendor {vendor.id}: {str(e)}", exc_info=True)
                         continue  # Continue with other vendors even if one fails
+
+                # Find and notify eligible pickers in the same institution as the vendor
+                for vendor in vendors_to_notify:
+                    try:
+                        # Get the vendor's institution
+                        vendor_institution = vendor.user.institution
+                        
+                        # Find all pickers (both regular and student pickers) from the same institution
+                        regular_pickers = User.objects.filter(
+                            user_type='picker',
+                            institution=vendor_institution,
+                            is_active=True
+                        )
+                        student_pickers = User.objects.filter(
+                            user_type='student_picker',
+                            institution=vendor_institution,
+                            is_active=True
+                        )
+                        
+                        # Combine the lists of pickers
+                        all_pickers_emails = []
+                        for picker in list(regular_pickers) + list(student_pickers):
+                            all_pickers_emails.append(picker.email)
+                        
+                        if all_pickers_emails:
+                            # Build email content
+                            picker_subject = f"New Delivery Opportunity - Order #{order.order_number}"
+                            picker_message = (
+                                f"Hello,\n\n"
+                                f"A new order has been placed that needs delivery from {vendor.business_name} "
+                                f"at {vendor_institution}.\n\n"
+                                f"Order Number: {order.order_number}\n"
+                                f"Order Date: {order.created_at}\n"
+                                f"Delivery Location: {order.address}\n\n"
+                                f"Please log in to your dashboard to accept this delivery. It is going to be first come first serve"
+                            )
+                            
+                            # Send email to all eligible pickers
+                            send_mail(
+                                subject=picker_subject,
+                                message=picker_message,
+                                from_email=settings.DEFAULT_FROM_EMAIL,
+                                recipient_list=all_pickers_emails,
+                                fail_silently=False
+                            )
+                            
+                            logger.info(f"Notified {len(all_pickers_emails)} pickers about order {order.order_number}")
+                    except Exception as e:
+                        logger.error(f"Failed to notify pickers for vendor {vendor.id}: {str(e)}", exc_info=True)
+                        continue  # Continue with other operations even if picker notification fails
 
                 # Delete the cart after successful payment
                 if cart_code:

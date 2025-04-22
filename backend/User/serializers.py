@@ -175,11 +175,16 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         if vendor:
             category = vendor.business_category
 
+        # Subscription status
         subscription = None
         sub = getattr(self.user, 'subscription', None)
-        if sub.user.vendor_profile.business_category == 'others':
-            subscription = sub.status
+        if sub:
+            if hasattr(sub.user, 'vendor_profile') and sub.user.vendor_profile and sub.user.vendor_profile.business_category == 'others':
+                subscription = sub.status
+            else:
+                subscription = sub.status
 
+        # Add custom claims to the token    
         data['kyc_status'] = kyc_status
         data['category'] = category
         data['subscription'] = subscription
