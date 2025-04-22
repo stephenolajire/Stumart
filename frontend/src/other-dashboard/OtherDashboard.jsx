@@ -6,6 +6,7 @@ import Applications from "./Applications";
 import Reviews from "./Reviews";
 import Settings from "./Settings";
 import Chat from "./Chat";
+import SubscriptionPlans from "../pages/SubscriptionPlans"
 import styles from "./css/Dashboard.module.css";
 
 const OtherDashboard = ({ vendor }) => {
@@ -18,6 +19,8 @@ const OtherDashboard = ({ vendor }) => {
         return <Home vendor={vendor} />;
       case "applications":
         return <Applications vendor={vendor} />;
+      case "subscription":
+        return <SubscriptionPlans />;
       case "reviews":
         return <Reviews vendor={vendor} />;
       case "settings":

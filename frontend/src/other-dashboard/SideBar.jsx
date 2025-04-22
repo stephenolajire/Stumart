@@ -7,6 +7,7 @@ const Sidebar = ({ activeTab, setActiveTab, vendor }) => {
   const navigation = [
     { id: "home", label: "Dashboard", icon: "📊" },
     { id: "applications", label: "Applications", icon: "📝" },
+    { id: "subscription", label: "Subscription", icon: "💳"},
     { id: "reviews", label: "Reviews", icon: "⭐" },
     { id: "chat", label: "Messages", icon: "💬" },
     { id: "settings", label: "Settings", icon: "⚙️" },
