@@ -1,130 +1,206 @@
 .home {
-  padding-top: 3rem;
+  min-height: 100vh;
+  background-color: var(--neutral-gray-50);
 }
 
 .container {
   width: 100%;
   margin: 0 auto;
-  padding: 0 2rem;
+  padding: 2.4rem;
 }
 
-.highLightCategory {
-  text-transform: capitalize;
+.categorySection {
+  padding: 4rem 0;
 }
 
-.container h2{
-  text-align: center;
-  margin-top: -3rem;
-}
-
-.container p {
-  font-size: 1.8rem;
-  color: var(--text-primary);
-  text-align: center;
-  margin-bottom: 2rem;
-  margin-top: -1.5rem;
-}
-
-.categorySection,
-.shopsSection {
-  margin: 6rem 0;
-}
-
-.categorySection h2,
-.shopsSection h2 {
+.categorySection h2 {
   font-size: var(--h2-desktop);
-  margin-bottom: 2rem;
   color: var(--text-primary);
+  text-align: center;
+  margin-bottom: 1.2rem;
+}
+
+.categorySection p {
+  font-size: 1.6rem;
+  color: var(--text-tertiary);
+  text-align: center;
+  margin-bottom: 3.2rem;
 }
 
 .filtering {
-  display: grid;
-  grid-template-columns: 2fr 3fr;
-  background-color: var(--neutral-gray-50);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-  height: auto;
-  gap: 2rem;
-  /* padding: 2rem; */
-  /* display: ; */
+  display: flex;
+  flex-direction: column;
+  gap: 3.2rem;
 }
 
-.filteringSection {
-  height: auto;
-  width: 100%;
+.filterSection {
+  background-color: var(--neutral-white);
+  border-radius: 1.2rem;
+  padding: 2.4rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.containers {
+  max-width: 80rem;
+  margin: 0 auto;
 }
 
 .containers h5 {
-  margin-top: 1rem;
+  font-size: var(--h5-desktop);
+  color: var(--text-primary);
+  margin-bottom: 2rem;
+  text-align: center;
 }
 
-.formGroup{
+.schoolFilterForm {
   display: flex;
   flex-direction: column;
-}
-
-.formGroup select, .formGroup input {
-  width: 100%;
-  height: 3.2rem;
-  font-size: 1.6rem;
-}
-
-.formGroup label {
-  font-size: 1.6rem;
-  margin-top: 1rem;
+  gap: 2.4rem;
 }
 
 .gridForm {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(24rem, 1fr));
   gap: 2rem;
 }
 
-.buttonGroup {
-  margin:1rem 0rem;
+.formGroup {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 0.8rem;
 }
 
-.resetButton, .submitButton {
-  height: 3.2rem;
-  width: 20rem;
-  border: none;
-  background-color: var(--secondary-500);
-  color: white;
+.formGroup label {
+  font-size: 1.4rem;
+  color: var(--text-secondary);
+}
+
+.selectInput {
+  width: 100%;
+  padding: 1.2rem;
+  border: 1px solid var(--neutral-gray-300);
+  border-radius: 0.8rem;
+  font-size: 1.4rem;
+  color: var(--text-primary);
+  background-color: var(--neutral-white);
+  transition: border-color 0.3s ease;
+}
+
+.selectInput:focus {
+  outline: none;
+  border-color: var(--primary-500);
+}
+
+.selectInput:disabled {
+  background-color: var(--neutral-gray-100);
+  cursor: not-allowed;
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 1.6rem;
+  justify-content: center;
+}
+
+.submitButton,
+.resetButton {
+  padding: 1.2rem 2.4rem;
+  border-radius: 0.8rem;
+  font-size: 1.4rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
 .submitButton {
   background-color: var(--primary-500);
+  color: var(--neutral-white);
+  border: none;
 }
 
-@media (max-width: 768px) {
-  .categorySection h2,
-  .shopsSection h2 {
+.submitButton:hover:not(:disabled) {
+  background-color: var(--primary-600);
+}
+
+.submitButton:disabled {
+  background-color: var(--neutral-gray-300);
+  cursor: not-allowed;
+}
+
+.resetButton {
+  background-color: var(--neutral-white);
+  color: var(--error);
+  border: 1px solid var(--error);
+}
+
+.resetButton:hover {
+  background-color: var(--error);
+  color: var(--neutral-white);
+}
+
+.shopsSection {
+  padding: 4rem 0;
+  margin-top: -4rem;
+}
+
+.sectionTitle {
+  font-size: var(--h3-desktop);
+  color: var(--text-primary);
+  margin-bottom: 3.2rem;
+  text-align: center;
+}
+
+.highlightCategory {
+  color: var(--primary-500);
+}
+
+.noShopsMessage {
+  text-align: center;
+  padding: 4rem;
+  color: var(--text-tertiary);
+  font-size: 1.6rem;
+  background-color: var(--neutral-white);
+  border-radius: 1.2rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+@media screen and (max-width: 768px) {
+  .container {
+    padding: 1.6rem;
+  }
+
+  .categorySection h2 {
     font-size: var(--h2-mobile);
   }
 
-  .filtering {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1rem;
+  .containers h5 {
+    font-size: var(--h5-mobile);
   }
 
   .gridForm {
     grid-template-columns: 1fr;
-    gap: 0.5rem;
   }
 
   .buttonGroup {
-    display: grid;
-    grid-template-columns: 1fr;
+    flex-direction: column;
   }
 
-  .submitButton, .resetButton {
+  .submitButton,
+  .resetButton {
     width: 100%;
-    text-align: center;
   }
 
-  .resetButton{
-    margin-top: 1rem;
+  .sectionTitle {
+    font-size: var(--h3-mobile);
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .container {
+    padding: 1.2rem;
+  }
+
+  .filterSection {
+    padding: 1.6rem;
   }
 }

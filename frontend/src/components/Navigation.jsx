@@ -31,20 +31,10 @@ const Navigation = () => {
           <img className={styles.imgLogo} src={logo} alt="StuMart" />
         </NavLink>
 
-        <div style={{ display: "flex", flexDirection: "row" }}>
-          <Link to="shopping-cart">
-            <FaCartPlus
-              className={styles.cartIcon}
-              size={26}
-              style={{
-                color: "black",
-                marginTop: "0.3rem",
-                marginRight: "2rem",
-              }}
-            />
-            <div className={styles.countDiv}>
-              <p className={styles.count}>{count}</p>
-            </div>
+        <div className={styles.rightSection}>
+          <Link to="shopping-cart" className={styles.cartWrapper}>
+            <FaCartPlus className={styles.cartIcon} />
+            {count > 0 && <span className={styles.cartBadge}>{count}</span>}
           </Link>
           <button className={styles.menuButton} onClick={toggleMenu}>
             {isMenuOpen ? <HiX size={32} /> : <HiMenu size={32} />}

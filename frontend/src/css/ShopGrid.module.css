@@ -1,126 +1,152 @@
 .shopGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 20px;
-  padding: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(28rem, 1fr));
+  gap: 2.4rem;
+  padding: 2.4rem 0;
+  /* margin-top: -4rem; */
 }
 
 .shopCard {
-  background-color: var(--neutral-gray-50);
-  border-radius: 8px;
-  box-shadow: 0 0 3px 2px rgba(128, 128, 128, 0.504);
+  display: block;
+  background-color: var(--neutral-white);
+  border-radius: 1.2rem;
   overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
   text-decoration: none;
-  color: var(--text-primary);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .shopCard:hover {
-  transform: translateY(-10px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
 }
 
 .imageWrapper {
   position: relative;
-  /* padding-top: 100%; Aspect ratio 1:1 */
+  width: 100%;
+  padding-top: 60%;
   overflow: hidden;
 }
 
 .imageWrapper img {
-  /* position: absolute;
+  position: absolute;
   top: 0;
   left: 0;
   width: 100%;
-  height: 100%; */
-  height: 20rem;
-  width: 100%;
+  height: 100%;
   object-fit: cover;
-  border-bottom: 2px solid var(--neutral-gray-100);
+  transition: transform 0.3s ease;
+}
+
+.shopCard:hover .imageWrapper img {
+  transform: scale(1.05);
 }
 
 .shopInfo {
-  padding: 15px;
-  /* text-align: center; */
+  padding: 1.6rem;
 }
 
 .shopInfo h3 {
-  font-size: var(--h5-desktop);
+  font-size: 1.8rem;
   font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 10px;
+  margin-bottom: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.shopInfo .category {
-  font-size: var(--h6-desktop);
-  font-weight: 500;
-  color: var(--text-secondary);
-  margin-bottom: 5px;
-  text-align: left;
-  margin-top: 1rem;
-}
-
-.shopInfo .rating {
-  font-size: var(--h5-desktop);
-  font-weight: 600;
-  color: var(--success);
-  margin-bottom: 10px;
-  text-align: left;
-}
-
-.shopInfo .delivery {
-  font-size: var(--h6-desktop);
-  font-weight: 400;
+.category {
+  font-size: 1.4rem;
   color: var(--text-tertiary);
-  text-align: left;
-  margin-top: 1rem;
+  margin-bottom: 0.4rem;
+  text-transform: capitalize;
 }
 
-/* Hover Effect on Shop Info */
-.shopCard:hover .shopInfo h3 {
-  color: var(--primary-500);
+.rating {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 1.4rem;
+  color: var(--text-secondary);
+  margin: 0.8rem 0;
 }
 
-.shopCard:hover .shopInfo .category {
-  color: var(--primary-400);
+.delivery {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 1.4rem;
+  color: var(--text-tertiary);
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--neutral-gray-100);
 }
 
 .contNo {
-  width: 100%;
-  display: grid;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 4rem 2rem;
+  background-color: var(--neutral-white);
+  border-radius: 1.2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .contNo p {
-  margin-top: 2rem;
+  font-size: 1.8rem;
+  color: var(--text-tertiary);
+  margin-bottom: 1.6rem;
 }
 
 .storeIcon {
-  height: 20rem;
-  width: 20rem;
-  color: var(--neutral-gray-400);
+  font-size: 4rem;
+  color: var(--neutral-gray-300);
+}
+
+@media screen and (max-width: 1024px) {
+  .shopGrid {
+    grid-template-columns: repeat(auto-fill, minmax(24rem, 1fr));
+    gap: 2rem;
+  }
 }
 
 @media screen and (max-width: 768px) {
   .shopGrid {
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    padding: 0rem ;
+    grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+    gap: 1.6rem;
+    padding: 1.6rem 0;
+  }
+
+  .shopInfo {
+    padding: 1.2rem;
   }
 
   .shopInfo h3 {
-    font-size: var(--h4-mobile);
+    font-size: 1.6rem;
   }
 
-  .shopInfo .category {
-    font-size: var(--h5-mobile);
+  .category,
+  .rating,
+  .delivery {
+    font-size: 1.3rem;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .shopGrid {
+    grid-template-columns: 1fr;
+    gap: 1.2rem;
+    padding: 1.2rem 0;
   }
 
-  .shopInfo .rating {
-    font-size: var(--h5-mobile);
+  .contNo {
+    padding: 3.2rem 1.6rem;
   }
 
-  .shopInfo .delivery {
-    font-size: var(--h6-mobile);
+  .contNo p {
+    font-size: 1.6rem;
+  }
+
+  .storeIcon {
+    font-size: 3.2rem;
   }
 }
