@@ -16,19 +16,40 @@ const SearchPage = () => {
   const [products, setProducts] = useState(initialProducts);
   const [priceRange, setPriceRange] = useState({
     min: 0,
-    max: Math.max(...initialProducts.map(p => Number(p.price))) || 100000
+    max: Math.max(...initialProducts.map((p) => Number(p.price))) || 100000,
   });
   const [currentPriceRange, setCurrentPriceRange] = useState({
     min: 0,
-    max: Math.max(...initialProducts.map(p => Number(p.price))) || 100000
+    max: Math.max(...initialProducts.map((p) => Number(p.price))) || 100000,
   });
 
   const handlePriceFilter = () => {
-    const filtered = initialProducts.filter(product => {
+    const filtered = initialProducts.filter((product) => {
       const price = Number(product.price);
       return price >= currentPriceRange.min && price <= currentPriceRange.max;
     });
     setProducts(filtered);
+  };
+
+  const handleMinPriceChange = (e) => {
+    const value = Number(e.target.value);
+    if (value >= 0) {
+      // Ensure value is not negative
+      setCurrentPriceRange((prev) => ({
+        ...prev,
+        min: value || "", // Use empty string if value is 0
+      }));
+    }
+  };
+
+  const handleMaxPriceChange = (e) => {
+    const value = Number(e.target.value);
+    if (value >= currentPriceRange.min) {
+      setCurrentPriceRange((prev) => ({
+        ...prev,
+        max: value,
+      }));
+    }
   };
 
   if (!initialProducts || initialProducts.length === 0) {
@@ -67,13 +88,13 @@ const SearchPage = () => {
                 <label>Min (₦)</label>
                 <input
                   type="number"
-                  value={currentPriceRange.min}
-                  onChange={(e) => setCurrentPriceRange(prev => ({
-                    ...prev,
-                    min: Number(e.target.value)
-                  }))}
+                  value={
+                    currentPriceRange.min === 0 ? "" : currentPriceRange.min
+                  }
+                  onChange={handleMinPriceChange}
                   min={0}
                   max={currentPriceRange.max}
+                  placeholder="0"
                 />
               </div>
               <div className={styles.inputGroup}>
@@ -81,18 +102,13 @@ const SearchPage = () => {
                 <input
                   type="number"
                   value={currentPriceRange.max}
-                  onChange={(e) => setCurrentPriceRange(prev => ({
-                    ...prev,
-                    max: Number(e.target.value)
-                  }))}
+                  onChange={handleMaxPriceChange}
                   min={currentPriceRange.min}
+                  placeholder="Max price"
                 />
               </div>
             </div>
-            <button 
-              className={styles.filterButton}
-              onClick={handlePriceFilter}
-            >
+            <button className={styles.filterButton} onClick={handlePriceFilter}>
               <FaFilter /> Apply Filter
             </button>
           </div>
