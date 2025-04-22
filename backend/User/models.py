@@ -82,6 +82,8 @@ class Student(models.Model):
     def __str__(self):
         return f"Student: {self.user.email}"
 
+# Update your Vendor model
+
 class Vendor(models.Model):
     BUSINESS_CATEGORIES = [
         ('food', 'Food'),
@@ -122,9 +124,27 @@ class Vendor(models.Model):
     bank_name = models.CharField(max_length=100)
     account_number = models.CharField(max_length=10)
     account_name = models.CharField(max_length=100)
-    # Add to your vendor model
     paystack_recipient_code = models.CharField(max_length=100, null=True, blank=True)
-
+    
+    # Helper properties for subscription
+    @property
+    def needs_subscription(self):
+        return self.business_category == 'others'
+    
+    @property
+    def has_active_subscription(self):
+        try:
+            return self.user.subscription.is_active()
+        except:
+            return False
+    
+    @property
+    def subscription_status(self):
+        try:
+            return self.user.subscription.status
+        except:
+            return None
+    
     def __str__(self):
         return f"Vendor: {self.business_name}"
 
@@ -255,3 +275,58 @@ class KYCVerification(models.Model):
             self.user.is_verified = True
             self.user.save()
         super().save(*args, **kwargs)
+
+
+# Add to your models.py file
+
+class SubscriptionPlan(models.Model):
+    DURATION_CHOICES = [
+        ('monthly', 'Monthly'),
+        ('half_year', 'Half Year'),
+        ('yearly', 'Yearly'),
+    ]
+    
+    name = models.CharField(max_length=50)
+    duration = models.CharField(max_length=20, choices=DURATION_CHOICES)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    description = models.TextField(blank=True)
+    features = models.TextField(blank=True, help_text="Comma separated list of features")
+    is_active = models.BooleanField(default=True)
+    
+    def __str__(self):
+        return f"{self.name} - {self.get_duration_display()}"
+
+class Subscription(models.Model):
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('expired', 'Expired'),
+        ('cancelled', 'Cancelled'),
+        ('trial', 'Trial'),
+    ]
+    
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='subscription')
+    plan = models.ForeignKey(SubscriptionPlan, on_delete=models.SET_NULL, null=True)
+    start_date = models.DateTimeField(auto_now_add=True)
+    end_date = models.DateTimeField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='trial')
+    payment_reference = models.CharField(max_length=100, blank=True, null=True)
+    auto_renew = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return f"{self.user.email} - {self.plan.name if self.plan else 'No Plan'} - {self.status}"
+    
+    def save(self, *args, **kwargs):
+        # If this is a new subscription with no end date set
+        if not self.pk and not self.end_date:
+            # Default to 1 month free trial
+            self.end_date = timezone.now() + timedelta(days=30)
+            self.status = 'trial'
+        super().save(*args, **kwargs)
+    
+    def is_active(self):
+        return self.status == 'active' or (self.status == 'trial' and self.end_date > timezone.now())
+    
+    def days_remaining(self):
+        if self.end_date > timezone.now():
+            return (self.end_date - timezone.now()).days
+        return 0

@@ -88,8 +88,26 @@ class WalletAdmin(admin.ModelAdmin):
     list_display = ['vendor', 'balance']
     search_fields = ['vendor__name']
     
-# admin.site.register(Order)
-# admin.site.register(OrderItem)
-# admin.site.register(Transaction)
-# admin.site.register(Wallet)
+@admin.register(ServiceApplication)
+class ServiceApplicationAdmin(admin.ModelAdmin):
+    list_display = ('service', 'name', 'email', 'phone', 'preferred_date', 'status', 'created_at')
+    list_filter = ('status', 'preferred_date', 'created_at')
+    search_fields = ('name', 'email', 'phone', 'service__business_name')
+    readonly_fields = ('created_at', 'updated_at', 'response_date', 'completion_date')
+    ordering = ('-created_at',)
+
+    fieldsets = (
+        ("Applicant Info", {
+            'fields': ('user', 'name', 'email', 'phone')
+        }),
+        ("Service Details", {
+            'fields': ('service', 'description', 'preferred_date', 'additional_details')
+        }),
+        ("Vendor Response", {
+            'fields': ('status', 'vendor_response', 'response_date', 'completion_date')
+        }),
+        ("Timestamps", {
+            'fields': ('created_at', 'updated_at')
+        }),
+    )
 

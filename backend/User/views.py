@@ -12,6 +12,7 @@ from .serializers import *
 from django.core.mail import send_mail
 from django.conf import settings
 from .models import OTP
+from rest_framework import permissions
 
 class BaseAPIView(APIView):
     model = None
@@ -469,4 +470,96 @@ class UpdateStudentProfileView(APIView):
             'department': student.department
         }
         
-        return Response(response_data)
+        return Response(response_data) 
+
+
+class SubscriptionListView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        subscriptions = Subscription.objects.filter(user=request.user)
+        serializer = SubscriptionSerializer(subscriptions, many=True)
+        return Response(serializer.data)
+
+
+class CurrentSubscriptionView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        try:
+            subscription = request.user.subscription
+            serializer = SubscriptionSerializer(subscription)
+            return Response(serializer.data)
+        except Subscription.DoesNotExist:
+            return Response({"detail": "No subscription found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+class SubscribeView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        plan_id = request.data.get('plan_id')
+        payment_reference = request.data.get('payment_reference')
+
+        if not plan_id or not payment_reference:
+            return Response(
+                {"detail": "Plan ID and payment reference are required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            plan = SubscriptionPlan.objects.get(id=plan_id, is_active=True)
+        except SubscriptionPlan.DoesNotExist:
+            return Response({"detail": "Invalid subscription plan"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Set start and end dates
+        start_date = timezone.now()
+        if plan.duration == 'monthly':
+            end_date = start_date + timedelta(days=30)
+        elif plan.duration == 'half_year':
+            end_date = start_date + timedelta(days=182)
+        elif plan.duration == 'yearly':
+            end_date = start_date + timedelta(days=365)
+        else:
+            end_date = start_date + timedelta(days=30)
+
+        # Create or update subscription
+        try:
+            subscription = request.user.subscription
+            subscription.plan = plan
+            subscription.start_date = start_date
+            subscription.end_date = end_date
+            subscription.status = 'active'
+            subscription.payment_reference = payment_reference
+            subscription.save()
+        except Subscription.DoesNotExist:
+            subscription = Subscription.objects.create(
+                user=request.user,
+                plan=plan,
+                start_date=start_date,
+                end_date=end_date,
+                status='active',
+                payment_reference=payment_reference
+            )
+
+        serializer = SubscriptionSerializer(subscription)
+        return Response(serializer.data)
+
+class VendorProfileView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    def get (self, request):
+        try:
+            vendor = Vendor.objects.get(user=request.user)
+            serializer = VendorSerializer(vendor)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Vendor.DoesNotExist:
+            return Response({"detail": "Vendor profile not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+
+class AllPlansView(APIView):
+    permission_classes = [permissions.AllowAny]  # or IsAuthenticated if needed
+
+    def get(self, request):
+        plans = SubscriptionPlan.objects.filter(is_active=True)
+        serializer = SubscriptionPlanSerializer(plans, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

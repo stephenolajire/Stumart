@@ -143,34 +143,41 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['is_verified'] = user.is_verified
         token['is_admin'] = user.is_staff
         
+        
         # Get KYC status
         try:
             kyc_status = user.kyc.verification_status if hasattr(user, 'kyc') else None
+            category = user.vendor.business_category if hasattr(user, 'vendor') else None
         except:
             kyc_status = None
 
         token['kyc_status'] = kyc_status
+        token['category'] = category
         
         return token
 
     def validate(self, attrs):
         data = super().validate(attrs)
-        
-        # Add extra responses here
+
         data['user_type'] = self.user.user_type
         data['is_verified'] = self.user.is_verified
         data['user_id'] = self.user.id
         data['is_admin'] = self.user.is_staff
-        
-        # Get KYC status
-        try:
-            kyc_status = self.user.kyc.verification_status if hasattr(self.user, 'kyc') else None
-        except:
-            kyc_status = None
-            
+
+        # KYC status
+        kyc_status = getattr(getattr(self.user, 'kyc', None), 'verification_status', None)
+
+        # Vendor category (OneToOneField)
+        category = None
+        vendor = getattr(self.user, 'vendor_profile', None)
+        if vendor:
+            category = vendor.business_category
+
         data['kyc_status'] = kyc_status
+        data['category'] = category
 
         return data
+
     
 
 class SendOTPSerializer(serializers.Serializer):
@@ -244,3 +251,32 @@ class SetNewPasswordSerializer(serializers.Serializer):
         user.set_password(self.validated_data['password'])
         user.save()
         return user
+    
+
+class SubscriptionPlanSerializer(serializers.ModelSerializer):
+    features_list = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = SubscriptionPlan
+        fields = ['id', 'name', 'duration', 'price', 'description', 'features', 'features_list']
+    
+    def get_features_list(self, obj):
+        if obj.features:
+            return [feature.strip() for feature in obj.features.split(',')]
+        return []
+
+class SubscriptionSerializer(serializers.ModelSerializer):
+    plan_details = SubscriptionPlanSerializer(source='plan', read_only=True)
+    days_remaining = serializers.SerializerMethodField()
+    is_active = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Subscription
+        fields = ['id', 'plan', 'plan_details', 'start_date', 'end_date', 
+                 'status', 'auto_renew', 'days_remaining', 'is_active']
+    
+    def get_days_remaining(self, obj):
+        return obj.days_remaining()
+    
+    def get_is_active(self, obj):
+        return obj.is_active()

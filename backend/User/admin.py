@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from django.utils import timezone
-from .models import User, Student, Vendor, Picker, StudentPicker, KYCVerification
+from .models import *
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
@@ -110,3 +110,20 @@ class KYCVerificationAdmin(admin.ModelAdmin):
                 obj.user.is_verified = True
                 obj.user.save()
         super().save_model(request, obj, form, change)
+
+
+@admin.register(SubscriptionPlan)
+class SubscriptionPlanAdmin(admin.ModelAdmin):
+    list_display = ('name', 'duration', 'price', 'is_active')
+    list_filter = ('duration', 'is_active')
+    search_fields = ('name', 'description', 'features')
+    ordering = ('price',)
+
+
+@admin.register(Subscription)
+class SubscriptionAdmin(admin.ModelAdmin):
+    list_display = ('user', 'plan', 'status', 'start_date', 'end_date', 'auto_renew')
+    list_filter = ('status', 'auto_renew', 'plan')
+    search_fields = ('user__email', 'payment_reference')
+    ordering = ('-start_date',)
+    readonly_fields = ('start_date',)

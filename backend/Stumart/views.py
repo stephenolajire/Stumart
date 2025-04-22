@@ -30,6 +30,10 @@ from django.utils.timezone import now
 import logging
 logger = logging.getLogger(__name__)
 from rest_framework import generics
+from django.shortcuts import get_object_or_404
+from django.db.models import Q
+from django.utils import timezone
+from django.core.mail import send_mail
 
 class ProductsView(APIView):
     def get(self, request, id):
@@ -1119,4 +1123,210 @@ class OrderHistoryView(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=400)
 
+class ServiceDetailAPIView(APIView):
+    """
+    Get detailed information about a specific service
+    """
+    def get(self, request, pk):
+        service = get_object_or_404(Vendor, pk=pk, business_category='others')
+        serializer = VendorSerializer(service)
+        return Response(serializer.data)       
+
+class ServiceApplicationAPIView(APIView):
+    """
+    Submit an application for a service
+    """
+    def post(self, request):
+        # Get the service details
+        service_id = request.data.get('service_id')
+        if not service_id:
+            return Response({'error': 'Service ID is required'},
+                          status=status.HTTP_400_BAD_REQUEST)
+        
+        service = get_object_or_404(Vendor, pk=service_id, business_category='others')
+        
+        # Create application data
+        application_data = {
+            'service': service.id,
+            'name': request.data.get('name'),
+            'email': request.data.get('email'),
+            'phone': request.data.get('phone'),
+            'description': request.data.get('description'),
+            'preferred_date': request.data.get('preferredDate'),
+            'additional_details': request.data.get('additionalDetails'),
+        }
+        
+        # If the user is authenticated, associate with the application
+        if request.user.is_authenticated:
+            application_data['user'] = request.user.id
+        
+        serializer = ServiceApplicationSerializer(data=application_data)
+        
+        if serializer.is_valid():
+            application = serializer.save()
+            
+            # Send email to user
+            user_email = application_data['email']
+            send_user_notification_email(
+                user_email, 
+                application, 
+                service
+            )
+            
+            # Send email to vendor
+            # Access vendor's email through the user foreign key
+            vendor_email = service.user.email  # Get email from the User model linked to Vendor
+            send_vendor_notification_email(
+                vendor_email, 
+                application, 
+                service
+            )
+            
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserServiceApplicationsAPIView(APIView):
+    """
+    Get all service applications submitted by the authenticated user
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        applications = ServiceApplication.objects.filter(user=request.user)
+        serializer = ServiceApplicationSerializer(applications, many=True)
+        return Response(serializer.data)
+
+
+class VendorServiceApplicationsAPIView(APIView):
+    """
+    Get all service applications for the vendor's services
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        # Check if the user is a vendor
+        try:
+            vendor = Vendor.objects.get(user=request.user)
+            applications = ServiceApplication.objects.filter(service=vendor)
+            serializer = ServiceApplicationSerializer(applications, many=True)
+            return Response(serializer.data)
+        except Vendor.DoesNotExist:
+            return Response({'error': 'User is not a vendor'}, 
+                            status=status.HTTP_403_FORBIDDEN)
+
+
+class ApplicationStatusUpdateAPIView(APIView):
+    """
+    Update the status of a service application (vendor only)
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def put(self, request, pk):
+        application = get_object_or_404(ServiceApplication, pk=pk)
+        
+        # Check if the current user is the vendor for this application
+        try:
+            vendor = Vendor.objects.get(user=request.user)
+            if application.service != vendor:
+                return Response({'error': 'You do not have permission to update this application'}, 
+                               status=status.HTTP_403_FORBIDDEN)
+        except Vendor.DoesNotExist:
+            return Response({'error': 'User is not a vendor'}, 
+                           status=status.HTTP_403_FORBIDDEN)
+        
+        # Update application status and response
+        application.status = request.data.get('status', application.status)
+        application.vendor_response = request.data.get('vendor_response', application.vendor_response)
+        
+        if application.status == 'completed' and not application.completion_date:
+            application.completion_date = timezone.now()
+        
+        application.save()
+        serializer = ServiceApplicationSerializer(application)
+        return Response(serializer.data)
+
+
+class SearchServicesAPIView(APIView):
+    """
+    Search for services by keywords
+    """
+    def get(self, request):
+        keyword = request.query_params.get('keyword', '')
+        
+        if not keyword:
+            return Response({'error': 'Keyword parameter is required'}, 
+                           status=status.HTTP_400_BAD_REQUEST)
+        
+        # Search in business name and specific category
+        services = Vendor.objects.filter(
+            Q(business_category='others') &
+            (Q(business_name__icontains=keyword) | 
+             Q(specific_category__icontains=keyword))
+        )
+        
+        serializer = VendorDetailSerializer(services, many=True)
+        return Response(serializer.data)
+
+
+def send_user_notification_email(email, application, service):
+    """Send confirmation email to the user who submitted the application"""
+    subject = f"Your application for {service.business_name} has been received"
+    message = f"""
+    Dear {application.name},
+    
+    Thank you for submitting an application for {service.business_name}. We have received your request for the date: {application.preferred_date}.
+    
+    The service provider will review your application and get back to you soon.
+    
+    Application Details:
+    - Service: {service.business_name}
+    - Description: {application.description}
+    - Preferred Date: {application.preferred_date}
+    
+    If you have any questions, please contact us.
+    
+    Best regards,
+    Stumart Platform Team
+    """
+    
+    send_mail(
+        subject,
+        message,
+        [settings.EMAIL_HOST_USER],
+        [email],
+        fail_silently=False,
+    )
+
+
+def send_vendor_notification_email(email, application, service):
+    """Send notification email to the vendor about the new application"""
+    subject = f"New service application received"
+    message = f"""
+    Dear Service Provider,
+    
+    You have received a new application for your service: {service.business_name}.
+    
+    Application Details:
+    - Client Name: {application.name}
+    - Email: {application.email}
+    - Phone: {application.phone}
+    - Description: {application.description}
+    - Preferred Date: {application.preferred_date}
+    - Additional Details: {application.additional_details}
+    
+    Please review this application and contact the client at your earliest convenience.
+    
+    Best regards,
+    Stumart Platform Team
+    """
+    
+    send_mail(
+        subject,
+        message,
+        [settings.EMAIL_HOST_USER],
+        [email],
+        fail_silently=False,
+    )
     

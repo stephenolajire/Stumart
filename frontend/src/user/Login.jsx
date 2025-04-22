@@ -53,7 +53,7 @@ const Login = () => {
 
     try {
       const response = await api.post("/token/", formData);
-      const { access, refresh, user_type, is_verified, kyc_status, user_id, is_admin } =
+      const { access, refresh, user_type, is_verified, kyc_status, user_id, is_admin, category } =
         response.data;
 
       console.log(response.data);
@@ -105,12 +105,16 @@ const Login = () => {
           return;
         }
 
-        if (kyc_status === "approved" && user_type==="vendor") {
+        if (kyc_status === "approved" && user_type==="vendor" && category !== "others") {
           navigate("/vendor-dashboard");
           auth();
           return;
+        }else if (kyc_status === "approved" && user_type==="vendor" && category === "others") {
+          navigate('/subscription-plans');
+          auth();
+          return;
         }else{
-          navigate('/picker')
+          navigate("/picker");
           auth();
           return;
         }

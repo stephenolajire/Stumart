@@ -4,10 +4,16 @@ from .models import *
 import json
 from User.models import Vendor
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 
 User = get_user_model()
 
-class VendorSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'email', 'first_name', 'last_name', 'phone_number', 'institution']
+
+class VendorProfileSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField()
 
     class Meta:
@@ -61,14 +67,16 @@ class ProductSerializer(serializers.ModelSerializer):
         ]
     
     def get_vendor_name(self, obj):
-        if hasattr(obj.vendor, 'vendor_profile'):
-            return obj.vendor.vendor_profile.business_name
-        return f"{obj.vendor.first_name} {obj.vendor.last_name}"
+        try:
+            return obj.vendor.vendor_profile.business_name if hasattr(obj.vendor, 'vendor_profile') else f"{obj.vendor.first_name} {obj.vendor.last_name}"
+        except AttributeError:
+            return "Unknown Vendor"
 
     def get_vendor_category(self, obj):
-        if hasattr(obj.vendor, 'vendor_profile'):
-            return obj.vendor.vendor_profile.business_category
-        return f"{obj.vendor.first_name} {obj.vendor.last_name}"
+        try:
+            return obj.vendor.vendor_profile.business_category if hasattr(obj.vendor, 'vendor_profile') else None
+        except AttributeError:
+            return None
     
     def get_vendor_rating(self, obj):
         # Add appropriate vendor rating logic here
@@ -130,41 +138,50 @@ class ProductCreateSerializer(serializers.ModelSerializer):
         if not request or not request.user.is_authenticated:
             raise serializers.ValidationError("Authentication required")
         
+        try:
+            user = request.user
+            vendor = Vendor.objects.get(user=user)
+            business_category = vendor.business_category if vendor.business_category else None
+        except Vendor.DoesNotExist:
+            raise serializers.ValidationError("User is not registered as a vendor")
         
-        # Get business category
-        user = request.user
-        vendor = Vendor.objects.get(user=user)
-        business_category = vendor.business_category if vendor.business_category else None
+        # Call specific validator based on business category
+        validation_method = getattr(self, f'validate_{business_category}', self.validate_default)
+        return validation_method(data)
+    
+    def validate_fashion(self, data):
+        if not data.get('gender'):
+            raise serializers.ValidationError({"gender": "Gender is required for fashion products"})
+            
+        if not data.get('sizes'):
+            raise serializers.ValidationError({"sizes": "Sizes are required for fashion products"})
+            
+        if not data.get('colors'):
+            raise serializers.ValidationError({"colors": "Colors are required for fashion products"})
         
-        # Apply category-specific validation
-        if business_category == 'fashion':
-            # Fashion products require gender
-            if not data.get('gender'):
-                raise serializers.ValidationError({"gender": "Gender is required for fashion products"})
-                
-            # Validate sizes and colors
-            if not data.get('sizes'):
-                raise serializers.ValidationError({"sizes": "Sizes are required for fashion products"})
-                
-            if not data.get('colors'):
-                raise serializers.ValidationError({"colors": "Colors are required for fashion products"})
-                
-        elif business_category == 'food':
-            # Food products don't require in_stock
-            if 'in_stock' in data:
-                data.pop('in_stock')
-        else:
-            # For other categories, in_stock is required
-            if not data.get('in_stock') and data.get('in_stock') != 0:
-                raise serializers.ValidationError({"in_stock": "Stock quantity is required"})
-                
+        return data
+    
+    def validate_food(self, data):
+        # Food products don't require in_stock
+        if 'in_stock' in data:
+            data.pop('in_stock')
+        return data
+    
+    def validate_default(self, data):
+        # For other categories, in_stock is required
+        if not data.get('in_stock') and data.get('in_stock') != 0:
+            raise serializers.ValidationError({"in_stock": "Stock quantity is required"})
         return data
     
     def create(self, validated_data):
         request = self.context.get('request')
         user = request.user
-        vendor = Vendor.objects.get(user=user)
-        business_category = vendor.business_category if vendor.business_category else None
+        
+        try:
+            vendor = Vendor.objects.get(user=user)
+            business_category = vendor.business_category if vendor.business_category else None
+        except Vendor.DoesNotExist:
+            raise serializers.ValidationError("User is not registered as a vendor")
         
         # Extract sizes and colors data if provided
         sizes_data = validated_data.pop('sizes', None)
@@ -186,10 +203,9 @@ class ProductCreateSerializer(serializers.ModelSerializer):
                         size=size_item['size'],
                         quantity=size_item['quantity']
                     )
-            except (json.JSONDecodeError, KeyError):
-                # If there's an error parsing the JSON, log it but continue
-                # Could also raise a validation error here
-                pass
+            except (json.JSONDecodeError, KeyError) as e:
+                # Log the error but continue
+                print(f"Error parsing sizes data: {e}")
                 
         # Process colors if provided and business category is fashion
         if business_category == 'fashion' and colors_data:
@@ -201,10 +217,9 @@ class ProductCreateSerializer(serializers.ModelSerializer):
                         color=color_item['color'],
                         quantity=color_item['quantity']
                     )
-            except (json.JSONDecodeError, KeyError):
-                # If there's an error parsing the JSON, log it but continue
-                # Could also raise a validation error here
-                pass
+            except (json.JSONDecodeError, KeyError) as e:
+                # Log the error but continue
+                print(f"Error parsing colors data: {e}")
                 
         # Process additional images
         for key, file in request.FILES.items():
@@ -256,7 +271,6 @@ class CartSerializer(serializers.ModelSerializer):
         
     def get_item_count(self, obj):
         return sum(item.quantity for item in obj.cartitem_set.all())
-
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
@@ -316,7 +330,7 @@ class OrderDetailSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         if obj.order_items.exists():
             product = obj.order_items.first().product
-            if product.image:
+            if product and product.image and request:
                 return request.build_absolute_uri(product.image.url)
         return None
     
@@ -326,3 +340,39 @@ class OrderDetailSerializer(serializers.ModelSerializer):
             return TransactionSerializer(transaction).data
         except Transaction.DoesNotExist:
             return None
+        
+
+class VendorDetailSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    
+    class Meta:
+        model = Vendor
+        fields = [
+            'id', 'business_name', 'business_category', 'specific_category',
+            'shop_image', 'rating', 'total_ratings', 'user'
+        ]
+
+class ServiceApplicationSerializer(serializers.ModelSerializer):
+    service_name = serializers.CharField(source='service.business_name', read_only=True)
+    service_category = serializers.CharField(source='service.specific_category', read_only=True)
+    
+    class Meta:
+        model = ServiceApplication
+        fields = [
+            'id', 'service', 'service_name', 'service_category', 'user',
+            'name', 'email', 'phone', 'description', 'preferred_date',
+            'additional_details', 'status', 'created_at', 'updated_at',
+            'vendor_response', 'response_date', 'completion_date'
+        ]
+        read_only_fields = ['created_at', 'updated_at']
+        
+    def validate(self, data):
+        # Validate that the service exists and is active
+        if 'service' in data and hasattr(data['service'], 'is_active') and not data['service'].is_active:
+            raise serializers.ValidationError({"service": "This service is not currently available"})
+        
+        if 'preferred_date' in data and data['preferred_date'].date() < timezone.now().date():
+            raise serializers.ValidationError({"preferred_date": "Please select a future date"})
+
+        
+        return data

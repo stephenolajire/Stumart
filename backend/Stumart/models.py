@@ -177,3 +177,47 @@ class Wallet(models.Model):
 
     # def __str__(self):
     #     return self.id
+
+
+# New model for service applications to add to your models.py file
+
+class ServiceApplication(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('accepted', 'Accepted'),
+        ('declined', 'Declined'),
+        ('completed', 'Completed'),
+        ('cancelled', 'Cancelled'),
+    ]
+    
+    # Service that the user is applying for
+    service = models.ForeignKey(Vendor, on_delete=models.CASCADE, related_name='service_applications')
+    
+    # User applying for the service (can be null for non-registered users)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='service_applications')
+    
+    # Information for the application
+    name = models.CharField(max_length=100)
+    email = models.EmailField()
+    phone = models.CharField(max_length=15)
+    description = models.TextField()
+    preferred_date = models.DateTimeField()
+    additional_details = models.TextField(blank=True, null=True)
+    
+    # Status tracking
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    # Vendor response
+    vendor_response = models.TextField(blank=True, null=True)
+    response_date = models.DateTimeField(blank=True, null=True)
+    
+    # Service completion
+    completion_date = models.DateTimeField(blank=True, null=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        
+    def __str__(self):
+        return f"Application for {self.service.business_name} by {self.name}"

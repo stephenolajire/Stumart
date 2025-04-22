@@ -1,0 +1,236 @@
+/* ServiceApplication.module.css */
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: Montserrat, Poppins, sans-serif;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 3rem;
+  position: relative;
+}
+
+.header h1 {
+  font-size: var(--h2-desktop);
+  color: var(--primary-600);
+  margin: 0 auto;
+  text-align: center;
+}
+
+.backButton {
+  position: absolute;
+  left: 0;
+  background-color: var(--primary-500);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 0.8rem;
+  font-size: 1.6rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.backButton:hover {
+  background-color: var(--primary-600);
+}
+
+.serviceInfoSection {
+  display: flex;
+  gap: 3rem;
+  margin-bottom: 4rem;
+  background-color: var(--neutral-gray-50);
+  border-radius: 1.2rem;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.serviceImageContainer {
+  flex: 0 0 35%;
+  max-width: 35%;
+  height: 20rem;
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+.serviceImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.serviceInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.serviceInfo h2 {
+  font-size: var(--h3-desktop);
+  color: var(--primary-600);
+  margin-bottom: 1.2rem;
+}
+
+.serviceCategory {
+  display: inline-block;
+  /* background-color: var(--primary-500); */
+  color: green;
+  /* padding: 0.5rem 1.5rem; */
+  border-radius: 2rem;
+  font-size: 1.6rem;
+  margin-bottom: 1.5rem;
+  font-weight: 900;
+
+}
+
+.serviceProvider, .serviceLocation {
+  font-size: 1.6rem;
+  color: var(--text-tertiary);
+  margin-bottom: 1rem;
+}
+
+.serviceRating {
+  font-size: 1.6rem;
+  color: var(--primary-600);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.formContainer {
+  background-color: var(--neutral-white);
+  border-radius: 1.2rem;
+  padding: 3rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.formContainer h3 {
+  font-size: var(--h4-desktop);
+  color: var(--text-primary);
+  margin-bottom: 2.5rem;
+  text-align: center;
+}
+
+.formGroup {
+  margin-bottom: 2rem;
+}
+
+.formGroup label {
+  display: block;
+  font-size: 1.6rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.8rem;
+  font-weight: 600;
+}
+
+.formGroup input,
+.formGroup textarea {
+  width: 100%;
+  padding: 1rem;
+  border: 1px solid var(--neutral-gray-300);
+  border-radius: 0.8rem;
+  font-size: 1.6rem;
+  color: var(--text-primary);
+  background-color: var(--neutral-white);
+  font-family: inherit;
+}
+
+.formGroup input:focus,
+.formGroup textarea:focus {
+  outline: none;
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 2px rgba(218, 165, 32, 0.2);
+}
+
+.formGroup input:disabled {
+  background-color: var(--neutral-gray-100);
+  cursor: not-allowed;
+}
+
+.submitButton {
+  width: 100%;
+  background-color: var(--primary-500);
+  color: white;
+  border: none;
+  padding: 1.5rem;
+  border-radius: 0.8rem;
+  font-size: 1.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  margin-top: 1rem;
+}
+
+.submitButton:hover {
+  background-color: var(--primary-600);
+}
+
+.submitButton:disabled {
+  background-color: var(--neutral-gray-400);
+  cursor: not-allowed;
+}
+
+.loadingMessage {
+  text-align: center;
+  font-size: 1.8rem;
+  color: var(--text-tertiary);
+  padding: 5rem 0;
+}
+
+.errorMessage {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--error);
+  padding: 1.5rem;
+  border-radius: 0.8rem;
+  margin-bottom: 2rem;
+  font-size: 1.6rem;
+  text-align: center;
+}
+
+.successMessage {
+  background-color: rgba(34, 197, 94, 0.1);
+  color: var(--success);
+  padding: 1.5rem;
+  border-radius: 0.8rem;
+  margin-bottom: 2rem;
+  font-size: 1.6rem;
+  text-align: center;
+}
+
+/* Media Queries */
+@media screen and (max-width: 768px) {
+  .header h1 {
+    font-size: var(--h2-mobile);
+    margin-left: 0;
+    margin-top: 5rem;
+    text-align: center;
+    width: 100%;
+  }
+  
+  .backButton {
+    position: relative;
+    margin-bottom: 2rem;
+    width: 100%;
+  }
+  
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .serviceInfoSection {
+    flex-direction: column;
+  }
+  
+  .serviceImageContainer {
+    max-width: 100%;
+    flex: 0 0 100%;
+  }
+  
+  .formContainer {
+    padding: 2rem;
+  }
+}

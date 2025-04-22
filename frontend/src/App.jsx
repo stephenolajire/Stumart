@@ -35,6 +35,9 @@ import Earnings from "./picker-dashboard/Earnings";
 import OrderDetail from "./picker-dashboard/OrderDetail";
 import AdminDashboard from "./admin-dashboard/AdminDashboard";
 import AdminOrderDetail from "./admin-dashboard/OrderDetail";
+import ServiceApplicationSuccess from "./pages/ServiceApplicationSuccess";
+import ServiceApplication from "./pages/ServiceApplication";
+import SubscriptionPlans from "./pages/SubscriptionPlans";
 
 function App() {
   return (
@@ -76,6 +79,18 @@ function App() {
                   <StudentProfile />
                 </ProtectedRoute>
               }
+            />
+            <Route
+              path="/service-application/:serviceId"
+              element={<ServiceApplication />}
+            />
+            <Route
+              path="/service-application-success/:serviceId"
+              element={<ServiceApplicationSuccess />}
+            />
+            <Route
+              path="/subscription-plans"
+              element={<SubscriptionPlans />}
             />
           </Route>
           <Route path="/login" element={<Login />} />
@@ -141,7 +156,10 @@ function App() {
           <Route path="/picker/my-deliveries" element={<MyDeliveries />} />
           <Route path="/earnings" element={<Earnings />} />
           <Route path="/order-detail/:orderId" element={<OrderDetail />} />
-          <Route path="/admin-order-detail/:orderId" element={<AdminOrderDetail />} />
+          <Route
+            path="/admin-order-detail/:orderId"
+            element={<AdminOrderDetail />}
+          />
 
           <Route path="/forgot-password" element={<RequestOTPForm />} />
           <Route path="/verify-otp" element={<VerifyOTPForm />} />

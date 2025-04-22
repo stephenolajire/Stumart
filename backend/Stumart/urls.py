@@ -20,4 +20,12 @@ urlpatterns = [
     path('payment/verify/', PaystackPaymentVerifyView.as_view(), name='order-detail'),
     path('orders/<str:order_number>/', OrderDetailView.as_view(), name='order-detail'),
     path('orders/', OrderHistoryView.as_view(), name='order-list'),
+
+    # Service specific endpoints
+    path('service-detail/<int:pk>/', ServiceDetailAPIView.as_view(), name='service-detail'),
+    path('service-application/', ServiceApplicationAPIView.as_view(), name='submit-service-application'),
+    path('user-service-applications/', UserServiceApplicationsAPIView.as_view(),  name='user-service-applications'),
+    path('vendor-service-applications/', VendorServiceApplicationsAPIView.as_view(), name='vendor-service-applications'),
+    path('update-application-status/<int:pk>/', ApplicationStatusUpdateAPIView.as_view(),  name='update-application-status'),
+    path('search-services/', SearchServicesAPIView.as_view(), name='search-services'),
 ]

@@ -1,73 +1,224 @@
+/* OtherService.module.css */
 .otherServiceContainer {
+  max-width: 1200px;
+  margin: 0 auto;
   padding: 2rem;
-  width: 100%;
+  font-family: Montserrat, Poppins, sans-serif;
   margin-top: 10rem;
 }
 
 .header {
   display: flex;
   align-items: center;
-  margin-bottom: 2rem;
+  margin-bottom: 3rem;
+  position: relative;
+}
+
+.header h1 {
+  font-size: var(--h2-desktop);
+  color: var(--primary-600);
+  margin: 0 auto;
+  text-align: center;
 }
 
 .backButton {
-  background-color: #f3f4f6;
+  position: absolute;
+  left: 0;
+  background-color: var(--primary-500);
+  color: white;
   border: none;
-  border-radius: 4px;
-  padding: 0.5rem 1rem;
-  margin-right: 1rem;
+  padding: 1rem 2rem;
+  border-radius: 0.8rem;
+  font-size: 1.6rem;
   cursor: pointer;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  transition: background-color 0.2s;
+  transition: background-color 0.3s;
 }
 
 .backButton:hover {
-  background-color: #e5e7eb;
+  background-color: var(--primary-600);
 }
 
 .filterContainer {
-  margin-bottom: 2rem;
   display: flex;
   align-items: center;
-  gap: 1rem;
-  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 3rem;
+  gap: 1.5rem;
 }
 
 .filterContainer label {
-    font-size: 1.6rem;
+  font-size: 1.8rem;
+  color: var(--text-secondary);
 }
 
 .selectInput {
-  /* padding: 0.5rem; */
-  border-radius: 4px;
-  border: 1px solid #d1d5db;
-  min-width: 250px;
-  font-size: 1.4rem;
-  height: 4rem;
+  padding: 1rem 2rem;
+  border: 2px solid var(--primary-300);
+  border-radius: 0.8rem;
+  font-size: 1.6rem;
+  min-width: 25rem;
+  background-color: var(--neutral-white);
+  color: var(--text-primary);
+  cursor: pointer;
 }
 
-.shopsContainer {
-  margin-top: 2rem;
+.selectInput:focus {
+  outline: none;
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 2px rgba(218, 165, 32, 0.2);
+}
+
+.serviceCardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 3rem;
+  margin-top: 3rem;
+}
+
+.serviceCard {
+  background-color: var(--neutral-white);
+  border-radius: 1.2rem;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s, box-shadow 0.3s;
+  display: flex;
+  flex-direction: column;
+}
+
+.serviceCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.serviceImageContainer {
+  height: 200px;
+  overflow: hidden;
+  position: relative;
+}
+
+.serviceImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.serviceImageOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.6));
+}
+
+.serviceCategory {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  background-color: var(--primary-500);
+  color: white;
+  padding: 0.5rem 1.5rem;
+  border-radius: 2rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.serviceDetails {
+  padding: 2rem;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.serviceName {
+  font-size: 2rem;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+
+.providerName {
+  font-size: 1.4rem;
+  color: var(--text-tertiary);
+  margin-bottom: 1.5rem;
+}
+
+.serviceLocation {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.4rem;
+  color: var(--text-tertiary);
+  margin-bottom: 1.5rem;
+}
+
+.serviceRating {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.ratingValue {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--primary-600);
+}
+
+.starIcon {
+  color: var(--warning);
+}
+
+.serviceDescription {
+  font-size: 1.4rem;
+  color: var(--text-tertiary);
+  margin-bottom: 2rem;
+  flex-grow: 1;
+}
+
+.applyButton {
+  width: 100%;
+  background-color: var(--primary-500);
+  color: white;
+  border: none;
+  padding: 1.2rem;
+  border-radius: 0.8rem;
+  font-size: 1.6rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  text-align: center;
+}
+
+.applyButton:hover {
+  background-color: var(--primary-600);
 }
 
 .loadingMessage, .noShopsMessage {
   text-align: center;
-  padding: 2rem;
-  font-size: 1.6rem;
-  color: #6b7280;
+  font-size: 1.8rem;
+  color: var(--text-tertiary);
+  padding: 5rem 0;
 }
 
-@media (max-width: 768px) {
-  .otherServiceContainer {
-    padding: 1rem;
+/* Media Queries */
+@media screen and (max-width: 768px) {
+  .header h1 {
+    font-size: var(--h2-mobile);
+    margin-left: 0;
+    margin-top: 5rem;
+    text-align: center;
+    width: 100%;
+  }
+  
+  .backButton {
+    position: relative;
+    margin-bottom: 2rem;
+    width: 100%;
   }
   
   .header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 1rem;
   }
   
   .filterContainer {
@@ -77,5 +228,10 @@
   
   .selectInput {
     width: 100%;
+    min-width: unset;
+  }
+  
+  .serviceCardGrid {
+    grid-template-columns: 1fr;
   }
 }

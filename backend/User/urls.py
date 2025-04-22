@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import *
+from django.urls import path
 
-app_name = 'users'
 
 urlpatterns = [
     # User URLs
@@ -41,4 +41,12 @@ urlpatterns = [
     path('request-otp/', RequestOTPView.as_view(), name='forgot-password'),
     path('verify-otp/', VerifyOTPView.as_view(), name='verify-otp'),
     path('reset-password/', SetNewPasswordView.as_view(), name='reset-password'),
+    
+    # subscription
+    path('subscription/', SubscriptionListView.as_view(), name='subscription-list'),
+    path('subscriptions/current/', CurrentSubscriptionView.as_view(), name='subscription-current'),
+    path('subscriptions/subscribe/', SubscribeView.as_view(), name='subscription-subscribe'),
+    path('vendor/profile/', VendorProfileView.as_view(), name='vendor-profile'),
+    path('allplans', AllPlansView.as_view()),
 ]
+
