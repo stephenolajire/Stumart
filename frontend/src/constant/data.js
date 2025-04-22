@@ -339,20 +339,20 @@ export const businessCategories = [
 ];
 
 export const otherBusinessCategories = [
-  "Laundry Services",
-  "Note Writing",
-  "Assignment Help",
-  "Barbing Services",
-  "Hair Styling",
-  "Printing Services",
-  "Computer Repairs",
-  "Phone Repairs",
-  "Tutoring",
-  "Photography",
-  "Graphic Design",
-  "Tailoring",
-  "Cleaning Services",
-  "Event Planning",
+  { value: "laundry", label: "Laundry Services" },
+  { value: "note_writing", label: "Note Writing" },
+  { value: "assignment_help", label: "Assignment Help" },
+  { value: "barbing", label: "Barbing Services" },
+  { value: "hair_styling", label: "Hair Styling" },
+  { value: "printing", label: "Printing Services" },
+  { value: "computer_repairs", label: "Computer Repairs" },
+  { value: "phone_repairs", label: "Phone Repairs" },
+  { value: "tutoring", label: "Tutoring" },
+  { value: "photography", label: "Photography" },
+  { value: "graphic_design", label: "Graphic Design" },
+  { value: "tailoring", label: "Tailoring" },
+  { value: "cleaning", label: "Cleaning Services" },
+  { value: "event_planning", label: "Event Planning" },
 ];
 
 export const userTypes = ["Student", "Picker", "Vendor", "Student Picker"];

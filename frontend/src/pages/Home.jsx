@@ -1,5 +1,7 @@
 import { useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
+import "sweetalert2/dist/sweetalert2.css";
 import Hero from "../components/Hero";
 import Promotion from "../components/Promotion";
 import CategoryFilter from "../components/CategoryFilter";
@@ -21,6 +23,7 @@ import {
 
 import { GlobalContext } from "../constant/GlobalContext";
 import { nigeriaInstitutions } from "../constant/data";
+import api from "../constant/api";
 
 // Sample categories data with "All" option
 const categories = [
@@ -46,6 +49,8 @@ const Home = () => {
   const [filteredShops, setFilteredShops] = useState([]);
   const [schoolShops, setSchoolShops] = useState([]); // Store original school shops
   const [displayMode, setDisplayMode] = useState("allShops"); // "allShops" or "schoolShops"
+  const [productName, setProductName] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
 
   // Get all states from Nigeria institutions
   const states = Object.keys(nigeriaInstitutions);
@@ -208,6 +213,59 @@ const Home = () => {
     }
   };
 
+  // Handle product search
+  // Handle product search
+  const handleProductSearch = async (e) => {
+    e.preventDefault();
+    if (!productName.trim()) return;
+
+    setIsSearching(true);
+    try {
+      const params = {
+        product_name: productName,
+        ...(selectedSchool && { institution: selectedSchool }),
+        ...(selectedState && { state: selectedState }),
+      };
+
+      const response = await api.get("search-products/", { params });
+
+      if (
+        response.data &&
+        response.data.products &&
+        response.data.products.length > 0
+      ) {
+        navigate("/search", {
+          state: {
+            products: response.data.products, // Access the products array
+            searchParams: {
+              productName,
+              school: selectedSchool,
+              state: selectedState,
+            },
+          },
+        });
+        console.log("Search results:", response.data.products);
+      } else {
+        // This closing brace was missing
+        // Show no products found message
+        Swal.fire({
+          icon: "info",
+          title: "No Products Found",
+          text: `No products matching "${productName}" found in the selected location.`,
+        });
+      }
+    } catch (error) {
+      console.error("Search error:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Search Failed",
+        text: "Failed to search for products. Please try again.",
+      });
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   return (
     <main className={styles.home}>
       <Hero />
@@ -215,17 +273,29 @@ const Home = () => {
 
       <section className={styles.categorySection}>
         <div className={styles.container}>
-          <h2>Browse by Category</h2>
+          <h2>Browse by School You In</h2>
           <p>Explore shops based on your interests</p>
           <div className={styles.filtering}>
             <div className={styles.filterSection}>
               <div className={styles.containers}>
-                <h5>Find Shops in Your School</h5>
+                <h5>Find Shops and Order</h5>
                 <form
-                  onSubmit={handleSchoolSubmit}
+                  onSubmit={handleProductSearch}
                   className={styles.schoolFilterForm}
                 >
                   <div className={styles.gridForm}>
+                    <div className={styles.formGroup}>
+                      <label htmlFor="product-search">Product Name:</label>
+                      <input
+                        type="text"
+                        id="product-search"
+                        value={productName}
+                        onChange={(e) => setProductName(e.target.value)}
+                        placeholder="What are you looking for?"
+                        className={styles.selectInput}
+                      />
+                    </div>
+
                     <div className={styles.formGroup}>
                       <label htmlFor="state-select">Select State:</label>
                       <select
@@ -266,15 +336,18 @@ const Home = () => {
                     <button
                       type="submit"
                       className={styles.submitButton}
-                      disabled={!selectedSchool}
+                      disabled={!productName.trim()}
                     >
-                      Find Shops
+                      {isSearching ? "Searching..." : "Search Products"}
                     </button>
-                    {(selectedState || selectedSchool) && (
+                    {(selectedState || selectedSchool || productName) && (
                       <button
                         type="button"
                         className={styles.resetButton}
-                        onClick={handleResetFilter}
+                        onClick={() => {
+                          handleResetFilter();
+                          setProductName("");
+                        }}
                       >
                         Reset
                       </button>
@@ -300,7 +373,7 @@ const Home = () => {
         <div className={styles.container}>
           <h2 className={styles.sectionTitle}>{getTitle()}</h2>
           {loading ? (
-            <Spinner/>
+            <Spinner />
           ) : filteredShops && filteredShops.length > 0 ? (
             <ShopGrid shops={filteredShops} />
           ) : (

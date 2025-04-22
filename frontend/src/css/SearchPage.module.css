@@ -1,0 +1,153 @@
+.searchPage {
+  padding: 4rem 2.4rem;
+  min-height: calc(100vh - 8rem);
+  background-color: var(--neutral-gray-50);
+}
+
+.container {
+  width: 100%;
+  margin: 0 auto;
+  margin-top: 10rem;
+}
+
+.searchHeader {
+  margin-bottom: 4rem;
+  text-align: center;
+  animation: fadeIn 0.5s ease-out;
+}
+
+.searchHeader h1 {
+  font-size: var(--h2-desktop);
+  color: var(--text-primary);
+  margin-bottom: 1.2rem;
+}
+
+.searchHeader p {
+  font-size: 1.6rem;
+  color: var(--text-tertiary);
+}
+
+.productsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(28rem, 1fr));
+  gap: 2.4rem;
+  animation: slideUp 0.5s ease-out;
+}
+
+.noResults {
+  text-align: center;
+  padding: 6rem 2rem;
+  background-color: var(--neutral-white);
+  border-radius: 1.2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.noResults h2 {
+  font-size: var(--h3-desktop);
+  color: var(--text-primary);
+  margin-bottom: 1.2rem;
+}
+
+.noResults p {
+  font-size: 1.6rem;
+  color: var(--text-tertiary);
+  margin-bottom: 2.4rem;
+}
+
+.backButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 1.2rem 2.4rem;
+  background-color: var(--primary-500);
+  color: var(--neutral-white);
+  border: none;
+  border-radius: 0.8rem;
+  font-size: 1.6rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.backButton:hover {
+  background-color: var(--primary-600);
+  transform: translateY(-2px);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Tablet Styles */
+@media screen and (max-width: 1024px) {
+  .productsGrid {
+    grid-template-columns: repeat(auto-fill, minmax(24rem, 1fr));
+    gap: 2rem;
+  }
+
+  .searchHeader h1 {
+    font-size: var(--h2-tablet);
+  }
+}
+
+/* Mobile Styles */
+@media screen and (max-width: 768px) {
+  .searchPage {
+    padding: 3.2rem 1.6rem;
+  }
+
+  .searchHeader {
+    margin-bottom: 3.2rem;
+  }
+
+  .searchHeader h1 {
+    font-size: var(--h2-mobile);
+  }
+
+  .searchHeader p {
+    font-size: 1.4rem;
+  }
+
+  .productsGrid {
+    grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+    gap: 1.6rem;
+  }
+}
+
+/* Small Mobile Styles */
+@media screen and (max-width: 480px) {
+  .searchPage {
+    padding: 2.4rem 1.2rem;
+  }
+
+  .productsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .noResults {
+    padding: 4rem 1.6rem;
+  }
+
+  .backButton {
+    width: 100%;
+    justify-content: center;
+  }
+}

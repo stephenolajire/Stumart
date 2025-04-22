@@ -94,17 +94,17 @@ const Signup = () => {
 
     // Password validations
     if (!formData.password) {
-  newErrors.password = "Password is required";
-} else if (formData.password.length < 8) {
-  newErrors.password = "Password must be at least 8 characters";
-} else if (
-  !/[A-Z]/.test(formData.password) ||         // no uppercase
-  !/[a-z]/.test(formData.password) ||         // no lowercase
-  !/[!@#$%^&*(),.?":{}|<>]/.test(formData.password) // no special char
-) {
-  newErrors.password = "Password must include uppercase, lowercase, and a special character";
-}
-
+      newErrors.password = "Password is required";
+    } else if (formData.password.length < 8) {
+      newErrors.password = "Password must be at least 8 characters";
+    } else if (
+      !/[A-Z]/.test(formData.password) || // no uppercase
+      !/[a-z]/.test(formData.password) || // no lowercase
+      !/[!@#$%^&*(),.?":{}|<>]/.test(formData.password) // no special char
+    ) {
+      newErrors.password =
+        "Password must include uppercase, lowercase, and a special character";
+    }
 
     if (!formData.confirmPassword) {
       newErrors.confirmPassword = "Please confirm your password";
@@ -259,9 +259,10 @@ const Signup = () => {
               formData.businessCategory.toLowerCase()
             );
             if (formData.businessCategory === "Others") {
+              // Use the value from the selected option
               formDataToSend.append(
                 "specific_category",
-                formData.specificCategory.toLowerCase()
+                formData.specificCategory // This will now be the value like "laundry", "note_writing", etc.
               );
             }
             if (formData.shopImage) {
@@ -617,8 +618,8 @@ const Signup = () => {
                 >
                   <option value="">Select Specific Category</option>
                   {otherBusinessCategories.map((category) => (
-                    <option key={category} value={category}>
-                      {category}
+                    <option key={category.value} value={category.value}>
+                      {category.label}
                     </option>
                   ))}
                 </select>

@@ -1,5 +1,6 @@
 from django.urls import path
 from .views import *
+from .views import SearchProductsView
 
 urlpatterns = [
     path('vendor-products/<int:id>', ProductsView.as_view(), name='list-vendor-products'),
@@ -28,4 +29,5 @@ urlpatterns = [
     path('vendor-service-applications/', VendorServiceApplicationsAPIView.as_view(), name='vendor-service-applications'),
     path('update-application-status/<int:pk>/', ApplicationStatusUpdateAPIView.as_view(),  name='update-application-status'),
     path('search-services/', SearchServicesAPIView.as_view(), name='search-services'),
+    path('search-products/', SearchProductsView.as_view(), name='search-products'),
 ]

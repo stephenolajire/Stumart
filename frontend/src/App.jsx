@@ -40,6 +40,7 @@ import ServiceApplication from "./pages/ServiceApplication";
 import SubscriptionPlans from "./pages/SubscriptionPlans";
 import Dashboard from "./other-dashboard/OtherDashboard";
 import OtherDashboard from "./other-dashboard/OtherDashboard";
+import SearchPage from "./pages/SearchPage";
 
 function App() {
   return (
@@ -57,6 +58,7 @@ function App() {
             <Route path="product/:productId" element={<ProductDetails />} />
             <Route path="other-services" element={<OtherService />} />
             <Route path="shopping-cart" element={<ShoppingCart />} />
+            <Route path="search" element={<SearchPage />} />
             <Route
               path="order-history"
               element={

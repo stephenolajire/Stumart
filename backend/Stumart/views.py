@@ -604,7 +604,7 @@ class CreateOrderView(APIView):
             )
             
             # Get cart items
-            cart_items = CartItem.objects.filter(id__in=data.get('cart_items', []))
+            cart_items = CartItem.objects.filter(id__in(data.get('cart_items', [])))
             
             # Create order items for each cart item
             for cart_item in cart_items:
@@ -1379,4 +1379,66 @@ def send_vendor_notification_email(email, application, service):
         [email],
         fail_silently=False,
     )
-    
+
+class SearchProductsView(APIView):
+    def get(self, request):
+        product_name = request.query_params.get('product_name')
+        state = request.query_params.get('state')
+        school = request.query_params.get('institution')
+
+        try:
+            # Start with all products
+            products_query = Product.objects.all()
+            print(f"\nSearch parameters - Product: {product_name}, State: {state}, School: {school}")
+
+            # Filter by product name if provided (case-insensitive)
+            if product_name:
+                products_query = products_query.filter(
+                    Q(name__icontains=product_name) |
+                    Q(description__icontains=product_name)
+                )
+                print(f"After product name filter: Found {products_query.count()} products matching '{product_name}'")
+                print("Products found:", [p.name for p in products_query])
+
+            # Filter by state and institution if provided
+            if state:
+                products_query = products_query.filter(vendor__state__iexact=state)
+                print(f"After state filter: {products_query.count()} products")
+                print("Products after state filter:", [p.name for p in products_query])
+
+            if school:
+                products_query = products_query.filter(vendor__institution__iexact=school)
+                print(f"After school filter: {products_query.count()} products")
+                print("Products after school filter:", [p.name for p in products_query])
+
+            # Print the actual SQL query for debugging
+            print("\nSQL Query:", products_query.query)
+
+            # Fetch products with related data
+            products = products_query.select_related('vendor').all()
+
+            if not products.exists():
+                print("No products found matching the criteria")
+                return Response({
+                    "status": "not_found",
+                    "message": "No products found matching your criteria"
+                }, status=status.HTTP_404_NOT_FOUND)
+
+            # Serialize the products
+            serializer = ProductSerializer(products, many=True, context={'request': request})
+            print(f"\nTotal products found: {products.count()}")
+
+            # Return successful response with products
+            return Response({
+                "status": "success",
+                "count": products.count(),
+                "products": serializer.data
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            print(f"\nError in search: {str(e)}")
+            print("Full error details:", e)
+            return Response({
+                "status": "error",
+                "message": f"An error occurred: {str(e)}"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

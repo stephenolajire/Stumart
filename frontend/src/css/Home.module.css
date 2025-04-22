@@ -60,7 +60,7 @@
 
 .gridForm {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(24rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(25rem, 1fr));
   gap: 2rem;
 }
 
@@ -94,6 +94,20 @@
 .selectInput:disabled {
   background-color: var(--neutral-gray-100);
   cursor: not-allowed;
+}
+
+.selectInput[type="text"] {
+  padding: 1.2rem;
+  font-size: 1.4rem;
+  border: 1px solid var(--neutral-gray-300);
+  border-radius: 0.8rem;
+  width: 100%;
+}
+
+.selectInput[type="text"]:focus {
+  outline: none;
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 2px var(--primary-100);
 }
 
 .buttonGroup {
