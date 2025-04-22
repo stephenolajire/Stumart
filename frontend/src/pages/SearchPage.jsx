@@ -1,5 +1,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { FaArrowLeft } from "react-icons/fa";
+import { FaArrowLeft, FaFilter } from "react-icons/fa";
+import { useState, useEffect } from "react";
 import styles from "../css/SearchPage.module.css";
 import ProductCard from "../components/ProductCard";
 import Spinner from "../components/Spinner";
@@ -7,12 +8,30 @@ import Spinner from "../components/Spinner";
 const SearchPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { products, searchParams } = location.state || {
+  const { products: initialProducts, searchParams } = location.state || {
     products: [],
     searchParams: {},
   };
 
-  if (!products || products.length === 0) {
+  const [products, setProducts] = useState(initialProducts);
+  const [priceRange, setPriceRange] = useState({
+    min: 0,
+    max: Math.max(...initialProducts.map(p => Number(p.price))) || 100000
+  });
+  const [currentPriceRange, setCurrentPriceRange] = useState({
+    min: 0,
+    max: Math.max(...initialProducts.map(p => Number(p.price))) || 100000
+  });
+
+  const handlePriceFilter = () => {
+    const filtered = initialProducts.filter(product => {
+      const price = Number(product.price);
+      return price >= currentPriceRange.min && price <= currentPriceRange.max;
+    });
+    setProducts(filtered);
+  };
+
+  if (!initialProducts || initialProducts.length === 0) {
     return (
       <div className={styles.searchPage}>
         <div className={styles.container}>
@@ -38,6 +57,45 @@ const SearchPage = () => {
             {searchParams.school && ` in ${searchParams.school}`}
             {searchParams.state && ` (${searchParams.state})`}
           </p>
+        </div>
+
+        <div className={styles.filterSection}>
+          <div className={styles.priceFilter}>
+            <h3>Price Range</h3>
+            <div className={styles.priceInputs}>
+              <div className={styles.inputGroup}>
+                <label>Min (₦)</label>
+                <input
+                  type="number"
+                  value={currentPriceRange.min}
+                  onChange={(e) => setCurrentPriceRange(prev => ({
+                    ...prev,
+                    min: Number(e.target.value)
+                  }))}
+                  min={0}
+                  max={currentPriceRange.max}
+                />
+              </div>
+              <div className={styles.inputGroup}>
+                <label>Max (₦)</label>
+                <input
+                  type="number"
+                  value={currentPriceRange.max}
+                  onChange={(e) => setCurrentPriceRange(prev => ({
+                    ...prev,
+                    max: Number(e.target.value)
+                  }))}
+                  min={currentPriceRange.min}
+                />
+              </div>
+            </div>
+            <button 
+              className={styles.filterButton}
+              onClick={handlePriceFilter}
+            >
+              <FaFilter /> Apply Filter
+            </button>
+          </div>
         </div>
 
         <div className={styles.productsGrid}>

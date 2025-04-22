@@ -96,6 +96,78 @@
   }
 }
 
+.filterSection {
+  background-color: var(--neutral-white);
+  border-radius: 1.2rem;
+  padding: 2rem;
+  margin-bottom: 2.4rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.priceFilter {
+  max-width: 48rem;
+  margin: 0 auto;
+}
+
+.priceFilter h3 {
+  font-size: 1.6rem;
+  color: var(--text-primary);
+  margin-bottom: 1.6rem;
+}
+
+.priceInputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 1.6rem;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.inputGroup label {
+  font-size: 1.4rem;
+  color: var(--text-secondary);
+}
+
+.inputGroup input {
+  padding: 1rem;
+  border: 1px solid var(--neutral-gray-200);
+  border-radius: 0.8rem;
+  font-size: 1.4rem;
+  width: 100%;
+}
+
+.inputGroup input:focus {
+  outline: none;
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 2px var(--primary-100);
+}
+
+.filterButton {
+  width: 100%;
+  padding: 1.2rem;
+  background-color: var(--primary-500);
+  color: var(--neutral-white);
+  border: none;
+  border-radius: 0.8rem;
+  font-size: 1.4rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.filterButton:hover {
+  background-color: var(--primary-600);
+}
+
 /* Tablet Styles */
 @media screen and (max-width: 1024px) {
   .productsGrid {
@@ -130,6 +202,14 @@
     grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
     gap: 1.6rem;
   }
+
+  .filterSection {
+    padding: 1.6rem;
+  }
+
+  .priceInputs {
+    gap: 1.2rem;
+  }
 }
 
 /* Small Mobile Styles */
@@ -149,5 +229,9 @@
   .backButton {
     width: 100%;
     justify-content: center;
+  }
+
+  .priceInputs {
+    grid-template-columns: 1fr;
   }
 }
