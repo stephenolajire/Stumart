@@ -1,0 +1,81 @@
+.settingsContainer {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 2.4rem;
+}
+
+.title {
+  font-size: var(--h3-desktop);
+  color: var(--text-primary);
+  margin-bottom: 3.2rem;
+}
+
+.settingsForm {
+  background-color: var(--neutral-white);
+  padding: 3.2rem;
+  border-radius: 1.2rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.formGroup {
+  margin-bottom: 2.4rem;
+}
+
+.formGroup label {
+  display: block;
+  font-size: 1.4rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.8rem;
+}
+
+.formGroup input,
+.formGroup textarea {
+  width: 100%;
+  padding: 1.2rem;
+  font-size: 1.6rem;
+  border: 1px solid var(--neutral-gray-300);
+  border-radius: 0.8rem;
+  background-color: var(--neutral-white);
+  transition: border-color 0.3s ease;
+}
+
+.formGroup textarea {
+  min-height: 12rem;
+  resize: vertical;
+}
+
+.formGroup input:focus,
+.formGroup textarea:focus {
+  outline: none;
+  border-color: var(--primary-500);
+}
+
+.submitButton {
+  width: 100%;
+  padding: 1.4rem;
+  font-size: 1.6rem;
+  color: var(--neutral-white);
+  background-color: var(--primary-500);
+  border: none;
+  border-radius: 0.8rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.submitButton:hover {
+  background-color: var(--primary-600);
+}
+
+@media screen and (max-width: 768px) {
+  .settingsContainer {
+    padding: 1.6rem;
+  }
+
+  .title {
+    font-size: var(--h3-mobile);
+  }
+
+  .settingsForm {
+    padding: 2.4rem;
+  }
+}

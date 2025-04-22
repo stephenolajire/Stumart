@@ -1,0 +1,146 @@
+.applicationsContainer {
+  max-width: 120rem;
+  margin: 0 auto;
+  padding: 2.4rem;
+}
+
+.header {
+  margin-bottom: 3.2rem;
+  text-align: center;
+}
+
+.title {
+  font-size: var(--h2-desktop);
+  color: var(--text-primary);
+  margin-bottom: 1.2rem;
+}
+
+.subtitle {
+  font-size: 1.6rem;
+  color: var(--text-tertiary);
+}
+
+.filters {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  margin-bottom: 3.2rem;
+}
+
+.searchBox {
+  width: 100%;
+  max-width: 48rem;
+  margin: 0 auto;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 1.2rem 1.6rem;
+  font-size: 1.4rem;
+  border: 1px solid var(--neutral-gray-300);
+  border-radius: 0.8rem;
+  background-color: var(--neutral-white);
+  transition: border-color 0.3s ease;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: var(--primary-500);
+}
+
+.statusFilters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.filterButton {
+  padding: 0.8rem 1.6rem;
+  font-size: 1.4rem;
+  border: 1px solid var(--neutral-gray-300);
+  border-radius: 2rem;
+  background-color: var(--neutral-white);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.filterButton:hover {
+  border-color: var(--primary-500);
+  color: var(--primary-500);
+}
+
+.filterButton.active {
+  background-color: var(--primary-500);
+  border-color: var(--primary-500);
+  color: var(--neutral-white);
+}
+
+.applicationsList {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.noResults {
+  text-align: center;
+  padding: 4rem 2rem;
+  background-color: var(--neutral-gray-50);
+  border-radius: 1.2rem;
+}
+
+.noResults p {
+  font-size: 1.6rem;
+  color: var(--text-tertiary);
+}
+
+.loadingContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 40rem;
+}
+
+.loadingContainer p {
+  font-size: 1.8rem;
+  color: var(--text-secondary);
+}
+
+@media screen and (max-width: 768px) {
+  .applicationsContainer {
+    padding: 1.6rem;
+  }
+
+  .title {
+    font-size: var(--h2-mobile);
+  }
+
+  .filters {
+    gap: 1.6rem;
+  }
+
+  .statusFilters {
+    gap: 0.8rem;
+  }
+
+  .filterButton {
+    padding: 0.6rem 1.2rem;
+    font-size: 1.3rem;
+  }
+
+  .searchInput {
+    padding: 1rem 1.4rem;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .applicationsContainer {
+    padding: 1.2rem;
+  }
+
+  .filterButton {
+    padding: 0.6rem 1rem;
+    font-size: 1.2rem;
+  }
+}

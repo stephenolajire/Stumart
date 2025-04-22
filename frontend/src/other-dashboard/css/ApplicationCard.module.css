@@ -1,0 +1,286 @@
+.card {
+  background-color: var(--neutral-white);
+  border-radius: 1.2rem;
+  border: 1px solid var(--neutral-gray-200);
+  padding: 2rem;
+  margin-bottom: 2rem;
+  max-width: 100%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.customerInfo {
+  flex: 1;
+  min-width: 20rem;
+}
+
+.customerName {
+  font-size: var(--h5-desktop);
+  color: var(--text-primary);
+  margin-bottom: 0.8rem;
+}
+
+.applicationDate {
+  font-size: 1.4rem;
+  color: var(--text-tertiary);
+}
+
+.statusSection {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.statusBadge {
+  padding: 0.6rem 1.2rem;
+  border-radius: 2rem;
+  font-size: 1.4rem;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.pendingBadge {
+  background-color: var(--warning);
+  color: var(--neutral-white);
+}
+
+.acceptedBadge {
+  background-color: var(--info);
+  color: var(--neutral-white);
+}
+
+.completedBadge {
+  background-color: var(--success);
+  color: var(--neutral-white);
+}
+
+.declinedBadge {
+  background-color: var(--error);
+  color: var(--neutral-white);
+}
+
+.cancelledBadge {
+  background-color: var(--neutral-gray-400);
+  color: var(--neutral-white);
+}
+
+.statusDropdown {
+  position: relative;
+}
+
+.statusButton {
+  padding: 0.8rem 1.6rem;
+  background-color: var(--primary-500);
+  color: var(--neutral-white);
+  border: none;
+  border-radius: 0.6rem;
+  font-size: 1.4rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.statusButton:hover {
+  background-color: var(--primary-600);
+}
+
+.statusMenu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: var(--neutral-white);
+  border: 1px solid var(--neutral-gray-200);
+  border-radius: 0.8rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  min-width: 15rem;
+}
+
+.statusMenuItem {
+  width: 100%;
+  padding: 1rem 1.6rem;
+  border: none;
+  background: none;
+  text-align: left;
+  font-size: 1.4rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.statusMenuItem:hover {
+  background-color: var(--primary-100);
+  color: var(--primary-500);
+}
+
+.cardPreview {
+  border-top: 1px solid var(--neutral-gray-200);
+  padding-top: 2rem;
+  margin-bottom: 2rem;
+}
+
+.serviceRequest {
+  margin-bottom: 1.6rem;
+}
+
+.requestTitle {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.8rem;
+}
+
+.requestText {
+  font-size: 1.4rem;
+  color: var(--text-tertiary);
+  line-height: 1.5;
+}
+
+.serviceDateSection {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.dateLabel, .dateValue {
+  font-size: 1.4rem;
+  color: var(--text-secondary);
+}
+
+.cardActions {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.expandButton, .chatButton {
+  padding: 1rem 2rem;
+  border-radius: 0.6rem;
+  font-size: 1.4rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.expandButton {
+  background-color: var(--neutral-gray-100);
+  border: 1px solid var(--neutral-gray-200);
+  color: var(--text-secondary);
+}
+
+.chatButton {
+  background-color: var(--primary-500);
+  border: none;
+  color: var(--neutral-white);
+}
+
+.expandButton:hover {
+  background-color: var(--neutral-gray-200);
+}
+
+.chatButton:hover {
+  background-color: var(--primary-600);
+}
+
+.expandedContent {
+  border-top: 1px solid var(--neutral-gray-200);
+  padding-top: 2rem;
+}
+
+.detailsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(25rem, 1fr));
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.detailItem {
+  margin-bottom: 1.6rem;
+}
+
+.detailLabel {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.8rem;
+}
+
+.detailValue {
+  font-size: 1.4rem;
+  color: var(--text-tertiary);
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.responseSection {
+  margin-top: 2rem;
+}
+
+.responseTitle {
+  font-size: 1.6rem;
+  color: var(--text-secondary);
+  margin-bottom: 1.2rem;
+}
+
+.responseTextarea {
+  width: 100%;
+  padding: 1.2rem;
+  border: 1px solid var(--neutral-gray-300);
+  border-radius: 0.8rem;
+  font-size: 1.4rem;
+  resize: vertical;
+  min-height: 12rem;
+  font-family: inherit;
+}
+
+.sendResponseButton {
+  margin-top: 1.6rem;
+  padding: 1.2rem 2.4rem;
+  background-color: var(--primary-500);
+  color: var(--neutral-white);
+  border: none;
+  border-radius: 0.6rem;
+  font-size: 1.4rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.sendResponseButton:hover {
+  background-color: var(--primary-600);
+}
+
+@media screen and (max-width: 768px) {
+  .card {
+    padding: 1.6rem;
+  }
+
+  .cardHeader {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .statusSection {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .detailsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .cardActions {
+    flex-direction: column;
+  }
+
+  .expandButton, 
+  .chatButton {
+    width: 100%;
+  }
+}

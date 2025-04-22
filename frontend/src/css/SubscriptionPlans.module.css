@@ -1,50 +1,41 @@
-/* SubscriptionPlans.module.css */
-
 .container {
-  padding: 8rem 8rem;
+  max-width: 120rem;
   margin: 0 auto;
-  width: 100%;
-  margin-top: 10rem;
+  padding: 4rem 2rem;
 }
 
 .header {
-  margin: 0 auto;
-  max-width: 80rem;
   text-align: center;
-  margin-bottom: 8rem;
+  margin-bottom: 4rem;
 }
 
 .title {
-  margin-bottom: 4rem;
-  font-size: var(--h2-desktop);
-  font-weight: 800;
-  letter-spacing: -0.05rem;
   color: var(--text-primary);
+  margin-bottom: 1rem;
 }
 
 .subtitle {
-  margin-bottom: 5rem;
-  font-weight: 300;
-  color: var(--neutral-gray-400);
-  font-size: 2rem;
+  font-size: 1.8rem;
+  color: var(--text-tertiary);
+  margin-bottom: 3rem;
 }
 
 .currentSubscription {
-  padding: 4rem;
-  margin-bottom: 8rem;
-  border: 1px solid var(--neutral-gray-200);
-  border-radius: 0.8rem;
-  background-color: var(--neutral-gray-50);
+  background-color: var(--primary-100);
+  border-radius: 1rem;
+  padding: 2rem;
+  max-width: 60rem;
+  margin: 0 auto;
 }
 
 .currentTitle {
-  font-weight: 700;
-  font-size: var(--h5-desktop);
-  margin-bottom: 1.6rem;
+  color: var(--primary-500);
+  margin-bottom: 1.5rem;
 }
 
 .subscriptionInfo {
   font-size: 1.6rem;
+  color: var(--text-secondary);
   margin-bottom: 1rem;
 }
 
@@ -54,148 +45,141 @@
 
 .plansGrid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8rem;
+  grid-template-columns: repeat(auto-fit, minmax(30rem, 1fr));
+  gap: 3rem;
+  margin-top: 4rem;
 }
 
 .planCard {
-  display: flex;
-  flex-direction: column;
-  padding: 6rem;
-  margin: 0 auto;
-  max-width: 40rem;
-  text-align: center;
-  color: var(--text-primary);
   background-color: var(--neutral-white);
-  border-radius: 0.8rem;
   border: 1px solid var(--neutral-gray-200);
-  box-shadow: 0 0.4rem 0.6rem rgba(0, 0, 0, 0.05);
+  border-radius: 1rem;
+  padding: 3rem 2rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.planCard:hover {
+  transform: translateY(-0.5rem);
+  box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.1);
 }
 
 .planName {
-  margin-bottom: 4rem;
-  font-size: var(--h4-desktop);
-  font-weight: 600;
+  color: var(--primary-500);
+  text-align: center;
+  margin-bottom: 1.5rem;
 }
 
 .planDuration {
-  font-weight: 300;
-  color: var(--neutral-gray-400);
-  font-size: 1.8rem;
+  font-size: 1.6rem;
+  color: var(--text-tertiary);
+  text-align: center;
+  margin-bottom: 2rem;
 }
 
 .priceContainer {
-  display: flex;
-  justify-content: center;
-  align-items: baseline;
-  margin: 8rem 0;
+  text-align: center;
+  margin-bottom: 2rem;
 }
 
 .price {
-  margin-right: 2rem;
-  font-size: 5rem;
-  font-weight: 800;
+  font-size: 3.2rem;
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
 .featuresList {
-  margin-bottom: 8rem;
-  list-style-type: none;
-  text-align: left;
+  list-style: none;
+  margin-bottom: 3rem;
 }
 
 .featureItem {
   display: flex;
   align-items: center;
-  margin-bottom: 4rem;
-}
-
-.featureItem:last-child {
-  margin-bottom: 0;
+  gap: 1rem;
+  font-size: 1.4rem;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
 }
 
 .checkIcon {
-  flex-shrink: 0;
   width: 2rem;
   height: 2rem;
   color: var(--success);
-  margin-right: 1.2rem;
 }
 
-.featureText {
-  font-size: 1.6rem;
+.loading {
+  text-align: center;
+  font-size: 2rem;
+  color: var(--text-secondary);
+  padding: 4rem;
 }
+
+.error {
+  text-align: center;
+  font-size: 1.6rem;
+  color: var(--error);
+  padding: 2rem;
+}
+
+/* Media Queries */
+@media screen and (max-width: 768px) {
+  .container {
+    padding: 2rem 1rem;
+  }
+
+  .plansGrid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .planCard {
+    padding: 2rem 1.5rem;
+  }
+
+  .price {
+    font-size: 2.8rem;
+  }
+
+  .featureItem {
+    font-size: 1.3rem;
+  }
+}
+
+/* ...existing code... */
 
 .subscribeButton {
-  display: block;
   width: 100%;
-  text-align: center;
+  padding: 1.6rem 2.4rem;
+  font-size: 1.6rem;
+  font-weight: 600;
   color: var(--neutral-white);
   background-color: var(--primary-500);
-  font-weight: 500;
-  border-radius: 0.8rem;
-  padding: 2rem 1rem;
-  font-size: 1.6rem;
-  transition: background-color 0.3s ease;
-  cursor: pointer;
   border: none;
+  border-radius: 0.8rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  font-family: inherit;
 }
 
 .subscribeButton:hover {
   background-color: var(--primary-600);
 }
 
-.loading {
-  text-align: center;
-  padding: 10rem 0;
-  font-size: 2rem;
+.subscribeButton:active {
+  background-color: var(--primary-700);
 }
 
-.error {
-  text-align: center;
-  padding: 10rem 0;
-  color: var(--error);
-  font-size: 2rem;
+.subscribeButton:disabled {
+  background-color: var(--neutral-gray-300);
+  cursor: not-allowed;
 }
 
-/* Media Queries */
-@media screen and (max-width: 1024px) {
-  .container {
-    padding: 6rem 3rem;
-  }
-  
-  .plansGrid {
-    gap: 4rem;
-  }
-  
-  .planCard {
-    padding: 4rem;
-  }
-}
-
+/* Add to the existing media query section */
 @media screen and (max-width: 768px) {
-  .container {
-    padding: 2rem;
-    width: 100%;
-  }
+  /* ...existing media query styles... */
   
-  .title {
-    font-size: var(--h2-mobile);
-  }
-  
-  .plansGrid {
-    grid-template-columns: 1fr;
-    gap: 2rem;
-  }
-
-  .planCard{
-    padding: 2rem;
-  }
-  
-  .currentSubscription {
-    padding: 3rem;
-  }
-  
-  .price {
-    font-size: 4rem;
+  .subscribeButton {
+    padding: 1.4rem 2rem;
+    font-size: 1.4rem;
   }
 }

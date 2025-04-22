@@ -1,0 +1,421 @@
+.homeContainer {
+  max-width: 120rem;
+  margin: 0 auto;
+  padding: 2.4rem;
+}
+
+.header {
+  margin-bottom: 3.2rem;
+}
+
+.welcomeText {
+  font-size: var(--h2-desktop);
+  color: var(--text-primary);
+  margin-bottom: 0.8rem;
+}
+
+.dateText {
+  font-size: 1.6rem;
+  color: var(--text-tertiary);
+}
+
+.sectionTitle {
+  font-size: var(--h4-desktop);
+  color: var(--text-primary);
+  margin-bottom: 2.4rem;
+}
+
+.statsSection {
+  margin-bottom: 4rem;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+  gap: 2rem;
+}
+
+.statCard {
+  padding: 2rem;
+  border-radius: 1.2rem;
+  background-color: var(--neutral-white);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease;
+}
+
+.statCard:hover {
+  transform: translateY(-0.5rem);
+}
+
+.statCard h3 {
+  font-size: 1.6rem;
+  color: var(--text-secondary);
+  margin-bottom: 1.2rem;
+}
+
+.statValue {
+  font-size: 3.2rem;
+  font-weight: 700;
+}
+
+.totalCard {
+  border-left: 4px solid var(--primary-500);
+}
+.pendingCard {
+  border-left: 4px solid var(--warning);
+}
+.acceptedCard {
+  border-left: 4px solid var(--info);
+}
+.completedCard {
+  border-left: 4px solid var(--success);
+}
+.cancelledCard {
+  border-left: 4px solid var(--neutral-gray-400);
+}
+.declinedCard {
+  border-left: 4px solid var(--error);
+}
+
+/* Chart Section Styles */
+.chartSection {
+  background-color: var(--neutral-white);
+  border-radius: 1.2rem;
+  padding: 2.4rem;
+  margin-bottom: 3.2rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.chartContainer {
+  height: 30rem;
+  overflow-x: auto;
+  margin-top: 2.4rem;
+  padding-bottom: 2rem;
+}
+
+.chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 2rem;
+  height: 100%;
+  padding: 0 1rem;
+  min-width: min-content;
+}
+
+.barContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 6rem;
+  height: 100%;
+  position: relative;
+}
+
+.bar {
+  width: 4rem;
+  background-color: var(--primary-500);
+  border-radius: 0.4rem 0.4rem 0 0;
+  position: relative;
+  transition: height 0.3s ease;
+}
+
+.bar:hover {
+  background-color: var(--primary-600);
+}
+
+.barValue {
+  position: absolute;
+  top: -2.4rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.monthLabel {
+  position: absolute;
+  bottom: -2.4rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.2rem;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+/* Chart grid lines */
+.chart::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 2.4rem;
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--neutral-gray-200) 0,
+    var(--neutral-gray-200) 1px,
+    transparent 1px,
+    transparent 20%
+  );
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.recentSection {
+  background-color: var(--neutral-white);
+  border-radius: 1.2rem;
+  padding: 2.4rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2.4rem;
+}
+
+.viewAllButton {
+  padding: 0.8rem 1.6rem;
+  border: 1px solid var(--primary-500);
+  border-radius: 0.6rem;
+  background-color: transparent;
+  color: var(--primary-500);
+  font-size: 1.4rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.viewAllButton:hover {
+  background-color: var(--primary-500);
+  color: var(--neutral-white);
+}
+
+.emptyState {
+  text-align: center;
+  padding: 4rem 2rem;
+  background-color: var(--neutral-gray-50);
+  border-radius: 0.8rem;
+}
+
+.emptyState p {
+  font-size: 1.4rem;
+  color: var(--text-tertiary);
+}
+
+.loadingContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 50vh;
+}
+
+.loadingContainer p {
+  font-size: 1.8rem;
+  color: var(--text-secondary);
+}
+
+.applicationTable {
+  width: 100%;
+  overflow-x: auto;
+  background-color: var(--neutral-white);
+  border-radius: 1.2rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.applicationTable table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 60rem; /* Ensures table doesn't get too squeezed */
+}
+
+.applicationTable th {
+  background-color: var(--neutral-gray-50);
+  color: var(--text-secondary);
+  font-size: 1.4rem;
+  font-weight: 600;
+  text-align: left;
+  padding: 1.6rem;
+  border-bottom: 1px solid var(--neutral-gray-200);
+}
+
+.applicationTable td {
+  padding: 1.6rem;
+  font-size: 1.4rem;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--neutral-gray-200);
+}
+
+.applicationTable tbody tr {
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.applicationTable tbody tr:hover {
+  background-color: var(--neutral-gray-50);
+}
+
+.applicationTable tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Status badges */
+.statusPending,
+.statusAccepted,
+.statusCompleted,
+.statusCancelled,
+.statusDeclined {
+  padding: 0.6rem 1.2rem;
+  border-radius: 2rem;
+  font-size: 1.2rem;
+  font-weight: 500;
+  text-align: center;
+  display: inline-block;
+}
+
+.statusPending {
+  background-color: var(--warning);
+  color: var(--neutral-white);
+}
+
+.statusAccepted {
+  background-color: var(--info);
+  color: var(--neutral-white);
+}
+
+.statusCompleted {
+  background-color: var(--success);
+  color: var(--neutral-white);
+}
+
+.statusCancelled {
+  background-color: var(--neutral-gray-400);
+  color: var(--neutral-white);
+}
+
+.statusDeclined {
+  background-color: var(--error);
+  color: var(--neutral-white);
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 768px) {
+  .homeContainer {
+    padding: 1.6rem;
+  }
+
+  .welcomeText {
+    font-size: var(--h2-mobile);
+  }
+
+  .sectionTitle {
+    font-size: var(--h4-mobile);
+  }
+
+  .statsGrid {
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+    gap: 1.6rem;
+  }
+
+  /* .recentList{
+    margin-top: 4rem;
+  } */
+  .statCard {
+    padding: 1.6rem;
+  }
+
+  .statValue {
+    font-size: 2.8rem;
+  }
+
+  .chartSection {
+    padding: 1.6rem;
+    margin: 0 -1.6rem;
+    border-radius: 0;
+  }
+
+  .recentSection {
+    margin-top: 3rem;
+    border-radius: 0;
+  }
+
+  .chartContainer {
+    height: 24rem;
+    margin-left: -1.6rem;
+    margin-right: -1.6rem;
+    margin-bottom: 4rem;
+  }
+
+  .chart {
+    gap: 1.6rem;
+    padding: 0 1.6rem;
+  }
+
+  .barContainer {
+    min-width: 5rem;
+  }
+
+  .bar {
+    width: 3.2rem;
+  }
+
+  /* Add scroll indicator */
+  .chartContainer::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 2.4rem;
+    background: linear-gradient(
+      to right,
+      transparent,
+      rgba(255, 255, 255, 0.9)
+    );
+    pointer-events: none;
+  }
+
+  .recentSection {
+    padding: 1.6rem;
+  }
+
+  .barContainer {
+    min-width: 5rem;
+  }
+
+  .bar {
+    width: 3rem;
+  }
+
+  .applicationTable {
+    margin: 0 -1.6rem; /* Negative margin to allow full-width scroll */
+    border-radius: 0;
+  }
+
+  .applicationTable table {
+    min-width: 48rem; /* Slightly smaller minimum width on mobile */
+  }
+
+  .applicationTable th,
+  .applicationTable td {
+    padding: 1.2rem;
+    font-size: 1.3rem;
+  }
+
+  /* Add horizontal scroll indicator */
+  .recentList {
+    position: relative;
+  }
+
+  .recentList::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 2.4rem;
+    background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.1));
+    pointer-events: none;
+  }
+}

@@ -55,8 +55,8 @@ const ServiceApplicationSuccess = () => {
           <p>What happens next?</p>
           <ul>
             <li>The service provider will review your application</li>
-            <li>You will receive a call when they check their mail</li>
-            <li>You can keep waiting till they call</li>
+            <li>The service provider will accept or decline your call</li>
+            <li>You will receive a call from them</li>
           </ul>
         </div>
 

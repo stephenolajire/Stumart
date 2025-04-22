@@ -1,0 +1,138 @@
+.chatContainer {
+  height: calc(100vh - 8rem);
+  display: flex;
+  flex-direction: column;
+  background-color: var(--neutral-white);
+  border-radius: 1.2rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.chatHeader {
+  padding: 2rem;
+  border-bottom: 1px solid var(--neutral-gray-200);
+}
+
+.chatHeader h2 {
+  font-size: var(--h4-desktop);
+  color: var(--text-primary);
+}
+
+.chatContent {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 2rem;
+}
+
+.messagesList {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+  padding-bottom: 2rem;
+}
+
+.messageItem {
+  max-width: 70%;
+  padding: 1.2rem;
+  border-radius: 1.2rem;
+}
+
+.messageItem.received {
+  align-self: flex-start;
+  background-color: var(--neutral-gray-100);
+}
+
+.messageItem.sent {
+  align-self: flex-end;
+  background-color: var(--primary-100);
+}
+
+.sender {
+  display: block;
+  font-size: 1.2rem;
+  color: var(--text-tertiary);
+  margin-bottom: 0.4rem;
+}
+
+.messageText {
+  font-size: 1.4rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: 0.4rem;
+}
+
+.timestamp {
+  display: block;
+  font-size: 1.2rem;
+  color: var(--text-tertiary);
+  text-align: right;
+}
+
+.messageForm {
+  display: flex;
+  gap: 1.2rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--neutral-gray-200);
+}
+
+.messageInput {
+  flex: 1;
+  min-width: 0; /* Add this to allow flex item to shrink below content size */
+  padding: 1.2rem;
+  font-size: 1.4rem;
+  border: 1px solid var(--neutral-gray-300);
+  border-radius: 0.8rem;
+  transition: border-color 0.3s ease;
+}
+
+.messageInput:focus {
+  outline: none;
+  border-color: var(--primary-500);
+}
+
+.sendButton {
+  padding: 1.2rem 2.4rem;
+  font-size: 1.4rem;
+  color: var(--neutral-white);
+  background-color: var(--primary-500);
+  border: none;
+  border-radius: 0.8rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  white-space: nowrap; /* Prevent button text from wrapping */
+}
+
+.sendButton:hover {
+  background-color: var(--primary-600);
+}
+
+@media screen and (max-width: 768px) {
+  .chatContainer {
+    height: calc(100vh - 12rem);
+  }
+
+  .chatHeader h2 {
+    font-size: var(--h4-mobile);
+  }
+
+  .messageItem {
+    max-width: 85%;
+  }
+
+  .messageForm {
+    padding: 1.6rem 1.2rem; /* Add horizontal padding */
+    gap: 0.8rem; /* Reduce gap on small screens */
+  }
+
+  .messageInput {
+    padding: 1rem; /* Reduce padding */
+    font-size: 1.3rem; /* Slightly smaller font */
+  }
+
+  .sendButton {
+    padding: 1rem 1.6rem; /* Reduce padding */
+    font-size: 1.3rem; /* Slightly smaller font */
+  }
+}

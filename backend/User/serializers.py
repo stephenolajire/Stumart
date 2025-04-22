@@ -148,11 +148,13 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         try:
             kyc_status = user.kyc.verification_status if hasattr(user, 'kyc') else None
             category = user.vendor.business_category if hasattr(user, 'vendor') else None
+            subscription = user.subscription.status if hasattr(user, 'subscription') else None
         except:
             kyc_status = None
 
         token['kyc_status'] = kyc_status
         token['category'] = category
+        token['subscription'] = subscription
         
         return token
 
@@ -173,8 +175,14 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         if vendor:
             category = vendor.business_category
 
+        subscription = None
+        sub = getattr(self.user, 'subscription', None)
+        if sub.user.vendor_profile.business_category == 'others':
+            subscription = sub.status
+
         data['kyc_status'] = kyc_status
         data['category'] = category
+        data['subscription'] = subscription
 
         return data
 

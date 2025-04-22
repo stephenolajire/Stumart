@@ -38,6 +38,8 @@ import AdminOrderDetail from "./admin-dashboard/OrderDetail";
 import ServiceApplicationSuccess from "./pages/ServiceApplicationSuccess";
 import ServiceApplication from "./pages/ServiceApplication";
 import SubscriptionPlans from "./pages/SubscriptionPlans";
+import Dashboard from "./other-dashboard/OtherDashboard";
+import OtherDashboard from "./other-dashboard/OtherDashboard";
 
 function App() {
   return (
@@ -88,10 +90,7 @@ function App() {
               path="/service-application-success/:serviceId"
               element={<ServiceApplicationSuccess />}
             />
-            <Route
-              path="/subscription-plans"
-              element={<SubscriptionPlans />}
-            />
+            <Route path="/subscription-plans" element={<SubscriptionPlans />} />
           </Route>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Signup />} />
@@ -121,6 +120,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <VendorDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/other-dashboard"
+            element={
+              <ProtectedRoute>
+                <OtherDashboard />
               </ProtectedRoute>
             }
           />

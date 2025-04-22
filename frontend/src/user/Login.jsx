@@ -53,7 +53,7 @@ const Login = () => {
 
     try {
       const response = await api.post("/token/", formData);
-      const { access, refresh, user_type, is_verified, kyc_status, user_id, is_admin, category } =
+      const { access, refresh, user_type, is_verified, kyc_status, user_id, is_admin, category, subscription } =
         response.data;
 
       console.log(response.data);
@@ -110,9 +110,15 @@ const Login = () => {
           auth();
           return;
         }else if (kyc_status === "approved" && user_type==="vendor" && category === "others") {
-          navigate('/subscription-plans');
-          auth();
-          return;
+          if (subscription==='trial' || subscription==='active'){ 
+            navigate("/other-dashboard");
+            auth();
+            return;
+          }else{
+            navigate("/subscription-plans");
+            auth();
+            return;
+          }
         }else{
           navigate("/picker");
           auth();
