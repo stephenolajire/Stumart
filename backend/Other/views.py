@@ -14,6 +14,8 @@ from rest_framework import status
 from User.models import User, Vendor
 from Stumart.models import ServiceApplication
 import calendar
+from django.core.mail import send_mail
+from django.conf import settings
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -289,3 +291,74 @@ def update_application_status(request, application_id):
         "status": new_status,
         "application_id": application.id
     })
+
+
+api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def send_application_response(request, application_id):
+    """
+    Send email response to service applicant
+    """
+    try:
+        vendor = Vendor.objects.get(user=request.user)
+        if vendor.business_category != 'others':
+            return Response(
+                {"error": "This endpoint is only available for service vendors"}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+    except Vendor.DoesNotExist:
+        return Response(
+            {"error": "Vendor profile not found"}, 
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    try:
+        application = ServiceApplication.objects.get(id=application_id, service=vendor)
+    except ServiceApplication.DoesNotExist:
+        return Response(
+            {"error": "Application not found"}, 
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    response_text = request.data.get('response')
+    if not response_text:
+        return Response(
+            {"error": "Response text is required"}, 
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        # Send email
+        subject = f"Response from {vendor.business_name} regarding your service request"
+        message = f"""
+            Dear {application.name},
+
+            {response_text}
+
+            Best regards,
+            {vendor.business_name}
+                    """
+                    
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            [application.email],
+            fail_silently=False,
+        )
+
+        # Update application with vendor response
+        application.vendor_response = response_text
+        application.response_date = timezone.now()
+        application.save()
+
+        return Response({
+            "message": "Response sent successfully",
+            "application_id": application.id
+        })
+
+    except Exception as e:
+        return Response(
+            {"error": f"Failed to send email: {str(e)}"}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

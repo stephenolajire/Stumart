@@ -1,10 +1,15 @@
 // ApplicationCard.jsx
 import React, { useState } from "react";
 import styles from "./css/ApplicationCard.module.css";
+import axios from "axios";
+import api from "../constant/api";
 
 const ApplicationCard = ({ application, onStatusChange }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showStatusMenu, setShowStatusMenu] = useState(false);
+  const [response, setResponse] = useState("");
+  const [isSending, setIsSending] = useState(false);
+  const [sendError, setSendError] = useState(null);
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -37,6 +42,30 @@ const ApplicationCard = ({ application, onStatusChange }) => {
   const handleStatusChange = (newStatus) => {
     onStatusChange(application.id, newStatus);
     setShowStatusMenu(false);
+  };
+
+  const handleSendResponse = async () => {
+    if (!response.trim()) return;
+
+    setIsSending(true);
+    setSendError(null);
+
+    try {
+      await api.post(`applications/${application.id}/respond/`, {
+        response: response.trim(),
+      });
+
+      // Clear response field and show success message
+      setResponse("");
+      // You might want to add a success notification here
+
+      // Refresh application data
+      onStatusChange(application.id, application.status);
+    } catch (err) {
+      setSendError(err.response?.data?.error || "Failed to send response");
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
@@ -151,12 +180,21 @@ const ApplicationCard = ({ application, onStatusChange }) => {
 
           <div className={styles.responseSection}>
             <h4 className={styles.responseTitle}>Your Response</h4>
+            {sendError && <p className={styles.errorText}>{sendError}</p>}
             <textarea
               className={styles.responseTextarea}
               placeholder="Enter your response to the customer..."
+              value={response}
+              onChange={(e) => setResponse(e.target.value)}
               rows={4}
             ></textarea>
-            <button className={styles.sendResponseButton}>Send Response</button>
+            <button
+              className={styles.sendResponseButton}
+              onClick={handleSendResponse}
+              disabled={isSending || !response.trim()}
+            >
+              {isSending ? "Sending..." : "Send Response"}
+            </button>
           </div>
         </div>
       )}

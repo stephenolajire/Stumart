@@ -11,4 +11,5 @@ urlpatterns = [
     path('applications/', views.all_applications, name='all_applications'),
     path('applications/<int:application_id>/', views.application_detail, name='application_detail'),
     path('applications/<int:application_id>/status/', views.update_application_status, name='update_application_status'),
+     path('applications/<int:application_id>/respond/', views.send_application_response, name='send_application_response'),
 ]

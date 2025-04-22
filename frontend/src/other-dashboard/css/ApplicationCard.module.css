@@ -150,7 +150,8 @@
   align-items: center;
 }
 
-.dateLabel, .dateValue {
+.dateLabel,
+.dateValue {
   font-size: 1.4rem;
   color: var(--text-secondary);
 }
@@ -161,7 +162,8 @@
   margin-bottom: 2rem;
 }
 
-.expandButton, .chatButton {
+.expandButton,
+.chatButton {
   padding: 1rem 2rem;
   border-radius: 0.6rem;
   font-size: 1.4rem;
@@ -256,6 +258,22 @@
   background-color: var(--primary-600);
 }
 
+.errorText {
+  color: var(--error);
+  font-size: 1.4rem;
+  margin-bottom: 1rem;
+}
+
+.sendResponseButton:disabled {
+  background-color: var(--neutral-gray-300);
+  cursor: not-allowed;
+}
+
+.responseTextarea:disabled {
+  background-color: var(--neutral-gray-100);
+  cursor: not-allowed;
+}
+
 @media screen and (max-width: 768px) {
   .card {
     padding: 1.6rem;
@@ -279,7 +297,7 @@
     flex-direction: column;
   }
 
-  .expandButton, 
+  .expandButton,
   .chatButton {
     width: 100%;
   }
