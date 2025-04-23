@@ -64,14 +64,10 @@ const ShopDetails = () => {
                 />
                 <div className={styles.productInfo}>
                   <h3>
-                    {product.name
-                      ? product.name.length > 14
-                        ? `${product.name.substring(0, 10)}...`
-                        : product.name
-                      : "No Name"}
+                    {product.name}
                   </h3>
                   <p className={styles.price}>₦{product.price || "0.00"}</p>
-                  <button className={styles.addToCart}>Add to Cart</button>
+                  {/* <button className={styles.addToCart}>Add to Cart</button> */}
                 </div>
               </div>
             </Link>
