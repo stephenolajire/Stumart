@@ -1442,3 +1442,80 @@ class SearchProductsView(APIView):
                 "status": "error",
                 "message": f"An error occurred: {str(e)}"
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class SearchSpecificServiceView(APIView):
+    def get(self, request):
+        specific_category = request.query_params.get('specific_category')
+        state = request.query_params.get('state')
+        school = request.query_params.get('institution')
+
+        try:
+            # Start with all vendors that are service providers
+            vendors_query = Vendor.objects.filter(business_category='others')
+            print(f"\nSearch parameters - Service: {specific_category}, State: {state}, School: {school}")
+
+            # Filter by specific category if provided (case-insensitive)
+            if specific_category and specific_category != 'all':
+                vendors_query = vendors_query.filter(
+                    specific_category__iexact=specific_category
+                )
+                print(f"After category filter: Found {vendors_query.count()} vendors")
+                print("Vendors found:", [v.business_name for v in vendors_query])
+
+            # Filter by state if provided
+            if state:
+                vendors_query = vendors_query.filter(user__state__iexact=state)
+                print(f"After state filter: {vendors_query.count()} vendors")
+                print("Vendors after state filter:", [v.business_name for v in vendors_query])
+
+            # Filter by school if provided
+            if school:
+                vendors_query = vendors_query.filter(user__institution__iexact=school)
+                print(f"After school filter: {vendors_query.count()} vendors")
+                print("Vendors after school filter:", [v.business_name for v in vendors_query])
+
+            # Print the actual SQL query for debugging
+            print("\nSQL Query:", vendors_query.query)
+
+            # Fetch vendors with related user data
+            vendors = vendors_query.select_related('user').all()
+
+            if not vendors.exists():
+                print("No service providers found matching the criteria")
+                return Response({
+                    "status": "not_found",
+                    "message": "No service providers found matching your criteria",
+                    "search_params": {
+                        "specific_category": specific_category,
+                        "state": state,
+                        "school": school
+                    }
+                }, status=status.HTTP_404_NOT_FOUND)
+
+            # Serialize the vendors
+            serializer = VendorSerializer(vendors, many=True)
+            print(f"\nTotal service providers found: {vendors.count()}")
+
+            return Response({
+                "status": "success",
+                "count": vendors.count(),
+                "services": serializer.data,
+                "search_params": {
+                    "specific_category": specific_category,
+                    "state": state,
+                    "school": school
+                }
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            print(f"\nError in service search: {str(e)}")
+            print("Full error details:", e)
+            return Response({
+                "status": "error",
+                "message": f"An error occurred: {str(e)}",
+                "search_params": {
+                    "specific_category": specific_category,
+                    "state": state,
+                    "school": school
+                }
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -2,9 +2,10 @@ import { useEffect } from 'react';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 import styles from '../css/About.module.css';
-import teamwork from '../assets/teamwork.jpg';
-import delivery from '../assets/delivery.jpg';
-import campus from '../assets/campus.jpg';
+import teamwork from '../assets/student.jpeg';
+import delivery from '../assets/del.jpeg';
+import campus from '../assets/uni.jpeg';
+import { Link } from 'react-router-dom';
 
 const About = () => {
   useEffect(() => {
@@ -25,10 +26,10 @@ const About = () => {
         <div className={styles.container}>
           <h2>Our Mission</h2>
           <p>
-            StuMart is dedicated to revolutionizing campus commerce by creating a
-            seamless marketplace that connects students, local vendors, and delivery
-            partners. We aim to make student life easier through accessible,
-            affordable, and efficient shopping solutions.
+            StuMart is dedicated to revolutionizing campus commerce by creating
+            a seamless marketplace that connects students, local vendors, and
+            delivery partners. We aim to make student life easier through
+            accessible, affordable, and efficient shopping solutions.
           </p>
         </div>
       </section>
@@ -48,8 +49,8 @@ const About = () => {
             <img src={teamwork} alt="Student Opportunities" />
             <h3>Student Opportunities</h3>
             <p>
-              Creating job opportunities for students through our delivery partner
-              program and vendor platform.
+              Creating job opportunities for students through our delivery
+              partner program and vendor platform.
             </p>
           </div>
 
@@ -57,8 +58,8 @@ const About = () => {
             <img src={delivery} alt="Quick Delivery" />
             <h3>Quick Delivery</h3>
             <p>
-              Fast, reliable delivery service powered by fellow students who know
-              the campus inside out.
+              Fast, reliable delivery service powered by fellow students who
+              know the campus inside out.
             </p>
           </div>
         </div>
@@ -68,25 +69,37 @@ const About = () => {
         <div className={styles.container}>
           <h2>How It Works</h2>
           <div className={styles.steps}>
-            <div className={styles.step} data-aos="fade-up" data-aos-delay="100">
+            <div
+              className={styles.step}
+              data-aos="fade-up"
+              data-aos-delay="100"
+            >
               <div className={styles.stepNumber}>1</div>
               <h3>Browse & Order</h3>
               <p>
-                Explore products from various campus vendors and place your order
-                with just a few clicks.
+                Explore products from various campus vendors and place your
+                order with just a few clicks.
               </p>
             </div>
 
-            <div className={styles.step} data-aos="zoom-in" data-aos-delay="200">
+            <div
+              className={styles.step}
+              data-aos="zoom-in"
+              data-aos-delay="200"
+            >
               <div className={styles.stepNumber}>2</div>
               <h3>Student Picker</h3>
               <p>
-                A fellow student picker accepts your order and coordinates with the
-                vendor.
+                A fellow student picker accepts your order and coordinates with
+                the vendor.
               </p>
             </div>
 
-            <div className={styles.step} data-aos="fade-up" data-aos-delay="300">
+            <div
+              className={styles.step}
+              data-aos="fade-up"
+              data-aos-delay="300"
+            >
               <div className={styles.stepNumber}>3</div>
               <h3>Swift Delivery</h3>
               <p>
@@ -126,7 +139,9 @@ const About = () => {
             Whether you're a student, vendor, or potential delivery partner, be
             part of our growing community.
           </p>
-          <button className={styles.ctaButton}>Get Started</button>
+          <Link to="/register">
+            <button className={styles.ctaButton}>Get Started</button>
+          </Link>
         </div>
       </section>
     </div>

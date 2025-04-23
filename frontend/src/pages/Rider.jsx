@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, Link } from 'react-router-dom';
 import { 
   FaBicycle, 
   FaMoneyBillWave, 
@@ -165,9 +165,9 @@ const Rider = () => {
         <div className={styles.container}>
           <h2>Start Earning Today</h2>
           <p>Join our network of student pickers and earn while you study</p>
-          <NavLink to="/register" className={styles.ctaButton}>
+          <Link to="/register" className={styles.ctaButton}>
             Apply Now
-          </NavLink>
+          </Link>
         </div>
       </section>
     </div>
