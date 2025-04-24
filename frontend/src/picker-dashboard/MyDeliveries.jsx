@@ -148,7 +148,7 @@ const MyDeliveries = () => {
                 </div>
 
                 <div className={styles.deliveryActions}>
-                  <Link to={`/order-detail/${delivery.id}`}>
+                  <Link to={`/delivery-detail/${delivery.id}`}>
                     <button className={styles.viewButton}>View Details</button>
                   </Link>
 

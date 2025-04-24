@@ -139,7 +139,6 @@ class AvailableOrdersView(APIView):
         user = request.user
         filter_param = request.query_params.get('filter', 'all')
         
-        # Check if the user is a picker or student picker
         if user.user_type not in ['picker', 'student_picker']:
             return Response({"error": "Only pickers can access this page"}, 
                            status=status.HTTP_403_FORBIDDEN)
@@ -154,9 +153,7 @@ class AvailableOrdersView(APIView):
         
         # Apply filters
         if filter_param == 'nearby':
-            # This would require more complex geo-location logic
-            # For now, we'll just simulate with a simple filter
-            available_orders = base_query.order_by('id')[:10]  # Simplified for now
+            available_orders = base_query.order_by('id')[:10]
         elif filter_param == 'high_value':
             available_orders = base_query.order_by('-total')
         else:  # 'all' or any other value
@@ -165,14 +162,21 @@ class AvailableOrdersView(APIView):
         # Prepare detailed response data
         orders_data = []
         for order in available_orders:
-            # Get vendor details
-            response = OrderItem.objects.get(order=order)
-            vendor = response.vendor
-            vendor_name = vendor.business_name if vendor else "Unknown"
+            # Get first vendor details from order items
+            order_items = OrderItem.objects.filter(order=order)
+            first_order_item = order_items.first()
             
-            # Get order items
+            if (first_order_item and first_order_item.vendor):
+                vendor = first_order_item.vendor
+                vendor_name = vendor.business_name
+                pickup_location = f"{vendor.user.institution}, {vendor.user.state}"
+            else:
+                vendor_name = "Unknown"
+                pickup_location = "Unknown"
+            
+            # Get all items for this order
             items = []
-            for item in OrderItem.objects.filter(order=order):
+            for item in order_items:
                 items.append({
                     'id': item.id,
                     'product_name': item.product.name,
@@ -184,7 +188,7 @@ class AvailableOrdersView(APIView):
                 'id': order.id,
                 'order_number': order.order_number,
                 'vendor_name': vendor_name,
-                'pickup_location': f"{vendor.user.institution}, {vendor.user.state}" if vendor else "Unknown",
+                'pickup_location': pickup_location,
                 'delivery_location': f"{order.address}, Room: {order.room_number}" if order.room_number else order.address,
                 'total': float(order.subtotal),
                 'shipping_fee': float(order.shipping_fee),
@@ -211,23 +215,23 @@ class AvailableOrdersView(APIView):
             return Response({"error": "Order not found or already accepted"}, 
                            status=status.HTTP_404_NOT_FOUND)
         
-        order_vendor =  OrderItem.objects.get(order=order)
-        vendor = order_vendor.vendor
+        # Check if any order item's vendor is in the same institution
+        order_items = OrderItem.objects.filter(order=order)
+        vendor_institutions = set(item.vendor.user.institution for item in order_items)
         
-        # Check if order is in the same institution
-        if vendor.user.institution != user.institution:
-            return Response({"error": "You can only accept orders from your institution"}, 
-                           status=status.HTTP_403_FORBIDDEN)
+        if user.institution not in vendor_institutions:
+            return Response({
+                "error": "You can only accept orders from your institution"
+            }, status=status.HTTP_403_FORBIDDEN)
         
         # Update order status and assign picker
         order.order_status = 'IN_TRANSIT'
-        if user.user_type == 'picker' or 'student_picker':
-            order.picker = user
-        
+        order.picker = user
         order.save()
         
-        return Response({"message": "Order accepted successfully"}, 
-                       status=status.HTTP_200_OK)
+        return Response({
+            "message": "Order accepted successfully"
+        }, status=status.HTTP_200_OK)
 
 
 class MyDeliveriesView(APIView):
@@ -575,76 +579,84 @@ class OrderDetailView(APIView):
     def get(self, request, order_id):
         user = request.user
         
-        # Check if the user is a picker or student picker
         if user.user_type not in ['picker', 'student_picker']:
-            return Response({"error": "Only pickers can access this page"}, 
-                           status=status.HTTP_403_FORBIDDEN)
+            return Response({
+                "error": "Only pickers can access this page"
+            }, status=status.HTTP_403_FORBIDDEN)
         
-        # Get the order
         try:
             order = Order.objects.get(id=order_id)
             
-            # Check if the order is in the same institution or assigned to this picker
-            if not (
-                order.picker == user or
-                order.picker.institution == order.user.institution
-            ):
-                return Response({"error": "You don't have permission to view this order"}, 
-                              status=status.HTTP_403_FORBIDDEN)
+            # Check permissions:
+            # 1. User's institution matches order user's institution OR
+            # 2. User is the assigned picker for this order
+            if not (user):
+                return Response({
+                    "error": "You don't have permission to view this order"
+                }, status=status.HTTP_403_FORBIDDEN)
             
         except Order.DoesNotExist:
             return Response({"error": "Order not found"}, 
                           status=status.HTTP_404_NOT_FOUND)
         
-        
         # Get customer details
         customer_name = f"{order.first_name} {order.last_name}"
         customer_phone = order.phone
         
-        # Get order items
-        items = []
-        for item in OrderItem.objects.filter(order=order):
-            items.append({
+        # Group items by vendor
+        vendor_items = {}
+        for item in OrderItem.objects.filter(order=order).select_related('vendor', 'vendor__user', 'product'):
+            if item.vendor.id not in vendor_items:
+                vendor_items[item.vendor.id] = {
+                    'vendor_info': {
+                        'id': item.vendor.id,
+                        'name': item.vendor.business_name,
+                        'phone': item.vendor.user.phone_number,
+                        'location': f"{item.vendor.user.institution}, {item.vendor.user.state}",
+                        'category': item.vendor.business_category,
+                    },
+                    'items': []
+                }
+            
+            vendor_items[item.vendor.id]['items'].append({
                 'id': item.id,
                 'product_name': item.product.name,
                 'quantity': item.quantity,
                 'price': float(item.price),
                 'size': item.size,
-                'color': item.color
+                'color': item.color,
+                'subtotal': float(item.price * item.quantity)
             })
-
-        for vendor in OrderItem.objects.filter(order=order):
-            vendor_name = vendor.vendor.business_name if vendor.vendor else "Unknown"
-            vendor_phone = vendor.vendor.user.phone_number if vendor.vendor and vendor.vendor.user else "Unknown"
+        
+        # Calculate subtotals per vendor
+        for vendor_data in vendor_items.values():
+            vendor_data['subtotal'] = sum(item['subtotal'] for item in vendor_data['items'])
         
         # Prepare response
         order_data = {
             'id': order.id,
             'order_number': order.order_number,
-            'vendor': {
-                'name': vendor_name,
-                'phone': vendor_phone,
-                'location': f"{vendor.vendor.user.institution}, {vendor.vendor.user.state}" if vendor and vendor.vendor else "Unknown"
-            },
+            'vendors': list(vendor_items.values()),
             'customer': {
                 'name': customer_name,
                 'phone': customer_phone,
                 'address': order.address,
                 'room_number': order.room_number
             },
-            'items': items,
-            'subtotal': float(order.subtotal),
-            'shipping_fee': float(order.shipping_fee),
-            'tax': float(order.tax),
-            'total': float(order.total),
+            'order_summary': {
+                'subtotal': float(order.subtotal),
+                'shipping_fee': float(order.shipping_fee),
+                'tax': float(order.tax),
+                'total': float(order.total)
+            },
             'status': order.order_status,
             'created_at': order.created_at.strftime('%Y-%m-%d %H:%M'),
-            'is_assigned': bool(order.picker or order.student_picker),
-            'is_assigned_to_me': (order.picker == user) or (order.student_picker == user)
+            'is_assigned': bool(order.picker),
+            'is_assigned_to_me': order.picker == user
         }
         
         return Response(order_data)
-    
+
 
 class ConfirmDeliveryView(APIView):
     permission_classes = [IsAuthenticated]

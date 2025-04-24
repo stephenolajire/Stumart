@@ -17,7 +17,7 @@ const AvailableOrders = ({ onOrderSelect }) => {
       try {
         setIsLoading(true);
 
-        const response = await api.get(`available-orders?filter=${filter}`);
+        const response = await api.get(`available-deliveries?filter=${filter}`);
         setOrders(response.data);
         console.log(response.data);
       } catch (error) {
@@ -32,7 +32,7 @@ const AvailableOrders = ({ onOrderSelect }) => {
 
   const handleAcceptOrder = async (orderId) => {
     try {
-      await api.post(`available-orders/${orderId}/accept/`);
+      await api.post(`available-delivery/${orderId}/accept/`);
       // After accepting, redirect to my deliveries or refresh the list
       Swal.fire({
         icon: "success",
@@ -135,7 +135,7 @@ const AvailableOrders = ({ onOrderSelect }) => {
               </div>
 
               <div className={styles.orderActions}>
-                <Link to={`/order-detail/${order.id}`}>
+                <Link to={`/delivery-detail/${order.id}`}>
                   <button className={styles.viewButton}>View Details</button>
                 </Link>
                 <button

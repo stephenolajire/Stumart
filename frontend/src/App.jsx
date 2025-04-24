@@ -32,7 +32,7 @@ import HomePage from "./picker-dashboard/Dashboard";
 import AvailableOrders from "./picker-dashboard/AvailableOrders";
 import MyDeliveries from "./picker-dashboard/MyDeliveries";
 import Earnings from "./picker-dashboard/Earnings";
-import OrderDetail from "./picker-dashboard/OrderDetail";
+// import OrderDetail from "./picker-dashboard/DeliveryDetail";
 import AdminDashboard from "./admin-dashboard/AdminDashboard";
 import AdminOrderDetail from "./admin-dashboard/OrderDetail";
 import ServiceApplicationSuccess from "./pages/ServiceApplicationSuccess";
@@ -41,6 +41,7 @@ import SubscriptionPlans from "./pages/SubscriptionPlans";
 import Dashboard from "./other-dashboard/OtherDashboard";
 import OtherDashboard from "./other-dashboard/OtherDashboard";
 import SearchPage from "./pages/SearchPage";
+import DeliveryDetail from "./picker-dashboard/DeliveryDetail";
 
 function App() {
   return (
@@ -164,7 +165,7 @@ function App() {
           />
           <Route path="/picker/my-deliveries" element={<MyDeliveries />} />
           <Route path="/earnings" element={<Earnings />} />
-          <Route path="/order-detail/:orderId" element={<OrderDetail />} />
+          <Route path="/delivery-detail/:orderId" element={<DeliveryDetail />} />
           <Route
             path="/admin-order-detail/:orderId"
             element={<AdminOrderDetail />}

@@ -7,8 +7,8 @@ urlpatterns = [
     path('picker/dashboard/', views.PickerDashboardView.as_view(), name='dashboard'),
     
     # Available Orders
-    path('available-orders/', views.AvailableOrdersView.as_view(), name='available_orders'),
-    path('available-orders/<int:order_id>/accept/', views.AvailableOrdersView.as_view(), name='accept_order'),
+    path('available-deliveries/', views.AvailableOrdersView.as_view(), name='available_orders'),
+    path('available-delivery/<int:order_id>/accept/', views.AvailableOrdersView.as_view(), name='accept_order'),
     
     # My Deliveries
     path('my-deliveries/', views.MyDeliveriesView.as_view(), name='my_deliveries'),

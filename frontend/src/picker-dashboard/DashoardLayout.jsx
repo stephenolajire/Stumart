@@ -8,7 +8,7 @@ import MyDeliveries from "./MyDeliveries";
 import Earnings from "./Earnings";
 import Reviews from "./Reviews";
 import Settings from "./Settings";
-import OrderDetail from "./OrderDetail";
+import OrderDetail from "./DeliveryDetail";
 import { IoMenuOutline } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 
