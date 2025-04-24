@@ -604,7 +604,7 @@ class CreateOrderView(APIView):
             )
             
             # Get cart items
-            cart_items = CartItem.objects.filter(id__in(data.get('cart_items', [])))
+            cart_items = CartItem.objects.filter(id__in=(data.get('cart_items', [])))
             
             # Create order items for each cart item
             for cart_item in cart_items:
