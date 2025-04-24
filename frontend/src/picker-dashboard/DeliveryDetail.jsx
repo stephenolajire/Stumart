@@ -106,7 +106,7 @@ const DeliveryDetail = () => {
           <div className={styles.orderDate}>{orderData.created_at}</div>
         </div>
         <div className={styles.orderStatus}>
-          {orderData.status === "IN_TRANSIT" ? "In Transit" : "Delivered"}
+          {orderData.status}
         </div>
       </div>
 
