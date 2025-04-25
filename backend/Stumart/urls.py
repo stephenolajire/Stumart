@@ -2,6 +2,7 @@ from django.urls import path
 from .views import *
 from .views import SearchProductsView
 from .views import SearchSpecificServiceView
+from .views import CancelOrderView
 
 urlpatterns = [
     path('vendor-products/<int:id>', ProductsView.as_view(), name='list-vendor-products'),
@@ -22,6 +23,7 @@ urlpatterns = [
     path('payment/verify/', PaystackPaymentVerifyView.as_view(), name='order-detail'),
     path('orders/<str:order_number>/', OrderDetailView.as_view(), name='order-detail'),
     path('orders/', OrderHistoryView.as_view(), name='order-list'),
+    path('orders/<int:order_id>/cancel/', CancelOrderView.as_view(), name='cancel-order'),
 
     # Service specific endpoints
     path('service-detail/<int:pk>/', ServiceDetailAPIView.as_view(), name='service-detail'),

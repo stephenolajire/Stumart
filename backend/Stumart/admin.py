@@ -62,7 +62,7 @@ from .models import Order, OrderItem, Transaction, Wallet
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ['order_number', 'user', 'first_name', 'last_name', 'email', 'total', 'order_status', 'created_at']
+    list_display = ['order_number', 'user', 'first_name', 'last_name', 'email', 'total', 'order_status', 'created_at', 'confirm', 'picker']
     list_filter = ['order_status', 'created_at']
     search_fields = ['order_number', 'email', 'first_name', 'last_name']
     readonly_fields = ['order_number', 'created_at']

@@ -14,19 +14,19 @@ const OrderHistory = () => {
   const [ordersPerPage] = useState(5);
   const printRefs = useRef({});
 
+  const fetchOrders = async () => {
+    try {
+      const response = await api.get("orders/");
+      setOrders(response.data);
+      setLoading(false);
+      console.log(response.data);
+    } catch (err) {
+      setError("Failed to load your order history. Please try again later.");
+      setLoading(false);
+    }
+  };
+  
   useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const response = await api.get("orders/");
-        setOrders(response.data);
-        setLoading(false);
-        console.log(response.data)
-      } catch (err) {
-        setError("Failed to load your order history. Please try again later.");
-        setLoading(false);
-      }
-    };
-
     fetchOrders();
   }, []);
 
@@ -55,13 +55,60 @@ const OrderHistory = () => {
         text: "Thank you for your patronage!",
         title: "Order Delivered",
       });
-      window.location.reload()
+      window.location.reload();
     } catch (error) {
       console.error("Error marking order as delivered:", error);
       Swal.fire({
         icon: "error",
         title: "Status Error",
         text: "Order status failed, pls try again later",
+      });
+    }
+  };
+
+  const handleCancelOrder = async (orderId) => {
+    try {
+      // Show confirmation dialog first
+      const result = await Swal.fire({
+        title: "Cancel Order?",
+        text: "Are you sure you want to cancel this order? This action cannot be undone.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "var(--error)",
+        cancelButtonColor: "var(--neutral-gray-400)",
+        confirmButtonText: "Yes, cancel order",
+        cancelButtonText: "No, keep order",
+      });
+
+      if (result.isConfirmed) {
+        // Send cancel request to API
+        await api.post(`orders/${orderId}/cancel/`);
+
+        // Update local state
+        setOrders((prevOrders) =>
+          prevOrders.map((order) =>
+            order.id === orderId
+              ? { ...order, order_status: "CANCELLED" }
+              : order
+          )
+        );
+
+        // Show success message
+        await Swal.fire({
+          icon: "success",
+          title: "Order Cancelled",
+          text: "Your order has been cancelled successfully",
+        });
+        fetchOrders(); // Refresh the order list
+      }
+    } catch (error) {
+      console.error("Error cancelling order:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Cancellation Failed",
+        text:
+          error.response?.data?.message ||
+          "Failed to cancel order. Please try again later.",
       });
     }
   };
@@ -262,19 +309,24 @@ const OrderHistory = () => {
                 </div>
 
                 <div className={style.orderActions}>
-                  {order.order_status.toUpperCase() === "DELIVERED" && (
+                  {order.order_status.toUpperCase() === "DELIVERED" &&
+                    !order.confirm && (
+                      <button
+                        className={style.confirmOrderBtn}
+                        onClick={() => handleMarkAsDelivered(order.id)}
+                      >
+                        Confirm
+                      </button>
+                    )}
+                  {order.order_status.toUpperCase() === "PENDING" && (
                     <button
-                      className={style.confirmOrderBtn}
-                      onClick={() => handleMarkAsDelivered(order.id)}
+                      className={style.cancelOrderBtn}
+                      onClick={() => handleCancelOrder(order.id)}
                     >
-                      Confirm
-                    </button>
-                  )}
-                  {order.order_status.toUpperCase() === "PENDING" ? (
-                    <button className={style.cancelOrderBtn}>
                       Cancel Order
                     </button>
-                  ) : (
+                  )}
+                  {order.order_status.toUpperCase() !== "PENDING" && (
                     <button
                       className={style.cancelOrderBtn}
                       onClick={() => handlePrint(order.order_number)}

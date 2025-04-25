@@ -680,20 +680,34 @@ class ConfirmDeliveryView(APIView):
                 wallet, created = PickerWallet.objects.get_or_create(picker=picker)
                 
                 if not created:
-                    # If wallet exists, convert current amount to float, add shipping fee, and save
-                    current_amount = float(wallet.amount) if wallet.amount else 0
-                    wallet.amount = str(current_amount + order.shipping_fee)
+                    # Convert both values to Decimal for consistent arithmetic
+                    from decimal import Decimal
+                    current_amount = Decimal(str(wallet.amount if wallet.amount else '0'))
+                    shipping_fee = Decimal(str(order.shipping_fee))
+                    wallet.amount = current_amount + shipping_fee
                 else:
-                    # If wallet was just created, set the amount
-                    wallet.amount = str(order.shipping_fee)
+                    # Use the shipping_fee directly since it's already a Decimal
+                    wallet.amount = order.shipping_fee
                 
                 wallet.save()
 
-                return Response("Order has been delivered successfully", status=status.HTTP_200_OK)
+                return Response({
+                    "status": "success",
+                    "message": "Order has been delivered successfully"
+                }, status=status.HTTP_200_OK)
             else:
-                return Response("Order is not in DELIVERED status", status=status.HTTP_400_BAD_REQUEST)
+                return Response({
+                    "status": "error",
+                    "message": "Order is not in DELIVERED status"
+                }, status=status.HTTP_400_BAD_REQUEST)
             
         except Order.DoesNotExist:
-            return Response("Order does not exist", status=status.HTTP_404_NOT_FOUND)
+            return Response({
+                "status": "error",
+                "message": "Order does not exist"
+            }, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response(f"Error: {str(e)}", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({
+                "status": "error",
+                "message": f"An error occurred: {str(e)}"
+            }, status=status.HTTP_500_INTERNAL_ERROR)

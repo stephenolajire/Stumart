@@ -139,6 +139,7 @@ class Order(models.Model):
     order_status = models.CharField(max_length=20, default='PENDING')
     created_at = models.DateTimeField(auto_now_add=True)
     picker = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE, related_name="picker")
+    confirm = models.BooleanField(default=False, blank=True, null=True)
     
 
     def __str__(self):

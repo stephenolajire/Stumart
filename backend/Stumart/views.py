@@ -1519,3 +1519,122 @@ class SearchSpecificServiceView(APIView):
                     "school": school
                 }
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class CancelOrderView(APIView):
+    """
+    API endpoint for canceling an order
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, order_id):
+        try:
+            # Get the order
+            order = Order.objects.get(id=order_id)
+
+            # Check if user owns this order
+            if order.user != request.user:
+                return Response({
+                    "status": "error",
+                    "message": "You don't have permission to cancel this order"
+                }, status=status.HTTP_403_FORBIDDEN)
+
+            # Check if order can be cancelled
+            if order.order_status in ['DELIVERED', 'CANCELLED']:
+                return Response({
+                    "status": "error",
+                    "message": f"Order cannot be cancelled because it is {order.order_status}"
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # If order is assigned to a picker, check if it's in transit
+            if order.picker and order.order_status == 'IN_TRANSIT':
+                return Response({
+                    "status": "error",
+                    "message": "Order is already in transit and cannot be cancelled"
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Update order status
+            order.order_status = 'CANCELLED'
+            order.save()
+
+            # Restore product inventory
+            order_items = OrderItem.objects.filter(order=order)
+            for item in order_items:
+                product = item.product
+                
+                # Restore main product stock
+                product.in_stock += item.quantity
+                product.save()
+
+                # Restore size stock if applicable
+                if item.size:
+                    try:
+                        size_obj = ProductSize.objects.get(product=product, size=item.size)
+                        size_obj.quantity += item.quantity
+                        size_obj.save()
+                    except ProductSize.DoesNotExist:
+                        pass
+
+                # Restore color stock if applicable
+                if item.color:
+                    try:
+                        color_obj = ProductColor.objects.get(product=product, color=item.color)
+                        color_obj.quantity += item.quantity
+                        color_obj.save()
+                    except ProductColor.DoesNotExist:
+                        pass
+
+            # Send cancellation emails
+            try:
+                # Email to customer
+                send_mail(
+                    subject=f"Order #{order.order_number} Cancelled",
+                    message=(
+                        f"Your order #{order.order_number} has been cancelled.\n\n"
+                        f"Order Total: ₦{order.total}\n"
+                        "If you have any questions, please contact support."
+                    ),
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[order.email],
+                    fail_silently=True
+                )
+
+                # Email to vendors
+                vendors_notified = set()
+                for item in order_items:
+                    vendor = item.vendor
+                    if vendor and vendor.id not in vendors_notified:
+                        send_mail(
+                            subject=f"Order #{order.order_number} Cancelled",
+                            message=(
+                                f"Order #{order.order_number} has been cancelled by the customer.\n\n"
+                                f"Please note that the inventory has been automatically restored."
+                            ),
+                            from_email=settings.DEFAULT_FROM_EMAIL,
+                            recipient_list=[vendor.user.email],
+                            fail_silently=True
+                        )
+                        vendors_notified.add(vendor.id)
+
+            except Exception as e:
+                # Log email sending errors but don't affect the response
+                logger.error(f"Error sending cancellation emails for order {order.order_number}: {str(e)}")
+
+            return Response({
+                "status": "success",
+                "message": "Order cancelled successfully",
+                "order_number": order.order_number
+            }, status=status.HTTP_200_OK)
+
+        except Order.DoesNotExist:
+            return Response({
+                "status": "error",
+                "message": "Order not found"
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        except Exception as e:
+            return Response({
+                "status": "error",
+                "message": f"An error occurred: {str(e)}"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
