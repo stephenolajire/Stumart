@@ -87,7 +87,9 @@ function App() {
             />
             <Route
               path="/service-application/:serviceId"
-              element={<ServiceApplication />}
+              element={<ProtectedRoute>
+                <ServiceApplication />
+              </ProtectedRoute>}
             />
             <Route
               path="/service-application-success/:serviceId"

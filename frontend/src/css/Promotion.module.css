@@ -1,46 +1,29 @@
 .promotionSection {
-  padding: 8rem;
-  background-color: var(--neutral-gray-50);
-  padding-top: 0rem;
-}
-
-.header {
-  text-align: center;
-  margin-bottom: 4rem;
-}
-
-.header h2 {
-  font-size: var(--h2-desktop);
-  color: var(--text-primary);
-  margin-bottom: 1.2rem;
-}
-
-.header p {
-  font-size: 1.8rem;
-  color: var(--text-tertiary);
+  position: relative;
+  width: 100%;
+  margin: 0 auto;
+  overflow: hidden;
+  margin-top: 12rem;
 }
 
 .container {
   width: 100%;
   margin: 0 auto;
-  padding: 0 2.4rem;
-  /* margin-top: -4rem; */
 }
 
-.slideContainer {
-  display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
-  gap: 3.2rem;
-  background-color: var(--neutral-white);
-  border-radius: 2rem;
-  overflow: hidden;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-}
-
-.videoSection {
+.slide {
   position: relative;
-  height: 48rem;
+  height: 20rem; /* Reduced from 50rem */
+  border-radius: 0; /* Removed border radius for full-width look */
   overflow: hidden;
+}
+
+.mediaWrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .video {
@@ -49,86 +32,93 @@
   object-fit: cover;
 }
 
-.videoOverlay {
+.overlay {
   position: absolute;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
+  width: 100%;
+  height: 100%;
   background: linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0.1),
-    rgba(0, 0, 0, 0.6)
+    to right,
+    rgba(0, 0, 0, 0.7) 0%,
+    rgba(0, 0, 0, 0.3) 100%
   );
-  display: flex;
-  align-items: flex-end;
-  padding: 3.2rem;
 }
 
-.videoOverlay h3 {
+/* Adjust content padding for shorter height */
+.content {
+  position: relative;
+  z-index: 2;
+  padding: 3rem 4rem; /* Reduced top/bottom padding */
   color: var(--neutral-white);
-  font-size: var(--h3-desktop);
-  font-weight: 700;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.contentSection {
-  padding: 3.2rem;
+  max-width: 60rem;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: center;
 }
 
-.contentHeader h3 {
-  font-size: var(--h4-desktop);
-  color: var(--text-primary);
-  margin-bottom: 1.6rem;
-}
-
-.content {
-  font-size: 1.6rem;
-  line-height: 1.6;
-  color: var(--text-secondary);
-  margin-bottom: 2.4rem;
+/* Adjust typography sizes for shorter height */
+.title {
+  font-size: var(--h3-desktop); /* Reduced from h2 */
+  margin-bottom: 1.2rem; /* Reduced margin */
+  color: var(--neutral-white);
 }
 
 .description {
-  border-top: 1px solid var(--neutral-gray-200);
-  padding-top: 2.4rem;
+  font-size: 1.6rem; /* Reduced from 1.8rem */
+  margin-bottom: 2rem; /* Reduced margin */
+  line-height: 1.5;
 }
 
-.description p {
+.details {
+  display: flex;
+  align-items: center;
+  gap: 2.4rem;
+}
+
+.offer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.discount {
+  font-size: 3.2rem;
+  font-weight: 700;
+  color: var(--primary-400);
+}
+
+.period {
   font-size: 1.4rem;
-  color: var(--text-tertiary);
-  margin-bottom: 2rem;
+  color: var(--neutral-gray-200);
 }
 
-.ctaButton {
+.button {
   padding: 1.2rem 2.4rem;
-  background-color: var(--primary-500);
+  font-size: 1.6rem;
+  font-weight: 500;
   color: var(--neutral-white);
+  background-color: var(--primary-500);
   border: none;
   border-radius: 0.8rem;
-  font-size: 1.6rem;
-  font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
-.ctaButton:hover {
+.button:hover {
   background-color: var(--primary-600);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-/* Custom Slider Styles */
+/* Custom Slick Slider Styles */
 :global(.slick-dots) {
-  bottom: -4rem;
+  bottom: 2.4rem;
 }
 
 :global(.slick-dots li button:before) {
   font-size: 1.2rem;
-  color: var(--primary-300);
+  color: var(--neutral-white);
   opacity: 0.5;
 }
 
@@ -137,87 +127,30 @@
   opacity: 1;
 }
 
-:global(.slick-prev),
-:global(.slick-next) {
-  width: 4rem;
-  height: 4rem;
-  z-index: 1;
-}
-
-:global(.slick-prev:before),
-:global(.slick-next:before) {
-  font-size: 4rem;
-  opacity: 0.8;
-}
-
-/* Responsive Styles */
-@media screen and (max-width: 1024px) {
-  .slideContainer {
-    grid-template-columns: 1fr;
-  }
-
-  .videoSection {
-    height: 40rem;
-  }
-
-  .contentSection {
-    padding: 2.4rem;
-  }
-}
-
+/* Mobile adjustments */
 @media screen and (max-width: 768px) {
-  .promotionSection {
-    padding: 4rem 0;
-  }
-
-  .header h2 {
-    font-size: var(--h2-mobile);
-  }
-
-  .header p {
-    font-size: 1.6rem;
-  }
-
-  .container {
-    padding: 0 1.6rem;
-  }
-
-  .videoSection {
-    height: 32rem;
-  }
-
-  .videoOverlay h3 {
-    font-size: var(--h3-mobile);
-  }
-
-  .contentHeader h3 {
-    font-size: var(--h4-mobile);
+  .slide {
+    height: 15rem; /* Even shorter on mobile */
   }
 
   .content {
-    font-size: 1.4rem;
-  }
-
-  .ctaButton {
-    width: 100%;
-    padding: 1.4rem;
-  }
-}
-
-@media screen and (max-width: 480px) {
-  .promotionSection {
-    padding: 3.2rem 0;
-  }
-
-  .videoSection {
-    height: 24rem;
-  }
-
-  .videoOverlay {
     padding: 2rem;
   }
 
-  .contentSection {
-    padding: 1.6rem;
+  .title {
+    font-size: var(--h3-mobile);
+  }
+
+  .description {
+    font-size: 1.4rem;
+  }
+
+  .discount {
+    font-size: 2.4rem;
+  }
+
+  .button {
+    padding: 1rem 2rem;
+    font-size: 1.4rem;
   }
 }

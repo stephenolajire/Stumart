@@ -268,8 +268,8 @@ const Home = () => {
 
   return (
     <main className={styles.home}>
-      <Hero />
       <Promotion />
+      <Hero />
 
       <section className={styles.categorySection}>
         <div className={styles.container}>
