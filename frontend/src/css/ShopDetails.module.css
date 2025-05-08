@@ -3,7 +3,7 @@
   margin: 0 auto;
   padding: 2.4rem;
   margin-top: 10rem;
-  /* height: 80vh; */
+  min-height: 80vh;
 }
 
 .header {
