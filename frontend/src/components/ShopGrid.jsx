@@ -7,26 +7,28 @@ const ShopGrid = ({ shops }) => {
   return (
     <div className={styles.shopGrid}>
       {shops && shops.length > 0 ? (
-        shops.map((shop) => (
-          <div key={shop.id}>
-            <Link to={`/shop/${shop.id}`} className={styles.shopCard}>
-              <div className={styles.imageWrapper}>
-                <img
-                  src={`${MEDIA_BASE_URL}${shop.shop_image}`}
-                  alt={shop.business_name}
-                />
-              </div>
-              <div className={styles.shopInfo}>
-                <h3>{shop.business_name}</h3>
-                <p className={styles.category}>{shop.business_category}</p>
-                <p className={styles.category}>{shop.user.state}</p>
-                <p className={styles.category}>{shop.user.institution}</p>
-                <div className={styles.rating}>⭐ {shop.rating}</div>
-                <p className={styles.delivery}>🕒 15mins - 30mins</p>
-              </div>
-            </Link>
-          </div>
-        ))
+        shops.map((shop) =>
+          shop.business_category !== "others" ? (
+            <div key={shop.id}>
+              <Link to={`/shop/${shop.id}`} className={styles.shopCard}>
+                <div className={styles.imageWrapper}>
+                  <img
+                    src={`${MEDIA_BASE_URL}${shop.shop_image}`}
+                    alt={shop.business_name}
+                  />
+                </div>
+                <div className={styles.shopInfo}>
+                  <h3>{shop.business_name}</h3>
+                  <p className={styles.category}>{shop.business_category}</p>
+                  <p className={styles.category}>{shop.user.state}</p>
+                  <p className={styles.category}>{shop.user.institution}</p>
+                  <div className={styles.rating}>⭐ {shop.rating}</div>
+                  <p className={styles.delivery}>🕒 15mins - 30mins</p>
+                </div>
+              </Link>
+            </div>
+          ) : null
+        )
       ) : (
         <div className={styles.contNo}>
           <p>No shops available</p>

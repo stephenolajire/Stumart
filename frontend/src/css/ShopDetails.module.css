@@ -3,6 +3,7 @@
   margin: 0 auto;
   padding: 2.4rem;
   margin-top: 10rem;
+  /* height: 80vh; */
 }
 
 .header {
@@ -106,6 +107,15 @@
 
 .productInfo {
   padding: 1.6rem;
+}
+
+.contNo {
+  min-height: 60vh;
+  margin-top: 10rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
 }
 
 .productInfo h3 {
