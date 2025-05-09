@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect } from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import Swal from "sweetalert2";
 import api from "../constant/api";
@@ -16,6 +16,8 @@ const Login = () => {
     password: "",
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [throttleError, setThrottleError] = useState(null);
+  const [throttleWaitTime, setThrottleWaitTime] = useState(null);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -50,11 +52,21 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    setThrottleError(null);
 
     try {
       const response = await api.post("/token/", formData);
-      const { access, refresh, user_type, is_verified, kyc_status, user_id, is_admin, category, subscription } =
-        response.data;
+      const {
+        access,
+        refresh,
+        user_type,
+        is_verified,
+        kyc_status,
+        user_id,
+        is_admin,
+        category,
+        subscription,
+      } = response.data;
 
       console.log(response.data);
 
@@ -73,7 +85,7 @@ const Login = () => {
       }
 
       // If user is a student and verified, navigate to home
-      if ( user_type== 'admin' && is_admin== true) {
+      if (user_type == "admin" && is_admin == true) {
         navigate("/admin-dashboard");
         auth();
         return;
@@ -84,7 +96,6 @@ const Login = () => {
         navigate(from, { replace: true });
         return;
       }
-
 
       // If user is picker, student picker, or vendor, handle KYC status
       if (["picker", "student_picker", "vendor"].includes(user_type)) {
@@ -105,21 +116,29 @@ const Login = () => {
           return;
         }
 
-        if (kyc_status === "approved" && user_type==="vendor" && category !== "others") {
+        if (
+          kyc_status === "approved" &&
+          user_type === "vendor" &&
+          category !== "others"
+        ) {
           navigate("/vendor-dashboard");
           auth();
           return;
-        }else if (kyc_status === "approved" && user_type==="vendor" && category === "others") {
-          if (subscription==='trial' || subscription==='active'){ 
+        } else if (
+          kyc_status === "approved" &&
+          user_type === "vendor" &&
+          category === "others"
+        ) {
+          if (subscription === "trial" || subscription === "active") {
             navigate("/other-dashboard");
             auth();
             return;
-          }else{
+          } else {
             navigate("/subscription-plans");
             auth();
             return;
           }
-        }else{
+        } else {
           navigate("/picker");
           auth();
           return;
@@ -136,12 +155,41 @@ const Login = () => {
     } catch (error) {
       console.error("Login error:", error);
 
-      Swal.fire({
-        icon: "error",
-        title: "Login Failed",
-        text: error.response?.data?.detail || "Invalid credentials",
-        confirmButtonColor: "var(--primary-500)",
-      });
+      // Check if it's a throttle error (status code 429)
+      if (error.response?.status === 429) {
+        const waitSeconds = error.response.data.wait_seconds || 60;
+        setThrottleError("Too many login attempts. Please try again later.");
+        setThrottleWaitTime(waitSeconds);
+
+        // Start countdown timer
+        let timeLeft = waitSeconds;
+        const timer = setInterval(() => {
+          timeLeft -= 1;
+          setThrottleWaitTime(timeLeft);
+
+          if (timeLeft <= 0) {
+            clearInterval(timer);
+            setThrottleError(null);
+            setThrottleWaitTime(null);
+          }
+        }, 1000);
+
+        Swal.fire({
+          icon: "warning",
+          title: "Too Many Attempts",
+          text: `Please wait ${waitSeconds} seconds before trying again.`,
+          confirmButtonColor: "var(--primary-500)",
+          timer: waitSeconds * 1000,
+          timerProgressBar: true,
+        });
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Login Failed",
+          text: error.response?.data?.detail || "Invalid credentials",
+          confirmButtonColor: "var(--primary-500)",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -157,6 +205,15 @@ const Login = () => {
         </div>
 
         <form onSubmit={handleSubmit} className={styles.form}>
+          {throttleError && (
+            <div className={styles.throttleError}>
+              <p>{throttleError}</p>
+              {throttleWaitTime > 0 && (
+                <p>Try again in {throttleWaitTime} seconds</p>
+              )}
+            </div>
+          )}
+
           <div className={styles.inputGroup}>
             <label htmlFor="email">Email</label>
             <input
@@ -190,9 +247,13 @@ const Login = () => {
           <button
             type="submit"
             className={styles.loginButton}
-            disabled={isLoading}
+            disabled={isLoading || throttleWaitTime > 0}
           >
-            {isLoading ? "Logging in..." : "Login"}
+            {isLoading
+              ? "Logging in..."
+              : throttleWaitTime > 0
+              ? `Wait ${throttleWaitTime}s`
+              : "Login"}
           </button>
 
           <div className={styles.registerLink}>

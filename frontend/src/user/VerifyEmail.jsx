@@ -26,6 +26,9 @@ const VerifyEmail = () => {
     return 600;
   });
 
+  const [throttleError, setThrottleError] = useState(null);
+  const [throttleWaitTime, setThrottleWaitTime] = useState(null);
+
   // Update countdown timer effect
   useEffect(() => {
     if (timeLeft === 0) {
@@ -78,6 +81,22 @@ const VerifyEmail = () => {
     }
   };
 
+  const handleThrottleError = (waitSeconds) => {
+    setThrottleError("Too many attempts. Please wait before trying again.");
+    setThrottleWaitTime(waitSeconds);
+
+    const timer = setInterval(() => {
+      setThrottleWaitTime((prevTime) => {
+        if (prevTime <= 1) {
+          clearInterval(timer);
+          setThrottleError(null);
+          return null;
+        }
+        return prevTime - 1;
+      });
+    }, 1000);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const otpString = otp.join("");
@@ -112,12 +131,27 @@ const VerifyEmail = () => {
       navigate("/login");
     } catch (error) {
       console.error("Verification error:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Verification Failed",
-        text: error.response?.data?.error || "Please try again",
-        confirmButtonColor: "var(--primary-500)",
-      });
+
+      if (error.response?.status === 429) {
+        const waitSeconds = error.response.data.wait_seconds || 60;
+        handleThrottleError(waitSeconds);
+
+        Swal.fire({
+          icon: "warning",
+          title: "Too Many Attempts",
+          text: `Please wait ${waitSeconds} seconds before trying again.`,
+          timer: waitSeconds * 1000,
+          timerProgressBar: true,
+          confirmButtonColor: "var(--primary-500)",
+        });
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Verification Failed",
+          text: error.response?.data?.error || "Please try again",
+          confirmButtonColor: "var(--primary-500)",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -142,12 +176,26 @@ const VerifyEmail = () => {
         confirmButtonColor: "var(--primary-500)",
       });
     } catch (error) {
-      Swal.fire({
-        icon: "error",
-        title: "Failed to Resend",
-        text: error.response?.data?.error || "Failed to send new code",
-        confirmButtonColor: "var(--primary-500)",
-      });
+      if (error.response?.status === 429) {
+        const waitSeconds = error.response.data.wait_seconds || 60;
+        handleThrottleError(waitSeconds);
+
+        Swal.fire({
+          icon: "warning",
+          title: "Too Many Attempts",
+          text: `Please wait ${waitSeconds} seconds before requesting a new code.`,
+          timer: waitSeconds * 1000,
+          timerProgressBar: true,
+          confirmButtonColor: "var(--primary-500)",
+        });
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Failed to Resend",
+          text: error.response?.data?.error || "Failed to send new code",
+          confirmButtonColor: "var(--primary-500)",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -182,6 +230,15 @@ const VerifyEmail = () => {
           </span>
         </div>
 
+        {throttleError && (
+          <div className={styles.throttleError}>
+            <p>{throttleError}</p>
+            {throttleWaitTime > 0 && (
+              <p>Try again in {throttleWaitTime} seconds</p>
+            )}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className={styles.verifyForm}>
           <div className={styles.otpInputs}>
             {otp.map((digit, index) => (
@@ -202,18 +259,22 @@ const VerifyEmail = () => {
           <button
             type="submit"
             className={styles.verifyButton}
-            disabled={isLoading || timeLeft === 0}
+            disabled={isLoading || timeLeft === 0 || throttleWaitTime > 0}
           >
-            {isLoading ? "Verifying..." : "Verify Email"}
+            {isLoading
+              ? "Verifying..."
+              : throttleWaitTime > 0
+              ? `Wait ${throttleWaitTime}s`
+              : "Verify Email"}
           </button>
 
           <button
             type="button"
             className={styles.resendButton}
             onClick={handleResendClick}
-            disabled={isLoading}
+            disabled={isLoading || timeLeft > 0 || throttleWaitTime > 0}
           >
-            Resend Code
+            {throttleWaitTime > 0 ? `Wait ${throttleWaitTime}s` : "Resend Code"}
           </button>
         </form>
       </div>

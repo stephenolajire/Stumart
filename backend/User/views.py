@@ -13,11 +13,14 @@ from django.core.mail import send_mail
 from django.conf import settings
 from .models import OTP
 from rest_framework import permissions
+from .throttles import LoginRateThrottle
+from .throttles import RegisterThrottle, EmailVerificationThrottle
 
 class BaseAPIView(APIView):
     model = None
     serializer_class = None
     permission_classes = [AllowAny]
+    throttle_classes = [RegisterThrottle]
 
     def get(self, request, pk=None):
         if pk:
@@ -199,6 +202,7 @@ class StudentPickerAPIView(BaseAPIView):
 
 class VerificationViewSet(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [EmailVerificationThrottle]
 
     def post(self, request):
         user_id = request.data.get('user_id')
@@ -244,6 +248,7 @@ class VerificationViewSet(APIView):
 
 class ResendOTPView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [EmailVerificationThrottle]
 
     def post(self, request):
         user_id = request.data.get('user_id')
@@ -352,7 +357,25 @@ class KYCVerificationView(APIView):
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
+    throttle_classes = [LoginRateThrottle]
 
+    def post(self, request, *args, **kwargs):
+        try:
+            response = super().post(request, *args, **kwargs)
+            if response.status_code == 200:
+                user = User.objects.get(email=request.data['email'])
+                response.data['user'] = {
+                    'id': user.id,
+                    'email': user.email,
+                    'user_type': user.user_type,
+                    'is_verified': user.is_verified
+                }
+            return response
+        except Exception as e:
+            return Response(
+                {'error': 'Invalid credentials'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
 
 class RequestOTPView(APIView):
     def post(self, request):

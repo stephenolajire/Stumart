@@ -212,6 +212,10 @@
   .sectionTitle {
     font-size: var(--h3-mobile);
   }
+
+  .categorySection {
+    margin-top: -6rem;
+  }
 }
 
 @media screen and (max-width: 480px) {

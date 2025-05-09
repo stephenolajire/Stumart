@@ -61,6 +61,8 @@ const Signup = () => {
   const [isSubmitEnabled, setIsSubmitEnabled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showOtherCategories, setShowOtherCategories] = useState(false);
+  const [throttleError, setThrottleError] = useState(null);
+  const [throttleWaitTime, setThrottleWaitTime] = useState(null);
 
   // Validate form inputs
   const validateForm = () => {
@@ -211,122 +213,150 @@ const Signup = () => {
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (validateForm()) {
-      setIsLoading(true);
+    if (!validateForm() || throttleWaitTime > 0) return;
 
-      try {
-        // Create form data
-        const formDataToSend = new FormData();
+    setIsLoading(true);
+    setThrottleError(null);
 
-        // Add all user fields
-        const userData = {
-          email: formData.email,
-          username: formData.email,
-          password: formData.password,
-          first_name: formData.firstName,
-          last_name: formData.lastName,
-          phone_number: formData.phoneNumber,
-          state: formData.state,
-          institution: formData.institution,
-          user_type: formData.userType.toLowerCase().replace(" ", "_"),
-        };
+    try {
+      // Create form data
+      const formDataToSend = new FormData();
 
-        // Append each user field separately
-        Object.keys(userData).forEach((key) => {
-          formDataToSend.append(`user.${key}`, userData[key]);
+      // Add all user fields
+      const userData = {
+        email: formData.email,
+        username: formData.email,
+        password: formData.password,
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        phone_number: formData.phoneNumber,
+        state: formData.state,
+        institution: formData.institution,
+        user_type: formData.userType.toLowerCase().replace(" ", "_"),
+      };
+
+      // Append each user field separately
+      Object.keys(userData).forEach((key) => {
+        formDataToSend.append(`user.${key}`, userData[key]);
+      });
+
+      // Handle profile picture
+      if (formData.profilePic) {
+        formDataToSend.append("profile_pic", formData.profilePic);
+      }
+
+      let endpoint = "";
+
+      // Handle specific user types
+      switch (formData.userType) {
+        case "Student":
+          endpoint = "/students/";
+          formDataToSend.append("matric_number", formData.matricNumber);
+          formDataToSend.append("department", formData.department);
+          break;
+
+        case "Vendor":
+          endpoint = "/vendors/";
+          formDataToSend.append("business_name", formData.businessName);
+          formDataToSend.append(
+            "business_category",
+            formData.businessCategory.toLowerCase()
+          );
+          if (formData.businessCategory === "Others") {
+            // Use the value from the selected option
+            formDataToSend.append(
+              "specific_category",
+              formData.specificCategory // This will now be the value like "laundry", "note_writing", etc.
+            );
+          }
+          if (formData.shopImage) {
+            formDataToSend.append("shop_image", formData.shopImage);
+          }
+          // Add bank details
+          formDataToSend.append("bank_name", formData.bankName);
+          formDataToSend.append("account_name", formData.accountName);
+          formDataToSend.append("account_number", formData.accountNumber);
+          break;
+
+        case "Picker":
+          endpoint = "/pickers/";
+          formDataToSend.append("fleet_type", formData.fleetType.toLowerCase());
+          // Add bank details
+          formDataToSend.append("bank_name", formData.bankName);
+          formDataToSend.append("account_name", formData.accountName);
+          formDataToSend.append("account_number", formData.accountNumber);
+          break;
+
+        case "Student Picker":
+          endpoint = "/student-pickers/";
+          formDataToSend.append("hostel_name", formData.hostelName);
+          formDataToSend.append("room_number", formData.roomNumber);
+          // Add bank details
+          formDataToSend.append("bank_name", formData.bankName);
+          formDataToSend.append("account_name", formData.accountName);
+          formDataToSend.append("account_number", formData.accountNumber);
+          break;
+
+        default:
+          throw new Error("Invalid user type");
+      }
+
+      // Log form data for debugging
+      for (let pair of formDataToSend.entries()) {
+        console.log(pair[0], pair[1]);
+      }
+
+      const response = await api.post(endpoint, formDataToSend, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      if (response.data?.user_id) {
+        await Swal.fire({
+          icon: "success",
+          title: "Registration Successful!",
+          text: "Please check your email for verification code.",
+          confirmButtonColor: "var(--primary-500)",
         });
 
-        // Handle profile picture
-        if (formData.profilePic) {
-          formDataToSend.append("profile_pic", formData.profilePic);
-        }
-
-        let endpoint = "";
-
-        // Handle specific user types
-        switch (formData.userType) {
-          case "Student":
-            endpoint = "/students/";
-            formDataToSend.append("matric_number", formData.matricNumber);
-            formDataToSend.append("department", formData.department);
-            break;
-
-          case "Vendor":
-            endpoint = "/vendors/";
-            formDataToSend.append("business_name", formData.businessName);
-            formDataToSend.append(
-              "business_category",
-              formData.businessCategory.toLowerCase()
-            );
-            if (formData.businessCategory === "Others") {
-              // Use the value from the selected option
-              formDataToSend.append(
-                "specific_category",
-                formData.specificCategory // This will now be the value like "laundry", "note_writing", etc.
-              );
-            }
-            if (formData.shopImage) {
-              formDataToSend.append("shop_image", formData.shopImage);
-            }
-            // Add bank details
-            formDataToSend.append("bank_name", formData.bankName);
-            formDataToSend.append("account_name", formData.accountName);
-            formDataToSend.append("account_number", formData.accountNumber);
-            break;
-
-          case "Picker":
-            endpoint = "/pickers/";
-            formDataToSend.append(
-              "fleet_type",
-              formData.fleetType.toLowerCase()
-            );
-            // Add bank details
-            formDataToSend.append("bank_name", formData.bankName);
-            formDataToSend.append("account_name", formData.accountName);
-            formDataToSend.append("account_number", formData.accountNumber);
-            break;
-
-          case "Student Picker":
-            endpoint = "/student-pickers/";
-            formDataToSend.append("hostel_name", formData.hostelName);
-            formDataToSend.append("room_number", formData.roomNumber);
-            // Add bank details
-            formDataToSend.append("bank_name", formData.bankName);
-            formDataToSend.append("account_name", formData.accountName);
-            formDataToSend.append("account_number", formData.accountNumber);
-            break;
-
-          default:
-            throw new Error("Invalid user type");
-        }
-
-        // Log form data for debugging
-        for (let pair of formDataToSend.entries()) {
-          console.log(pair[0], pair[1]);
-        }
-
-        const response = await api.post(endpoint, formDataToSend, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+        // Navigate to verify email with user ID
+        navigate("/verify-email", {
+          state: { userId: response.data.user_id },
         });
+      }
+    } catch (error) {
+      console.error("Registration error:", error);
 
-        if (response.data?.user_id) {
-          await Swal.fire({
-            icon: "success",
-            title: "Registration Successful!",
-            text: "Please check your email for verification code.",
-            confirmButtonColor: "var(--primary-500)",
+      // Handle throttle error
+      if (error.response?.status === 429) {
+        const waitSeconds = error.response.data.wait_seconds || 60;
+        setThrottleError(
+          "Too many registration attempts. Please try again later."
+        );
+        setThrottleWaitTime(waitSeconds);
+
+        // Start countdown timer
+        const timer = setInterval(() => {
+          setThrottleWaitTime((prevTime) => {
+            if (prevTime <= 1) {
+              clearInterval(timer);
+              setThrottleError(null);
+              return null;
+            }
+            return prevTime - 1;
           });
+        }, 1000);
 
-          // Navigate to verify email with user ID
-          navigate("/verify-email", {
-            state: { userId: response.data.user_id },
-          });
-        }
-      } catch (error) {
-        console.error("Registration error:", error);
-
+        Swal.fire({
+          icon: "warning",
+          title: "Too Many Attempts",
+          text: `Please wait ${waitSeconds} seconds before trying again.`,
+          timer: waitSeconds * 1000,
+          timerProgressBar: true,
+          confirmButtonColor: "var(--primary-500)",
+        });
+      } else {
         // Handle different types of errors
         const errorMessage =
           error.response?.data?.detail ||
@@ -341,9 +371,9 @@ const Signup = () => {
           text: errorMessage,
           confirmButtonColor: "var(--primary-500)",
         });
-      } finally {
-        setIsLoading(false);
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -355,6 +385,15 @@ const Signup = () => {
           <h2>Welcome to StuMart</h2>
           <p>Create an account to get started</p>
         </div>
+
+        {throttleError && (
+          <div className={styles.throttleError}>
+            <p>{throttleError}</p>
+            {throttleWaitTime > 0 && (
+              <p>Try again in {throttleWaitTime} seconds</p>
+            )}
+          </div>
+        )}
 
         {/* User Type Selection */}
         <div className={styles.formGroup}>
@@ -787,9 +826,13 @@ const Signup = () => {
         <button
           type="submit"
           className={styles.submitButton}
-          disabled={!isSubmitEnabled || isLoading}
+          disabled={!isSubmitEnabled || isLoading || throttleWaitTime > 0}
         >
-          {isLoading ? "Creating Account..." : "Create Account"}
+          {isLoading
+            ? "Creating Account..."
+            : throttleWaitTime > 0
+            ? `Wait ${throttleWaitTime}s`
+            : "Create Account"}
         </button>
       </form>
     </div>

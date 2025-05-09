@@ -198,7 +198,20 @@ CORS_ALLOW_HEADERS = [
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
+    ),
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/day',
+        'user': '1000/day',
+        'login': '5/minute',
+        'email_verification': '3/minute',
+        'password_reset': '3/minute',
+        'register': '10/hour',
+    },
+    'EXCEPTION_HANDLER': 'User.utils.custom_exception_handler'
 }
 
 AUTH_USER_MODEL = "User.User"

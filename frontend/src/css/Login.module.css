@@ -95,6 +95,11 @@
   background: var(--primary-600);
 }
 
+.loginButton:disabled {
+  background-color: var(--neutral-gray-300);
+  cursor: not-allowed;
+}
+
 .registerLink {
   text-align: center;
   font-size: 1.4rem;
@@ -104,6 +109,26 @@
 .registerLink a {
   color: var(--primary-500);
   text-decoration: none;
+  font-weight: 500;
+}
+
+.throttleError {
+  background-color: var(--primary-100);
+  border: 1px solid var(--warning);
+  border-radius: 0.8rem;
+  padding: 1.6rem;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.throttleError p {
+  color: var(--warning);
+  font-size: 1.4rem;
+  margin: 0;
+}
+
+.throttleError p:last-child {
+  margin-top: 0.8rem;
   font-weight: 500;
 }
 

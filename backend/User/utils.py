@@ -2,6 +2,8 @@ import logging
 from django.core.mail import send_mail
 from django.conf import settings
 from .models import OTP
+from rest_framework.views import exception_handler
+from rest_framework.exceptions import Throttled
 
 logger = logging.getLogger(__name__)
 
@@ -37,3 +39,15 @@ def send_otp_email(user):
     except Exception as e:
         logger.error(f"Failed to send OTP email: {str(e)}")
         raise Exception("Failed to send verification email")
+
+def custom_exception_handler(exc, context):
+    response = exception_handler(exc, context)
+
+    if isinstance(exc, Throttled):
+        custom_response_data = {
+            'error': 'Too many attempts. Please try again later.',
+            'wait_seconds': exc.wait
+        }
+        response.data = custom_response_data
+
+    return response
