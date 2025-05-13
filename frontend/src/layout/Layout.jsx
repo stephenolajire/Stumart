@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import Navigation from '../components/Navigation';
-import Footer from '../components/Footer';
-import { Outlet } from 'react-router-dom';
-import { FaPlayCircle, FaTimes } from 'react-icons/fa';
-import styles from './Layout.module.css';
+import React, { useState } from "react";
+import Navigation from "../components/Navigation";
+import Footer from "../components/Footer";
+import { Outlet } from "react-router-dom";
+import { FaPlayCircle, FaTimes } from "react-icons/fa";
+import styles from "./Layout.module.css";
 
 const Layout = () => {
   const [showModal, setShowModal] = useState(false);
@@ -17,7 +17,7 @@ const Layout = () => {
       <Footer />
 
       {/* Learn More Button */}
-      <button 
+      <button
         className={styles.learnMoreBtn}
         onClick={toggleModal}
         aria-label="Learn how to use platform"
@@ -28,8 +28,11 @@ const Layout = () => {
       {/* Video Modal */}
       {showModal && (
         <div className={styles.modalOverlay} onClick={toggleModal}>
-          <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
-            <button 
+          <div
+            className={styles.modalContent}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
               className={styles.closeBtn}
               onClick={toggleModal}
               aria-label="Close tutorial"
@@ -38,7 +41,7 @@ const Layout = () => {
             </button>
             <div className={styles.videoWrapper}>
               <iframe
-                src="YOUR_VIDEO_URL_HERE"
+                src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=0&rel=0&modestbranding=1"
                 title="Platform Tutorial"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
