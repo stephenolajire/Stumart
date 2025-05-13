@@ -29,7 +29,7 @@ const Footer = () => {
           <div className={styles.footerSection}>
             <h3 className={styles.sectionTitle}>Services</h3>
             <ul className={styles.linkList}>
-              <li><NavLink to="/vendor">Become a Vendor</NavLink></li>
+              <li><NavLink to="/vendors">Become a Vendor</NavLink></li>
               <li><NavLink to="/rider">Become a Rider</NavLink></li>
               {/* <li><NavLink to="/track-order">Track Order</NavLink></li> */}
               <li><NavLink to="/contact">Support</NavLink></li>
