@@ -3,7 +3,7 @@ import Navigation from "../components/Navigation";
 import Footer from "../components/Footer";
 import { Outlet } from "react-router-dom";
 import { FaPlayCircle, FaTimes } from "react-icons/fa";
-import styles from "./Layout.module.css";
+import styles from "../css/Layout.module.css";
 
 const Layout = () => {
   const [showModal, setShowModal] = useState(false);
