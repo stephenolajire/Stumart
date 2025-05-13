@@ -1,7 +1,11 @@
 import styles from "../css/Hero.module.css";
 import stumart from "../assets/stumart1.jpeg";
 import { Link } from "react-router-dom";
+import { useContext } from "react";
+import { GlobalContext } from "../constant/GlobalContext";
 const Hero = () => {
+
+  const {isAuthenticated} = useContext(GlobalContext);
   return (
     <section className={styles.hero}>
       <div className={styles.container}>
@@ -17,9 +21,13 @@ const Hero = () => {
               everyone.
             </span>
           </p>
-          <Link to="/register">
-            <button className={styles.ctaButton}>Start Shopping</button>
-          </Link>
+          {isAuthenticated ? (
+            ""
+          ) : (
+            <Link to="/register">
+              <button className={styles.ctaButton}>Start Shopping</button>
+            </Link>
+          )}
         </div>
         <div className={styles.imageWrapper}>
           <img src={stumart} alt="Vibrant campus marketplace" />
