@@ -13,7 +13,7 @@ const promotions = [
     title: "Back to School Sale",
     video:
       "https://res.cloudinary.com/demo/video/upload/v1452716716/fashion_show.mp4",
-    image: stumart1,
+    image: stumart4,
     thumbnail:
       "https://images.pexels.com/photos/5428836/pexels-photo-5428836.jpeg",
     description: "Get 20% off on all stationery items",
