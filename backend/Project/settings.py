@@ -204,7 +204,7 @@ REST_FRAMEWORK = {
         'login': '5/minute',
         'email_verification': '3/minute',
         'password_reset': '3/minute',
-        'register': '10/hour',
+        'register': '3/hour',
     },
     'EXCEPTION_HANDLER': 'User.utils.custom_exception_handler'
 }
