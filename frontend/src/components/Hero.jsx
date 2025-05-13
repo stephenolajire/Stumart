@@ -1,5 +1,6 @@
 import styles from "../css/Hero.module.css";
 import stumart from "../assets/stumarts.jpg";
+import { Link } from "react-router-dom";
 const Hero = () => {
   return (
     <section className={styles.hero}>
@@ -16,13 +17,12 @@ const Hero = () => {
               everyone.
             </span>
           </p>
-          <button className={styles.ctaButton}>Start Shopping</button>
+          <Link to="/register">
+            <button className={styles.ctaButton}>Start Shopping</button>
+          </Link>
         </div>
         <div className={styles.imageWrapper}>
-          <img
-            src={stumart}
-            alt="Vibrant campus marketplace"
-          />
+          <img src={stumart} alt="Vibrant campus marketplace" />
         </div>
       </div>
     </section>
