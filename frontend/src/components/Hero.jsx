@@ -1,5 +1,5 @@
 import styles from "../css/Hero.module.css";
-import stumart from "../assets/stumarts.jpg";
+import stumart from "../assets/stumart1.jpeg";
 import { Link } from "react-router-dom";
 const Hero = () => {
   return (
