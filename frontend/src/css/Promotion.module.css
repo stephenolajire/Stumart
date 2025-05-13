@@ -27,11 +27,13 @@
   height: 100%;
 }
 
-.video {
+.video, .image {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  max-height: 20rem; 
 }
+
 
 .overlay {
   position: absolute;
@@ -77,6 +79,12 @@
   align-items: center;
   gap: 2.4rem;
 }
+
+/* .image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+} */
 
 .offer {
   display: flex;
@@ -131,11 +139,17 @@
 /* Mobile adjustments */
 @media screen and (max-width: 768px) {
   .slide {
-    height: 15rem; /* Even shorter on mobile */
+    height: 18rem; 
+  }
+
+  .video, .image {
+    max-height: 18rem; 
+    object-fit: cover;
   }
 
   .content {
     padding: 2rem;
+    display: none;
   }
 
   .title {

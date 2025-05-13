@@ -2,7 +2,10 @@ import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import styles from "../css/Promotion.module.css";
-
+import stumart1 from "../assets/stumart1.jpeg";
+import stumart2 from "../assets/stumart2.jpeg"; 
+import stumart3 from "../assets/stumart3.jpeg"; 
+import stumart4 from "../assets/stumart4.jpeg";
 // Updated promotion data with real video URLs from Pexels
 const promotions = [
   {
@@ -10,6 +13,7 @@ const promotions = [
     title: "Back to School Sale",
     video:
       "https://res.cloudinary.com/demo/video/upload/v1452716716/fashion_show.mp4",
+    image: stumart1,
     thumbnail:
       "https://images.pexels.com/photos/5428836/pexels-photo-5428836.jpeg",
     description: "Get 20% off on all stationery items",
@@ -25,6 +29,7 @@ const promotions = [
         "Backpacks",
         "Study Accessories",
       ],
+
       terms: [
         "Discount applies to selected items",
         "Cannot be combined with other offers",
@@ -42,6 +47,7 @@ const promotions = [
     title: "Food Festival Week",
     video:
       "https://res.cloudinary.com/demo/video/upload/v1452716767/sea-turtle.mp4",
+    image: stumart2,
     thumbnail:
       "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg",
     description: "Amazing deals on campus restaurants",
@@ -79,6 +85,7 @@ const promotions = [
     title: "Tech Gadget Fair",
     video:
       "https://res.cloudinary.com/demo/video/upload/v1452716847/snow-work.mp4",
+    image: stumart3,
     thumbnail:
       "https://images.pexels.com/photos/1447264/pexels-photo-1447264.jpeg",
     description: "Latest gadgets at student-friendly prices",
@@ -140,7 +147,7 @@ const Promotion = () => {
           {promotions.map((promo) => (
             <div key={promo.id} className={styles.slide}>
               <div className={styles.mediaWrapper}>
-                <video
+                {/* <video
                   className={styles.video}
                   autoPlay
                   loop
@@ -149,7 +156,8 @@ const Promotion = () => {
                   poster={promo.thumbnail}
                 >
                   <source src={promo.video} type="video/mp4" />
-                </video>
+                </video> */}
+                <img className={styles.image} src={promo.image} alt="image" />
                 <div className={styles.overlay}></div>
               </div>
 
