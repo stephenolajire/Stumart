@@ -10,7 +10,8 @@ const Footer = () => {
           <div className={styles.footerSection}>
             <h3 className={styles.sectionTitle}>StuMart</h3>
             <p className={styles.description}>
-              Your one-stop marketplace for campus commerce, connecting students with local vendors.
+              Your one-stop marketplace for campus commerce, connecting students
+              with local vendors.
             </p>
           </div>
 
@@ -18,10 +19,16 @@ const Footer = () => {
           <div className={styles.footerSection}>
             <h3 className={styles.sectionTitle}>Quick Links</h3>
             <ul className={styles.linkList}>
-              <li><NavLink to="/">Home</NavLink></li>
+              <li>
+                <NavLink to="/">Home</NavLink>
+              </li>
               {/* <li><NavLink to="/shop">Shop</NavLink></li> */}
-              <li><NavLink to="/vendors">Vendors</NavLink></li>
-              <li><NavLink to="/about">About</NavLink></li>
+              <li>
+                <NavLink to="/vendors">Vendors</NavLink>
+              </li>
+              <li>
+                <NavLink to="/about">About</NavLink>
+              </li>
             </ul>
           </div>
 
@@ -29,10 +36,16 @@ const Footer = () => {
           <div className={styles.footerSection}>
             <h3 className={styles.sectionTitle}>Services</h3>
             <ul className={styles.linkList}>
-              <li><NavLink to="/vendors">Become a Vendor</NavLink></li>
-              <li><NavLink to="/rider">Become a Rider</NavLink></li>
+              <li>
+                <NavLink to="/vendors">Become a Vendor</NavLink>
+              </li>
+              <li>
+                <NavLink to="/rider">Become a Rider</NavLink>
+              </li>
               {/* <li><NavLink to="/track-order">Track Order</NavLink></li> */}
-              <li><NavLink to="/contact">Support</NavLink></li>
+              <li>
+                <NavLink to="/contact">Support</NavLink>
+              </li>
             </ul>
           </div>
 
@@ -40,7 +53,7 @@ const Footer = () => {
           <div className={styles.footerSection}>
             <h3 className={styles.sectionTitle}>Contact Us</h3>
             <ul className={styles.contactList}>
-              <li>Email: support@stumart.com</li>
+              <li>Email: stumartstorejv@gmail.com</li>
               <li>Phone: +234 123 456 7890</li>
               <li>Address: Your University Campus</li>
             </ul>

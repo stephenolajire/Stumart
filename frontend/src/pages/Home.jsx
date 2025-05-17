@@ -273,7 +273,7 @@ const Home = () => {
 
       <section className={styles.categorySection}>
         <div className={styles.container}>
-          <h2>Browse by School You In</h2>
+          <h2>Browse by School You Are In</h2>
           <p>Explore shops based on your interests</p>
           <div className={styles.filtering}>
             <div className={styles.filterSection}>
