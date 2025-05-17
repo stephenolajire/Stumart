@@ -1725,5 +1725,3 @@ class AllProductsView(APIView):
                 {'error': 'An error occurred while processing your request.'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-
-

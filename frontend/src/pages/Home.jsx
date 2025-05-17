@@ -20,8 +20,8 @@ import {
   FaTablet,
   FaSearch,
 } from "react-icons/fa";
-
 import { GlobalContext } from "../constant/GlobalContext";
+
 import { nigeriaInstitutions } from "../constant/data";
 import api from "../constant/api";
 
@@ -40,8 +40,14 @@ const categories = [
 
 const Home = () => {
   const navigate = useNavigate();
-  const { shopsData, fetchShopsBySchool, fetchShopData, loading } =
-    useContext(GlobalContext);
+  const {
+    shopsData,
+    fetchShopsBySchool,
+    fetchShopData,
+    loading,
+    isAuthenticated,
+    user, // Add user from context
+  } = useContext(GlobalContext);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedState, setSelectedState] = useState("");
   const [selectedSchool, setSelectedSchool] = useState("");
@@ -81,6 +87,51 @@ const Home = () => {
     }
     setSelectedSchool(""); // Reset selected school when state changes
   }, [selectedState]);
+
+  // Add effect to handle authenticated user's institution
+  useEffect(() => {
+    if (isAuthenticated && user?.institution) {
+      // Set the user's state and school automatically
+      const userState = Object.keys(nigeriaInstitutions).find((state) =>
+        nigeriaInstitutions[state].includes(user.institution)
+      );
+
+      if (userState) {
+        setSelectedState(userState);
+        setSelectedSchool(user.institution);
+
+        // Fetch shops for user's institution
+        const fetchUserInstitutionShops = async () => {
+          try {
+            const fetchedSchoolShops = await fetchShopsBySchool(
+              user.institution
+            );
+
+            if (
+              Array.isArray(fetchedSchoolShops) &&
+              fetchedSchoolShops.length > 0
+            ) {
+              setSchoolShops(fetchedSchoolShops);
+              const filtered = applyFilters(
+                fetchedSchoolShops,
+                selectedCategory
+              );
+              setFilteredShops(filtered);
+              setDisplayMode("schoolShops");
+            } else {
+              setSchoolShops([]);
+              setFilteredShops([]);
+              setDisplayMode("schoolShops");
+            }
+          } catch (error) {
+            console.error("Error fetching institution shops:", error);
+          }
+        };
+
+        fetchUserInstitutionShops();
+      }
+    }
+  }, [isAuthenticated, user?.institution]);
 
   // Function to filter shops based on category
   const applyFilters = (shops, category) => {
@@ -214,7 +265,6 @@ const Home = () => {
   };
 
   // Handle product search
-  // Handle product search
   const handleProductSearch = async (e) => {
     e.preventDefault();
     if (!productName.trim()) return;
@@ -301,6 +351,7 @@ const Home = () => {
                         value={selectedState}
                         onChange={(e) => setSelectedState(e.target.value)}
                         className={styles.selectInput}
+                        disabled={isAuthenticated} // Disable if authenticated
                       >
                         <option value="">-- Select State --</option>
                         {states.map((state) => (
@@ -318,7 +369,7 @@ const Home = () => {
                         value={selectedSchool}
                         onChange={(e) => setSelectedSchool(e.target.value)}
                         className={styles.selectInput}
-                        disabled={!selectedState}
+                        disabled={isAuthenticated || !selectedState} // Disable if authenticated or no state selected
                       >
                         <option value="">-- Select School --</option>
                         {availableSchools.map((school, index) => (
@@ -338,12 +389,15 @@ const Home = () => {
                     >
                       {isSearching ? "Searching..." : "Search Products"}
                     </button>
-                    {(selectedState || selectedSchool || productName) && (
+                    {((!isAuthenticated && (selectedState || selectedSchool)) ||
+                      productName) && (
                       <button
                         type="button"
                         className={styles.resetButton}
                         onClick={() => {
-                          handleResetFilter();
+                          if (!isAuthenticated) {
+                            handleResetFilter();
+                          }
                           setProductName("");
                         }}
                       >
