@@ -142,7 +142,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['user_type'] = user.user_type
         token['is_verified'] = user.is_verified
         token['is_admin'] = user.is_staff
-        
+        token['institution'] = user.institution        
         
         # Get KYC status
         try:
@@ -165,6 +165,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data['is_verified'] = self.user.is_verified
         data['user_id'] = self.user.id
         data['is_admin'] = self.user.is_staff
+        data['institution] = self.user.institution
+
 
         # KYC status
         kyc_status = getattr(getattr(self.user, 'kyc', None), 'verification_status', None)
