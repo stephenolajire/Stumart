@@ -49,7 +49,7 @@ const Home = () => {
     user, // Add user from context
   } = useContext(GlobalContext);
   const institution = localStorage.getItem("institution")
-  const user_type = localStorage.getItem("user_type)
+  const user_type = localStorage.getItem("user_type")
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedState, setSelectedState] = useState("");
   const [selectedSchool, setSelectedSchool] = useState("");
