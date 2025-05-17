@@ -213,11 +213,13 @@ const AllProducts = () => {
           Clear Filters
         </button>
       </div>
-      <div className={styles.sortBy}>
-        <button className={styles.clearFilterss} onClick={clearFilters}>
-          Clear Filters
-        </button>
-      </div>
+      {showFilters && (
+        <div className={styles.sortBy}>
+          <button className={styles.clearFilterss} onClick={clearFilters}>
+            Clear Filters
+          </button>
+        </div>
+      )}
       {loading ? (
         <Spinner />
       ) : error ? (
