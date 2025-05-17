@@ -200,4 +200,16 @@
   .featureCard img {
     height: 20rem;
   }
+
+  .containers p{
+    font-size: 1.6rem;
+    /* max-width: 80rem; */
+    margin: 0 auto;
+    line-height: 3rem;
+  }
+  
+  .containers h2 {
+    font-size: 2.4rem;
+    margin-bottom: 0.5rem;
+  }
 }

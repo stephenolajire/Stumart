@@ -1,13 +1,15 @@
-import { useEffect } from 'react';
-import AOS from 'aos';
-import 'aos/dist/aos.css';
-import styles from '../css/About.module.css';
-import teamwork from '../assets/student.jpeg';
-import delivery from '../assets/del.jpeg';
-import campus from '../assets/uni.jpeg';
-import { Link } from 'react-router-dom';
+import { use, useContext, useEffect } from "react";
+import AOS from "aos";
+import "aos/dist/aos.css";
+import styles from "../css/About.module.css";
+import teamwork from "../assets/student.jpeg";
+import delivery from "../assets/del.jpeg";
+import campus from "../assets/uni.jpeg";
+import { Link } from "react-router-dom";
+import { GlobalContext } from "../constant/GlobalContext";
 
 const About = () => {
+  const { isAuthenticated } = useContext(GlobalContext);
   useEffect(() => {
     AOS.init({
       duration: 1000,
@@ -139,9 +141,15 @@ const About = () => {
             Whether you're a student, vendor, or potential delivery partner, be
             part of our growing community.
           </p>
-          <Link to="/register">
-            <button className={styles.ctaButton}>Get Started</button>
-          </Link>
+          {isAuthenticated ? (
+            <Link to="/products">
+              <button className={styles.ctaButton}>Get Started</button>
+            </Link>
+          ) : (
+            <Link to="/register">
+              <button className={styles.ctaButton}>Get Started</button>
+            </Link>
+          )}
         </div>
       </section>
     </div>
