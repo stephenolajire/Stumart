@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import ProductCard from '../components/ProductCard';
-import Spinner from '../components/Spinner';
-import api from '../constant/api';
-import styles from '../css/AllProducts.module.css';
-import { FaFilter, FaSort, FaTimes } from 'react-icons/fa';
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
+import ProductCard from "../components/ProductCard";
+import Spinner from "../components/Spinner";
+import api from "../constant/api";
+import styles from "../css/AllProducts.module.css";
+import { FaFilter, FaSort, FaTimes } from "react-icons/fa";
 
 const AllProducts = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -13,12 +13,13 @@ const AllProducts = () => {
   const [error, setError] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
-    category: searchParams.get('category') || '',
-    minPrice: searchParams.get('min_price') || '',
-    maxPrice: searchParams.get('max_price') || '',
-    sort: searchParams.get('sort') || 'newest',
-    search: searchParams.get('search') || ''
+    category: searchParams.get("category") || "",
+    minPrice: searchParams.get("min_price") || "",
+    maxPrice: searchParams.get("max_price") || "",
+    sort: searchParams.get("sort") || "newest",
+    search: searchParams.get("search") || "",
   });
+  const [categories, setCategories] = useState([]);
 
   const fetchProducts = async () => {
     try {
@@ -26,9 +27,18 @@ const AllProducts = () => {
       const params = new URLSearchParams(filters);
       const response = await api.get(`/all-products/?${params}`);
       setProducts(response.data.results);
+
+      // Extract unique categories from products
+      const uniqueCategories = [
+        ...new Set(
+          response.data.results.map((product) => product.vendor_category)
+        ),
+      ].filter(Boolean); // Remove null/empty categories
+
+      setCategories(uniqueCategories);
       setError(null);
     } catch (err) {
-      setError('Failed to fetch products');
+      setError("Failed to fetch products");
       console.error(err);
     } finally {
       setLoading(false);
@@ -40,8 +50,8 @@ const AllProducts = () => {
   }, [filters]);
 
   const handleFilterChange = (name, value) => {
-    setFilters(prev => ({ ...prev, [name]: value }));
-    setSearchParams(prev => {
+    setFilters((prev) => ({ ...prev, [name]: value }));
+    setSearchParams((prev) => {
       prev.set(name, value);
       return prev;
     });
@@ -49,11 +59,11 @@ const AllProducts = () => {
 
   const clearFilters = () => {
     setFilters({
-      category: '',
-      minPrice: '',
-      maxPrice: '',
-      sort: 'newest',
-      search: ''
+      category: "",
+      minPrice: "",
+      maxPrice: "",
+      sort: "newest",
+      search: "",
     });
     setSearchParams({});
   };
@@ -62,7 +72,7 @@ const AllProducts = () => {
     <div className={styles.productsPage}>
       <div className={styles.header}>
         <h1>All Products</h1>
-        <button 
+        <button
           className={styles.filterToggle}
           onClick={() => setShowFilters(!showFilters)}
         >
@@ -71,26 +81,27 @@ const AllProducts = () => {
         </button>
       </div>
 
-      <div className={`${styles.filters} ${showFilters ? styles.show : ''}`}>
+      <div className={`${styles.filters} ${showFilters ? styles.show : ""}`}>
         <div className={styles.filterGroup}>
           <input
             type="text"
             placeholder="Search products..."
             value={filters.search}
-            onChange={(e) => handleFilterChange('search', e.target.value)}
+            onChange={(e) => handleFilterChange("search", e.target.value)}
           />
         </div>
 
         <div className={styles.filterGroup}>
           <select
             value={filters.category}
-            onChange={(e) => handleFilterChange('category', e.target.value)}
+            onChange={(e) => handleFilterChange("category", e.target.value)}
           >
             <option value="">All Categories</option>
-            <option value="electronics">Electronics</option>
-            <option value="fashion">Fashion</option>
-            <option value="books">Books</option>
-            {/* Add more categories */}
+            {categories.map((category) => (
+              <option key={category} value={category}>
+                {category.replace(/_/g, " ")}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -99,25 +110,25 @@ const AllProducts = () => {
             type="number"
             placeholder="Min Price"
             value={filters.minPrice}
-            onChange={(e) => handleFilterChange('minPrice', e.target.value)}
+            onChange={(e) => handleFilterChange("minPrice", e.target.value)}
           />
           <input
             type="number"
             placeholder="Max Price"
             value={filters.maxPrice}
-            onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
+            onChange={(e) => handleFilterChange("maxPrice", e.target.value)}
           />
         </div>
 
         <div className={styles.filterGroup}>
           <select
             value={filters.sort}
-            onChange={(e) => handleFilterChange('sort', e.target.value)}
+            onChange={(e) => handleFilterChange("sort", e.target.value)}
           >
             <option value="newest">Newest</option>
             <option value="price_low">Price: Low to High</option>
             <option value="price_high">Price: High to Low</option>
-            <option value="rating">Best Rating</option>
+            {/* <option value="rating">Best Rating</option> */}
           </select>
         </div>
 
@@ -132,7 +143,7 @@ const AllProducts = () => {
         <div className={styles.error}>{error}</div>
       ) : (
         <div className={styles.productsGrid}>
-          {products.map(product => (
+          {products.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>

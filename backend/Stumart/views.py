@@ -1638,6 +1638,7 @@ class CancelOrderView(APIView):
                 "message": f"An error occurred: {str(e)}"
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
 class ProductPagination(PageNumberPagination):
     page_size = 12
     page_size_query_param = 'page_size'
@@ -1648,10 +1649,20 @@ class AllProductsView(APIView):
 
     def get(self, request):
         try:
-            # Get query parameters with proper type conversion
+            # Get query parameters with proper type conversion and error handling
             category = request.query_params.get('category', '').strip()
-            min_price = Decimal(request.query_params.get('minPrice', '0') or '0')
-            max_price = Decimal(request.query_params.get('maxPrice', '0') or '999999999')
+            
+            # Safely convert price values to Decimal, using default values if empty
+            try:
+                min_price = Decimal(request.query_params.get('minPrice')) if request.query_params.get('minPrice') else Decimal('0')
+            except (ValueError, TypeError):
+                min_price = Decimal('0')
+                
+            try:
+                max_price = Decimal(request.query_params.get('maxPrice')) if request.query_params.get('maxPrice') else Decimal('999999999')
+            except (ValueError, TypeError):
+                max_price = Decimal('999999999')
+                
             search = request.query_params.get('search', '').strip()
             sort = request.query_params.get('sort', 'newest')
 
@@ -1660,7 +1671,10 @@ class AllProductsView(APIView):
 
             # Apply filters
             if category:
-                queryset = queryset.filter(vendor__business_category__iexact=category)
+                # Filter only by vendor's business category
+                queryset = queryset.filter(
+                    vendor__vendor_profile__business_category__iexact=category
+                )
             
             queryset = queryset.filter(price__gte=min_price, price__lte=max_price)
             
@@ -1690,14 +1704,14 @@ class AllProductsView(APIView):
             # Return paginated response
             return paginator.get_paginated_response(serializer.data)
 
-        except ValueError as e:
-            return Response(
-                {'error': 'Invalid price value provided'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
         except Exception as e:
+            # Log the detailed error
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error in AllProductsView: {str(e)}")
+            
             return Response(
-                {'error': str(e)},
+                {'error': 'An error occurred while processing your request.'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
