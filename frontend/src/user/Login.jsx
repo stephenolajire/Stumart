@@ -66,6 +66,7 @@ const Login = () => {
         is_admin,
         category,
         subscription,
+        institution,
       } = response.data;
 
       console.log(response.data);
@@ -73,8 +74,7 @@ const Login = () => {
       // Store the tokens in local storage
       localStorage.setItem("access", access);
       localStorage.setItem("refresh", refresh);
-
-      // Set default auth header for future requests
+      localStorage.setItem("institution", institution);      // Set default auth header for future requests
       api.defaults.headers.common["Authorization"] = `Bearer ${access}`;
 
       // If user is not verified, send OTP and navigate to email verification
