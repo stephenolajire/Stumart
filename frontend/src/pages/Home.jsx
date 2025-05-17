@@ -246,8 +246,6 @@ const Home = () => {
         });
         console.log("Search results:", response.data.products);
       } else {
-        // This closing brace was missing
-        // Show no products found message
         Swal.fire({
           icon: "info",
           title: "No Products Found",
@@ -259,7 +257,7 @@ const Home = () => {
       Swal.fire({
         icon: "error",
         title: "Search Failed",
-        text: "Failed to search for products. Please try again.",
+        text: "Product not found. Please try again.",
       });
     } finally {
       setIsSearching(false);
