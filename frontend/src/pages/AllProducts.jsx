@@ -4,28 +4,44 @@ import ProductCard from "../components/ProductCard";
 import Spinner from "../components/Spinner";
 import api from "../constant/api";
 import styles from "../css/AllProducts.module.css";
-import { FaFilter, FaSort, FaTimes } from "react-icons/fa";
+import { FaFilter, FaSort, FaTimes, FaBox, FaSadTear } from "react-icons/fa";
+import { nigeriaInstitutions, nigeriaStates } from "../constant/data";
 
 const AllProducts = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
+  const [vendors, setVendors] = useState([]);
+  const [selectedState, setSelectedState] = useState("");
+  const [schools, setSchools] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
     category: searchParams.get("category") || "",
-    minPrice: searchParams.get("min_price") || "",
-    maxPrice: searchParams.get("max_price") || "",
+    minPrice: searchParams.get("minPrice") || "",
+    maxPrice: searchParams.get("maxPrice") || "",
     sort: searchParams.get("sort") || "newest",
     search: searchParams.get("search") || "",
+    school: searchParams.get("school") || "",
+    vendor: searchParams.get("vendor") || "",
+    state: searchParams.get("state") || "",
   });
   const [categories, setCategories] = useState([]);
+
+  // Handle state change
+  const handleStateChange = (state) => {
+    setSelectedState(state);
+    setSchools(state ? nigeriaInstitutions[state] || [] : []);
+    handleFilterChange("state", state);
+    handleFilterChange("school", ""); // Reset school when state changes
+  };
 
   const fetchProducts = async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams(filters);
       const response = await api.get(`/all-products/?${params}`);
+      console.log(response.data.results);
       setProducts(response.data.results);
 
       // Extract unique categories from products
@@ -33,9 +49,22 @@ const AllProducts = () => {
         ...new Set(
           response.data.results.map((product) => product.vendor_category)
         ),
-      ].filter(Boolean); // Remove null/empty categories
-
+      ]
+        .filter(Boolean)
+        .sort();
       setCategories(uniqueCategories);
+
+      // Extract unique vendors from products
+      const uniqueVendors = [
+        ...new Set(
+          response.data.results.map((product) => ({
+            id: product.vendor_id,
+            name: product.vendor_name,
+          }))
+        ),
+      ].filter((vendor) => vendor.name);
+
+      setVendors(uniqueVendors);
       setError(null);
     } catch (err) {
       setError("Failed to fetch products");
@@ -64,6 +93,9 @@ const AllProducts = () => {
       maxPrice: "",
       sort: "newest",
       search: "",
+      school: "",
+      vendor: "",
+      state: "",
     });
     setSearchParams({});
   };
@@ -132,15 +164,86 @@ const AllProducts = () => {
           </select>
         </div>
 
+        {/* State Filter */}
+        <div className={styles.filterGroup}>
+          <select
+            value={filters.state}
+            onChange={(e) => handleStateChange(e.target.value)}
+          >
+            <option value="">All States</option>
+            {nigeriaStates.map((state) => (
+              <option key={state} value={state}>
+                {state.replace(/_/g, " ")}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* School Filter */}
+        <div className={styles.filterGroup}>
+          <select
+            value={filters.school}
+            onChange={(e) => handleFilterChange("school", e.target.value)}
+            disabled={!selectedState}
+          >
+            <option value="">All Schools</option>
+            {schools.map((school) => (
+              <option key={school} value={school}>
+                {school}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Vendor Filter */}
+        <div className={styles.filterGroup}>
+          <select
+            value={filters.vendor}
+            onChange={(e) => handleFilterChange("vendor", e.target.value)}
+          >
+            <option value="">All Vendors</option>
+            {vendors.map((vendor) => (
+              <option key={vendor.id} value={vendor.id}>
+                {vendor.name}
+              </option>
+            ))}
+          </select>
+        </div>
         <button className={styles.clearFilters} onClick={clearFilters}>
           Clear Filters
         </button>
       </div>
-
+      <div className={styles.sortBy}>
+        <button className={styles.clearFilterss} onClick={clearFilters}>
+          Clear Filters
+        </button>
+      </div>
       {loading ? (
         <Spinner />
       ) : error ? (
         <div className={styles.error}>{error}</div>
+      ) : products.length === 0 ? (
+        <div className={styles.noProducts}>
+          <FaBox className={styles.noProductsIcon} />
+          <h2>No Products Found</h2>
+          <p>
+            {filters.search ||
+            filters.category ||
+            filters.state ||
+            filters.school ? (
+              <>
+                <FaSadTear className={styles.sadIcon} />
+                No products match your current filters. Try adjusting your
+                search criteria.
+              </>
+            ) : (
+              "No products are available at this time. Please check back later."
+            )}
+          </p>
+          <button className={styles.clearButton} onClick={clearFilters}>
+            Clear All Filters
+          </button>
+        </div>
       ) : (
         <div className={styles.productsGrid}>
           {products.map((product) => (

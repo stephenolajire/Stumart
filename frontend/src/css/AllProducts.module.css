@@ -3,6 +3,7 @@
   width: 100%;
   margin: 0 auto;
   margin-top: 10rem;
+  min-height: calc(100vh - 8rem);
 }
 
 .header {
@@ -62,7 +63,34 @@
   border-color: var(--primary-500);
 }
 
-.clearFilters {
+.filterGroup select:disabled {
+  background-color: var(--neutral-gray-100);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.filterGroup select {
+  width: 100%;
+  padding: 1rem;
+  border: 1px solid var(--neutral-gray-200);
+  border-radius: 0.6rem;
+  font-size: 1.4rem;
+  background: var(--neutral-white);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.filterGroup select:hover:not(:disabled) {
+  border-color: var(--primary-400);
+}
+
+.filterGroup select:focus {
+  outline: none;
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 2px var(--primary-100);
+}
+
+.clearFilters, .clearFilterss {
   padding: 1rem 2rem;
   background: var(--error);
   color: var(--neutral-white);
@@ -90,6 +118,66 @@
   padding: 2.4rem;
 }
 
+.noProducts {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  background: var(--neutral-gray-50);
+  border-radius: 1.2rem;
+  margin: 2rem 0;
+}
+
+.noProductsIcon {
+  font-size: 6rem;
+  color: var(--primary-500);
+  margin-bottom: 2rem;
+}
+
+.sadIcon {
+  font-size: 2rem;
+  color: var(--warning);
+  margin: 0 0.8rem;
+  vertical-align: middle;
+}
+
+.noProducts h2 {
+  font-size: var(--h3-desktop);
+  color: var(--text-primary);
+  margin-bottom: 1.6rem;
+}
+
+.noProducts p {
+  font-size: 1.6rem;
+  color: var(--text-secondary);
+  margin-bottom: 2.4rem;
+  max-width: 60rem;
+  line-height: 1.5;
+}
+
+.clearButton {
+  padding: 1.2rem 2.4rem;
+  background-color: var(--primary-500);
+  color: var(--neutral-white);
+  border: none;
+  border-radius: 0.8rem;
+  font-size: 1.4rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.clearButton:hover {
+  background-color: var(--primary-600);
+  transform: translateY(-2px);
+}
+
+.sortBy{
+  display: none;
+}
+
 @media screen and (max-width: 768px) {
   .productsPage {
     padding: 1.6rem;
@@ -105,18 +193,56 @@
 
   .filters {
     display: none;
-    grid-template-columns: 1fr;
+    padding: 1.2rem;
   }
 
   .filters.show {
     display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Show 2 filters per row */
+    gap: 1rem;
   }
 
   .filterGroup {
     width: 100%;
   }
 
+  .filterGroup input,
+  .filterGroup select {
+    padding: 0.8rem;
+    font-size: 1.3rem;
+    min-height: 3.6rem;
+  }
+
+  /* Make price inputs appear side by side */
+  .filterGroup:has(input[type="number"]) {
+    flex-direction: row;
+    gap: 0.8rem;
+  }
+
+  /* Make search input full width */
+  .filterGroup:has(input[type="text"]) {
+    grid-column: 1 / -1;
+  }
+
+  /* Make clear filters button full width */
+  .filterGroup:has(.clearFilters) {
+    grid-column: 1 / -1;
+  }
+
+  /* .clearFilters {
+    width: 100%;
+  } */
+
+  .filterGroup {
+    width: 100%;
+    flex-direction: column;
+  }
+
   .filterGroup input {
+    width: 100%;
+  }
+
+  .filterGroup select {
     width: 100%;
   }
 
@@ -124,4 +250,62 @@
     grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
     gap: 1.6rem;
   }
+
+  .noProducts {
+    padding: 3rem 1.6rem;
+  }
+
+  .noProductsIcon {
+    font-size: 4.8rem;
+  }
+
+  .noProducts h2 {
+    font-size: var(--h3-mobile);
+  }
+
+  .noProducts p {
+    font-size: 1.4rem;
+  }
+
+  .clearButton {
+    padding: 1rem 2rem;
+    font-size: 1.3rem;
+  }
+
+  /* Make search input and clearFilters full width */
+  .filterGroup:has(input[type="text"]),
+  .filterGroup:has(.clearFilters) {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .clearFilterss {
+    width: 100%;
+    min-height: 3.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: -2rem;
+    margin-bottom: 2rem;
+  }
+
+  /* Ensure the container of clearFilters spans full width */
+  .filterGroup:has(.clearFilters) {
+    display: flex;
+    width: 100%;
+  }
+  .clearFilters{
+    display: none;
+  }
+
+  .sortBy {
+    display: block;
+  }
 }
+
+/* Additional breakpoint for very small screens */
+/* @media screen and (max-width: 480px) {
+  .filters.show {
+    grid-template-columns: 1fr; 
+  }
+} */

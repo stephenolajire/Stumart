@@ -1665,6 +1665,9 @@ class AllProductsView(APIView):
                 
             search = request.query_params.get('search', '').strip()
             sort = request.query_params.get('sort', 'newest')
+            state = request.query_params.get('state', '').strip()
+            school = request.query_params.get('school', '').strip()
+            vendor = request.query_params.get('vendor', '').strip()
 
             # Start with all active products
             queryset = Product.objects.filter(in_stock__gt=0)
@@ -1683,6 +1686,14 @@ class AllProductsView(APIView):
                     models.Q(name__icontains=search) |
                     models.Q(description__icontains=search)
                 )
+            if state:
+                queryset = queryset.filter(vendor__state__iexact=state)
+            
+            if school:
+                queryset = queryset.filter(vendor__institution__iexact=school)
+            
+            if vendor:
+                queryset = queryset.filter(vendor_id=vendor)
 
             # Apply sorting
             if sort == 'price_low':
