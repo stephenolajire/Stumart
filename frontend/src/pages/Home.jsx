@@ -48,6 +48,8 @@ const Home = () => {
     isAuthenticated,
     user, // Add user from context
   } = useContext(GlobalContext);
+  const institution = localStorage.getItem("institution")
+  const user_type = localStorage.getItem("user_type)
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedState, setSelectedState] = useState("");
   const [selectedSchool, setSelectedSchool] = useState("");
@@ -90,12 +92,13 @@ const Home = () => {
 
   // Add effect to handle authenticated user's institution
   useEffect(() => {
-    if (isAuthenticated && user?.institution) {
+    if (isAuthenticated && institution) {
       // Set the user's state and school automatically
-      const userState = Object.keys(nigeriaInstitutions).find((state) =>
-        nigeriaInstitutions[state].includes(user.institution)
+      if (user_type === 'student' ) {
+        const userState = Object.keys(nigeriaInstitutions).find((state) =>
+        nigeriaInstitutions[state].includes(institution)
       );
-
+      }
       if (userState) {
         setSelectedState(userState);
         setSelectedSchool(user.institution);
@@ -104,7 +107,7 @@ const Home = () => {
         const fetchUserInstitutionShops = async () => {
           try {
             const fetchedSchoolShops = await fetchShopsBySchool(
-              user.institution
+              institution
             );
 
             if (
@@ -131,7 +134,7 @@ const Home = () => {
         fetchUserInstitutionShops();
       }
     }
-  }, [isAuthenticated, user?.institution]);
+  }, [isAuthenticated, institution]);
 
   // Function to filter shops based on category
   const applyFilters = (shops, category) => {
