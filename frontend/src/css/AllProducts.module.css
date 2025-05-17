@@ -90,7 +90,8 @@
   box-shadow: 0 0 0 2px var(--primary-100);
 }
 
-.clearFilters, .clearFilterss {
+.clearFilters,
+.clearFilterss {
   padding: 1rem 2rem;
   background: var(--error);
   color: var(--neutral-white);
@@ -174,7 +175,7 @@
   transform: translateY(-2px);
 }
 
-.sortBy{
+.sortBy {
   display: none;
 }
 
@@ -247,8 +248,26 @@
   }
 
   .productsGrid {
-    grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
-    gap: 1.6rem;
+    grid-template-columns: repeat(2, 1fr); /* Show exactly 2 products per row */
+    gap: 1.2rem; /* Reduce gap for better fit */
+  }
+
+  /* Adjust product card styles for smaller screens */
+  .productCard {
+    min-width: unset; /* Remove any minimum width constraints */
+  }
+
+  /* Adjust spacing inside product cards */
+  .productInfo {
+    padding: 1rem;
+  }
+
+  .productName {
+    font-size: 1.3rem;
+  }
+
+  .price {
+    font-size: 1.4rem;
   }
 
   .noProducts {
@@ -294,7 +313,7 @@
     display: flex;
     width: 100%;
   }
-  .clearFilters{
+  .clearFilters {
     display: none;
   }
 
@@ -303,9 +322,9 @@
   }
 }
 
-/* Additional breakpoint for very small screens */
-/* @media screen and (max-width: 480px) {
-  .filters.show {
-    grid-template-columns: 1fr; 
+/* Further optimize for very small screens */
+@media screen and (max-width: 480px) {
+  .productsGrid {
+    gap: 1rem;
   }
-} */
+}
