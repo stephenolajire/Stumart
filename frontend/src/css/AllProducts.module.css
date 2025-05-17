@@ -2,6 +2,7 @@
   padding: 2.4rem;
   width: 100%;
   margin: 0 auto;
+  margin-top: 10rem;
 }
 
 .header {
@@ -31,7 +32,7 @@
 
 .filters {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
   gap: 1.6rem;
   margin-bottom: 2.4rem;
   padding: 1.6rem;
@@ -41,7 +42,8 @@
 
 .filterGroup {
   display: flex;
-  gap: 1.2rem;
+  gap: 1rem;
+  width: 100%;
 }
 
 .filterGroup input,
@@ -108,6 +110,14 @@
 
   .filters.show {
     display: grid;
+  }
+
+  .filterGroup {
+    width: 100%;
+  }
+
+  .filterGroup input {
+    width: 100%;
   }
 
   .productsGrid {

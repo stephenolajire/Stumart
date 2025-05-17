@@ -1648,43 +1648,53 @@ class AllProductsView(APIView):
 
     def get(self, request):
         try:
-            # Get query parameters
-            category = request.query_params.get('category', '')
-            min_price = request.query_params.get('min_price', 0)
-            max_price = request.query_params.get('max_price', float('inf'))
-            search = request.query_params.get('search', '')
+            # Get query parameters with proper type conversion
+            category = request.query_params.get('category', '').strip()
+            min_price = Decimal(request.query_params.get('minPrice', '0') or '0')
+            max_price = Decimal(request.query_params.get('maxPrice', '0') or '999999999')
+            search = request.query_params.get('search', '').strip()
             sort = request.query_params.get('sort', 'newest')
 
-            # Start with all products
-            products = Product.objects.filter(is_active=True)
+            # Start with all active products
+            queryset = Product.objects.filter(in_stock__gt=0)
 
             # Apply filters
             if category:
-                products = products.filter(category__iexact=category)
-            if min_price:
-                products = products.filter(price__gte=min_price)
-            if max_price != float('inf'):
-                products = products.filter(price__lte=max_price)
+                queryset = queryset.filter(vendor__business_category__iexact=category)
+            
+            queryset = queryset.filter(price__gte=min_price, price__lte=max_price)
+            
             if search:
-                products = products.filter(name__icontains=search)
+                queryset = queryset.filter(
+                    models.Q(name__icontains=search) |
+                    models.Q(description__icontains=search)
+                )
 
             # Apply sorting
             if sort == 'price_low':
-                products = products.order_by('price')
+                queryset = queryset.order_by('price')
             elif sort == 'price_high':
-                products = products.order_by('-price')
+                queryset = queryset.order_by('-price')
             elif sort == 'rating':
-                products = products.order_by('-vendor__rating')
+                queryset = queryset.order_by('-vendor__rating')
             else:  # newest
-                products = products.order_by('-created_at')
+                queryset = queryset.order_by('-created_at')
 
             # Paginate results
             paginator = self.pagination_class()
-            paginated_products = paginator.paginate_queryset(products, request)
+            paginated_products = paginator.paginate_queryset(queryset, request)
+            
+            # Serialize data
             serializer = ProductSerializer(paginated_products, many=True)
-
+            
+            # Return paginated response
             return paginator.get_paginated_response(serializer.data)
 
+        except ValueError as e:
+            return Response(
+                {'error': 'Invalid price value provided'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         except Exception as e:
             return Response(
                 {'error': str(e)},
