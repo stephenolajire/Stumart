@@ -196,6 +196,10 @@
     font-size: var(--h5-mobile);
   }
 
+  .container h2 {
+    font-size: 2rem;
+  }
+
   .gridForm {
     grid-template-columns: 1fr;
   }

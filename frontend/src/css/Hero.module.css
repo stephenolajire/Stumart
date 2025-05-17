@@ -140,7 +140,7 @@
   }
 
   .content h1 {
-    font-size: var(--h1-mobile);
+    font-size: 2rem;
   }
 
   .content p {
