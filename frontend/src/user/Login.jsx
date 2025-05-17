@@ -72,6 +72,7 @@ const Login = () => {
       console.log(response.data);
 
       // Store the tokens in local storage
+      localStorage.setItem("user_type", user_type);
       localStorage.setItem("access", access);
       localStorage.setItem("refresh", refresh);
       localStorage.setItem("institution", institution);      // Set default auth header for future requests
