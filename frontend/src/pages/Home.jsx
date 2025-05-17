@@ -1,4 +1,23 @@
-import { useContext, useState, useEffect } from "react";
+// Add a debugging useEffect to help track state
+  useEffect(() => {
+    if (loading) {
+      console.log("Loading state is true");
+    } else {
+      console.log("Loading state is false");
+      console.log("Display mode:", displayMode);
+      console.log("Filtered shops count:", filteredShops?.length || 0);
+      console.log("School shops count:", schoolShops?.length || 0);
+    }
+  }, [loading, displayMode, filteredShops, schoolShops]);
+
+  // Add useEffect to handle loading state completion
+  useEffect(() => {
+    if (!loading && filteredShops.length === 0 && shopsData && shopsData.length > 0 && displayMode === "allShops") {
+      // If we're not in school shops mode and have no filtered shops but shopsData exists,
+      // initialize with all shops
+      setFilteredShops([...shopsData]);
+    }
+  }, [loading, filteredShops.length, shopsData, displayMode]);import { useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import "sweetalert2/dist/sweetalert2.css";
@@ -74,11 +93,16 @@ const Home = () => {
       .join(" ");
   };
 
-  // Initialize with all shops data
+  // Initialize with all shops data - added null check and loading state check
   useEffect(() => {
-    // Set initial filtered shops to all shops
-    setFilteredShops(shopsData);
-  }, [shopsData]);
+    // Only update filtered shops when not loading and we have data
+    if (!loading && shopsData && Array.isArray(shopsData)) {
+      // Only update if we're in "allShops" mode to avoid overwriting school shops
+      if (displayMode === "allShops") {
+        setFilteredShops([...shopsData]);
+      }
+    }
+  }, [shopsData, loading, displayMode]);
 
   // Update available schools whenever state changes
   useEffect(() => {
@@ -92,34 +116,28 @@ const Home = () => {
 
   // Add effect to handle authenticated user's institution
   useEffect(() => {
-    if (isAuthenticated && institution) {
-      // Fix: Define userState outside the conditional and use it consistently
-      let userState = null;
-      
-      if (user_type === 'student') {
-        userState = Object.keys(nigeriaInstitutions).find((state) =>
-          nigeriaInstitutions[state].includes(institution)
-        );
-      }
-      
-      if (userState) {
-        setSelectedState(userState);
-        setSelectedSchool(institution); // Use institution from localStorage consistently
+    const loadInstitutionShops = async () => {
+      if (isAuthenticated && institution) {
+        // Fix: Define userState outside the conditional and use it consistently
+        let userState = null;
+        
+        if (user_type === 'student') {
+          userState = Object.keys(nigeriaInstitutions).find((state) =>
+            nigeriaInstitutions[state].includes(institution)
+          );
+        }
+        
+        if (userState) {
+          setSelectedState(userState);
+          setSelectedSchool(institution); // Use institution from localStorage consistently
 
-        // Fetch shops for user's institution
-        const fetchUserInstitutionShops = async () => {
           try {
             const fetchedSchoolShops = await fetchShopsBySchool(institution);
-
-            if (
-              Array.isArray(fetchedSchoolShops) &&
-              fetchedSchoolShops.length > 0
-            ) {
+            
+            if (Array.isArray(fetchedSchoolShops) && fetchedSchoolShops.length > 0) {
               setSchoolShops(fetchedSchoolShops);
-              const filtered = applyFilters(
-                fetchedSchoolShops,
-                selectedCategory
-              );
+              // Don't use the currently selected category to avoid dependency cycle
+              const filtered = applyFilters(fetchedSchoolShops, "all");
               setFilteredShops(filtered);
               setDisplayMode("schoolShops");
             } else {
@@ -129,20 +147,25 @@ const Home = () => {
             }
           } catch (error) {
             console.error("Error fetching institution shops:", error);
+            // Set empty arrays to prevent loading state
+            setSchoolShops([]);
+            setFilteredShops([]);
           }
-        };
-
-        fetchUserInstitutionShops();
+        }
       }
-    }
-  }, [isAuthenticated, institution, user_type, fetchShopsBySchool, selectedCategory]);
+    };
+    
+    loadInstitutionShops();
+    // Remove selectedCategory from dependencies to prevent re-fetching
+    // when category changes
+  }, [isAuthenticated, institution, user_type, fetchShopsBySchool]);
 
   // Function to filter shops based on category
   const applyFilters = (shops, category) => {
-    if (!shops || !Array.isArray(shops)) return [];
+    if (!shops || !Array.isArray(shops) || shops.length === 0) return [];
 
     if (category === "all") {
-      return shops;
+      return [...shops]; // Return a new array to ensure React detects the change
     } else {
       return shops.filter(
         (shop) =>
@@ -154,18 +177,24 @@ const Home = () => {
 
   // Apply category filter when category changes
   useEffect(() => {
+    // Skip processing if not loaded yet
+    if (loading) return;
+    
     // "Other" category is handled separately
     if (selectedCategory.toLowerCase() === "other") {
       // Navigate will happen in handleCategoryChange
       return;
     }
 
+    // Use the currently available shops rather than triggering new fetches
     if (displayMode === "allShops") {
-      setFilteredShops(applyFilters(shopsData, selectedCategory));
+      const filtered = applyFilters(shopsData, selectedCategory);
+      setFilteredShops(filtered);
     } else if (displayMode === "schoolShops") {
-      setFilteredShops(applyFilters(schoolShops, selectedCategory));
+      const filtered = applyFilters(schoolShops, selectedCategory);
+      setFilteredShops(filtered);
     }
-  }, [selectedCategory, displayMode, shopsData, schoolShops]);
+  }, [selectedCategory, displayMode, shopsData, schoolShops, loading]);
 
   // Handle school selection submission
   const handleSchoolSubmit = async (e) => {
