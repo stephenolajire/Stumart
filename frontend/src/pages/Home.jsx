@@ -46,10 +46,10 @@ const Home = () => {
     fetchShopData,
     loading,
     isAuthenticated,
-    user, // Add user from context
+    user,
   } = useContext(GlobalContext);
-  const institution = localStorage.getItem("institution")
-  const user_type = localStorage.getItem("user_type")
+  const institution = localStorage.getItem("institution");
+  const user_type = localStorage.getItem("user_type");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedState, setSelectedState] = useState("");
   const [selectedSchool, setSelectedSchool] = useState("");
@@ -93,22 +93,23 @@ const Home = () => {
   // Add effect to handle authenticated user's institution
   useEffect(() => {
     if (isAuthenticated && institution) {
-      // Set the user's state and school automatically
-      if (user_type === 'student' ) {
-        const userState = Object.keys(nigeriaInstitutions).find((state) =>
-        nigeriaInstitutions[state].includes(institution)
-      );
+      // Fix: Define userState outside the conditional and use it consistently
+      let userState = null;
+      
+      if (user_type === 'student') {
+        userState = Object.keys(nigeriaInstitutions).find((state) =>
+          nigeriaInstitutions[state].includes(institution)
+        );
       }
+      
       if (userState) {
         setSelectedState(userState);
-        setSelectedSchool(user.institution);
+        setSelectedSchool(institution); // Use institution from localStorage consistently
 
         // Fetch shops for user's institution
         const fetchUserInstitutionShops = async () => {
           try {
-            const fetchedSchoolShops = await fetchShopsBySchool(
-              institution
-            );
+            const fetchedSchoolShops = await fetchShopsBySchool(institution);
 
             if (
               Array.isArray(fetchedSchoolShops) &&
@@ -134,7 +135,7 @@ const Home = () => {
         fetchUserInstitutionShops();
       }
     }
-  }, [isAuthenticated, institution]);
+  }, [isAuthenticated, institution, user_type, fetchShopsBySchool, selectedCategory]);
 
   // Function to filter shops based on category
   const applyFilters = (shops, category) => {
