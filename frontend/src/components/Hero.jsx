@@ -22,7 +22,9 @@ const Hero = () => {
             </span>
           </p>
           {isAuthenticated ? (
-            ""
+            <Link to="/products">
+              <button className={styles.ctaButton}>Start Shopping</button>
+            </Link>
           ) : (
             <Link to="/register">
               <button className={styles.ctaButton}>Start Shopping</button>

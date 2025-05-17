@@ -27,6 +27,7 @@ import logo from "../assets/stumart.jpeg";
 import api from "../constant/api";
 import { useNavigate } from "react-router-dom";
 import { banks } from "../constant/bank";
+import { NavLink } from "react-router-dom";
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -834,6 +835,9 @@ const Signup = () => {
             ? `Wait ${throttleWaitTime}s`
             : "Create Account"}
         </button>
+        <div className={styles.registerLink}>
+          Already have an account? <NavLink to="/login">log in</NavLink>
+        </div>
       </form>
     </div>
   );

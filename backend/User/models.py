@@ -66,9 +66,13 @@ class User(AbstractUser):
         if not self.username:
             self.username = self.email
         if self.is_superuser:
-            # Set default values for superuser
-            self.user_type = 'admin'  # Set a default user type
-            self.phone_number = '00000000000'  # Set a default phone number
+            # Generate unique phone number for superuser
+            base_phone = '00000000000'
+            counter = 0
+            while User.objects.filter(phone_number=f"{base_phone}{counter or ''}").exists():
+                counter += 1
+            self.phone_number = f"{base_phone}{counter or ''}"
+            self.user_type = 'admin'
             self.state = 'Default'
             self.institution = 'Default'
         super().save(*args, **kwargs)

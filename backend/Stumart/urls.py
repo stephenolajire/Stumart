@@ -24,6 +24,7 @@ urlpatterns = [
     path('orders/<str:order_number>/', OrderDetailView.as_view(), name='order-detail'),
     path('orders/', OrderHistoryView.as_view(), name='order-list'),
     path('orders/<int:order_id>/cancel/', CancelOrderView.as_view(), name='cancel-order'),
+    path('all-produts/', AllProductsView.as_view(), name='all-products'),
 
     # Service specific endpoints
     path('service-detail/<int:pk>/', ServiceDetailAPIView.as_view(), name='service-detail'),

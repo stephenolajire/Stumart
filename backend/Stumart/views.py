@@ -34,6 +34,7 @@ from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from django.utils import timezone
 from django.core.mail import send_mail
+from rest_framework.pagination import PageNumberPagination
 
 class ProductsView(APIView):
     def get(self, request, id):
@@ -1636,5 +1637,58 @@ class CancelOrderView(APIView):
                 "status": "error",
                 "message": f"An error occurred: {str(e)}"
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class ProductPagination(PageNumberPagination):
+    page_size = 12
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+class AllProductsView(APIView):
+    pagination_class = ProductPagination
+
+    def get(self, request):
+        try:
+            # Get query parameters
+            category = request.query_params.get('category', '')
+            min_price = request.query_params.get('min_price', 0)
+            max_price = request.query_params.get('max_price', float('inf'))
+            search = request.query_params.get('search', '')
+            sort = request.query_params.get('sort', 'newest')
+
+            # Start with all products
+            products = Product.objects.filter(is_active=True)
+
+            # Apply filters
+            if category:
+                products = products.filter(category__iexact=category)
+            if min_price:
+                products = products.filter(price__gte=min_price)
+            if max_price != float('inf'):
+                products = products.filter(price__lte=max_price)
+            if search:
+                products = products.filter(name__icontains=search)
+
+            # Apply sorting
+            if sort == 'price_low':
+                products = products.order_by('price')
+            elif sort == 'price_high':
+                products = products.order_by('-price')
+            elif sort == 'rating':
+                products = products.order_by('-vendor__rating')
+            else:  # newest
+                products = products.order_by('-created_at')
+
+            # Paginate results
+            paginator = self.pagination_class()
+            paginated_products = paginator.paginate_queryset(products, request)
+            serializer = ProductSerializer(paginated_products, many=True)
+
+            return paginator.get_paginated_response(serializer.data)
+
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 

@@ -42,6 +42,7 @@ import Dashboard from "./other-dashboard/OtherDashboard";
 import OtherDashboard from "./other-dashboard/OtherDashboard";
 import SearchPage from "./pages/SearchPage";
 import DeliveryDetail from "./picker-dashboard/DeliveryDetail";
+import AllProducts from "./pages/AllProducts";
 
 function App() {
   return (
@@ -87,15 +88,18 @@ function App() {
             />
             <Route
               path="/service-application/:serviceId"
-              element={<ProtectedRoute>
-                <ServiceApplication />
-              </ProtectedRoute>}
+              element={
+                <ProtectedRoute>
+                  <ServiceApplication />
+                </ProtectedRoute>
+              }
             />
             <Route
               path="/service-application-success/:serviceId"
               element={<ServiceApplicationSuccess />}
             />
             <Route path="/subscription-plans" element={<SubscriptionPlans />} />
+            <Route path="/products" element={<AllProducts />} />
           </Route>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Signup />} />
@@ -167,7 +171,10 @@ function App() {
           />
           <Route path="/picker/my-deliveries" element={<MyDeliveries />} />
           <Route path="/earnings" element={<Earnings />} />
-          <Route path="/delivery-detail/:orderId" element={<DeliveryDetail />} />
+          <Route
+            path="/delivery-detail/:orderId"
+            element={<DeliveryDetail />}
+          />
           <Route
             path="/admin-order-detail/:orderId"
             element={<AdminOrderDetail />}

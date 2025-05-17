@@ -1,171 +1,144 @@
 .promotionSection {
-  position: relative;
-  width: 100%;
-  margin: 0 auto;
-  overflow: hidden;
+  padding: 1.6rem;
+  background: var(--neutral-gray-50);
+  height: 20rem;
   margin-top: 10rem;
-  padding: 0rem 0rem;
 }
 
-.container {
+.promotionCard {
+  position: relative;
   width: 100%;
   margin: 0 auto;
-}
-
-.slide {
-  position: relative;
-  height: 20rem; /* Reduced from 50rem */
-  border-radius: 0; /* Removed border radius for full-width look */
+  height: 100%;
+  border-radius: 1.2rem;
+  padding: 2.4rem;
   overflow: hidden;
+  transform-style: preserve-3d;
+  perspective: 1000px;
+  box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.1);
+  transition: transform 0.5s ease;
 }
 
-.mediaWrapper {
+.promotionCard:hover {
+  transform: translateY(-0.5rem) rotateX(2deg);
+}
+
+.content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.content h2 {
+  font-size: var(--h3-desktop);
+  color: var(--neutral-white);
+  margin-bottom: 1rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  text-align: center;
+}
+
+.content p {
+  font-size: 1.6rem;
+  color: var(--neutral-white);
+  margin-bottom: 2rem;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.learnMore {
+  display: inline-block;
+  padding: 1rem 2.4rem;
+  background: var(--neutral-white);
+  color: var(--text-primary);
+  border-radius: 3rem;
+  font-size: 1.4rem;
+  font-weight: 500;
+  transform: translateZ(20px);
+  transition: all 0.3s ease;
+}
+
+.learnMore:hover {
+  transform: translateZ(30px) scale(1.05);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.2);
+}
+
+.dots {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  bottom: 2rem;
+  right: 2rem;
+  display: flex;
+  gap: 0.8rem;
 }
 
-.video, .image {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  max-height: 20rem; 
+.dot {
+  width: 1rem;
+  height: 1rem;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
+.dot.active {
+  background: var(--neutral-white);
+  transform: scale(1.2);
+}
 
-.overlay {
+/* Gradient Backgrounds */
+.primary {
+  background: linear-gradient(135deg, var(--primary-500), var(--primary-700));
+}
+
+.secondary {
+  background: linear-gradient(135deg, var(--info), var(--primary-500));
+}
+
+.tertiary {
+  background: linear-gradient(135deg, var(--warning), var(--error));
+}
+
+/* 3D Elements */
+.promotionCard::before {
+  content: '';
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
   background: linear-gradient(
-    to right,
-    rgba(0, 0, 0, 0.7) 0%,
-    rgba(0, 0, 0, 0.3) 100%
+    45deg,
+    rgba(255, 255, 255, 0.1),
+    rgba(255, 255, 255, 0)
   );
+  transform: translateZ(10px);
 }
 
-/* Adjust content padding for shorter height */
-.content {
-  position: relative;
-  z-index: 2;
-  padding: 3rem 4rem; /* Reduced top/bottom padding */
-  color: var(--neutral-white);
-  max-width: 60rem;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-/* Adjust typography sizes for shorter height */
-.title {
-  font-size: var(--h3-desktop); /* Reduced from h2 */
-  margin-bottom: 1.2rem; /* Reduced margin */
-  color: var(--neutral-white);
-}
-
-.description {
-  font-size: 1.6rem; /* Reduced from 1.8rem */
-  margin-bottom: 2rem; /* Reduced margin */
-  line-height: 1.5;
-}
-
-.details {
-  display: flex;
-  align-items: center;
-  gap: 2.4rem;
-}
-
-/* .image {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-} */
-
-.offer {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-}
-
-.discount {
-  font-size: 3.2rem;
-  font-weight: 700;
-  color: var(--primary-400);
-}
-
-.period {
-  font-size: 1.4rem;
-  color: var(--neutral-gray-200);
-}
-
-.button {
-  padding: 1.2rem 2.4rem;
-  font-size: 1.6rem;
-  font-weight: 500;
-  color: var(--neutral-white);
-  background-color: var(--primary-500);
-  border: none;
-  border-radius: 0.8rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.button:hover {
-  background-color: var(--primary-600);
-  transform: translateY(-2px);
-}
-
-/* Custom Slick Slider Styles */
-:global(.slick-dots) {
-  bottom: 2.4rem;
-}
-
-:global(.slick-dots li button:before) {
-  font-size: 1.2rem;
-  color: var(--neutral-white);
-  opacity: 0.5;
-}
-
-:global(.slick-dots li.slick-active button:before) {
-  color: var(--primary-500);
-  opacity: 1;
-}
-
-/* Mobile adjustments */
 @media screen and (max-width: 768px) {
-  .slide {
-    height: 18rem; 
+  .promotionSection {
+    height: 16rem;
+    padding: 1.2rem;
   }
 
-  .video, .image {
-    max-height: 18rem; 
-    object-fit: cover;
+  .promotionCard {
+    padding: 1.6rem;
   }
 
-  .content {
-    padding: 2rem;
-    display: none;
-  }
-
-  .title {
+  .content h2 {
     font-size: var(--h3-mobile);
   }
 
-  .description {
+  .content p {
     font-size: 1.4rem;
+    margin-bottom: 1.6rem;
   }
 
-  .discount {
-    font-size: 2.4rem;
-  }
-
-  .button {
-    padding: 1rem 2rem;
-    font-size: 1.4rem;
+  .dots {
+    bottom: 1.6rem;
+    right: 1.6rem;
   }
 }
