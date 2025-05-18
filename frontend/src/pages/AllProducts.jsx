@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useSearchParams } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
 import Spinner from "../components/Spinner";
@@ -6,6 +6,7 @@ import api from "../constant/api";
 import styles from "../css/AllProducts.module.css";
 import { FaFilter, FaSort, FaTimes, FaBox, FaSadTear } from "react-icons/fa";
 import { nigeriaInstitutions, nigeriaStates } from "../constant/data";
+import { GlobalContext } from "../context/GlobalContext";
 
 const AllProducts = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -28,6 +29,7 @@ const AllProducts = () => {
   });
   const [categories, setCategories] = useState([]);
   const school = localStorage.getItem("institution");
+  const { isAuthenticated } = useContext(GlobalContext);
 
   // Handle state change
   const handleStateChange = (state) => {
@@ -114,12 +116,37 @@ const AllProducts = () => {
         </button>
       </div>
       <div style={{ marginBottom: "1.5rem" }}>
-        <h6 style={{ textAlign: "center", marginBottom: "0.5rem" }}>
-          All products in {school}
-        </h6>
-        <p style={{ textAlign: "center", marginBottom: "1rem", fontSize: "1.3rem" }}>
-          You can use the filter opion to see other school products
-        </p>
+        {isAuthenticated ? (
+          <>
+            <h6 style={{ textAlign: "center", marginBottom: "0.5rem" }}>
+              All products in {school}
+            </h6>
+            <p
+              style={{
+                textAlign: "center",
+                marginBottom: "1rem",
+                fontSize: "1.3rem",
+              }}
+            >
+              You can use the filter option to see other school products
+            </p>
+          </>
+        ) : (
+          <>
+            <h6 style={{ textAlign: "center", marginBottom: "0.5rem" }}>
+              All productts in registered schools
+            </h6>
+            <p
+              style={{
+                textAlign: "center",
+                marginBottom: "1rem",
+                fontSize: "1.3rem",
+              }}
+            >
+              You the filter option to see products from a specific school
+            </p>
+          </>
+        )}
       </div>
       <div className={`${styles.filters} ${showFilters ? styles.show : ""}`}>
         <div className={styles.filterGroup}>
