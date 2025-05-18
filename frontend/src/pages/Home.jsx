@@ -60,6 +60,7 @@ const Home = () => {
   const [productName, setProductName] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isLockedToInstitution, setIsLockedToInstitution] = useState(true); // New state to track if user is locked to their institution
 
   // Get all states from Nigeria institutions
   const states = Object.keys(nigeriaInstitutions);
@@ -174,9 +175,49 @@ const Home = () => {
     }
   }, [selectedCategory, displayMode, shopsData, schoolShops]);
 
+  // Request to switch institutions confirmation
+  const requestInstitutionSwitch = () => {
+    if (isAuthenticated && institution && isLockedToInstitution) {
+      Swal.fire({
+        title: 'Looking for shops elsewhere?',
+        text: `You're currently browsing shops at ${institution}. Would you like to look at shops in other institutions?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, show me other institutions',
+        cancelButtonText: 'No, stay at my institution',
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+      }).then((result) => {
+        if (result.isConfirmed) {
+          setIsLockedToInstitution(false);
+          // Reset state but keep the current institution as the default
+          setSelectedState("");
+          setSelectedSchool("");
+          Swal.fire({
+            title: 'Institution filter unlocked',
+            text: 'You can now browse shops from any institution.',
+            icon: 'success',
+            timer: 2000,
+            showConfirmButton: false
+          });
+        }
+      });
+      return true;
+    }
+    return false;
+  };
+
   // Handle school selection submission
   const handleSchoolSubmit = async (e) => {
     e.preventDefault();
+    
+    // Check if user is trying to change institution while being locked
+    if (isAuthenticated && institution && isLockedToInstitution && 
+        selectedSchool && selectedSchool !== institution) {
+      const switched = requestInstitutionSwitch();
+      if (switched) return;
+    }
+    
     if (selectedSchool) {
       try {
         const fetchedSchoolShops = await fetchShopsBySchool(selectedSchool);
@@ -221,6 +262,12 @@ const Home = () => {
 
   // Reset school filter
   const handleResetFilter = () => {
+    // If user is authenticated and locked to institution, ask for confirmation
+    if (isAuthenticated && institution && isLockedToInstitution) {
+      const switched = requestInstitutionSwitch();
+      if (switched) return;
+    }
+
     setSelectedState("");
     setSelectedSchool("");
     setDisplayMode("allShops");
@@ -276,6 +323,13 @@ const Home = () => {
     e.preventDefault();
     if (!productName.trim()) return;
 
+    // If user is locked to institution but trying to search outside their institution
+    if (isAuthenticated && institution && isLockedToInstitution &&
+        (selectedSchool && selectedSchool !== institution)) {
+      const switched = requestInstitutionSwitch();
+      if (switched) return;
+    }
+
     setIsSearching(true);
     try {
       const params = {
@@ -321,8 +375,42 @@ const Home = () => {
     }
   };
 
+  // Handle state selection
+  const handleStateChange = (e) => {
+    const newState = e.target.value;
+    
+    // Check if user is locked to their institution but trying to change state
+    if (isAuthenticated && institution && isLockedToInstitution) {
+      requestInstitutionSwitch();
+      return;
+    }
+    
+    setSelectedState(newState);
+  };
+
+  // Handle school selection
+  const handleSchoolChange = (e) => {
+    const newSchool = e.target.value;
+    
+    // Check if user is locked to their institution but trying to change school
+    if (isAuthenticated && institution && isLockedToInstitution && 
+        newSchool !== institution) {
+      requestInstitutionSwitch();
+      return;
+    }
+    
+    setSelectedSchool(newSchool);
+  };
+
   // Handle change school selection
   const handleChangeSchool = async () => {
+    // Check if user is trying to view shops from a different institution
+    if (isAuthenticated && institution && isLockedToInstitution && 
+        selectedSchool !== institution) {
+      const switched = requestInstitutionSwitch();
+      if (switched) return;
+    }
+    
     if (selectedSchool) {
       try {
         const fetchedSchoolShops = await fetchShopsBySchool(selectedSchool);
@@ -357,6 +445,13 @@ const Home = () => {
     }
   };
 
+  // Add a "Browse everywhere" button
+  const handleBrowseEverywhere = () => {
+    if (isAuthenticated && institution && isLockedToInstitution) {
+      requestInstitutionSwitch();
+    }
+  };
+
   return (
     <main className={styles.home}>
       <Promotion />
@@ -366,6 +461,18 @@ const Home = () => {
         <div className={styles.container}>
           <h2>Browse By School You Are In</h2>
           <p>Explore shops based on your interests</p>
+          
+          {isAuthenticated && institution && isLockedToInstitution && (
+            <div className={styles.currentInstitutionBanner}>
+              <p>You're currently browsing shops at <strong>{institution}</strong></p>
+              <button 
+                className={styles.browseEverywhereBtn}
+                onClick={handleBrowseEverywhere}>
+                Browse shops elsewhere
+              </button>
+            </div>
+          )}
+          
           <div className={styles.filtering}>
             <div className={styles.filterSection}>
               <div className={styles.containers}>
@@ -392,8 +499,9 @@ const Home = () => {
                       <select
                         id="state-select"
                         value={selectedState}
-                        onChange={(e) => setSelectedState(e.target.value)}
+                        onChange={handleStateChange}
                         className={styles.selectInput}
+                        disabled={isAuthenticated && institution && isLockedToInstitution}
                       >
                         <option value="">-- Select State --</option>
                         {states.map((state) => (
@@ -409,9 +517,9 @@ const Home = () => {
                       <select
                         id="school-select"
                         value={selectedSchool}
-                        onChange={(e) => setSelectedSchool(e.target.value)}
+                        onChange={handleSchoolChange}
                         className={styles.selectInput}
-                        disabled={!selectedState} // Only disable if no state selected
+                        disabled={(isAuthenticated && institution && isLockedToInstitution) || !selectedState}
                       >
                         <option value="">-- Select School --</option>
                         {availableSchools.map((school, index) => (
