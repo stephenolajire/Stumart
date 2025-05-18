@@ -27,6 +27,7 @@ const AllProducts = () => {
     state: searchParams.get("state") || "",
   });
   const [categories, setCategories] = useState([]);
+  const school = localStorage.getItem("institution");
 
   // Handle state change
   const handleStateChange = (state) => {
@@ -112,7 +113,14 @@ const AllProducts = () => {
           Filters
         </button>
       </div>
-
+      <div style={{ marginBottom: "1.5rem" }}>
+        <h6 style={{ textAlign: "center", marginBottom: "0.5rem" }}>
+          All products in {school}
+        </h6>
+        <p style={{ textAlign: "center", marginBottom: "1rem", fontSize: "1.3rem" }}>
+          You can use the filter opion to see other school products
+        </p>
+      </div>
       <div className={`${styles.filters} ${showFilters ? styles.show : ""}`}>
         <div className={styles.filterGroup}>
           <input

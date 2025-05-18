@@ -1649,10 +1649,8 @@ class AllProductsView(APIView):
 
     def get(self, request):
         try:
-            # Get query parameters with proper type conversion and error handling
+            # Get query parameters
             category = request.query_params.get('category', '').strip()
-            
-            # Safely convert price values to Decimal, using default values if empty
             try:
                 min_price = Decimal(request.query_params.get('minPrice')) if request.query_params.get('minPrice') else Decimal('0')
             except (ValueError, TypeError):
@@ -1672,11 +1670,20 @@ class AllProductsView(APIView):
             # Start with all active products
             queryset = Product.objects.filter(in_stock__gt=0)
 
-            # Apply filters
+            # Filter based on authentication status
+            if request.user.is_authenticated:
+                # Get products from vendors in the same institution as the user
+                user_institution = request.user.institution
+                queryset = queryset.filter(vendor__institution__iexact=user_institution)
+            else:
+                # If school parameter is provided for anonymous users
+                if school:
+                    queryset = queryset.filter(vendor__institution__iexact=school)
+
+            # Apply other filters
             if category:
-                # Filter only by vendor's business category
                 queryset = queryset.filter(
-                    vendor__vendor_profile__business_category__iexact=category
+                    vendor__business_category__iexact=category
                 )
             
             queryset = queryset.filter(price__gte=min_price, price__lte=max_price)
@@ -1686,11 +1693,9 @@ class AllProductsView(APIView):
                     models.Q(name__icontains=search) |
                     models.Q(description__icontains=search)
                 )
+
             if state:
                 queryset = queryset.filter(vendor__state__iexact=state)
-            
-            if school:
-                queryset = queryset.filter(vendor__institution__iexact=school)
             
             if vendor:
                 queryset = queryset.filter(vendor_id=vendor)
@@ -1712,8 +1717,11 @@ class AllProductsView(APIView):
             # Serialize data
             serializer = ProductSerializer(paginated_products, many=True)
             
-            # Return paginated response
-            return paginator.get_paginated_response(serializer.data)
+            # Add metadata to response
+            response = paginator.get_paginated_response(serializer.data)
+            response.data['user_institution'] = request.user.institution if request.user.is_authenticated else None
+
+            return response
 
         except Exception as e:
             # Log the detailed error
@@ -1722,6 +1730,9 @@ class AllProductsView(APIView):
             logger.error(f"Error in AllProductsView: {str(e)}")
             
             return Response(
-                {'error': 'An error occurred while processing your request.'},
+                {
+                    'error': 'An error occurred while processing your request.',
+                    'detail': str(e)
+                },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
