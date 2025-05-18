@@ -128,7 +128,7 @@ const AllProducts = () => {
                 fontSize: "1.3rem",
               }}
             >
-              Use the filter option to see other school products
+              Use the filter option to see other school products 
             </p>
           </>
         ) : (
@@ -143,7 +143,7 @@ const AllProducts = () => {
                 fontSize: "1.3rem",
               }}
             >
-              Use the filter option to see products from a specific school
+              Use the filter option to see products from a specific school or
             </p>
             <p
               style={{
