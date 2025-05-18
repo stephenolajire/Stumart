@@ -134,7 +134,7 @@ const AllProducts = () => {
         ) : (
           <>
             <h6 style={{ textAlign: "center", marginBottom: "0.5rem" }}>
-              All productts in registered schools
+              All products in registered schools
             </h6>
             <p
               style={{
