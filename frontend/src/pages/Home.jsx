@@ -59,6 +59,7 @@ const Home = () => {
   const [displayMode, setDisplayMode] = useState("allShops"); // "allShops" or "schoolShops"
   const [productName, setProductName] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Get all states from Nigeria institutions
   const states = Object.keys(nigeriaInstitutions);
@@ -73,69 +74,6 @@ const Home = () => {
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(" ");
   };
-
-  // Initialize with all shops data
-  useEffect(() => {
-    // Set initial filtered shops to all shops
-    setFilteredShops(shopsData);
-  }, [shopsData]);
-
-  // Update available schools whenever state changes
-  useEffect(() => {
-    if (selectedState) {
-      setAvailableSchools(nigeriaInstitutions[selectedState] || []);
-    } else {
-      setAvailableSchools([]);
-    }
-    setSelectedSchool(""); // Reset selected school when state changes
-  }, [selectedState]);
-
-  // Add effect to handle authenticated user's institution
-  useEffect(() => {
-    if (isAuthenticated && institution) {
-      // Fix: Define userState outside the conditional and use it consistently
-      let userState = null;
-      
-      if (user_type === 'student') {
-        userState = Object.keys(nigeriaInstitutions).find((state) =>
-          nigeriaInstitutions[state].includes(institution)
-        );
-      }
-      
-      if (userState) {
-        setSelectedState(userState);
-        setSelectedSchool(institution); // Use institution from localStorage consistently
-
-        // Fetch shops for user's institution
-        const fetchUserInstitutionShops = async () => {
-          try {
-            const fetchedSchoolShops = await fetchShopsBySchool(institution);
-
-            if (
-              Array.isArray(fetchedSchoolShops) &&
-              fetchedSchoolShops.length > 0
-            ) {
-              setSchoolShops(fetchedSchoolShops);
-              const filtered = applyFilters(
-                fetchedSchoolShops,
-                selectedCategory
-              );
-              setFilteredShops(filtered);
-              setDisplayMode("schoolShops");
-            } else {
-              setSchoolShops([]);
-              setFilteredShops([]);
-              setDisplayMode("schoolShops");
-            }
-          } catch (error) {
-            console.error("Error fetching institution shops:", error);
-          }
-        };
-
-        fetchUserInstitutionShops();
-      }
-    }
-  }, [isAuthenticated, institution, user_type]);
 
   // Function to filter shops based on category
   const applyFilters = (shops, category) => {
@@ -152,11 +90,79 @@ const Home = () => {
     }
   };
 
+  // Initial data fetch
+  useEffect(() => {
+    if (!isInitialized && Array.isArray(shopsData) && shopsData.length > 0) {
+      // If not authenticated or no institution stored, use all shops data
+      if (!isAuthenticated || !institution) {
+        setFilteredShops(applyFilters(shopsData, selectedCategory));
+        setDisplayMode("allShops");
+        setIsInitialized(true);
+      }
+    }
+  }, [shopsData, isAuthenticated, institution, selectedCategory, isInitialized]);
+
+  // Update available schools whenever state changes
+  useEffect(() => {
+    if (selectedState) {
+      setAvailableSchools(nigeriaInstitutions[selectedState] || []);
+    } else {
+      setAvailableSchools([]);
+    }
+    
+    // Only reset selected school when not authenticated
+    if (!isAuthenticated) {
+      setSelectedSchool(""); 
+    }
+  }, [selectedState, isAuthenticated]);
+
+  // Handle authenticated user's institution
+  useEffect(() => {
+    const handleUserInstitution = async () => {
+      if (isAuthenticated && institution && !isInitialized) {
+        try {
+          // Find the state for this institution
+          const userState = Object.keys(nigeriaInstitutions).find((state) =>
+            nigeriaInstitutions[state].includes(institution)
+          );
+          
+          if (userState) {
+            setSelectedState(userState);
+            setSelectedSchool(institution);
+          }
+          
+          // Fetch shops for user's institution
+          const fetchedSchoolShops = await fetchShopsBySchool(institution);
+          
+          if (Array.isArray(fetchedSchoolShops)) {
+            setSchoolShops(fetchedSchoolShops);
+            const filtered = applyFilters(fetchedSchoolShops, selectedCategory);
+            setFilteredShops(filtered);
+            setDisplayMode("schoolShops");
+          } else {
+            // Handle case where no shops are found
+            setSchoolShops([]);
+            setFilteredShops([]);
+          }
+          
+          setIsInitialized(true);
+        } catch (error) {
+          console.error("Error fetching institution shops:", error);
+          // If there's an error, still initialize and show all shops
+          setFilteredShops(applyFilters(shopsData, selectedCategory));
+          setDisplayMode("allShops");
+          setIsInitialized(true);
+        }
+      }
+    };
+    
+    handleUserInstitution();
+  }, [isAuthenticated, institution, isInitialized, shopsData, selectedCategory, fetchShopsBySchool]);
+
   // Apply category filter when category changes
   useEffect(() => {
     // "Other" category is handled separately
     if (selectedCategory.toLowerCase() === "other") {
-      // Navigate will happen in handleCategoryChange
       return;
     }
 
@@ -174,10 +180,7 @@ const Home = () => {
       try {
         const fetchedSchoolShops = await fetchShopsBySchool(selectedSchool);
 
-        if (
-          Array.isArray(fetchedSchoolShops) &&
-          fetchedSchoolShops.length > 0
-        ) {
+        if (Array.isArray(fetchedSchoolShops)) {
           // Store the original school shops
           setSchoolShops(fetchedSchoolShops);
 
@@ -188,7 +191,6 @@ const Home = () => {
         } else {
           setSchoolShops([]);
           setFilteredShops([]);
-          setDisplayMode("schoolShops");
         }
       } catch (error) {
         console.error("Error fetching shops by school:", error);
@@ -412,7 +414,7 @@ const Home = () => {
                 </form>
               </div>
             </div>
-            {loading ? (
+            {loading && !isInitialized ? (
               <Spinner />
             ) : (
               <CategoryFilter
@@ -428,7 +430,7 @@ const Home = () => {
       <section className={styles.shopsSection}>
         <div className={styles.container}>
           <h2 className={styles.sectionTitle}>{getTitle()}</h2>
-          {loading ? (
+          {loading && !isInitialized ? (
             <Spinner />
           ) : filteredShops && filteredShops.length > 0 ? (
             <ShopGrid shops={filteredShops} />
