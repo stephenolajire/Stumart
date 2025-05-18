@@ -465,11 +465,7 @@ const Home = () => {
           {isAuthenticated && institution && isLockedToInstitution && (
             <div className={styles.currentInstitutionBanner}>
               <p>You're currently browsing shops at <strong>{institution}</strong></p>
-              <button 
-                className={styles.browseEverywhereBtn}
-                onClick={handleBrowseEverywhere}>
-                Browse shops elsewhere
-              </button>
+              
             </div>
           )}
           
