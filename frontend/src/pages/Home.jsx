@@ -106,15 +106,16 @@ const Home = () => {
   useEffect(() => {
     if (selectedState) {
       setAvailableSchools(nigeriaInstitutions[selectedState] || []);
+      
+      // Clear selected school only if changing to a new state
+      if (selectedSchool && !nigeriaInstitutions[selectedState].includes(selectedSchool)) {
+        setSelectedSchool("");
+      }
     } else {
       setAvailableSchools([]);
+      setSelectedSchool("");
     }
-    
-    // Only reset selected school when not authenticated
-    if (!isAuthenticated) {
-      setSelectedSchool(""); 
-    }
-  }, [selectedState, isAuthenticated]);
+  }, [selectedState, selectedSchool]);
 
   // Handle authenticated user's institution
   useEffect(() => {
@@ -320,6 +321,42 @@ const Home = () => {
     }
   };
 
+  // Handle change school selection
+  const handleChangeSchool = async () => {
+    if (selectedSchool) {
+      try {
+        const fetchedSchoolShops = await fetchShopsBySchool(selectedSchool);
+
+        if (Array.isArray(fetchedSchoolShops)) {
+          setSchoolShops(fetchedSchoolShops);
+          const filtered = applyFilters(fetchedSchoolShops, selectedCategory);
+          setFilteredShops(filtered);
+          setDisplayMode("schoolShops");
+        } else {
+          setSchoolShops([]);
+          setFilteredShops([]);
+          
+          // Show message when no shops found
+          Swal.fire({
+            icon: "info",
+            title: "No Shops Found",
+            text: `No shops found for ${selectedSchool}.`,
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching shops by school:", error);
+        setSchoolShops([]);
+        setFilteredShops([]);
+        
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Failed to fetch shops. Please try again.",
+        });
+      }
+    }
+  };
+
   return (
     <main className={styles.home}>
       <Promotion />
@@ -357,7 +394,6 @@ const Home = () => {
                         value={selectedState}
                         onChange={(e) => setSelectedState(e.target.value)}
                         className={styles.selectInput}
-                        disabled={isAuthenticated} // Disable if authenticated
                       >
                         <option value="">-- Select State --</option>
                         {states.map((state) => (
@@ -375,7 +411,7 @@ const Home = () => {
                         value={selectedSchool}
                         onChange={(e) => setSelectedSchool(e.target.value)}
                         className={styles.selectInput}
-                        disabled={isAuthenticated || !selectedState} // Disable if authenticated or no state selected
+                        disabled={!selectedState} // Only disable if no state selected
                       >
                         <option value="">-- Select School --</option>
                         {availableSchools.map((school, index) => (
@@ -395,15 +431,23 @@ const Home = () => {
                     >
                       {isSearching ? "Searching..." : "Search Products"}
                     </button>
-                    {((!isAuthenticated && (selectedState || selectedSchool)) ||
-                      productName) && (
+                    
+                    {selectedSchool && (
+                      <button
+                        type="button"
+                        className={`${styles.submitButton} ${styles.changeSchoolBtn}`}
+                        onClick={handleChangeSchool}
+                      >
+                        View Shops in This School
+                      </button>
+                    )}
+                    
+                    {((selectedState || selectedSchool) || productName) && (
                       <button
                         type="button"
                         className={styles.resetButton}
                         onClick={() => {
-                          if (!isAuthenticated) {
-                            handleResetFilter();
-                          }
+                          handleResetFilter();
                           setProductName("");
                         }}
                       >
