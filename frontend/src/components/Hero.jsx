@@ -26,7 +26,7 @@ const Hero = () => {
               <button className={styles.ctaButton}>Start Shopping</button>
             </Link>
           ) : (
-            <Link to="/register">
+            <Link to="/products">
               <button className={styles.ctaButton}>Start Shopping</button>
             </Link>
           )}

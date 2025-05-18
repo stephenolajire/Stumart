@@ -6,7 +6,7 @@ import api from "../constant/api";
 import styles from "../css/AllProducts.module.css";
 import { FaFilter, FaSort, FaTimes, FaBox, FaSadTear } from "react-icons/fa";
 import { nigeriaInstitutions, nigeriaStates } from "../constant/data";
-import { GlobalContext } from "../context/GlobalContext";
+import { GlobalContext } from "../constant/GlobalContext";
 
 const AllProducts = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -144,6 +144,15 @@ const AllProducts = () => {
               }}
             >
               You the filter option to see products from a specific school
+            </p>
+            <p
+              style={{
+                textAlign: "center",
+                marginBottom: "1rem",
+                fontSize: "1.3rem",
+              }}
+            >
+              Register to see products from your school 
             </p>
           </>
         )}
