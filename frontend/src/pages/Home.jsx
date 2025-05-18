@@ -135,7 +135,7 @@ const Home = () => {
         fetchUserInstitutionShops();
       }
     }
-  }, [isAuthenticated, institution, user_type, fetchShopsBySchool, selectedCategory]);
+  }, [isAuthenticated, institution, user_type]);
 
   // Function to filter shops based on category
   const applyFilters = (shops, category) => {
