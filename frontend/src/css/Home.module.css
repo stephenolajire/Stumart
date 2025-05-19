@@ -198,7 +198,11 @@
   font-size: 1.6rem;
   margin-bottom: 2rem;
   max-width: 70%;
+  color: white;
   /* opacity: 0.9; */
+  /* -webkit-text-stroke-width: 1px;
+  -webkit-text-stroke-color: white; */
+  line-height: 2.2rem;
 }
 
 .dealButton {
