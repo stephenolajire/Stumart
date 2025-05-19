@@ -4,7 +4,7 @@ import Swal from "sweetalert2";
 import "sweetalert2/dist/sweetalert2.css";
 import styles from "../css/Home.module.css";
 import Spinner from "../components/Spinner";
-import ourwife from "../assets/our-wife.jpg";
+import ourwife from "../assets/student.jpeg";
 import abu from "../assets/abu.jpg";
 import james from "../assets/james.jpg";
 import {
@@ -580,7 +580,11 @@ const Home = () => {
             style={{
               backgroundImage: `url(${promotions[currentPromoIndex].image})`,
               backgroundSize: "cover",
+              backgroundRepeat: "no-repeat",
               backgroundPosition: "center",
+              // objectFit: "contain",
+              // height: "200px",
+              // width: "100%",
             }}
           >
             <h3>{promotions[currentPromoIndex].title}</h3>
