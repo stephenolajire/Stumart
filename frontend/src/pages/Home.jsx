@@ -4,7 +4,7 @@ import Swal from "sweetalert2";
 import "sweetalert2/dist/sweetalert2.css";
 import styles from "../css/Home.module.css";
 import Spinner from "../components/Spinner";
-import ourwife from "../assets/student.jpeg";
+import ourwife from "../assets/our-wife.jpg";
 import abu from "../assets/abu.jpg";
 import james from "../assets/james.jpg";
 import {
