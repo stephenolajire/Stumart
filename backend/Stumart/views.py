@@ -1668,7 +1668,7 @@ class AllProductsView(APIView):
             vendor = request.query_params.get('vendor', '').strip()
 
             # Start with all active products
-            queryset = Product.objects.filter(in_stock__gt=0)
+            queryset = Product.objects.all()
 
             # Filter based on authentication status
             if request.user.is_authenticated:
