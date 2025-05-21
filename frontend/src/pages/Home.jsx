@@ -576,7 +576,7 @@ const Home = () => {
 
         <div className={styles.dealsCarousel}>
           <div
-            className={styles.dealCard} 
+            className={styles.dealCard}
             style={{
               backgroundImage: `url(${promotions[currentPromoIndex].image})`,
               backgroundSize: "cover",
@@ -754,13 +754,14 @@ const Home = () => {
                             <span>{shop.rating}</span>
                           </div>
                         </div>
+                        {/* On small screens, we'll conditionally show less info */}
                         <div className={styles.shopLocation}>
                           <FaMapMarkerAlt className={styles.locationIcon} />
                           <span>{shop.user.institution}</span>
                         </div>
                         <div className={styles.shopDelivery}>
                           <FaClock className={styles.clockIcon} />
-                          <span>15-30 mins delivery</span>
+                          <span>15-30 mins</span>
                         </div>
                         <button className={styles.viewShopButton}>
                           <FaShoppingCart /> Shop Now

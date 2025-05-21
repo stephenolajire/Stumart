@@ -1,76 +1,113 @@
 import { useEffect, useContext } from "react";
-import { Link, useParams } from "react-router-dom";
-import styles from "../css/ShopDetails.module.css";
+import { Link, useParams, useNavigate } from "react-router-dom";
+import { FaBuilding, FaClock, FaStar, FaShoppingCart } from "react-icons/fa";
 import { GlobalContext } from "../constant/GlobalContext";
-import { FaBuilding } from "react-icons/fa";
-import { MEDIA_BASE_URL } from "../constant/api";
-
-// Cloudinary Base URL (Modify if needed)
-const CLOUDINARY_BASE_URL = "https://res.cloudinary.com/YOUR_CLOUDINARY_NAME/";
+import styles from "../css/ShopDetails.module.css";
 
 const ShopDetails = () => {
   const { shopId } = useParams();
   const { fetchProducts, products, details } = useContext(GlobalContext);
+  const navigate = useNavigate();
+
+  const handleProductClick = (productId) => {
+    navigate(`/product/${productId}`);
+  };
 
   useEffect(() => {
     fetchProducts(shopId);
-  }, [shopId]);
+  }, [shopId, fetchProducts]);
 
-  // Ensure `products` is an array before proceeding
+  // Loading state
   if (!Array.isArray(products.products)) {
-    return <div className={styles.loading}>Loading products ...</div>;
+    return (
+      <div className={styles.loadingContainer}>
+        <div className={styles.loader}></div>
+        <h2>Loading products...</h2>
+      </div>
+    );
   }
 
-  // If no products exist, show a fallback message
+  // No products state
   if (products.products.length === 0) {
     return (
-      <div className={styles.contNo}>
-        <p>No product is available yet for the selected shop</p>
-        <FaBuilding className={styles.storeIcon} />
+      <div className={styles.noProductsContainer}>
+        <FaBuilding size={48} className={styles.noProductsIcon} />
+        <h2>No product is available yet for the selected shop</h2>
+        <Link to="/" className={styles.backButton}>
+          Return to Shops
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className={styles.shopDetails}>
-      <div className={styles.header}>
-        <img
-          src={details.shop_image}
-          alt={details.business_name} // Fixed typo here
-          className={styles.shopImage}
-        />
+    <div className={styles.shopDetailsContainer}>
+      {/* Shop Header Section */}
+      <div className={styles.shopHeader}>
         <div className={styles.shopInfo}>
-          <h1>{details.business_name}</h1>
-          <p className={styles.category}>{details.business_category}</p>
-          <p className={styles.description}>
+          <h1 className={styles.shopName}>{details.business_name}</h1>
+          <p className={styles.shopCategory}>{details.business_category}</p>
+          <p className={styles.shopDescription}>
             Discover quality {details.business_category} and excellence at{" "}
             {details.business_name}, your trusted destination for top{" "}
             {details.business_category} and services.
           </p>
-          <p className={styles.delivery}>🕒 15mins - 30mins</p>
-          <div className={styles.rating}>⭐ {details.rating}</div>
+
+          <div className={styles.shopMeta}>
+            <div className={styles.shopMetaItem}>
+              <FaClock className={styles.icon} />
+              <span>15mins - 30mins</span>
+            </div>
+            <div className={styles.shopMetaItem}>
+              <FaStar className={styles.icon} />
+              <span>{details.rating || "New"}</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className={styles.products}>
-        <h2>Products</h2>
-        <div className={styles.productGrid}>
+      {/* Products Section */}
+      <div className={styles.productsSection}>
+        <h2 className={styles.sectionTitle}>Products</h2>
+        <div className={styles.productsGrid}>
           {products.products.map((product) => (
-            <Link to={`/product/${product.id}`} key={product.id}>
-              <div className={styles.productCard}>
-                <img
-                  src={product.image_url}
-                  alt={product.name || "Product"}
-                />
-                <div className={styles.productInfo}>
-                  <h3>
-                    {product.name}
-                  </h3>
-                  <p className={styles.price}>₦{product.price || "0.00"}</p>
-                  {/* <button className={styles.addToCart}>Add to Cart</button> */}
-                </div>
+            <div
+              key={product.id}
+              className={styles.productCard}
+              onClick={() => handleProductClick(product.id)}
+            >
+              <div className={styles.productImageContainer}>
+                {product.image_url ? (
+                  <img
+                    src={product.image_url}
+                    alt={product.name}
+                    className={styles.productImage}
+                  />
+                ) : (
+                  <div className={styles.productImagePlaceholder}>
+                    <FaBuilding />
+                  </div>
+                )}
               </div>
-            </Link>
+              <div className={styles.productDetails}>
+                <h3 className={styles.productName}>{product.name}</h3>
+                <p className={styles.productPrice}>
+                  ₦{product.price || "0.00"}
+                </p>
+                <p className={styles.productDescription}>
+                  {product.description || "No description available"}
+                </p>
+                {/* <button 
+                  className={styles.addToCartButton}
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent the click from bubbling up to the card
+                  }}
+                >
+                  <FaShoppingCart className={styles.cartIcon} />
+                  Add to Cart
+                </button> */}
+              </div>
+            </div>
           ))}
         </div>
       </div>
