@@ -5,6 +5,7 @@ import api from "../constant/api";
 import styles from "../css/Login.module.css";
 import logo from "../assets/stumart.jpeg";
 import { GlobalContext } from "../constant/GlobalContext";
+import { FaEye, FaEyeSlash } from "react-icons/fa"; // Add this import at the top
 
 const Login = () => {
   const location = useLocation();
@@ -18,6 +19,7 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [throttleError, setThrottleError] = useState(null);
   const [throttleWaitTime, setThrottleWaitTime] = useState(null);
+  const [showPassword, setShowPassword] = useState(false); // Add this new state
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -75,7 +77,7 @@ const Login = () => {
       localStorage.setItem("user_type", user_type);
       localStorage.setItem("access", access);
       localStorage.setItem("refresh", refresh);
-      localStorage.setItem("institution", institution);      // Set default auth header for future requests
+      localStorage.setItem("institution", institution); // Set default auth header for future requests
       api.defaults.headers.common["Authorization"] = `Bearer ${access}`;
 
       // If user is not verified, send OTP and navigate to email verification
@@ -230,15 +232,25 @@ const Login = () => {
 
           <div className={styles.inputGroup}>
             <label htmlFor="password">Password</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="Enter your password"
-              required
-            />
+            <div className={styles.passwordInput}>
+              <input
+                type={showPassword ? "text" : "password"}
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Enter your password"
+                required
+              />
+              <button
+                type="button"
+                className={styles.passwordToggle}
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
           </div>
 
           <div className={styles.forgotPassword}>

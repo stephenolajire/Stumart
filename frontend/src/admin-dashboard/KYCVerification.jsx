@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import styles from "./css/KYCVerification.module.css";
 import api from "../constant/api";
+import { MEDIA_BASE_URL } from "../constant/api";
 
 const KYCVerification = () => {
   const [verifications, setVerifications] = useState([]);
@@ -32,6 +33,7 @@ const KYCVerification = () => {
         params,
       });
       setVerifications(response.data);
+      console.log("Fetched verifications:", response.data);
       setError(null);
     } catch (err) {
       setError("Failed to fetch KYC verifications. Please try again later.");
@@ -276,7 +278,7 @@ const KYCVerification = () => {
                     <h6>Selfie Image</h6>
                     {selectedVerification.selfie_image ? (
                       <img
-                        src={selectedVerification.selfie_image}
+                        src={`${MEDIA_BASE_URL}${selectedVerification.selfie_image}`}
                         alt="Selfie"
                         className={styles.documentImage}
                       />
@@ -290,7 +292,7 @@ const KYCVerification = () => {
                     <h6>ID Document</h6>
                     {selectedVerification.id_image ? (
                       <img
-                        src={selectedVerification.id_image}
+                        src={`${MEDIA_BASE_URL}${selectedVerification.id_image}`}
                         alt="ID Document"
                         className={styles.documentImage}
                       />

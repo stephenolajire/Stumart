@@ -132,6 +132,39 @@
   font-weight: 500;
 }
 
+.passwordInput {
+  position: relative;
+  width: 100%;
+}
+
+.passwordInput input {
+  width: 100%;
+  padding-right: 40px; /* Make space for the icon */
+}
+
+.passwordToggle {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  color: var(--neutral-gray-500);
+}
+
+.passwordToggle:hover {
+  color: var(--neutral-gray-700);
+}
+
+.passwordToggle:focus {
+  outline: none;
+  color: var(--primary-500);
+}
+
 @media (max-width: 468px) {
   .loginCard {
     padding: 2rem;
