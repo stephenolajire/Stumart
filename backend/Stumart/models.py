@@ -140,6 +140,7 @@ class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     picker = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE, related_name="picker")
     confirm = models.BooleanField(default=False, blank=True, null=True)
+    packed = models.BooleanField(default=False, blank=True, null=True) 
     
 
     def __str__(self):
@@ -154,6 +155,7 @@ class OrderItem(models.Model):
     vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE)
     size = models.CharField(max_length=50, null=True, blank=True)  # New
     color = models.CharField(max_length=50, null=True, blank=True)
+ # New
 
     def __str__(self):
         return f"{self.product.name} - {self.quantity}"

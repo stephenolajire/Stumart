@@ -57,7 +57,7 @@ const VendorDashboard = () => {
 
       setStats(statsData);
       setProducts(productsData);
-      // setOrders(ordersData);
+      setOrders(ordersData);
       console.log("Orders Data:", ordersData);
       setWithrawalHistory(withdrawData);
     } catch (error) {

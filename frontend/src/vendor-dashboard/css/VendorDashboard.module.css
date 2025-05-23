@@ -947,3 +947,18 @@
     display: none;
   }
 }
+
+.updateButton, .shipButton {
+  color: white;
+  background-color: var(--primary-500);
+  /* padding: 1.5rem; */
+  border: none;
+  height: 3rem;
+  border-radius: 1.5rem;
+  text-align: center;
+  width: 100%;
+}
+
+.shipButton {
+  background-color: var(--info);
+}

@@ -285,9 +285,10 @@ class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = [
-            'id', 'order_number', 'user', 'first_name', 'last_name', 'email', 
-            'phone', 'address', 'room_number', 'subtotal', 'shipping_fee', 
-            'tax', 'total', 'order_status', 'order_items, confirm', 'picker'
+            'id', 'order_number', 'user', 'first_name', 'last_name',
+            'email', 'phone', 'address', 'room_number', 'subtotal',
+            'shipping_fee', 'tax', 'total', 'order_status', 'created_at',
+            'order_items', 'transaction', 'image_url', 'confirm', 'picker', 'packed',
         ]
     
     def create(self, validated_data):

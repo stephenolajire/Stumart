@@ -1,4 +1,11 @@
-import { useContext, useState, useEffect } from "react";
+import {
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  memo,
+  useMemo,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import "sweetalert2/dist/sweetalert2.css";
@@ -32,6 +39,7 @@ import { nigeriaInstitutions } from "../constant/data";
 import api from "../constant/api";
 import { MEDIA_BASE_URL } from "../constant/api";
 import { Link } from "react-router-dom";
+import debounce from "lodash/debounce";
 
 // Categories with icons
 const categories = [
@@ -74,172 +82,297 @@ const promotions = [
   },
 ];
 
-const Home = () => {
+const Home = memo(() => {
   const navigate = useNavigate();
-  const {
-    shopsData,
-    fetchShopsBySchool,
-    fetchShopData,
-    loading,
-    isAuthenticated,
-    user,
-  } = useContext(GlobalContext);
+  const { shopsData, fetchShopsBySchool, loading, isAuthenticated } =
+    useContext(GlobalContext);
 
-  // State variables
+  // Consolidated state
+  const [filters, setFilters] = useState({
+    category: "all",
+    state: "",
+    school: "",
+  });
+
+  const [shopState, setShopState] = useState({
+    filteredShops: [],
+    schoolShops: [],
+    displayMode: "allShops",
+  });
+
+  // UI state
+  const [uiState, setUiState] = useState({
+    productName: "",
+    isSearching: false,
+    isInitialized: false,
+    isLockedToInstitution: true,
+    showFilters: false,
+    currentPromoIndex: 0,
+    currentPage: 1,
+  });
+
+  // Constants
   const institution = localStorage.getItem("institution");
-  const user_type = localStorage.getItem("user_type");
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const [selectedState, setSelectedState] = useState("");
-  const [selectedSchool, setSelectedSchool] = useState("");
-  const [availableSchools, setAvailableSchools] = useState([]);
-  const [filteredShops, setFilteredShops] = useState([]);
-  const [schoolShops, setSchoolShops] = useState([]);
-  const [displayMode, setDisplayMode] = useState("allShops");
-  const [productName, setProductName] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [isLockedToInstitution, setIsLockedToInstitution] = useState(true);
-  const [showFilters, setShowFilters] = useState(false);
-  const [currentPromoIndex, setCurrentPromoIndex] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
-  const shopsPerPage = 12; // Show fewer shops per page for better layout
+  const shopsPerPage = 12;
 
   // Get all states from Nigeria institutions
-  const states = Object.keys(nigeriaInstitutions);
+  const states = useMemo(() => Object.keys(nigeriaInstitutions), []);
 
-  // Format category name
-  const formatCategoryName = (category) => {
+  // Compute available schools when state changes
+  const availableSchools = useMemo(() => {
+    if (!filters.state) return [];
+    return nigeriaInstitutions[filters.state] || [];
+  }, [filters.state]);
+
+  // Filter function - memoized to prevent recreating on every render
+  const applyFilters = useCallback((shops, category) => {
+    if (!shops || !Array.isArray(shops)) return [];
+    if (category === "all") return shops;
+
+    return shops.filter(
+      (shop) =>
+        shop.business_category &&
+        shop.business_category.toLowerCase() === category.toLowerCase()
+    );
+  }, []);
+
+  // Computed properties
+  const totalPages = useMemo(() => {
+    return Math.ceil((shopState.filteredShops?.length || 0) / shopsPerPage);
+  }, [shopState.filteredShops, shopsPerPage]);
+
+  const currentShops = useMemo(() => {
+    const { currentPage } = uiState;
+    const indexOfLastShop = currentPage * shopsPerPage;
+    const indexOfFirstShop = indexOfLastShop - shopsPerPage;
+    return shopState.filteredShops?.slice(indexOfFirstShop, indexOfLastShop);
+  }, [shopState.filteredShops, uiState.currentPage, shopsPerPage]);
+
+  // Format category name - memoized helper function
+  const formatCategoryName = useCallback((category) => {
     if (category === "all") return "All";
     return category
       .split(" ")
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(" ");
-  };
+  }, []);
 
-  // Filter shops based on category
-  const applyFilters = (shops, category) => {
-    if (!shops || !Array.isArray(shops)) return [];
-    if (category === "all") {
-      return shops;
+  // Format title based on current selections
+  const getTitle = useCallback(() => {
+    const formattedCategory = formatCategoryName(filters.category);
+
+    if (shopState.displayMode === "schoolShops") {
+      return filters.category === "all" ? (
+        `Shops in ${filters.school}`
+      ) : (
+        <span>
+          <span className={styles.highlightCategory}>{formattedCategory}</span>{" "}
+          Shops in {filters.school}
+        </span>
+      );
     } else {
-      return shops.filter(
-        (shop) =>
-          shop.business_category &&
-          shop.business_category.toLowerCase() === category.toLowerCase()
+      return filters.category === "all" ? (
+        "Featured Shops"
+      ) : (
+        <span>
+          <span className={styles.highlightCategory}>{formattedCategory}</span>{" "}
+          Shops
+        </span>
       );
     }
-  };
+  }, [
+    filters.category,
+    filters.school,
+    shopState.displayMode,
+    formatCategoryName,
+  ]);
 
-  // Change promotion slide every 5 seconds
+  // Format the no results message
+  const getNoResultsMessage = useCallback(() => {
+    const formattedCategory = formatCategoryName(filters.category);
+
+    if (shopState.displayMode === "schoolShops") {
+      return filters.category === "all"
+        ? `No shops found for ${filters.school}`
+        : `No ${formattedCategory} shops found for ${filters.school}`;
+    } else {
+      return filters.category === "all"
+        ? "No shops available"
+        : `No ${formattedCategory} shops available`;
+    }
+  }, [
+    filters.category,
+    filters.school,
+    shopState.displayMode,
+    formatCategoryName,
+  ]);
+
+  // Promotion carousel timer
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentPromoIndex((prev) => (prev + 1) % promotions.length);
+      setUiState((prev) => ({
+        ...prev,
+        currentPromoIndex: (prev.currentPromoIndex + 1) % promotions.length,
+      }));
     }, 5000);
 
     return () => clearInterval(timer);
   }, []);
 
-  // Initial data fetch
-  useEffect(() => {
-    if (!isInitialized && Array.isArray(shopsData) && shopsData.length > 0) {
-      if (!isAuthenticated || !institution) {
-        setFilteredShops(applyFilters(shopsData, selectedCategory));
-        setDisplayMode("allShops");
-        setIsInitialized(true);
+  // Centralized shop fetching function - memoized with useCallback
+  const fetchShops = useCallback(
+    async (schoolName) => {
+      try {
+        const fetchedShops = await fetchShopsBySchool(schoolName);
+
+        if (Array.isArray(fetchedShops)) {
+          setShopState((prev) => ({
+            ...prev,
+            schoolShops: fetchedShops,
+            filteredShops: applyFilters(fetchedShops, filters.category),
+            displayMode: "schoolShops",
+          }));
+          return true;
+        }
+        return false;
+      } catch (error) {
+        console.error("Error fetching shops:", error);
+        return false;
       }
-    }
-  }, [
-    shopsData,
-    isAuthenticated,
-    institution,
-    selectedCategory,
-    isInitialized,
-  ]);
+    },
+    [fetchShopsBySchool, applyFilters, filters.category]
+  );
 
-  // Update available schools when state changes
-  useEffect(() => {
-    if (selectedState) {
-      setAvailableSchools(nigeriaInstitutions[selectedState] || []);
-
-      if (
-        selectedSchool &&
-        !nigeriaInstitutions[selectedState].includes(selectedSchool)
-      ) {
-        setSelectedSchool("");
-      }
-    } else {
-      setAvailableSchools([]);
-      setSelectedSchool("");
-    }
-  }, [selectedState, selectedSchool]);
-
-  // Handle authenticated user's institution
-  useEffect(() => {
-    const handleUserInstitution = async () => {
-      if (isAuthenticated && institution && !isInitialized) {
+  // Debounced filter update function - properly memoized
+  const debouncedFilterUpdate = useMemo(
+    () =>
+      debounce(async (newFilters) => {
         try {
-          // Find the state for this institution
+          if (newFilters.school) {
+            await fetchShops(newFilters.school);
+          } else {
+            setShopState((prev) => ({
+              ...prev,
+              filteredShops: applyFilters(shopsData, newFilters.category),
+              displayMode: "allShops",
+            }));
+          }
+        } catch (error) {
+          console.error("Error updating filters:", error);
+        }
+      }, 500),
+    [fetchShops, applyFilters, shopsData]
+  );
+
+  // Clean up debounce on unmount
+  useEffect(() => {
+    return () => {
+      debouncedFilterUpdate.cancel();
+    };
+  }, [debouncedFilterUpdate]);
+
+  // MAIN INITIALIZATION EFFECT - consolidated from multiple effects
+  useEffect(() => {
+    const initializeData = async () => {
+      if (uiState.isInitialized) return;
+
+      try {
+        if (isAuthenticated && institution) {
+          // Find user's state
           const userState = Object.keys(nigeriaInstitutions).find((state) =>
             nigeriaInstitutions[state].includes(institution)
           );
 
-          if (userState) {
-            setSelectedState(userState);
-            setSelectedSchool(institution);
-          }
+          // Update filters with user's institution
+          setFilters((prev) => ({
+            ...prev,
+            state: userState || "",
+            school: institution,
+          }));
 
           // Fetch shops for user's institution
-          const fetchedSchoolShops = await fetchShopsBySchool(institution);
+          const success = await fetchShops(institution);
 
-          if (Array.isArray(fetchedSchoolShops)) {
-            setSchoolShops(fetchedSchoolShops);
-            const filtered = applyFilters(fetchedSchoolShops, selectedCategory);
-            setFilteredShops(filtered);
-            setDisplayMode("schoolShops");
-          } else {
-            setSchoolShops([]);
-            setFilteredShops([]);
+          if (!success) {
+            // Fall back to all shops if institution fetch fails
+            setShopState((prev) => ({
+              ...prev,
+              filteredShops: applyFilters(shopsData, filters.category),
+              displayMode: "allShops",
+            }));
           }
-
-          setIsInitialized(true);
-        } catch (error) {
-          console.error("Error fetching institution shops:", error);
-          setFilteredShops(applyFilters(shopsData, selectedCategory));
-          setDisplayMode("allShops");
-          setIsInitialized(true);
+        } else {
+          // Not authenticated, show all shops
+          setShopState((prev) => ({
+            ...prev,
+            filteredShops: applyFilters(shopsData, filters.category),
+            displayMode: "allShops",
+          }));
         }
+
+        // Mark initialization as complete
+        setUiState((prev) => ({
+          ...prev,
+          isInitialized: true,
+        }));
+      } catch (error) {
+        console.error("Error initializing data:", error);
+        // Fall back to all shops on error
+        setShopState((prev) => ({
+          ...prev,
+          filteredShops: applyFilters(shopsData, filters.category),
+          displayMode: "allShops",
+        }));
+
+        setUiState((prev) => ({
+          ...prev,
+          isInitialized: true,
+        }));
       }
     };
 
-    handleUserInstitution();
+    initializeData();
   }, [
     isAuthenticated,
     institution,
-    isInitialized,
     shopsData,
-    selectedCategory,
-    fetchShopsBySchool,
+    filters.category,
+    fetchShops,
+    applyFilters,
+    uiState.isInitialized,
   ]);
 
-  // Apply category filter when category changes
+  // Apply category filter when it changes
   useEffect(() => {
-    if (selectedCategory.toLowerCase() === "other") {
-      return;
-    }
+    if (uiState.isInitialized && filters.category.toLowerCase() !== "other") {
+      const currentShops =
+        shopState.displayMode === "schoolShops"
+          ? shopState.schoolShops
+          : shopsData;
 
-    if (displayMode === "allShops") {
-      setFilteredShops(applyFilters(shopsData, selectedCategory));
-    } else if (displayMode === "schoolShops") {
-      setFilteredShops(applyFilters(schoolShops, selectedCategory));
-    }
+      setShopState((prev) => ({
+        ...prev,
+        filteredShops: applyFilters(currentShops, filters.category),
+      }));
 
-    // Reset to first page when filters change
-    setCurrentPage(1);
-  }, [selectedCategory, displayMode, shopsData, schoolShops]);
+      // Reset to first page when filters change
+      setUiState((prev) => ({
+        ...prev,
+        currentPage: 1,
+      }));
+    }
+  }, [
+    filters.category,
+    uiState.isInitialized,
+    shopState.displayMode,
+    shopState.schoolShops,
+    shopsData,
+    applyFilters,
+  ]);
 
   // Request to switch institutions confirmation
-  const requestInstitutionSwitch = () => {
-    if (isAuthenticated && institution && isLockedToInstitution) {
+  const requestInstitutionSwitch = useCallback(() => {
+    if (isAuthenticated && institution && uiState.isLockedToInstitution) {
       Swal.fire({
         title: "Looking for shops elsewhere?",
         text: `You're currently browsing shops at ${institution}. Would you like to look at shops in other institutions?`,
@@ -251,10 +384,18 @@ const Home = () => {
         cancelButtonColor: "#d33",
       }).then((result) => {
         if (result.isConfirmed) {
-          setIsLockedToInstitution(false);
+          setUiState((prev) => ({
+            ...prev,
+            isLockedToInstitution: false,
+          }));
+
           // Reset state but keep the current institution as the default
-          setSelectedState("");
-          setSelectedSchool("");
+          setFilters((prev) => ({
+            ...prev,
+            state: "",
+            school: "",
+          }));
+
           Swal.fire({
             title: "Institution filter unlocked",
             text: "You can now browse shops from any institution.",
@@ -267,302 +408,258 @@ const Home = () => {
       return true;
     }
     return false;
-  };
+  }, [isAuthenticated, institution, uiState.isLockedToInstitution]);
+
+  // CONSOLIDATED EVENT HANDLERS
+
+  // Handle filter changes
+  const handleFilterChange = useCallback(
+    (name, value) => {
+      setFilters((prev) => ({ ...prev, [name]: value }));
+      debouncedFilterUpdate({ ...filters, [name]: value });
+    },
+    [filters, debouncedFilterUpdate]
+  );
 
   // Handle school selection submission
-  const handleSchoolSubmit = async (e) => {
-    e.preventDefault();
+  const handleSchoolSubmit = useCallback(
+    async (e) => {
+      e?.preventDefault();
 
-    // Check if user is trying to change institution while being locked
-    if (
-      isAuthenticated &&
-      institution &&
-      isLockedToInstitution &&
-      selectedSchool &&
-      selectedSchool !== institution
-    ) {
-      const switched = requestInstitutionSwitch();
-      if (switched) return;
-    }
-
-    if (selectedSchool) {
-      try {
-        const fetchedSchoolShops = await fetchShopsBySchool(selectedSchool);
-
-        if (Array.isArray(fetchedSchoolShops)) {
-          setSchoolShops(fetchedSchoolShops);
-          const filtered = applyFilters(fetchedSchoolShops, selectedCategory);
-          setFilteredShops(filtered);
-          setDisplayMode("schoolShops");
-        } else {
-          setSchoolShops([]);
-          setFilteredShops([]);
-        }
-      } catch (error) {
-        console.error("Error fetching shops by school:", error);
-        setSchoolShops([]);
-        setFilteredShops([]);
+      // Check if user is trying to change institution while being locked
+      if (
+        isAuthenticated &&
+        institution &&
+        uiState.isLockedToInstitution &&
+        filters.school &&
+        filters.school !== institution
+      ) {
+        const switched = requestInstitutionSwitch();
+        if (switched) return;
       }
-    }
-  };
+
+      if (filters.school) {
+        try {
+          await fetchShops(filters.school);
+        } catch (error) {
+          console.error("Error fetching shops by school:", error);
+          setShopState((prev) => ({
+            ...prev,
+            schoolShops: [],
+            filteredShops: [],
+          }));
+        }
+      }
+    },
+    [
+      isAuthenticated,
+      institution,
+      uiState.isLockedToInstitution,
+      filters.school,
+      fetchShops,
+      requestInstitutionSwitch,
+    ]
+  );
 
   // Handle category change with navigation to Other Services
-  const handleCategoryChange = (category) => {
-    setSelectedCategory(category);
+  const handleCategoryChange = useCallback(
+    (category) => {
+      setFilters((prev) => ({ ...prev, category }));
 
-    // Navigate to Other Services page if "Other" is selected
-    if (category.toLowerCase() === "other") {
-      if (displayMode === "schoolShops" && selectedSchool) {
-        navigate(
-          `/other-services?school=${encodeURIComponent(selectedSchool)}`
-        );
-      } else {
-        navigate("/other-services");
+      // Navigate to Other Services page if "Other" is selected
+      if (category.toLowerCase() === "other") {
+        if (shopState.displayMode === "schoolShops" && filters.school) {
+          navigate(
+            `/other-services?school=${encodeURIComponent(filters.school)}`
+          );
+        } else {
+          navigate("/other-services");
+        }
       }
-    }
-  };
+    },
+    [navigate, shopState.displayMode, filters.school]
+  );
 
   // Reset school filter
-  const handleResetFilter = () => {
-    if (isAuthenticated && institution && isLockedToInstitution) {
+  const handleResetFilter = useCallback(() => {
+    if (isAuthenticated && institution && uiState.isLockedToInstitution) {
       const switched = requestInstitutionSwitch();
       if (switched) return;
     }
 
-    setSelectedState("");
-    setSelectedSchool("");
-    setDisplayMode("allShops");
-    setSchoolShops([]);
+    setFilters((prev) => ({
+      ...prev,
+      state: "",
+      school: "",
+    }));
 
-    const filtered = applyFilters(shopsData, selectedCategory);
-    setFilteredShops(filtered);
-  };
-
-  // Format the title based on current selections
-  const getTitle = () => {
-    const formattedCategory = formatCategoryName(selectedCategory);
-
-    if (displayMode === "schoolShops") {
-      return selectedCategory === "all" ? (
-        `Shops in ${selectedSchool}`
-      ) : (
-        <span>
-          <span className={styles.highlightCategory}>{formattedCategory}</span>{" "}
-          Shops in {selectedSchool}
-        </span>
-      );
-    } else {
-      return selectedCategory === "all" ? (
-        "Featured Shops"
-      ) : (
-        <span>
-          <span className={styles.highlightCategory}>{formattedCategory}</span>{" "}
-          Shops
-        </span>
-      );
-    }
-  };
-
-  // Format the no results message
-  const getNoResultsMessage = () => {
-    const formattedCategory = formatCategoryName(selectedCategory);
-
-    if (displayMode === "schoolShops") {
-      return selectedCategory === "all"
-        ? `No shops found for ${selectedSchool}`
-        : `No ${formattedCategory} shops found for ${selectedSchool}`;
-    } else {
-      return selectedCategory === "all"
-        ? "No shops available"
-        : `No ${formattedCategory} shops available`;
-    }
-  };
+    setShopState((prev) => ({
+      ...prev,
+      displayMode: "allShops",
+      schoolShops: [],
+      filteredShops: applyFilters(shopsData, filters.category),
+    }));
+  }, [
+    isAuthenticated,
+    institution,
+    uiState.isLockedToInstitution,
+    filters.category,
+    shopsData,
+    applyFilters,
+    requestInstitutionSwitch,
+  ]);
 
   // Handle product search
-  const handleProductSearch = async (e) => {
-    e.preventDefault();
-    if (!productName.trim()) return;
-
-    if (
-      isAuthenticated &&
-      institution &&
-      isLockedToInstitution &&
-      selectedSchool &&
-      selectedSchool !== institution
-    ) {
-      const switched = requestInstitutionSwitch();
-      if (switched) return;
-    }
-
-    setIsSearching(true);
-    try {
-      const params = {
-        product_name: productName,
-        ...(selectedSchool && { institution: selectedSchool }),
-        ...(selectedState && { state: selectedState }),
-      };
-
-      const response = await api.get("search-products/", { params });
+  const handleProductSearch = useCallback(
+    async (e) => {
+      e.preventDefault();
+      if (!uiState.productName.trim()) return;
 
       if (
-        response.data &&
-        response.data.products &&
-        response.data.products.length > 0
+        isAuthenticated &&
+        institution &&
+        uiState.isLockedToInstitution &&
+        filters.school &&
+        filters.school !== institution
       ) {
-        navigate("/search", {
-          state: {
-            products: response.data.products,
-            searchParams: {
-              productName,
-              school: selectedSchool,
-              state: selectedState,
-            },
-          },
-        });
-      } else {
-        Swal.fire({
-          icon: "info",
-          title: "No Products Found",
-          text: `No products matching "${productName}" found in the selected location.`,
-        });
+        const switched = requestInstitutionSwitch();
+        if (switched) return;
       }
-    } catch (error) {
-      console.error("Search error:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Search Failed",
-        text: "Product not found. Please try again.",
-      });
-    } finally {
-      setIsSearching(false);
-    }
-  };
 
-  // Handle state selection
-  const handleStateChange = (e) => {
-    const newState = e.target.value;
+      setUiState((prev) => ({ ...prev, isSearching: true }));
 
-    if (isAuthenticated && institution && isLockedToInstitution) {
-      requestInstitutionSwitch();
-      return;
-    }
-
-    setSelectedState(newState);
-  };
-
-  // Handle school selection
-  const handleSchoolChange = (e) => {
-    const newSchool = e.target.value;
-
-    if (
-      isAuthenticated &&
-      institution &&
-      isLockedToInstitution &&
-      newSchool !== institution
-    ) {
-      requestInstitutionSwitch();
-      return;
-    }
-
-    setSelectedSchool(newSchool);
-  };
-
-  // Handle change school selection
-  const handleChangeSchool = async () => {
-    if (
-      isAuthenticated &&
-      institution &&
-      isLockedToInstitution &&
-      selectedSchool !== institution
-    ) {
-      const switched = requestInstitutionSwitch();
-      if (switched) return;
-    }
-
-    if (selectedSchool) {
       try {
-        const fetchedSchoolShops = await fetchShopsBySchool(selectedSchool);
+        const params = {
+          product_name: uiState.productName,
+          ...(filters.school && { institution: filters.school }),
+          ...(filters.state && { state: filters.state }),
+        };
 
-        if (Array.isArray(fetchedSchoolShops)) {
-          setSchoolShops(fetchedSchoolShops);
-          const filtered = applyFilters(fetchedSchoolShops, selectedCategory);
-          setFilteredShops(filtered);
-          setDisplayMode("schoolShops");
+        const response = await api.get("search-products/", { params });
+
+        if (
+          response.data &&
+          response.data.products &&
+          response.data.products.length > 0
+        ) {
+          navigate("/search", {
+            state: {
+              products: response.data.products,
+              searchParams: {
+                productName: uiState.productName,
+                school: filters.school,
+                state: filters.state,
+              },
+            },
+          });
         } else {
-          setSchoolShops([]);
-          setFilteredShops([]);
-
           Swal.fire({
             icon: "info",
-            title: "No Shops Found",
-            text: `No shops found for ${selectedSchool}.`,
+            title: "No Products Found",
+            text: `No products matching "${uiState.productName}" found in the selected location.`,
           });
         }
       } catch (error) {
-        console.error("Error fetching shops by school:", error);
-        setSchoolShops([]);
-        setFilteredShops([]);
-
+        console.error("Search error:", error);
         Swal.fire({
           icon: "error",
-          title: "Error",
-          text: "Failed to fetch shops. Please try again.",
+          title: "Search Failed",
+          text: "Product not found. Please try again.",
         });
+      } finally {
+        setUiState((prev) => ({ ...prev, isSearching: false }));
       }
-    }
-  };
+    },
+    [
+      uiState.productName,
+      uiState.isLockedToInstitution,
+      isAuthenticated,
+      institution,
+      filters.school,
+      filters.state,
+      navigate,
+      requestInstitutionSwitch,
+    ]
+  );
+
+  // Handle state selection
+  const handleStateChange = useCallback(
+    (e) => {
+      const newState = e.target.value;
+
+      if (isAuthenticated && institution && uiState.isLockedToInstitution) {
+        requestInstitutionSwitch();
+        return;
+      }
+
+      setFilters((prev) => ({ ...prev, state: newState, school: "" }));
+    },
+    [
+      isAuthenticated,
+      institution,
+      uiState.isLockedToInstitution,
+      requestInstitutionSwitch,
+    ]
+  );
+
+  // Handle school selection
+  const handleSchoolChange = useCallback(
+    (e) => {
+      const newSchool = e.target.value;
+
+      if (
+        isAuthenticated &&
+        institution &&
+        uiState.isLockedToInstitution &&
+        newSchool !== institution
+      ) {
+        requestInstitutionSwitch();
+        return;
+      }
+
+      setFilters((prev) => ({ ...prev, school: newSchool }));
+    },
+    [
+      isAuthenticated,
+      institution,
+      uiState.isLockedToInstitution,
+      requestInstitutionSwitch,
+    ]
+  );
 
   // Toggle filters visibility
-  const toggleFilters = () => {
-    setShowFilters(!showFilters);
-  };
+  const toggleFilters = useCallback(() => {
+    setUiState((prev) => ({ ...prev, showFilters: !prev.showFilters }));
+  }, []);
 
-  // Pagination logic
-  const indexOfLastShop = currentPage * shopsPerPage;
-  const indexOfFirstShop = indexOfLastShop - shopsPerPage;
-  const currentShops = filteredShops?.slice(indexOfFirstShop, indexOfLastShop);
-  const totalPages = Math.ceil((filteredShops?.length || 0) / shopsPerPage);
-
-  const paginate = (pageNumber) => {
-    setCurrentPage(pageNumber);
+  // Pagination handler
+  const paginate = useCallback((pageNumber) => {
+    setUiState((prev) => ({ ...prev, currentPage: pageNumber }));
     window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+  }, []);
 
+  // UI COMPONENTS SECTION
   return (
     <main className={styles.homeContainer}>
       {/* Hero Banner Section with Search */}
       <form onSubmit={handleProductSearch} className={styles.searchBar}>
         <input
           type="text"
-          value={productName}
-          onChange={(e) => setProductName(e.target.value)}
+          value={uiState.productName}
+          onChange={(e) =>
+            setUiState((prev) => ({ ...prev, productName: e.target.value }))
+          }
           placeholder="What are you looking for?"
           className={styles.searchInput}
         />
         <button
           type="submit"
           className={styles.searchButton}
-          disabled={!productName.trim() || isSearching}
+          disabled={!uiState.productName.trim() || uiState.isSearching}
         >
-          {isSearching ? "Searching..." : <FaSearch />}
+          {uiState.isSearching ? "Searching..." : <FaSearch />}
         </button>
       </form>
-      {/* <section className={styles.heroBanner}>
-        <div className={styles.heroContent}>
-          <h1>Your Campus Marketplace</h1>
-          <p>
-            Shop from local vendors, get exclusive student discounts, and enjoy
-            fast delivery right to your hostel
-          </p>
-
-          {isAuthenticated && institution && isLockedToInstitution && (
-            <div className={styles.currentInstitutionLabel}>
-              <FaUniversity className={styles.institutionIcon} />
-              Currently shopping at <span>{institution}</span>
-            </div>
-          )}
-        </div>
-      </section> */}
 
       {/* Featured Deals Carousel */}
       <section className={styles.featuredDeals}>
@@ -578,19 +675,18 @@ const Home = () => {
           <div
             className={styles.dealCard}
             style={{
-              backgroundImage: `url(${promotions[currentPromoIndex].image})`,
+              backgroundImage: `url(${
+                promotions[uiState.currentPromoIndex].image
+              })`,
               backgroundSize: "cover",
               backgroundRepeat: "no-repeat",
               backgroundPosition: "center",
-              // objectFit: "contain",
-              // height: "200px",
-              // width: "100%",
             }}
           >
-            <h3>{promotions[currentPromoIndex].title}</h3>
-            <p>{promotions[currentPromoIndex].description}</p>
+            <h3>{promotions[uiState.currentPromoIndex].title}</h3>
+            <p>{promotions[uiState.currentPromoIndex].description}</p>
             <Link
-              to={promotions[currentPromoIndex].link}
+              to={promotions[uiState.currentPromoIndex].link}
               className={styles.dealButton}
             >
               Shop Now
@@ -602,9 +698,11 @@ const Home = () => {
               <button
                 key={index}
                 className={`${styles.dot} ${
-                  index === currentPromoIndex ? styles.activeDot : ""
+                  index === uiState.currentPromoIndex ? styles.activeDot : ""
                 }`}
-                onClick={() => setCurrentPromoIndex(index)}
+                onClick={() =>
+                  setUiState((prev) => ({ ...prev, currentPromoIndex: index }))
+                }
                 aria-label={`View promotion ${index + 1}`}
               />
             ))}
@@ -623,7 +721,7 @@ const Home = () => {
             <button
               key={category.id}
               className={`${styles.categoryCard} ${
-                selectedCategory === category.name.toLowerCase()
+                filters.category === category.name.toLowerCase()
                   ? styles.activeCategory
                   : ""
               }`}
@@ -642,12 +740,12 @@ const Home = () => {
           <div className={styles.filterHeader}>
             <h2>{getTitle()}</h2>
             <button onClick={toggleFilters} className={styles.filterToggle}>
-              {showFilters ? <FaTimes /> : <FaFilter />}{" "}
-              {showFilters ? "Hide Filter" : "Filter by school"}
+              {uiState.showFilters ? <FaTimes /> : <FaFilter />}{" "}
+              {uiState.showFilters ? "Hide Filter" : "Filter by school"}
             </button>
           </div>
 
-          {showFilters && (
+          {uiState.showFilters && (
             <div className={styles.advancedFilters}>
               <form className={styles.filterForm} onSubmit={handleSchoolSubmit}>
                 <div className={styles.filterGrid}>
@@ -655,10 +753,12 @@ const Home = () => {
                     <label htmlFor="state-select">State:</label>
                     <select
                       id="state-select"
-                      value={selectedState}
+                      value={filters.state}
                       onChange={handleStateChange}
                       disabled={
-                        isAuthenticated && institution && isLockedToInstitution
+                        isAuthenticated &&
+                        institution &&
+                        uiState.isLockedToInstitution
                       }
                       className={styles.formSelect}
                     >
@@ -675,13 +775,13 @@ const Home = () => {
                     <label htmlFor="school-select">Institution:</label>
                     <select
                       id="school-select"
-                      value={selectedSchool}
+                      value={filters.school}
                       onChange={handleSchoolChange}
                       disabled={
                         (isAuthenticated &&
                           institution &&
-                          isLockedToInstitution) ||
-                        !selectedState
+                          uiState.isLockedToInstitution) ||
+                        !filters.state
                       }
                       className={styles.formSelect}
                     >
@@ -696,17 +796,17 @@ const Home = () => {
                 </div>
 
                 <div className={styles.filterButtons}>
-                  {selectedSchool && (
+                  {filters.school && (
                     <button
                       type="button"
-                      onClick={handleChangeSchool}
+                      onClick={handleSchoolSubmit}
                       className={styles.applyButton}
                     >
                       View Shops
                     </button>
                   )}
 
-                  {(selectedState || selectedSchool) && (
+                  {(filters.state || filters.school) && (
                     <button
                       type="button"
                       onClick={handleResetFilter}
@@ -724,11 +824,11 @@ const Home = () => {
 
       {/* Shops Grid Section */}
       <section className={styles.shopsSection}>
-        {loading && !isInitialized ? (
+        {loading && !uiState.isInitialized ? (
           <div className={styles.loadingContainer}>
             <Spinner />
           </div>
-        ) : filteredShops && filteredShops.length > 0 ? (
+        ) : shopState.filteredShops && shopState.filteredShops.length > 0 ? (
           <>
             <div className={styles.shopsGrid}>
               {currentShops.map((shop) =>
@@ -754,7 +854,6 @@ const Home = () => {
                             <span>{shop.rating}</span>
                           </div>
                         </div>
-                        {/* On small screens, we'll conditionally show less info */}
                         <div className={styles.shopLocation}>
                           <FaMapMarkerAlt className={styles.locationIcon} />
                           <span>{shop.user.institution}</span>
@@ -777,8 +876,8 @@ const Home = () => {
             {totalPages > 1 && (
               <div className={styles.pagination}>
                 <button
-                  onClick={() => paginate(currentPage - 1)}
-                  disabled={currentPage === 1}
+                  onClick={() => paginate(uiState.currentPage - 1)}
+                  disabled={uiState.currentPage === 1}
                   className={styles.pageButton}
                 >
                   Prev
@@ -791,7 +890,7 @@ const Home = () => {
                       return (
                         num === 1 ||
                         num === totalPages ||
-                        Math.abs(num - currentPage) <= 1
+                        Math.abs(num - uiState.currentPage) <= 1
                       );
                     })
                     .map((number, index, array) => (
@@ -802,7 +901,9 @@ const Home = () => {
                         <button
                           onClick={() => paginate(number)}
                           className={`${styles.pageNumber} ${
-                            currentPage === number ? styles.activePage : ""
+                            uiState.currentPage === number
+                              ? styles.activePage
+                              : ""
                           }`}
                         >
                           {number}
@@ -812,8 +913,8 @@ const Home = () => {
                 </div>
 
                 <button
-                  onClick={() => paginate(currentPage + 1)}
-                  disabled={currentPage === totalPages}
+                  onClick={() => paginate(uiState.currentPage + 1)}
+                  disabled={uiState.currentPage === totalPages}
                   className={styles.pageButton}
                 >
                   Next
@@ -825,9 +926,9 @@ const Home = () => {
           <div className={styles.noResults}>
             <FaStore className={styles.noResultsIcon} />
             <p>{getNoResultsMessage()}</p>
-            {(selectedState ||
-              selectedSchool ||
-              selectedCategory !== "all") && (
+            {(filters.state ||
+              filters.school ||
+              filters.category !== "all") && (
               <button
                 onClick={handleResetFilter}
                 className={styles.resetFiltersButton}
@@ -840,6 +941,6 @@ const Home = () => {
       </section>
     </main>
   );
-};
+});
 
 export default Home;

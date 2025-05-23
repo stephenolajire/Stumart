@@ -15,7 +15,7 @@ const ShopDetails = () => {
 
   useEffect(() => {
     fetchProducts(shopId);
-  }, [shopId, fetchProducts]);
+  }, []);
 
   // Loading state
   if (!Array.isArray(products.products)) {
@@ -97,15 +97,6 @@ const ShopDetails = () => {
                 <p className={styles.productDescription}>
                   {product.description || "No description available"}
                 </p>
-                {/* <button 
-                  className={styles.addToCartButton}
-                  onClick={(e) => {
-                    e.stopPropagation(); // Prevent the click from bubbling up to the card
-                  }}
-                >
-                  <FaShoppingCart className={styles.cartIcon} />
-                  Add to Cart
-                </button> */}
               </div>
             </div>
           ))}

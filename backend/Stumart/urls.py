@@ -34,4 +34,5 @@ urlpatterns = [
     path('search-services/', SearchServicesAPIView.as_view(), name='search-services'),
     path('search-products/', SearchProductsView.as_view(), name='search-products'),
     path('search-specific-services/', SearchSpecificServiceView.as_view(), name='search-specific-services'),
+    path('pack-order/', PackOrderView.as_view(), name='pack-order'),
 ]

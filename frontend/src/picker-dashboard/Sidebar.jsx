@@ -12,6 +12,11 @@ import {
 import { TbLogout } from "react-icons/tb";
 
 const Sidebar = ({ activeView, onViewChange }) => {
+  const handleLogout = () => {
+    localStorage.removeItem("access");
+    localStorage.removeItem("refresh");
+    window.location.href = "/login";
+  };
   const navItems = [
     { id: "dashboard", label: "Dashboard", icon: <FaHome /> },
     {
@@ -51,7 +56,7 @@ const Sidebar = ({ activeView, onViewChange }) => {
       </nav>
 
       <div className={styles.logout}>
-        <button className={styles.logoutButton}>
+        <button className={styles.logoutButton} onClick={handleLogout}>
           <span className={styles.icon}>
             <TbLogout />
           </span>

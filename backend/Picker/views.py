@@ -13,6 +13,8 @@ from Stumart.models import Order, OrderItem, Transaction
 from User.models import User, Picker, StudentPicker, KYCVerification
 from .serializers import *
 from .models import*
+from django.conf import settings
+from django.core.mail import send_mail
 
 class PickerDashboardView(APIView):
     """
@@ -28,13 +30,24 @@ class PickerDashboardView(APIView):
             return Response({"error": "Only pickers can access this dashboard"}, 
                             status=status.HTTP_403_FORBIDDEN)
 
-        # Get picker model based on user type
-        picker_profile = user.picker_profile if user.user_type == 'picker' else user.student_picker_profile
+        # Get picker model based on user type with proper error handling
+        try:
+            if user.user_type == 'picker':
+                picker_profile = user.picker_profile
+            else:  # student_picker
+                picker_profile = user.student_picker_profile
+        except (User.picker_profile.RelatedObjectDoesNotExist, 
+                User.student_picker_profile.RelatedObjectDoesNotExist):
+            return Response(
+                {"error": f"No {user.user_type.replace('_', ' ')} profile found for this user"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
 
-        # ✅ Get available orders count
+        # ✅ Get available orders count (packed orders ready for pickup)
         available_orders = Order.objects.filter(
             id__in=OrderItem.objects.filter(
                 vendor__user__institution=user.institution,
+                order__packed=True,
                 order__order_status='PAID'
             ).values_list('order_id', flat=True).distinct()
         ).count()
@@ -64,13 +77,12 @@ class PickerDashboardView(APIView):
 
         completed_order_ids = completed_order_items.values_list('order_id', flat=True).distinct()
 
-
         # ✅ Recent Orders
         recent_orders = []
 
-        # Available Orders (PAID)
+        # Available Orders (packed and ready for pickup)
         available_order_ids = OrderItem.objects.filter(
-            order__order_status='PAID',
+            order__packed=True,
             vendor__user__institution=user.institution
         ).values_list('order_id', flat=True).distinct()
 
@@ -143,10 +155,11 @@ class AvailableOrdersView(APIView):
             return Response({"error": "Only pickers can access this page"}, 
                            status=status.HTTP_403_FORBIDDEN)
         
-        # Base query - get orders that are pending and in the same institution
+        # Base query - get orders that are packed and ready for pickup in the same institution
         base_query = Order.objects.filter(
             id__in=OrderItem.objects.filter(
                 vendor__user__institution=user.institution,
+                order__packed=True,
                 order__order_status='PAID'
             ).values_list('order_id', flat=True).distinct()
         )
@@ -208,11 +221,11 @@ class AvailableOrdersView(APIView):
             return Response({"error": "Only pickers can accept orders"}, 
                            status=status.HTTP_403_FORBIDDEN)
         
-        # Get the order
+        # Get the order - check if it's packed and ready for pickup
         try:
-            order = Order.objects.get(id=order_id, order_status='PAID')
+            order = Order.objects.get(id=order_id, packed=True)
         except Order.DoesNotExist:
-            return Response({"error": "Order not found or already accepted"}, 
+            return Response({"error": "Order not found or not ready for pickup"}, 
                            status=status.HTTP_404_NOT_FOUND)
         
         # Check if any order item's vendor is in the same institution
@@ -228,6 +241,19 @@ class AvailableOrdersView(APIView):
         order.order_status = 'IN_TRANSIT'
         order.picker = user
         order.save()
+
+        email = order.email
+        send_mail(
+            subject=f"Order #{order.order_number} Packed",
+            message=(
+                f"Hello {order.first_name},\n\n"
+                f"Your order #{order.order_number} has been packed and is ready for delivery.\n\n"
+                "Thank you for your patronage!"
+            ),
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[email],
+            fail_silently=False
+        )
         
         return Response({
             "message": "Order accepted successfully"
@@ -253,21 +279,27 @@ class MyDeliveriesView(APIView):
         if delivery_status == 'active':
             deliveries = Order.objects.filter(
                 order_status='IN_TRANSIT',
-                picker = user,
+                picker=user,
             ).order_by('-created_at')
         elif delivery_status == 'completed':
+            # Fixed: Use __in to check for multiple statuses
             deliveries = Order.objects.filter(
-                order_status='COMPLETED',
-                picker = user,
+                order_status__in=['COMPLETED', 'DELIVERED'],
+                picker=user,
             ).order_by('-created_at')
+        else:
+            # Handle other cases or default to empty
+            deliveries = Order.objects.none()
 
-        
         # Prepare detailed response data
         deliveries_data = []
         for delivery in deliveries:
-            # Get vendor details
-            vendor = delivery.user.vendor_profile if hasattr(delivery.user, 'vendor_profile') else None
-            vendor_name = vendor.business_name if vendor else "Unknown"
+            # Get vendor details - Fixed: Get vendor from order items instead
+            first_order_item = OrderItem.objects.filter(order=delivery).first()
+            if first_order_item and first_order_item.vendor:
+                vendor_name = first_order_item.vendor.business_name
+            else:
+                vendor_name = "Unknown"
             
             # Get customer details
             customer_name = f"{delivery.first_name} {delivery.last_name}"
@@ -287,6 +319,10 @@ class MyDeliveriesView(APIView):
                 'status': delivery.order_status,
                 'created_at': delivery.created_at.strftime('%Y-%m-%d %H:%M'),
             })
+
+        # print(deliveries_data)
+        # Fixed: Sort and limit after the loop, not inside it
+        deliveries_data = sorted(deliveries_data, key=lambda x: x['created_at'], reverse=True)
         
         return Response(deliveries_data)
     
@@ -306,8 +342,8 @@ class MyDeliveriesView(APIView):
         try:
             order = Order.objects.get(
                 id=order_id,
-                order_status = 'IN_TRANSIT',
-                picker =  user
+                order_status='IN_TRANSIT',
+                picker=user
             )
         except Order.DoesNotExist:
             return Response({"error": "Order not found or not in transit"}, 
@@ -317,23 +353,31 @@ class MyDeliveriesView(APIView):
         order.order_status = 'DELIVERED'
         order.save()
 
-        if user.user_type == 'student':
-            wallet = PickerWallet.create(
-                amount=order.shipping_fee,
-                picker=user
-            )
-
-            wallet.save()
+        # Fixed: Check for correct user type (was checking 'student' instead of picker types)
+        if user.user_type in ['picker', 'student_picker']:
+            try:
+                wallet, created = PickerWallet.objects.get_or_create(
+                    picker=user,
+                    defaults={'amount': 0}
+                )
+                wallet.amount += order.shipping_fee
+                wallet.save()
+            except Exception as e:
+                print(f"Error updating wallet: {e}")
         
-        # Update picker statistics
-        if user.user_type == 'picker':
-            picker = user.picker_profile
-            picker.total_deliveries += 1
-            picker.save()
-        else:
-            student_picker = user.student_picker_profile
-            student_picker.total_deliveries += 1
-            student_picker.save()
+        # Update picker statistics with proper error handling
+        try:
+            if user.user_type == 'picker':
+                picker = user.picker_profile
+                picker.total_deliveries += 1
+                picker.save()
+            else:  # student_picker
+                student_picker = user.student_picker_profile
+                student_picker.total_deliveries += 1
+                student_picker.save()
+        except (User.picker_profile.RelatedObjectDoesNotExist, 
+                User.student_picker_profile.RelatedObjectDoesNotExist):
+            print(f"No picker profile found for user {user.email}")
         
         return Response({"message": "Order marked as delivered"}, 
                        status=status.HTTP_200_OK)

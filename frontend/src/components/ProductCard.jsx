@@ -25,8 +25,10 @@ const ProductCard = ({ product }) => {
           alt={name} 
           className={styles.productImage}
         />
-        {in_stock <= 0 && (
-          <div className={styles.outOfStock}>Out of Stock</div>
+        {vendor_category !== 'food' && in_stock  === 0 && (
+          <div className={styles.outOfStock}>
+            <span>Out of Stock</span>
+          </div>
         )}
         {colors?.length > 0 && (
           <div className={styles.colorBadge}>

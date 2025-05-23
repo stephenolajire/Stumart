@@ -932,56 +932,6 @@ class PaystackPaymentVerifyView(APIView):
                         logger.error(f"Error sending notification to vendor {vendor.id}: {str(e)}", exc_info=True)
                         continue  # Continue with other vendors even if one fails
 
-                # Find and notify eligible pickers in the same institution as the vendor
-                for vendor in vendors_to_notify:
-                    try:
-                        # Get the vendor's institution
-                        vendor_institution = vendor.user.institution
-                        
-                        # Find all pickers (both regular and student pickers) from the same institution
-                        regular_pickers = User.objects.filter(
-                            user_type='picker',
-                            institution=vendor_institution,
-                            is_active=True
-                        )
-                        student_pickers = User.objects.filter(
-                            user_type='student_picker',
-                            institution=vendor_institution,
-                            is_active=True
-                        )
-                        
-                        # Combine the lists of pickers
-                        all_pickers_emails = []
-                        for picker in list(regular_pickers) + list(student_pickers):
-                            all_pickers_emails.append(picker.email)
-                        
-                        if all_pickers_emails:
-                            # Build email content
-                            picker_subject = f"New Delivery Opportunity - Order #{order.order_number}"
-                            picker_message = (
-                                f"Hello,\n\n"
-                                f"A new order has been placed that needs delivery from {vendor.business_name} "
-                                f"at {vendor_institution}.\n\n"
-                                f"Order Number: {order.order_number}\n"
-                                f"Order Date: {order.created_at}\n"
-                                f"Delivery Location: {order.address}\n\n"
-                                f"Please log in to your dashboard to accept this delivery. It is going to be first come first serve"
-                            )
-                            
-                            # Send email to all eligible pickers
-                            send_mail(
-                                subject=picker_subject,
-                                message=picker_message,
-                                from_email=settings.DEFAULT_FROM_EMAIL,
-                                recipient_list=all_pickers_emails,
-                                fail_silently=False
-                            )
-                            
-                            logger.info(f"Notified {len(all_pickers_emails)} pickers about order {order.order_number}")
-                    except Exception as e:
-                        logger.error(f"Failed to notify pickers for vendor {vendor.id}: {str(e)}", exc_info=True)
-                        continue  # Continue with other operations even if picker notification fails
-
                 # Delete the cart after successful payment
                 if cart_code:
                     try:
@@ -1698,7 +1648,7 @@ class AllProductsView(APIView):
                 queryset = queryset.filter(vendor__state__iexact=state)
             
             if vendor:
-                queryset = queryset.filter(vendor_id=vendor)
+                queryset = queryset.filter(vendor__vendor_profile__business_name__iexact=vendor)
 
             # Apply sorting
             if sort == 'price_low':
@@ -1736,3 +1686,113 @@ class AllProductsView(APIView):
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+class PackOrderView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            order_id = request.data.get('order_id')
+            if not order_id:
+                return Response({
+                    'error': 'Order ID is required'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Find order items belonging to this vendor
+            vendor_order_items = OrderItem.objects.filter(
+                order_id=order_id,
+                vendor__user=request.user
+            )
+
+            if not vendor_order_items.exists():
+                return Response({
+                    'error': 'No order items found or unauthorized'
+                }, status=status.HTTP_404_NOT_FOUND)
+
+            # Get the order
+            order = Order.objects.get(id=order_id)
+            
+            # Update packed status for the order
+            order.packed = True
+            order.save()
+
+            email = order.email
+            # Send email to the customer
+            send_mail(
+                subject=f"Order #{order.order_number} Packed",
+                message=(
+                    f"Hello {order.first_name},\n\n"
+                    f"Your order #{order.order_number} has been packed and is ready for delivery.\n\n"
+                    "Thank you for your patronage!"
+                ),
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[email],
+                fail_silently=False
+            )
+
+            # Get vendor details from the first order item
+            first_item = vendor_order_items.first()
+            vendor = first_item.vendor
+
+            # Find and notify eligible pickers
+            try:
+                # Get the vendor's institution
+                vendor_institution = vendor.user.institution
+                
+                # Find all pickers from the same institution
+                regular_pickers = User.objects.filter(
+                    user_type='picker',
+                    institution=vendor_institution,
+                    is_active=True
+                )
+                student_pickers = User.objects.filter(
+                    user_type='student_picker',
+                    institution=vendor_institution,
+                    is_active=True
+                )
+                
+                # Combine picker emails
+                all_pickers_emails = []
+                for picker in list(regular_pickers) + list(student_pickers):
+                    all_pickers_emails.append(picker.email)
+                
+                if all_pickers_emails:
+                    # Build email content
+                    picker_subject = f"New Delivery Opportunity - Order #{order.order_number}"
+                    picker_message = (
+                        f"Hello,\n\n"
+                        f"A new order is ready for pickup from {vendor.business_name} "
+                        f"at {vendor_institution}.\n\n"
+                        f"Order Number: {order.order_number}\n"
+                        f"Order Date: {order.created_at}\n"
+                        f"Pickup Location: {vendor.business_name}\n"  # Changed from vendor.address which doesn't exist
+                        f"Delivery Location: {order.address}\n\n"
+                        f"Please log in to your dashboard to accept this delivery. "
+                        f"This opportunity is available on a first-come, first-served basis."
+                    )
+                    
+                    # Send email to all eligible pickers
+                    send_mail(
+                        subject=picker_subject,
+                        message=picker_message,
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        recipient_list=all_pickers_emails,
+                        fail_silently=False
+                    )
+                    
+                    logger.info(f"Notified {len(all_pickers_emails)} pickers about order {order.order_number}")
+
+            except Exception as e:
+                logger.error(f"Failed to notify pickers for order {order_id}: {str(e)}")
+                # Don't return error response here as the main operation succeeded
+
+            return Response({
+                'message': 'Order packed successfully and pickers notified',
+                'order_id': order_id
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            logger.error(f"Error in PackOrderView: {str(e)}")
+            return Response({
+                'error': f'An error occurred: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
