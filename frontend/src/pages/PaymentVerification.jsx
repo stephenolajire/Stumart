@@ -105,12 +105,6 @@ const PaymentVerification = () => {
           </p>
           <div className={styles.actionButtons}>
             <button
-              className={styles.viewOrderButton}
-              onClick={handleViewOrder}
-            >
-              View Order
-            </button>
-            <button
               className={styles.continueShoppingButton}
               onClick={handleContinueShopping}
             >
