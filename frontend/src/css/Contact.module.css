@@ -276,3 +276,26 @@
     font-size: 2.4rem;
   }
 }
+
+@media screen and (max-width: 360px) {
+  .hero h1 {
+    font-size: 3rem;
+  }
+
+  .hero p {
+    font-size: 1.6rem;
+  }
+
+  .contactInfo h2,
+  .contactForm h2 {
+    font-size: 2rem;
+  }
+
+  .infoItem h3 {
+    font-size: 1.8rem;
+  }
+
+  .infoItem p {
+    font-size: 1.4rem;
+  }
+}

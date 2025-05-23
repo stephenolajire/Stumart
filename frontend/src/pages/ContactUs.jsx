@@ -6,6 +6,7 @@ import {
   FaWhatsapp,
   FaInstagram,
   FaTwitter,
+  FaTiktok,
 } from "react-icons/fa";
 import styles from "../css/Contact.module.css";
 import api from "../constant/api";
@@ -126,26 +127,33 @@ const Contact = () => {
               <div className={styles.socialLinks}>
                 <h3>Follow Us</h3>
                 <div className={styles.socialIcons}>
-                  <a
+                  {/* <a
                     href="https://wa.me/234XXXXXXXXX"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
                     <FaWhatsapp />
-                  </a>
+                  </a> */}
                   <a
-                    href="https://instagram.com/stumart"
+                    href="https://www.instagram.com/stumart.store?igsh=MWQzNnQ3dmVtaWVjdA=="
                     target="_blank"
                     rel="noopener noreferrer"
                   >
                     <FaInstagram />
                   </a>
-                  <a
+                  {/* <a
                     href="https://twitter.com/stumart"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
                     <FaTwitter />
+                  </a> */}
+                  <a
+                    href="https://www.tiktok.com/@stumart6?_t=ZM-8wbSLyqeS3S&_r=1"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <FaTiktok />
                   </a>
                 </div>
               </div>
