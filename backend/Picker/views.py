@@ -354,16 +354,16 @@ class MyDeliveriesView(APIView):
         order.save()
 
         # Fixed: Check for correct user type (was checking 'student' instead of picker types)
-        if user.user_type in ['picker', 'student_picker']:
-            try:
-                wallet, created = PickerWallet.objects.get_or_create(
-                    picker=user,
-                    defaults={'amount': 0}
-                )
-                wallet.amount += order.shipping_fee
-                wallet.save()
-            except Exception as e:
-                print(f"Error updating wallet: {e}")
+        # if user.user_type in ['picker', 'student_picker']:
+        #     try:
+        #         wallet, created = PickerWallet.objects.get_or_create(
+        #             picker=user,
+        #             defaults={'amount': 0}
+        #         )
+        #         wallet.amount += order.shipping_fee
+        #         wallet.save()
+        #     except Exception as e:
+        #         print(f"Error updating wallet: {e}")
         
         # Update picker statistics with proper error handling
         try:
