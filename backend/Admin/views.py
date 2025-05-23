@@ -9,6 +9,9 @@ from datetime import timedelta
 from User.models import User, Vendor, Picker, StudentPicker, KYCVerification
 from Stumart.models import Product, Order, OrderItem, Transaction, Wallet
 from .serializers import*
+from django.conf import settings
+from django.core.mail import send_mail
+
 
 
 class DashboardStatsAPIView(APIView):
@@ -596,3 +599,47 @@ class KYCVerificationAPIView(APIView):
             return Response({'error': 'Verification not found'}, status=status.HTTP_404_NOT_FOUND)
         
 
+class ContactView(APIView):
+    def post(self, request):
+        serializer = ContactSerializer(data=request.data)
+        
+        if serializer.is_valid():
+            contact = serializer.save()
+            
+            # Send confirmation email to user
+            send_mail(
+                subject='Thank you for contacting StuMart',
+                message=f"""Dear {contact.name},
+
+                Thank you for reaching out to us. We have received your message and will get back to you shortly.
+
+                Your message details:
+                Subject: {contact.subject}
+                Message: {contact.message}
+
+                Best regards,
+                The StuMart Team""",
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[contact.email],
+                fail_silently=False,
+            )
+            
+            # Send notification to admin
+            send_mail(
+                subject=f'New Contact Form Submission - {contact.subject}',
+                message=f"""New contact form submission from {contact.name}
+
+                Email: {contact.email}
+                Subject: {contact.subject}
+                Message: {contact.message}""",
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[settings.ADMIN_EMAIL],
+                fail_silently=False,
+            )
+            
+            return Response({
+                'message': 'Your message has been sent successfully!',
+                'data': serializer.data
+            }, status=status.HTTP_201_CREATED)
+            
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -1,6 +1,8 @@
 # serializers.py
 from rest_framework import serializers
 from User.models import Picker, StudentPicker, User
+from .models import Contact
+from django.utils import timezone
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -31,3 +33,10 @@ class StudentPickerSerializer(serializers.ModelSerializer):
     
     def get_picker_type(self, obj):
         return 'student_picker'
+    
+
+class ContactSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Contact
+        fields = ['id', 'name', 'email', 'subject', 'message', 'created_at']
+        read_only_fields = ['created_at']

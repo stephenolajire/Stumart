@@ -1,49 +1,84 @@
-import { useState } from 'react';
-import { 
-  FaEnvelope, 
-  FaPhone, 
-  FaMapMarkerAlt, 
-  FaWhatsapp, 
-  FaInstagram, 
-  FaTwitter 
-} from 'react-icons/fa';
-import styles from '../css/Contact.module.css';
+import { useState } from "react";
+import {
+  FaEnvelope,
+  FaPhone,
+  FaMapMarkerAlt,
+  FaWhatsapp,
+  FaInstagram,
+  FaTwitter,
+} from "react-icons/fa";
+import styles from "../css/Contact.module.css";
+import api from "../constant/api";
+import Swal from "sweetalert2";
 
 const Contact = () => {
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    subject: '',
-    message: ''
+    name: "",
+    email: "",
+    subject: "",
+    message: "",
   });
 
   const [status, setStatus] = useState({
     submitted: false,
     submitting: false,
-    info: { error: false, msg: null }
+    info: { error: false, msg: null },
   });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prevData => ({
+    setFormData((prevData) => ({
       ...prevData,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setStatus(prevStatus => ({ ...prevStatus, submitting: true }));
-    
-    // Add your form submission logic here
-    // This is just a simulation
-    setTimeout(() => {
+    setStatus((prevStatus) => ({ ...prevStatus, submitting: true }));
+
+    try {
+      const response = await api.post("contact/", formData);
+
+      if (response.status === 201) {
+        setStatus({
+          submitted: true,
+          submitting: false,
+          info: { error: false, msg: "Message sent successfully!" },
+        });
+
+        // Reset form
+        setFormData({
+          name: "",
+          email: "",
+          subject: "",
+          message: "",
+        });
+
+        Swal.fire({
+          icon: "success",
+          title: "Success!",
+          text: "Your message has been sent successfully.",
+        });
+      }
+    } catch (error) {
       setStatus({
-        submitted: true,
+        submitted: false,
         submitting: false,
-        info: { error: false, msg: 'Message sent successfully!' }
+        info: {
+          error: true,
+          msg:
+            error.response?.data?.message ||
+            "Failed to send message. Please try again.",
+        },
       });
-    }, 1000);
+
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "Failed to send message. Please try again.",
+      });
+    }
   };
 
   return (
@@ -60,16 +95,14 @@ const Contact = () => {
           <div className={styles.contactGrid}>
             <div className={styles.contactInfo}>
               <h2>Get In Touch</h2>
-              <p>
-                Have questions about StuMart? We're here to help!
-              </p>
+              <p>Have questions about StuMart? We're here to help!</p>
 
               <div className={styles.infoItems}>
                 <div className={styles.infoItem}>
                   <FaEnvelope className={styles.icon} />
                   <div>
                     <h3>Email</h3>
-                    <p>support@stumart.com</p>
+                    <p>stumartstorejv@gmail.com</p>
                   </div>
                 </div>
 
@@ -93,13 +126,25 @@ const Contact = () => {
               <div className={styles.socialLinks}>
                 <h3>Follow Us</h3>
                 <div className={styles.socialIcons}>
-                  <a href="https://wa.me/234XXXXXXXXX" target="_blank" rel="noopener noreferrer">
+                  <a
+                    href="https://wa.me/234XXXXXXXXX"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     <FaWhatsapp />
                   </a>
-                  <a href="https://instagram.com/stumart" target="_blank" rel="noopener noreferrer">
+                  <a
+                    href="https://instagram.com/stumart"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     <FaInstagram />
                   </a>
-                  <a href="https://twitter.com/stumart" target="_blank" rel="noopener noreferrer">
+                  <a
+                    href="https://twitter.com/stumart"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     <FaTwitter />
                   </a>
                 </div>
@@ -157,16 +202,20 @@ const Contact = () => {
                   ></textarea>
                 </div>
 
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className={styles.submitButton}
                   disabled={status.submitting}
                 >
-                  {status.submitting ? 'Sending...' : 'Send Message'}
+                  {status.submitting ? "Sending..." : "Send Message"}
                 </button>
 
                 {status.info.msg && (
-                  <div className={`${styles.message} ${status.info.error ? styles.error : styles.success}`}>
+                  <div
+                    className={`${styles.message} ${
+                      status.info.error ? styles.error : styles.success
+                    }`}
+                  >
                     {status.info.msg}
                   </div>
                 )}

@@ -9,6 +9,7 @@ from .views import (
     PaymentsAPIView, 
     KYCVerificationAPIView,
     # AllPickersView,
+    ContactView,
 )
 
 
@@ -41,4 +42,7 @@ urlpatterns = [
     # KYC verification management
     path('admin-kyc-verification/', KYCVerificationAPIView.as_view(), name='kyc_verification_list'),
     path('admin-kyc-verification/<int:verification_id>/', KYCVerificationAPIView.as_view(), name='kyc_verification_detail'),
+
+    #CONTACT US
+     path('contact/', ContactView.as_view(), name='contact'),
 ]

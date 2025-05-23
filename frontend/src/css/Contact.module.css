@@ -164,7 +164,10 @@
 .formGroup input,
 .formGroup textarea {
   width: 100%;
-  padding: 1.5rem;
+  /* padding: 1.5rem;
+   */
+  height: 4rem;
+  padding-left: 1rem;
   border: 2px solid var(--neutral-gray-200);
   border-radius: 0.8rem;
   font-size: 1.6rem;
@@ -186,7 +189,8 @@
 
 .submitButton {
   width: 100%;
-  padding: 1.5rem;
+  /* padding: 1.5rem; */
+  height: 4rem;
   background: var(--primary-500);
   color: var(--neutral-white);
   border: none;
