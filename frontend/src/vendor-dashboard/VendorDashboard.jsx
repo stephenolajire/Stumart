@@ -12,7 +12,7 @@ import styles from "./css/VendorDashboard.module.css";
 import Swal from "sweetalert2";
 import Inventory from "./Inventory";
 import Settings from "./Settings";
-import vendorApi from "../services/vendorApi"
+import vendorApi from "../services/vendorApi";
 
 const VendorDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -49,26 +49,45 @@ const VendorDashboard = () => {
   const fetchDashboardData = async () => {
     setIsLoading(true);
     try {
-      const [statsData, productsData, ordersData, withdrawData] = await Promise.all([
+      // Fixed: Only fetch the data that exists, handle withdrawals separately if needed
+      const [statsData, productsData, ordersData] = await Promise.all([
         vendorApi.getDashboardStats(),
         vendorApi.getProducts(),
         vendorApi.getOrders(),
       ]);
 
+      console.log("Stats Data:", statsData); // Debug log
+      console.log("Products Data:", productsData); // Debug log
+      console.log("Orders Data:", ordersData); // Debug log
+
       setStats(statsData);
       setProducts(productsData);
       setOrders(ordersData);
-      console.log("Orders Data:", ordersData);
-      setWithrawalHistory(withdrawData);
+
+      // Handle withdrawal history separately if the API exists
+      try {
+        const withdrawData = await vendorApi.getWithdrawals();
+        setWithrawalHistory(withdrawData);
+      } catch (withdrawError) {
+        console.warn("Withdrawal data not available:", withdrawError);
+        setWithrawalHistory([]);
+      }
     } catch (error) {
       console.error("Dashboard Data Error:", error);
       console.error("Error Response:", error.response);
+
+      // More detailed error logging
+      if (error.response) {
+        console.error("Status:", error.response.status);
+        console.error("Status Text:", error.response.statusText);
+        console.error("Response Data:", error.response.data);
+      }
+
       Swal.fire("Error", "Failed to fetch dashboard data", "error");
     } finally {
       setIsLoading(false);
     }
   };
-
   const handleDeleteProduct = async (id) => {
     Swal.fire({
       title: "Are you sure?",

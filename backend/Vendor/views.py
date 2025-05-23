@@ -30,50 +30,130 @@ class DashboardStatsView(views.APIView):
         # Get vendor associated with the current user
         try:
             vendor = request.user.vendor_profile
+            print(f"Found vendor: {vendor}")
         except Vendor.DoesNotExist:
             return Response({"error": "You are not registered as a vendor"}, status=status.HTTP_403_FORBIDDEN)
         
-        # Get or calculate stats
+        # print(f"=== DEBUGGING VENDOR STATS ===")
+        # print(f"Current user: {request.user}")
+        # print(f"Vendor: {vendor}")
+        
+        # FORCE RECALCULATION - Delete existing stats to force fresh calculation
         try:
-            stats = VendorStats.objects.get(vendor=vendor)
-            # If stats are older than a day, refresh them
-            if timezone.now() - stats.last_updated > timedelta(days=1):
-                self._update_vendor_stats(vendor, stats)
+            existing_stats = VendorStats.objects.get(vendor=vendor)
+            # print(f"Deleting existing stats: {existing_stats}")
+            existing_stats.delete()
+            # print("Existing stats deleted")
         except VendorStats.DoesNotExist:
-            stats = self._create_vendor_stats(vendor)
+            print("No existing stats found")
+        
+        # Always create fresh stats
+        # print("Creating fresh stats...")
+        stats = self._create_vendor_stats(vendor)
         
         # Get chart data
         revenue_data = VendorRevenueData.objects.filter(vendor=vendor).order_by('year', 'month')[:6]
         sales_data = VendorSalesData.objects.filter(vendor=vendor).order_by('year', 'month')[:6]
         
+        # print(f"Revenue data count: {revenue_data.count()}")
+        # print(f"Sales data count: {sales_data.count()}")
+        
         # Prepare response data
         data = {
-            'totalSales': stats.total_sales,
+            'totalSales': float(stats.total_sales),
             'totalOrders': stats.total_orders,
             'totalProducts': stats.total_products,
             'lowStock': stats.low_stock_products,
-            'totalRevenue': stats.total_sales,  # Can be adjusted if different from sales
+            'totalRevenue': float(stats.total_sales),
             'pendingReviews': stats.pending_reviews,
-            'revenueData': [{'month': rd.month, 'value': rd.value} for rd in revenue_data],
+            'revenueData': [{'month': rd.month, 'value': float(rd.value)} for rd in revenue_data],
             'salesData': [{'month': sd.month, 'value': sd.value} for sd in sales_data],
         }
         
-        serializer = DashboardStatsSerializer(data)
-        return Response(serializer.data)
+        # print(f"Final data being returned: {data}")
+        return Response(data, status=status.HTTP_200_OK)
     
     def _create_vendor_stats(self, vendor):
-        # Calculate all statistics
-        total_products = Product.objects.filter(vendor=vendor.user).count()
-        low_stock = Product.objects.filter(vendor=vendor.user, in_stock__lt=10).count()
+        # print(f"=== CREATING VENDOR STATS ===")
         
-        # Get order items for this vendor
-        order_items = OrderItem.objects.filter(vendor=vendor)
+        # Debug products
+        products_by_user = Product.objects.filter(vendor=vendor.user)
+        # print(f"Products by vendor.user: {products_by_user.count()}")
+        # for product in products_by_user:
+            # print(f"  - Product: {product.name}, Stock: {product.in_stock}")
+        
+        # Calculate all statistics
+        total_products = products_by_user.count()
+        low_stock = products_by_user.filter(in_stock__lt=10).count()
+        
+        # print(f"Total products: {total_products}")
+        # print(f"Low stock products: {low_stock}")
+        
+        # # Debug order items - try different approaches
+        # print(f"=== CHECKING ORDER ITEMS ===")
+        
+        # Method 1: Direct vendor field (if exists)
+        try:
+            order_items_direct = OrderItem.objects.filter(vendor=vendor)
+            # print(f"OrderItems with direct vendor field: {order_items_direct.count()}")
+        except Exception as e:
+            # print(f"Direct vendor filter failed: {e}")
+            order_items_direct = OrderItem.objects.none()
+        
+        # Method 2: Through product relationship
+        try:
+            order_items_through_product = OrderItem.objects.filter(product__vendor=vendor.user)
+            # print(f"OrderItems through product.vendor: {order_items_through_product.count()}")
+            for item in order_items_through_product[:5]:  # Show first 5
+                print(f"  - Order: {item.order.id}, Product: {item.product.name}, Price: {item.price}")
+        except Exception as e:
+            # print(f"Product relationship filter failed: {e}")
+            order_items_through_product = OrderItem.objects.none()
+        
+        # Method 3: Through product vendor_id
+        try:
+            order_items_through_vendor_id = OrderItem.objects.filter(product__vendor_id=vendor.user.id)
+            # print(f"OrderItems through product.vendor_id: {order_items_through_vendor_id.count()}")
+        except Exception as e:
+            # print(f"Vendor ID relationship filter failed: {e}")
+            order_items_through_vendor_id = OrderItem.objects.none()
+        
+        # Use the method that works
+        if order_items_direct.exists():
+            order_items = order_items_direct
+            # print("Using direct vendor relationship")
+        elif order_items_through_product.exists():
+            order_items = order_items_through_product
+            # print("Using product.vendor relationship")
+        elif order_items_through_vendor_id.exists():
+            order_items = order_items_through_vendor_id
+            # print("Using product.vendor_id relationship")
+        else:
+            order_items = OrderItem.objects.none()
+            # print("No order items found with any method!")
+            
+            # Additional debugging - let's see ALL OrderItems
+            all_order_items = OrderItem.objects.all()
+            print(f"Total OrderItems in system: {all_order_items.count()}")
+            for item in all_order_items[:3]:
+                # print(f"  - OrderItem: {item.id}, Product: {item.product.name if hasattr(item, 'product') else 'No product'}")
+                if hasattr(item, 'product') and hasattr(item.product, 'vendor'):
+                    print(f"    Product vendor: {item.product.vendor}")
+                if hasattr(item, 'vendor'):
+                    print(f"    Direct vendor: {item.vendor}")
+        
         total_orders = order_items.values('order').distinct().count()
         total_sales = order_items.aggregate(Sum('price'))['price__sum'] or 0
         
-        # Get pending reviews count (reviews without vendor response)
-        products = Product.objects.filter(vendor=vendor.user)
-        pending_reviews = ProductReview.objects.filter(product__in=products, vendor_response__isnull=True).count()
+       
+        # Get pending reviews count
+        products = products_by_user
+        try:
+            pending_reviews = ProductReview.objects.filter(product__in=products, vendor_response__isnull=True).count()
+            # print(f"Pending reviews: {pending_reviews}")
+        except Exception as e:
+            # print(f"Error calculating pending reviews: {e}")
+            pending_reviews = 0
         
         # Create stats object
         stats = VendorStats.objects.create(
@@ -85,36 +165,31 @@ class DashboardStatsView(views.APIView):
             pending_reviews=pending_reviews
         )
         
+        
         # Generate/update chart data
-        self._update_chart_data(vendor)
+        self._update_chart_data(vendor, order_items)
         
         return stats
     
-    def _update_vendor_stats(self, vendor, stats):
-        stats.total_products = Product.objects.filter(vendor=vendor.user).count()
-        stats.low_stock_products = Product.objects.filter(vendor=vendor.user, in_stock__lt=10).count()
+    def _update_chart_data(self, vendor, order_items=None):
+        # print(f"=== UPDATING CHART DATA ===")
         
-        order_items = OrderItem.objects.filter(vendor=vendor)
-        stats.total_orders = order_items.values('order').distinct().count()
-        stats.total_sales = order_items.aggregate(Sum('price'))['price__sum'] or 0
+        # If order_items not provided, try to get them
+        if order_items is None:
+            try:
+                order_items = OrderItem.objects.filter(product__vendor=vendor.user)
+            except:
+                order_items = OrderItem.objects.none()
         
-        products = Product.objects.filter(vendor=vendor.user)
-        stats.pending_reviews = ProductReview.objects.filter(product__in=products, vendor_response__isnull=True).count()
         
-        stats.save()
-        
-        # Update chart data
-        self._update_chart_data(vendor)
-        
-        return stats
-    
-    def _update_chart_data(self, vendor):
         # Get the last 6 months
         today = timezone.now()
         months = []
         for i in range(5, -1, -1):
             month_date = today - timedelta(days=30*i)
             months.append((month_date.strftime("%b"), month_date.year, month_date.month))
+        
+        
         
         # Clear previous data and recreate
         VendorRevenueData.objects.filter(vendor=vendor).delete()
@@ -128,14 +203,14 @@ class DashboardStatsView(views.APIView):
             else:
                 end_date = datetime(year, month_num + 1, 1)
             
-            order_items = OrderItem.objects.filter(
-                vendor=vendor,
+            month_order_items = order_items.filter(
                 order__created_at__gte=start_date,
                 order__created_at__lt=end_date
             )
             
+            
             # Calculate revenue
-            revenue = order_items.aggregate(Sum('price'))['price__sum'] or 0
+            revenue = month_order_items.aggregate(Sum('price'))['price__sum'] or 0
             VendorRevenueData.objects.create(
                 vendor=vendor,
                 month=month_name,
@@ -144,15 +219,15 @@ class DashboardStatsView(views.APIView):
             )
             
             # Calculate order count
-            orders_count = order_items.values('order').distinct().count()
+            orders_count = month_order_items.values('order').distinct().count()
             VendorSalesData.objects.create(
                 vendor=vendor,
                 month=month_name,
                 year=year,
                 value=orders_count
             )
-
-
+            
+            
 class ProductViewSet(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
     permission_classes = [IsAuthenticated]

@@ -44,7 +44,7 @@ const AllProducts = () => {
       setLoading(true);
       const params = new URLSearchParams(filters);
       const response = await api.get(`/all-products/?${params}`);
-      console.log(response.data.results);
+      // console.log(response.data.results);
       setProducts(response.data.results);
 
       // Extract unique categories from products

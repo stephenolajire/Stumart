@@ -4,6 +4,19 @@ import styles from "./css/AddProduct.module.css";
 import api from "../constant/api";
 import Swal from "sweetalert2";
 
+// Configure toast notification
+const Toast = Swal.mixin({
+  toast: true,
+  position: "top-right",
+  showConfirmButton: false,
+  timer: 3000,
+  timerProgressBar: true,
+  didOpen: (toast) => {
+    toast.addEventListener("mouseenter", Swal.stopTimer);
+    toast.addEventListener("mouseleave", Swal.resumeTimer);
+  },
+});
+
 const AddProduct = () => {
   const [product, setProduct] = useState({
     name: "",
@@ -318,7 +331,6 @@ const AddProduct = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Run validation
     if (!validate()) {
       return;
     }
@@ -390,32 +402,23 @@ const AddProduct = () => {
       const response = await api.post("vendor-products/", formData, {
         headers,
       });
-      if(response.status === 201) {
-        Swal.fire({
+
+      if (response.status === 201) {
+        Toast.fire({
           icon: "success",
-          title: "Product Added",
-          text: "Your product has been added successfully.",
+          title: "Product added successfully",
         });
+
+        resetForm();
       }
-
-      // Reset form on success
-      resetForm();
-
-      setMessage({
-        text: "Product added successfully!",
-        type: "success",
-      });
     } catch (error) {
       console.error("API Error:", error.response?.data || error.message);
 
-      // Handle different types of errors
       if (error.response?.status === 400) {
-        // Extract server validation errors and display them
         const serverErrors = error.response.data.errors;
         if (serverErrors) {
           const fieldErrors = {};
           Object.keys(serverErrors).forEach((field) => {
-            // Handle errors that might be arrays or strings
             fieldErrors[field] = Array.isArray(serverErrors[field])
               ? serverErrors[field][0]
               : serverErrors[field];
@@ -423,24 +426,27 @@ const AddProduct = () => {
           setErrors(fieldErrors);
         }
 
-        setMessage({
-          text: "Please correct the errors in the form.",
-          type: "error",
+        Toast.fire({
+          icon: "error",
+          title: "Please correct the form errors",
         });
       } else if (error.response?.status === 403) {
-        setMessage({
-          text: "You don't have permission to add products. Please make sure your account is registered as a vendor.",
-          type: "error",
+        Toast.fire({
+          icon: "error",
+          title: "Permission denied",
+          text: "Your account must be registered as a vendor",
         });
       } else if (error.response?.status === 401) {
-        setMessage({
-          text: "You must be logged in to add products.",
-          type: "error",
+        Toast.fire({
+          icon: "error",
+          title: "Authentication required",
+          text: "Please log in to add products",
         });
       } else {
-        setMessage({
-          text: "Failed to add product. Please try again later.",
-          type: "error",
+        Toast.fire({
+          icon: "error",
+          title: "Failed to add product",
+          text: "Please try again later",
         });
       }
     } finally {

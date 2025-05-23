@@ -5,6 +5,18 @@ import { GlobalContext } from "../constant/GlobalContext";
 import api from "../constant/api";
 import Swal from "sweetalert2";
 
+const Toast = Swal.mixin({
+  toast: true,
+  position: "top-right",
+  showConfirmButton: false,
+  timer: 3000,
+  timerProgressBar: true,
+  didOpen: (toast) => {
+    toast.addEventListener("mouseenter", Swal.stopTimer);
+    toast.addEventListener("mouseleave", Swal.resumeTimer);
+  },
+});
+
 const ProductDetails = () => {
   const { productId } = useParams();
   const [quantity, setQuantity] = useState(1);
@@ -18,51 +30,50 @@ const ProductDetails = () => {
 
   // Handle Add to Cart
   const handleAddToCart = async () => {
-    // Check if product has color or size fields and is a fashion product
     const isFashionProduct = product.vendor_category === "fashion";
 
     if (isFashionProduct) {
       if (!selectedColor && product.colors?.length > 0) {
-        Swal.fire(
-          "Color Required",
-          "Please select a color before adding to cart.",
-          "warning"
-        );
+        Toast.fire({
+          icon: "warning",
+          title: "Please select a color",
+        });
         return;
       }
 
       if (!selectedSize && product.sizes?.length > 0) {
-        Swal.fire(
-          "Size Required",
-          "Please select a size before adding to cart.",
-          "warning"
-        );
+        Toast.fire({
+          icon: "warning",
+          title: "Please select a size",
+        });
         return;
       }
     }
 
     try {
-      const cartCode = localStorage.getItem("cart_code") || generateCartCode(); // If you're storing guest cart code
+      const cartCode = localStorage.getItem("cart_code") || generateCartCode();
 
       const res = await api.post("add-to-cart/", {
         product_id: product.id,
         quantity,
-        size: selectedSize, // Only send if a size exists
-        color: selectedColor, // Only send if a color exists
+        size: selectedSize,
+        color: selectedColor,
         cart_code: cartCode,
-        // category:isFashionProduct
       });
 
       if (res.status === 201) {
-        Swal.fire({
+        Toast.fire({
           icon: "success",
-          title: "Added to Cart",
-          text: `${product.name} has been added to your cart.`,
+          title: `${product.name} added to cart`,
         });
+        incrementCount();
       }
     } catch (error) {
       console.error("Add to cart error:", error);
-      Swal.fire("Oops!", "Something went wrong while adding to cart.", "error");
+      Toast.fire({
+        icon: "error",
+        title: "Failed to add item to cart",
+      });
     }
   };
 

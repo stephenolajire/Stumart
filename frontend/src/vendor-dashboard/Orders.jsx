@@ -4,6 +4,19 @@ import styles from "./css/VendorDashboard.module.css";
 import api from "../constant/api";
 import Swal from "sweetalert2";
 
+// Configure toast notification
+const Toast = Swal.mixin({
+  toast: true,
+  position: "top-right",
+  showConfirmButton: false,
+  timer: 3000,
+  timerProgressBar: true,
+  didOpen: (toast) => {
+    toast.addEventListener("mouseenter", Swal.stopTimer);
+    toast.addEventListener("mouseleave", Swal.resumeTimer);
+  },
+});
+
 const Orders = ({ orders, onOrderUpdate }) => {
   const [filterStatus, setFilterStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -16,10 +29,9 @@ const Orders = ({ orders, onOrderUpdate }) => {
       const response = await api.post("pack-order/", { order_id: orderId });
 
       if (response.status === 200) {
-        await Swal.fire({
+        Toast.fire({
           icon: "success",
-          title: "Success",
-          text: "Order packed successfully",
+          title: "Order packed successfully",
         });
 
         // Call parent component's update function if provided
@@ -31,10 +43,10 @@ const Orders = ({ orders, onOrderUpdate }) => {
       }
     } catch (error) {
       console.error("Error packing order:", error);
-      await Swal.fire({
+      Toast.fire({
         icon: "error",
-        title: "Error",
-        text: "Failed to pack order. Please try again.",
+        title: "Failed to pack order",
+        text: "Please try again",
       });
     } finally {
       setLoadingOrders((prev) => {

@@ -5,6 +5,19 @@ import api from "../constant/api";
 import Swal from "sweetalert2";
 import { Link } from "react-router-dom";
 
+// Create toast mixin configuration
+const Toast = Swal.mixin({
+  toast: true,
+  position: "top-right",
+  showConfirmButton: false,
+  timer: 3000,
+  timerProgressBar: true,
+  didOpen: (toast) => {
+    toast.addEventListener("mouseenter", Swal.stopTimer);
+    toast.addEventListener("mouseleave", Swal.resumeTimer);
+  },
+});
+
 const MyDeliveries = () => {
   const [deliveries, setDeliveries] = useState([]);
   const [activeTab, setActiveTab] = useState("active");
@@ -37,17 +50,17 @@ const MyDeliveries = () => {
         prevDeliveries.filter((delivery) => delivery.id !== orderId)
       );
 
-      Swal.fire({
-        icon: "success", // Fixed: Added quotes around success
-        text: "Thank you for an amazing job. Go on to accept more orders",
-        title: "Order Delivered",
+      Toast.fire({
+        icon: "success",
+        title: "Order marked as delivered",
+        text: "Thank you for an amazing job!",
       });
     } catch (error) {
       console.error("Error marking order as delivered:", error);
-      Swal.fire({
-        icon: "error", // Fixed: Added quotes around error
-        title: "Status Error",
-        text: "Order status failed, pls try again later",
+      Toast.fire({
+        icon: "error",
+        title: "Failed to update status",
+        text: "Please try again later",
       });
     }
   };

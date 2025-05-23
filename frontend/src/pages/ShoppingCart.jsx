@@ -18,7 +18,7 @@ const ShoppingCart = () => {
     0
   );
 
-  console.log (cartSummary)
+  // console.log (cartSummary)
 
   const navigate = useNavigate();
 
