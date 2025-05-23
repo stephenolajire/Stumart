@@ -78,7 +78,7 @@ const PaymentVerification = () => {
   }, [location.search]); // Added location.search as dependency to re-run if URL changes
 
   const handleContinueShopping = () => {
-    navigate(-1);
+    navigate('/products');
   };
 
   const handleViewOrder = () => {
