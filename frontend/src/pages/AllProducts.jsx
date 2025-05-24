@@ -33,7 +33,7 @@ const AllProducts = () => {
     const params = new URLSearchParams(window.location.search);
     return params.get("viewOtherProducts") === "true" ? "other" : "school";
   });
-  
+
   const school = localStorage.getItem("institution");
   const { isAuthenticated } = useContext(GlobalContext);
   const viewingOtherSchools = viewMode === "other";
@@ -72,7 +72,7 @@ const AllProducts = () => {
       }
 
       console.log("Making API request with params:", apiParams.toString());
-      
+
       const response = await api.get(`/all-products/?${apiParams}`);
       setProducts(response.data.results);
 
@@ -114,29 +114,29 @@ const AllProducts = () => {
     fetchProducts();
   }, [
     filters.category,
-    filters.minPrice, 
+    filters.minPrice,
     filters.maxPrice,
     filters.sort,
     filters.search,
     filters.school,
     filters.vendor,
-    filters.state
+    filters.state,
   ]);
 
   // 2. Handle view mode changes specifically
   useEffect(() => {
     console.log("View mode useEffect triggered, viewMode:", viewMode);
-    
+
     // Skip initial render - let the filter useEffect handle it
     if (loading) return;
-    
+
     fetchProducts(true); // Use toggle loader for view mode changes
   }, [viewMode]);
 
   // 3. Handle authentication state changes
   useEffect(() => {
     console.log("Auth useEffect triggered, isAuthenticated:", isAuthenticated);
-    
+
     // Only refetch if not initial load
     if (!loading) {
       fetchProducts();
@@ -158,7 +158,7 @@ const AllProducts = () => {
 
   const handleViewModeChange = (newViewMode) => {
     console.log("View mode changing from", viewMode, "to", newViewMode);
-    
+
     setViewMode(newViewMode);
 
     const params = new URLSearchParams(searchParams);
