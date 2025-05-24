@@ -3,6 +3,10 @@ from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .models import *
+from django.contrib.auth.password_validation import validate_password
+from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
+from django.db import IntegrityError
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
@@ -10,30 +14,73 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'email', 'username', 'password', 
-                 'first_name', 'last_name', 'phone_number', 'user_type', 
-                 'profile_pic', 'state', 'institution','image_url')
+        fields = ('id', 'email', 'username', 'password',
+                  'first_name', 'last_name', 'phone_number', 'user_type',
+                  'profile_pic', 'state', 'institution', 'image_url')
         extra_kwargs = {
             'first_name': {'required': True},
             'last_name': {'required': True}
         }
-    
+
     def get_image_url(self, obj):
         if obj.profile_pic:
             return obj.profile_pic.url
         return None
 
-    def validate(self, attrs):
-        # Phone number validation
-        if not attrs['phone_number'].startswith('0'):
-            raise serializers.ValidationError({"phone_number": "Phone number must start with 0"})
+    def validate_phone_number(self, value):
+        # Check if phone number starts with 0
+        if not value.startswith('0'):
+            raise serializers.ValidationError("Phone number must start with 0")
         
+        # Get the instance being updated (if this is an update operation)
+        instance = getattr(self, 'instance', None)
+        
+        # If this is an update and the phone number hasn't changed, allow it
+        if instance and instance.phone_number == value:
+            return value
+        
+        # Check if another user has this phone number (excluding current user if updating)
+        existing_user_query = User.objects.filter(phone_number=value)
+        if instance:
+            existing_user_query = existing_user_query.exclude(id=instance.id)
+        
+        if existing_user_query.exists():
+            raise serializers.ValidationError("A user with this phone number already exists.")
+        
+        return value
+
+    def validate_email(self, value):
+        # Get the instance being updated (if this is an update operation)
+        instance = getattr(self, 'instance', None)
+        
+        # If this is an update and the email hasn't changed, allow it
+        if instance and instance.email == value:
+            return value
+        
+        # Check if another user has this email (excluding current user if updating)
+        existing_user_query = User.objects.filter(email=value)
+        if instance:
+            existing_user_query = existing_user_query.exclude(id=instance.id)
+        
+        if existing_user_query.exists():
+            # Raise a custom exception that can be caught in the view to return 403
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("A user with this email already exists.")
+        
+        return value
+
+    def validate(self, attrs):
         return attrs
 
     def create(self, validated_data):
-        user = User.objects.create_user(**validated_data)
-        return user
-
+        try:
+            user = User.objects.create_user(**validated_data)
+            return user
+        except IntegrityError:
+            raise serializers.ValidationError({
+                "phone_number": "A user with this phone number already exists."
+            })
+        
 class StudentSerializer(serializers.ModelSerializer):
     # Flatten user fields
     email = serializers.EmailField(write_only=True)
@@ -45,20 +92,28 @@ class StudentSerializer(serializers.ModelSerializer):
     user_type = serializers.CharField(write_only=True)
     state = serializers.CharField(write_only=True)
     institution = serializers.CharField(write_only=True)
-    profile_pic = serializers.ImageField(write_only=True)
+    profile_pic = serializers.ImageField(write_only=True, required=False)
     
     # Include user data in response
     user = UserSerializer(read_only=True)
 
     class Meta:
         model = Student
-        fields = ('id', 'user', 'matric_number', 'department',
-                 'email', 'username', 'password', 'first_name', 'last_name',
-                 'phone_number', 'user_type', 'state', 'institution', 'profile_pic')
+        fields = '__all__'
 
+    def validate_account_number(self, value):
+        if not value.isdigit() or len(value) != 10:
+            raise serializers.ValidationError("Account number must be 10 digits")
+        return value
+        
     def validate_phone_number(self, value):
         if not value.startswith('0'):
             raise serializers.ValidationError("Phone number must start with 0")
+        
+        # Check if phone number already exists
+        if User.objects.filter(phone_number=value).exists():
+            raise serializers.ValidationError("A user with this phone number already exists.")
+        
         return value
 
     def create(self, validated_data):
@@ -73,15 +128,25 @@ class StudentSerializer(serializers.ModelSerializer):
             'user_type': validated_data.pop('user_type'),
             'state': validated_data.pop('state'),
             'institution': validated_data.pop('institution'),
-            'profile_pic': validated_data.pop('profile_pic'),
+            'matric_number': validated_data.pop('matric_number', None),
+            'department': validated_data.pop('department', None),
         }
         
-        # Create user
-        user = User.objects.create_user(**user_data)
+        # Handle optional profile_pic
+        if 'profile_pic' in validated_data:
+            user_data['profile_pic'] = validated_data.pop('profile_pic')
         
-        # Create student
-        student = Student.objects.create(user=user, **validated_data)
-        return student
+        try:
+            # Create user
+            user = User.objects.create_user(**user_data)
+            
+            # Create student
+            student = Student.objects.create(user=user, **validated_data)
+            return student
+        except IntegrityError:
+            raise serializers.ValidationError({
+                "phone_number": "A user with this phone number already exists."
+            })
 
 class VendorSerializer(serializers.ModelSerializer):
     # Flatten user fields
@@ -94,7 +159,7 @@ class VendorSerializer(serializers.ModelSerializer):
     user_type = serializers.CharField(write_only=True)
     state = serializers.CharField(write_only=True)
     institution = serializers.CharField(write_only=True)
-    profile_pic = serializers.ImageField(write_only=True)
+    profile_pic = serializers.ImageField(write_only=True, required=False)
     
     # Include user data in response
     user = UserSerializer(read_only=True)
@@ -102,19 +167,6 @@ class VendorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Vendor
         fields = '__all__'
-        # Add the flattened fields
-        extra_kwargs = {
-            'email': {'write_only': True},
-            'username': {'write_only': True},
-            'password': {'write_only': True},
-            'first_name': {'write_only': True},
-            'last_name': {'write_only': True},
-            'phone_number': {'write_only': True},
-            'user_type': {'write_only': True},
-            'state': {'write_only': True},
-            'institution': {'write_only': True},
-            'profile_pic': {'write_only': True},
-        }
 
     def validate_account_number(self, value):
         if not value.isdigit() or len(value) != 10:
@@ -124,6 +176,11 @@ class VendorSerializer(serializers.ModelSerializer):
     def validate_phone_number(self, value):
         if not value.startswith('0'):
             raise serializers.ValidationError("Phone number must start with 0")
+        
+        # Check if phone number already exists
+        if User.objects.filter(phone_number=value).exists():
+            raise serializers.ValidationError("A user with this phone number already exists.")
+        
         return value
 
     def create(self, validated_data):
@@ -138,15 +195,23 @@ class VendorSerializer(serializers.ModelSerializer):
             'user_type': validated_data.pop('user_type'),
             'state': validated_data.pop('state'),
             'institution': validated_data.pop('institution'),
-            'profile_pic': validated_data.pop('profile_pic'),
         }
         
-        # Create user
-        user = User.objects.create_user(**user_data)
+        # Handle optional profile_pic
+        if 'profile_pic' in validated_data:
+            user_data['profile_pic'] = validated_data.pop('profile_pic')
         
-        # Create vendor
-        vendor = Vendor.objects.create(user=user, **validated_data)
-        return vendor
+        try:
+            # Create user
+            user = User.objects.create_user(**user_data)
+            
+            # Create vendor
+            vendor = Vendor.objects.create(user=user, **validated_data)
+            return vendor
+        except IntegrityError:
+            raise serializers.ValidationError({
+                "phone_number": "A user with this phone number already exists."
+            })
 
 class PickerSerializer(serializers.ModelSerializer):
     # Flatten user fields
@@ -159,7 +224,7 @@ class PickerSerializer(serializers.ModelSerializer):
     user_type = serializers.CharField(write_only=True)
     state = serializers.CharField(write_only=True)
     institution = serializers.CharField(write_only=True)
-    profile_pic = serializers.ImageField(write_only=True)
+    profile_pic = serializers.ImageField(write_only=True, required=False)
     
     # Include user data in response
     user = UserSerializer(read_only=True)
@@ -176,6 +241,11 @@ class PickerSerializer(serializers.ModelSerializer):
     def validate_phone_number(self, value):
         if not value.startswith('0'):
             raise serializers.ValidationError("Phone number must start with 0")
+        
+        # Check if phone number already exists
+        if User.objects.filter(phone_number=value).exists():
+            raise serializers.ValidationError("A user with this phone number already exists.")
+        
         return value
 
     def create(self, validated_data):
@@ -190,15 +260,23 @@ class PickerSerializer(serializers.ModelSerializer):
             'user_type': validated_data.pop('user_type'),
             'state': validated_data.pop('state'),
             'institution': validated_data.pop('institution'),
-            'profile_pic': validated_data.pop('profile_pic'),
         }
         
-        # Create user
-        user = User.objects.create_user(**user_data)
+        # Handle optional profile_pic
+        if 'profile_pic' in validated_data:
+            user_data['profile_pic'] = validated_data.pop('profile_pic')
         
-        # Create picker
-        picker = Picker.objects.create(user=user, **validated_data)
-        return picker
+        try:
+            # Create user
+            user = User.objects.create_user(**user_data)
+            
+            # Create picker
+            picker = Picker.objects.create(user=user, **validated_data)
+            return picker
+        except IntegrityError:
+            raise serializers.ValidationError({
+                "phone_number": "A user with this phone number already exists."
+            })
 
 class StudentPickerSerializer(serializers.ModelSerializer):
     # Flatten user fields
@@ -211,7 +289,7 @@ class StudentPickerSerializer(serializers.ModelSerializer):
     user_type = serializers.CharField(write_only=True)
     state = serializers.CharField(write_only=True)
     institution = serializers.CharField(write_only=True)
-    profile_pic = serializers.ImageField(write_only=True)
+    profile_pic = serializers.ImageField(write_only=True, required=False)
     
     # Include user data in response
     user = UserSerializer(read_only=True)
@@ -228,6 +306,11 @@ class StudentPickerSerializer(serializers.ModelSerializer):
     def validate_phone_number(self, value):
         if not value.startswith('0'):
             raise serializers.ValidationError("Phone number must start with 0")
+        
+        # Check if phone number already exists
+        if User.objects.filter(phone_number=value).exists():
+            raise serializers.ValidationError("A user with this phone number already exists.")
+        
         return value
 
     def create(self, validated_data):
@@ -242,15 +325,23 @@ class StudentPickerSerializer(serializers.ModelSerializer):
             'user_type': validated_data.pop('user_type'),
             'state': validated_data.pop('state'),
             'institution': validated_data.pop('institution'),
-            'profile_pic': validated_data.pop('profile_pic'),
         }
         
-        # Create user
-        user = User.objects.create_user(**user_data)
+        # Handle optional profile_pic
+        if 'profile_pic' in validated_data:
+            user_data['profile_pic'] = validated_data.pop('profile_pic')
         
-        # Create student picker
-        student_picker = StudentPicker.objects.create(user=user, **validated_data)
-        return student_picker
+        try:
+            # Create user
+            user = User.objects.create_user(**user_data)
+            
+            # Create student picker
+            student_picker = StudentPicker.objects.create(user=user, **validated_data)
+            return student_picker
+        except IntegrityError:
+            raise serializers.ValidationError({
+                "phone_number": "A user with this phone number already exists."
+            })
 
 # Keep your other serializers unchanged
 class KYCVerificationSerializer(serializers.ModelSerializer):

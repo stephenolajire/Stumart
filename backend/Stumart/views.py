@@ -1588,104 +1588,222 @@ class CancelOrderView(APIView):
                 "message": f"An error occurred: {str(e)}"
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
 class ProductPagination(PageNumberPagination):
     page_size = 12
     page_size_query_param = 'page_size'
     max_page_size = 100
+
+import logging
 
 class AllProductsView(APIView):
     pagination_class = ProductPagination
 
     def get(self, request):
         try:
-            # Get query parameters
-            category = request.query_params.get('category', '').strip()
-            try:
-                min_price = Decimal(request.query_params.get('minPrice')) if request.query_params.get('minPrice') else Decimal('0')
-            except (ValueError, TypeError):
-                min_price = Decimal('0')
-                
-            try:
-                max_price = Decimal(request.query_params.get('maxPrice')) if request.query_params.get('maxPrice') else Decimal('999999999')
-            except (ValueError, TypeError):
-                max_price = Decimal('999999999')
-                
-            search = request.query_params.get('search', '').strip()
-            sort = request.query_params.get('sort', 'newest')
-            state = request.query_params.get('state', '').strip()
-            school = request.query_params.get('school', '').strip()
-            vendor = request.query_params.get('vendor', '').strip()
-
-            # Start with all active products
-            queryset = Product.objects.all()
-
-            # Filter based on authentication status
+            # Parse request parameters
+            filters = self._parse_request_params(request)
+            
+            print(f"Request params - viewOtherProducts: {filters['view_other_products']}, authenticated: {request.user.is_authenticated}")
             if request.user.is_authenticated:
-                # Get products from vendors in the same institution as the user
-                user_institution = request.user.institution
-                queryset = queryset.filter(vendor__institution__iexact=user_institution)
+                print(f"User institution: {request.user.institution}")
+            if filters['school']:
+                print(f"School parameter provided: {filters['school']}")
+            
+            # Handle different user states separately
+            if request.user.is_authenticated:
+                if filters['view_other_products']:
+                    queryset = self._handle_authenticated_viewing_other_schools(request, filters)
+                else:
+                    queryset = self._handle_authenticated_viewing_own_school(request, filters)
             else:
-                # If school parameter is provided for anonymous users
-                if school:
-                    queryset = queryset.filter(vendor__institution__iexact=school)
-
-            # Apply other filters
-            if category:
-                queryset = queryset.filter(
-                    vendor__business_category__iexact=category
-                )
+                queryset = self._handle_anonymous_user(request, filters)
             
-            queryset = queryset.filter(price__gte=min_price, price__lte=max_price)
+            # Apply common filters and return response
+            queryset = self._apply_common_filters(queryset, filters)
+            queryset = self._apply_sorting(queryset, filters['sort'])
             
-            if search:
-                queryset = queryset.filter(
-                    models.Q(name__icontains=search) |
-                    models.Q(description__icontains=search)
-                )
-
-            if state:
-                queryset = queryset.filter(vendor__state__iexact=state)
-            
-            if vendor:
-                queryset = queryset.filter(vendor__vendor_profile__business_name__iexact=vendor)
-
-            # Apply sorting
-            if sort == 'price_low':
-                queryset = queryset.order_by('price')
-            elif sort == 'price_high':
-                queryset = queryset.order_by('-price')
-            elif sort == 'rating':
-                queryset = queryset.order_by('-vendor__rating')
-            else:  # newest
-                queryset = queryset.order_by('-created_at')
-
-            # Paginate results
-            paginator = self.pagination_class()
-            paginated_products = paginator.paginate_queryset(queryset, request)
-            
-            # Serialize data
-            serializer = ProductSerializer(paginated_products, many=True)
-            
-            # Add metadata to response
-            response = paginator.get_paginated_response(serializer.data)
-            response.data['user_institution'] = request.user.institution if request.user.is_authenticated else None
-
-            return response
+            return self._paginate_and_serialize(queryset, request, filters)
 
         except Exception as e:
-            # Log the detailed error
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.error(f"Error in AllProductsView: {str(e)}")
-            
-            return Response(
-                {
-                    'error': 'An error occurred while processing your request.',
-                    'detail': str(e)
-                },
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            return self._handle_error(e)
+
+    def _handle_authenticated_viewing_own_school(self, request, filters):
+        """
+        AUTHENTICATED USER + view_other_products = FALSE
+        
+        User is logged in and wants to see products from their own school only.
+        We COMPLETELY IGNORE any 'school' filter parameter because they can only see their own school.
+        """
+        print(f"Authenticated user viewing own school: {request.user.institution}")
+        print("IGNORING any 'school' parameter - user can only see their own institution")
+        
+        # Start with all products, then filter ONLY by user's institution
+        queryset = Product.objects.all()
+        queryset = queryset.filter(vendor__institution__iexact=request.user.institution)
+        
+        print(f"Products from user's institution ({request.user.institution}): {queryset.count()}")
+        
+        return queryset
+
+    def _handle_authenticated_viewing_other_schools(self, request, filters):
+        """
+        AUTHENTICATED USER + view_other_products = TRUE
+        
+        User is logged in but wants to see products from other schools.
+        They can optionally filter by a specific school using the 'school' parameter.
+        If no school is specified, they see products from ALL schools.
+        """
+        print("Authenticated user viewing other schools")
+        
+        # Start with all products
+        queryset = Product.objects.all()
+        
+        # If they specify a particular school, filter by that school
+        if filters['school']:
+            print(f"Filtering by specific school: {filters['school']}")
+            queryset = queryset.filter(vendor__institution__iexact=filters['school'])
+            print(f"Products from specified school: {queryset.count()}")
+        else:
+            # No school specified = show products from ALL schools
+            print(f"Showing products from all schools: {queryset.count()}")
+        
+        return queryset
+
+    def _handle_anonymous_user(self, request, filters):
+        """
+        ANONYMOUS USER (not logged in)
+        
+        Anonymous users can see products from any school.
+        They can optionally filter by a specific school using the 'school' parameter.
+        If no school is specified, they see products from ALL schools.
+        """
+        print("Anonymous user browsing products")
+        
+        # Start with all products
+        queryset = Product.objects.all()
+        
+        # If they specify a school, filter by that school
+        if filters['school']:
+            print(f"Anonymous user filtering by school: {filters['school']}")
+            queryset = queryset.filter(vendor__institution__iexact=filters['school'])
+            print(f"Products from specified school: {queryset.count()}")
+        else:
+            # No school specified = show products from ALL schools
+            print(f"Anonymous user seeing all products: {queryset.count()}")
+        
+        return queryset
+
+    def _apply_common_filters(self, queryset, filters):
+        """Apply filters that are common to all user states"""
+        
+        # Category filter
+        if filters['category']:
+            queryset = queryset.filter(vendor__business_category__iexact=filters['category'])
+            print(f"After category filter: {queryset.count()}")
+
+        # Price range filter
+        queryset = queryset.filter(
+            price__gte=filters['min_price'], 
+            price__lte=filters['max_price']
+        )
+        print(f"After price filter: {queryset.count()}")
+
+        # Search filter
+        if filters['search']:
+            queryset = queryset.filter(
+                models.Q(name__icontains=filters['search']) |
+                models.Q(description__icontains=filters['search'])
             )
+            print(f"After search filter: {queryset.count()}")
+
+        # State filter
+        if filters['state']:
+            queryset = queryset.filter(vendor__state__iexact=filters['state'])
+            print(f"After state filter: {queryset.count()}")
+
+        # Vendor filter
+        if filters['vendor']:
+            queryset = queryset.filter(vendor__vendor_profile__business_name__iexact=filters['vendor'])
+            print(f"After vendor filter: {queryset.count()}")
+
+        return queryset
+
+    def _apply_sorting(self, queryset, sort_option):
+        """Apply sorting based on user's choice"""
+        if sort_option == 'price_low':
+            return queryset.order_by('price')
+        elif sort_option == 'price_high':
+            return queryset.order_by('-price')
+        elif sort_option == 'rating':
+            return queryset.order_by('-vendor__rating')
+        else:  # default to 'newest'
+            return queryset.order_by('-created_at')
+
+    def _parse_request_params(self, request):
+        """Parse and validate all request parameters"""
+        params = request.query_params
+        
+        # Parse price filters with error handling
+        try:
+            min_price = Decimal(params.get('minPrice')) if params.get('minPrice') else Decimal('0')
+        except (ValueError, TypeError):
+            min_price = Decimal('0')
+
+        try:
+            max_price = Decimal(params.get('maxPrice')) if params.get('maxPrice') else Decimal('999999999')
+        except (ValueError, TypeError):
+            max_price = Decimal('999999999')
+
+        return {
+            'category': params.get('category', '').strip(),
+            'min_price': min_price,
+            'max_price': max_price,
+            'search': params.get('search', '').strip(),
+            'sort': params.get('sort', 'newest'),
+            'state': params.get('state', '').strip(),
+            'school': params.get('school', '').strip(),
+            'vendor': params.get('vendor', '').strip(),
+            'view_other_products': params.get('viewOtherProducts', '').lower() == 'true'
+        }
+
+    def _paginate_and_serialize(self, queryset, request, filters):
+        """Handle pagination and serialization"""
+        print(f"Final product count: {queryset.count()}")
+        
+        # Pagination
+        paginator = self.pagination_class()
+        paginated_products = paginator.paginate_queryset(queryset, request)
+        
+        # Serialization
+        serializer = ProductSerializer(paginated_products, many=True)
+        response = paginator.get_paginated_response(serializer.data)
+        
+        # Add metadata
+        response.data['user_institution'] = request.user.institution if request.user.is_authenticated else None
+        response.data['view_other_products'] = filters['view_other_products']
+        response.data['total_products'] = queryset.count()
+        
+        # Calculate user's institution product count for authenticated users
+        if request.user.is_authenticated:
+            response.data['user_institution_product_count'] = Product.objects.filter(
+                vendor__institution__iexact=request.user.institution
+            ).count()
+        else:
+            response.data['user_institution_product_count'] = None
+        
+        return response
+
+    def _handle_error(self, error):
+        """Handle errors gracefully"""
+        print(f"Error in AllProductsView: {str(error)}")
+        return Response(
+            {
+                'error': 'An error occurred while processing your request.',
+                'detail': str(error)
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
 
 class PackOrderView(APIView):
     permission_classes = [IsAuthenticated]

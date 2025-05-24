@@ -17,5 +17,5 @@ class PasswordResetThrottle(AnonRateThrottle):
 
 class RegisterThrottle(AnonRateThrottle):
     """Throttle for registration attempts"""
-    rate = '1/hour'
+    rate = '3/hour'
     scope = 'register'

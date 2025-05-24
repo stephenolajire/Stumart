@@ -14,6 +14,7 @@ import Spinner from "../components/Spinner";
 import ourwife from "../assets/our-wife.jpg";
 import abu from "../assets/abu.jpg";
 import james from "../assets/james.jpg";
+// import Spinner from "../components/Spinner";
 import {
   FaBook,
   FaUtensils,
@@ -561,11 +562,19 @@ const Home = memo(() => {
         }
       } catch (error) {
         console.error("Search error:", error);
-        Swal.fire({
-          icon: "error",
-          title: "Search Failed",
-          text: "Product not found. Please try again.",
-        });
+        if (isAuthenticated && error.status === 404){
+          Swal.fire({
+            icon: "error",
+            title: "Search Error",
+            text: `Product not found in your school .`,
+          });
+        }else {
+          Swal.fire({
+            icon: "error",
+            title: "Search Error",
+            text: "Product is not availbale.",
+          });
+        }
       } finally {
         setUiState((prev) => ({ ...prev, isSearching: false }));
       }
@@ -642,24 +651,38 @@ const Home = memo(() => {
   return (
     <main className={styles.homeContainer}>
       {/* Hero Banner Section with Search */}
-      <form onSubmit={handleProductSearch} className={styles.searchBar}>
-        <input
-          type="text"
-          value={uiState.productName}
-          onChange={(e) =>
-            setUiState((prev) => ({ ...prev, productName: e.target.value }))
-          }
-          placeholder="What are you looking for?"
-          className={styles.searchInput}
-        />
-        <button
-          type="submit"
-          className={styles.searchButton}
-          disabled={!uiState.productName.trim() || uiState.isSearching}
-        >
-          {uiState.isSearching ? "Searching..." : <FaSearch />}
-        </button>
-      </form>
+      <div className={styles.heroGrid}>
+        {isAuthenticated && (
+          <div className={styles.heroSwitch}>
+            <button
+              onClick={handleResetFilter}
+              className={styles.resetFiltersButtonTop}
+            >
+              Switch Institution
+            </button>
+          </div>
+        )}
+        <div className={isAuthenticated ? styles.heroForm : styles.heroForms}>
+          <form onSubmit={handleProductSearch} className={styles.searchBar}>
+            <input
+              type="text"
+              value={uiState.productName}
+              onChange={(e) =>
+                setUiState((prev) => ({ ...prev, productName: e.target.value }))
+              }
+              placeholder="What are you looking for?"
+              className={styles.searchInput}
+            />
+            <button
+              type="submit"
+              className={styles.searchButton}
+              disabled={!uiState.productName.trim() || uiState.isSearching}
+            >
+              {uiState.isSearching ? "..." : <FaSearch />}
+            </button>
+          </form>
+        </div>
+      </div>
 
       {/* Featured Deals Carousel */}
       <section className={styles.featuredDeals}>
@@ -933,7 +956,7 @@ const Home = memo(() => {
                 onClick={handleResetFilter}
                 className={styles.resetFiltersButton}
               >
-                Reset Filters
+                Switch Institution
               </button>
             )}
           </div>

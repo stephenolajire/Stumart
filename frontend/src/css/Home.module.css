@@ -8,7 +8,7 @@
   padding: 0 6rem;
   font-size: 1.6rem;
   color: var(--text-primary);
-  margin-top: 10.5rem;
+  margin-top: 11rem;
 }
 
 /* Hero Banner Section */
@@ -57,6 +57,46 @@
   opacity: 0.95;
 }
 
+.heroGrid {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-top: 6rem;
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.heroSwitch {
+  width: 15%;
+  height: 4rem;
+}
+
+.resetFiltersButtonTop {
+  /* padding: 1rem 2rem; */
+  height: 5rem;
+  background-color: var(--primary-500);
+  color: var(--neutral-white);
+  border: none;
+  border-radius: 0.6rem;
+  font-weight: 600;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+}
+
+
+
+.heroForm {
+  width: 85%;
+  height: 4rem;
+}
+
+.heroForms {
+  width: 100%;
+  margin-bottom: -2rem;
+}
+
 .searchBar {
   display: flex;
   width: 100%;
@@ -65,16 +105,19 @@
   border-radius: 0.8rem;
   overflow: hidden;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  margin-top: 4rem;
+  /* margin-top: 4rem; */
+  height: 5rem;
 }
 
 .searchInput {
   flex-grow: 1;
-  padding: 1.6rem 2rem;
+  /* padding: 1.6rem 2rem; */
   border: none;
   font-size: 1.6rem;
   outline: none;
   color: var(--text-primary);
+  height: 5rem;
+  padding-left: 1rem;
 }
 
 .searchButton {
@@ -776,6 +819,22 @@
 @media screen and (max-width: 480px) {
   .heroBanner h1 {
     font-size: 2.8rem;
+  }
+
+  .heroForm {
+    width: 70%;
+  }
+
+  .heroSwitch {
+    width: 30%;
+  }
+
+  .resetFiltersButtonTop {
+    font-size: 1.4rem;
+  }
+
+  .heroGrid {
+    gap: 1rem;
   }
   
   .categoryGrid {

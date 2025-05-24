@@ -433,6 +433,8 @@ class StudentDetailsView(APIView):
         
         return Response(response_data)
 
+from rest_framework.exceptions import PermissionDenied
+
 class UpdateStudentProfileView(APIView):
     permission_classes = [IsAuthenticated]
     
@@ -454,6 +456,10 @@ class UpdateStudentProfileView(APIView):
             'institution': request.data.get('institution', user.institution)
         }
         
+        # Include email if provided
+        if 'email' in request.data:
+            user_data['email'] = request.data.get('email', user.email)
+        
         # Extract data for student model fields
         student_data = {
             'matric_number': request.data.get('matric_number', student.matric_number),
@@ -464,12 +470,17 @@ class UpdateStudentProfileView(APIView):
         if 'profile_pic' in request.FILES:
             user.profile_pic = request.FILES['profile_pic']
         
-        # Update user model
-        user_serializer = UserSerializer(user, data=user_data, partial=True)
-        if user_serializer.is_valid():
-            user_serializer.save()
-        else:
-            return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            # Update user model
+            user_serializer = UserSerializer(user, data=user_data, partial=True)
+            if user_serializer.is_valid():
+                user_serializer.save()
+            else:
+                return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        except PermissionDenied as e:
+            # Return 403 for email conflicts
+            return Response({"email": [str(e)]}, status=status.HTTP_403_FORBIDDEN)
         
         # Update student model
         student_serializer = StudentSerializer(student, data=student_data, partial=True)
@@ -478,7 +489,7 @@ class UpdateStudentProfileView(APIView):
         else:
             return Response(student_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
-        # Prepare combined response similar to the get method
+        # Prepare combined response
         response_data = {
             'user': {
                 'first_name': user.first_name,
@@ -493,7 +504,7 @@ class UpdateStudentProfileView(APIView):
             'department': student.department
         }
         
-        return Response(response_data) 
+        return Response(response_data)
 
 
 class SubscriptionListView(APIView):

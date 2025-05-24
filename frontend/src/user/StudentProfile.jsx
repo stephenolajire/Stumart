@@ -41,7 +41,7 @@ const StudentProfile = () => {
     try {
       setIsLoading(true);
       const response = await api.get("student-details/");
-      console.log(response.data)
+      // console.log(response.data)
       setProfile(response.data);
       setFormData({
         first_name: response.data.user.first_name,
@@ -108,7 +108,7 @@ const StudentProfile = () => {
       }
 
       const response = await api.patch(
-        "/api/update-student-profile/",
+        "update-student-profile/",
         updateData,
         {
           headers: {

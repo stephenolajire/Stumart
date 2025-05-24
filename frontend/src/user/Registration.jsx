@@ -320,22 +320,14 @@ const Signup = () => {
           state: { userId: response.data?.user?.id || response.data?.id },
         });
       }
-
-      if (response.data.status === 500) {
-        Swal.fire({
-          icon: "error",
-          title: "Registration Failed",
-          text: "User with that email already exists.",
-          confirmButtonColor: "var(--primary-500)",
-        });
-      }
     } catch (error) {
      console.error("Error during signup:", error);
       if (error.response) {
         // Handle specific error responses
         if (error.response.status === 429) {
+          const wait_time = error.response.data.wait_seconds;
           setThrottleError("Too many requests. Please try again later.");
-          setThrottleWaitTime(4000); // Set a wait time of 30 seconds
+          setThrottleWaitTime(wait_time);
           const interval = setInterval(() => {
             setThrottleWaitTime((prev) => {
               if (prev <= 1) {
@@ -345,8 +337,20 @@ const Signup = () => {
               return prev - 1;
             });
           }, 1000);
-        } else if (error.response.status === 500) {
-          setErrors(error.response.data);
+        } else if (error.response.status === 403) {
+          Swal.fire({
+            icon: "error",
+            title: "Email Exists",
+            text: "A user with that email already exists.",
+            confirmButtonColor: "var(--primary-500)",
+          });
+        } else if (error.response.status === 400) {
+          Swal.fire({
+            icon: "error",
+            title: "Phone Number Already Exists",
+            text: "A user with that phone number already exists.",
+            confirmButtonColor: "var(--primary-500)",
+          });
         } else {
           Swal.fire({
             icon: "error",

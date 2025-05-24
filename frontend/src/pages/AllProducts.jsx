@@ -15,6 +15,7 @@ const AllProducts = () => {
   const [selectedState, setSelectedState] = useState("");
   const [schools, setSchools] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [toggleLoading, setToggleLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
@@ -28,26 +29,53 @@ const AllProducts = () => {
     state: searchParams.get("state") || "",
   });
   const [categories, setCategories] = useState([]);
+  const [viewMode, setViewMode] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("viewOtherProducts") === "true" ? "other" : "school";
+  });
+  
   const school = localStorage.getItem("institution");
   const { isAuthenticated } = useContext(GlobalContext);
+  const viewingOtherSchools = viewMode === "other";
 
-  // Handle state change
   const handleStateChange = (state) => {
     setSelectedState(state);
     setSchools(state ? nigeriaInstitutions[state] || [] : []);
     handleFilterChange("state", state);
-    handleFilterChange("school", ""); // Reset school when state changes
+    handleFilterChange("school", "");
   };
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (showToggleLoader = false) => {
     try {
-      setLoading(true);
-      const params = new URLSearchParams(filters);
-      const response = await api.get(`/all-products/?${params}`);
-      // console.log(response.data.results);
+      if (showToggleLoader) {
+        setToggleLoading(true);
+      } else {
+        setLoading(true);
+      }
+
+      const apiParams = new URLSearchParams();
+
+      // Add filter parameters
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value) {
+          apiParams.set(key, value);
+        }
+      });
+
+      // Handle view mode logic
+      if (isAuthenticated) {
+        if (viewMode === "school") {
+          apiParams.set("viewOtherProducts", "false");
+        } else if (viewMode === "other") {
+          apiParams.set("viewOtherProducts", "true");
+        }
+      }
+
+      console.log("Making API request with params:", apiParams.toString());
+      
+      const response = await api.get(`/all-products/?${apiParams}`);
       setProducts(response.data.results);
 
-      // Extract unique categories from products
       const uniqueCategories = [
         ...new Set(
           response.data.results.map((product) => product.vendor_category)
@@ -57,7 +85,6 @@ const AllProducts = () => {
         .sort();
       setCategories(uniqueCategories);
 
-      // Extract unique vendors from products
       const uniqueVendors = [
         ...new Set(
           response.data.results.map((product) => ({
@@ -73,38 +100,137 @@ const AllProducts = () => {
       setError("Failed to fetch products");
       console.error(err);
     } finally {
-      setLoading(false);
+      if (showToggleLoader) {
+        setToggleLoading(false);
+      } else {
+        setLoading(false);
+      }
     }
   };
 
+  // 1. Initial load and filter changes (NOT view mode changes)
   useEffect(() => {
+    console.log("Filter useEffect triggered");
     fetchProducts();
-  }, [filters]);
+  }, [
+    filters.category,
+    filters.minPrice, 
+    filters.maxPrice,
+    filters.sort,
+    filters.search,
+    filters.school,
+    filters.vendor,
+    filters.state
+  ]);
+
+  // 2. Handle view mode changes specifically
+  useEffect(() => {
+    console.log("View mode useEffect triggered, viewMode:", viewMode);
+    
+    // Skip initial render - let the filter useEffect handle it
+    if (loading) return;
+    
+    fetchProducts(true); // Use toggle loader for view mode changes
+  }, [viewMode]);
+
+  // 3. Handle authentication state changes
+  useEffect(() => {
+    console.log("Auth useEffect triggered, isAuthenticated:", isAuthenticated);
+    
+    // Only refetch if not initial load
+    if (!loading) {
+      fetchProducts();
+    }
+  }, [isAuthenticated]);
 
   const handleFilterChange = (name, value) => {
+    console.log("Filter changed:", name, value);
     setFilters((prev) => ({ ...prev, [name]: value }));
     setSearchParams((prev) => {
-      prev.set(name, value);
+      if (value) {
+        prev.set(name, value);
+      } else {
+        prev.delete(name);
+      }
       return prev;
     });
   };
 
+  const handleViewModeChange = (newViewMode) => {
+    console.log("View mode changing from", viewMode, "to", newViewMode);
+    
+    setViewMode(newViewMode);
+
+    const params = new URLSearchParams(searchParams);
+
+    if (newViewMode === "other") {
+      params.set("viewOtherProducts", "true");
+      // Clear school filter when switching to other schools
+      if (filters.school) {
+        setFilters((prev) => ({ ...prev, school: "" }));
+        params.delete("school");
+      }
+    } else {
+      params.delete("viewOtherProducts");
+      // Add own school filter when switching to my school
+      if (school && !filters.school) {
+        setFilters((prev) => ({ ...prev, school: school }));
+        params.set("school", school);
+      }
+    }
+
+    setSearchParams(params);
+  };
+
   const clearFilters = () => {
-    setFilters({
+    const resetFilters = {
       category: "",
       minPrice: "",
       maxPrice: "",
       sort: "newest",
       search: "",
-      school: "",
+      school: viewMode === "school" && school ? school : "", // Keep school filter for "My School" mode
       vendor: "",
       state: "",
-    });
-    setSearchParams({});
+    };
+
+    setFilters(resetFilters);
+    setSelectedState("");
+    setSchools([]);
+
+    const params = new URLSearchParams();
+    if (viewMode === "other") {
+      params.set("viewOtherProducts", "true");
+    } else {
+      params.set("viewOtherProducts", "false");
+      if (school) {
+        params.set("school", school);
+      }
+    }
+    setSearchParams(params);
   };
 
   return (
     <div className={styles.productsPage}>
+      {isAuthenticated && (
+        <div className={styles.viewToggle}>
+          <select
+            value={viewMode}
+            onChange={(e) => handleViewModeChange(e.target.value)}
+            className={styles.viewSelect}
+            disabled={toggleLoading}
+          >
+            <option value="school">My School Products</option>
+            <option value="other">Other Schools Products</option>
+          </select>
+          {toggleLoading && (
+            <div className={styles.toggleLoader}>
+              <span>Loading...</span>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className={styles.header}>
         <h1>All Products</h1>
         <button
@@ -115,8 +241,9 @@ const AllProducts = () => {
           Filters
         </button>
       </div>
+
       <div style={{ marginBottom: "1.5rem" }}>
-        {isAuthenticated ? (
+        {isAuthenticated && !viewingOtherSchools ? (
           <>
             <h6 style={{ textAlign: "center", marginBottom: "0.5rem" }}>
               All products in {school}
@@ -128,7 +255,7 @@ const AllProducts = () => {
                 fontSize: "1.3rem",
               }}
             >
-              Use the filter option to see other school products 
+              Use the filter option to see other school products
             </p>
           </>
         ) : (
@@ -143,20 +270,23 @@ const AllProducts = () => {
                 fontSize: "1.3rem",
               }}
             >
-              Use the filter option to see products from a specific school or
+              Use the filter option to see products from a specific school
             </p>
-            <p
-              style={{
-                textAlign: "center",
-                marginBottom: "1rem",
-                fontSize: "1.3rem",
-              }}
-            >
-              Register to see products from your school 
-            </p>
+            {!isAuthenticated && (
+              <p
+                style={{
+                  textAlign: "center",
+                  marginBottom: "1rem",
+                  fontSize: "1.3rem",
+                }}
+              >
+                Register to see products from your school
+              </p>
+            )}
           </>
         )}
       </div>
+
       <div className={`${styles.filters} ${showFilters ? styles.show : ""}`}>
         <div className={styles.filterGroup}>
           <input
@@ -204,11 +334,9 @@ const AllProducts = () => {
             <option value="newest">Newest</option>
             <option value="price_low">Price: Low to High</option>
             <option value="price_high">Price: High to Low</option>
-            {/* <option value="rating">Best Rating</option> */}
           </select>
         </div>
 
-        {/* State Filter */}
         <div className={styles.filterGroup}>
           <select
             value={filters.state}
@@ -223,7 +351,6 @@ const AllProducts = () => {
           </select>
         </div>
 
-        {/* School Filter */}
         <div className={styles.filterGroup}>
           <select
             value={filters.school}
@@ -239,7 +366,6 @@ const AllProducts = () => {
           </select>
         </div>
 
-        {/* Vendor Filter */}
         <div className={styles.filterGroup}>
           <select
             value={filters.vendor}
@@ -253,10 +379,12 @@ const AllProducts = () => {
             ))}
           </select>
         </div>
+
         <button className={styles.clearFilters} onClick={clearFilters}>
           Clear Filters
         </button>
       </div>
+
       {showFilters && (
         <div className={styles.sortBy}>
           <button className={styles.clearFilterss} onClick={clearFilters}>
@@ -264,7 +392,8 @@ const AllProducts = () => {
           </button>
         </div>
       )}
-      {loading ? (
+
+      {loading || toggleLoading ? (
         <Spinner />
       ) : error ? (
         <div className={styles.error}>{error}</div>
@@ -286,9 +415,6 @@ const AllProducts = () => {
               "No products are available at this time. Please check back later."
             )}
           </p>
-          <button className={styles.clearButton} onClick={clearFilters}>
-            Clear All Filters
-          </button>
         </div>
       ) : (
         <div className={styles.productsGrid}>

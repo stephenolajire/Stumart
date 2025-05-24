@@ -1,885 +1,534 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import styles from "./css/AddProduct.module.css";
+import { useState, useEffect, useContext, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
+import ProductCard from "../components/ProductCard";
+import Spinner from "../components/Spinner";
 import api from "../constant/api";
-import Swal from "sweetalert2";
+import styles from "../css/AllProducts.module.css";
+import {
+  FaFilter,
+  FaSort,
+  FaTimes,
+  FaBox,
+  FaSadTear,
+  FaInfoCircle,
+} from "react-icons/fa";
+import { nigeriaInstitutions, nigeriaStates } from "../constant/data";
+import { GlobalContext } from "../constant/GlobalContext";
 
-// Configure toast notification
-const Toast = Swal.mixin({
-  toast: true,
-  position: "top-right",
-  showConfirmButton: false,
-  timer: 3000,
-  timerProgressBar: true,
-  didOpen: (toast) => {
-    toast.addEventListener("mouseenter", Swal.stopTimer);
-    toast.addEventListener("mouseleave", Swal.resumeTimer);
-  },
-});
-
-const AddProduct = () => {
-  const [product, setProduct] = useState({
-    name: "",
-    description: "",
-    price: "",
-    in_stock: 0,
-    image: null,
+const AllProducts = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [products, setProducts] = useState([]);
+  const [vendors, setVendors] = useState([]);
+  const [selectedState, setSelectedState] = useState("");
+  const [schools, setSchools] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const [viewOtherProducts, setViewOtherProducts] = useState(
+    searchParams.get("viewOtherProducts") === "true" || false
+  );
+  const [userInstitutionProductCount, setUserInstitutionProductCount] =
+    useState(0);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [filters, setFilters] = useState({
+    category: searchParams.get("category") || "",
+    minPrice: searchParams.get("minPrice") || "",
+    maxPrice: searchParams.get("maxPrice") || "",
+    sort: searchParams.get("sort") || "newest",
+    search: searchParams.get("search") || "",
+    school: searchParams.get("school") || "",
+    vendor: searchParams.get("vendor") || "",
+    state: searchParams.get("state") || "",
   });
-  const [errors, setErrors] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
-  const [loadingCategory, setLoadingCategory] = useState(true);
-  const [message, setMessage] = useState({ text: "", type: "" });
-  const [imagePreview, setImagePreview] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [viewMode, setViewMode] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("viewOtherProducts") === "true" ? "other" : "school";
+  });
+  const school = localStorage.getItem("institution");
+  const { isAuthenticated } = useContext(GlobalContext);
 
-  // New states for the additional requirements
-  const [businessCategory, setBusinessCategory] = useState("");
-  const [sizes, setSizes] = useState([{ size: "", quantity: 0 }]);
-  // Updated colors state to match size structure with quantity
-  const [colors, setColors] = useState([{ color: "", quantity: 0 }]);
-  const [additionalImages, setAdditionalImages] = useState([
-    { image: null, preview: null },
-  ]);
-  const [gender, setGender] = useState("");
+  // Handle state change
+  const handleStateChange = (state) => {
+    setSelectedState(state);
+    setSchools(state ? nigeriaInstitutions[state] || [] : []);
+    handleFilterChange("state", state);
+    handleFilterChange("school", ""); // Reset school when state changes
+  };
 
-  // Fetch business category on component mount
+  // Add view type to URL params on mount
   useEffect(() => {
-    const fetchBusinessCategory = async () => {
-      try {
-        setLoadingCategory(true);
-        const response = await api.get("create-products");
-        setBusinessCategory(response.data.business_category || "");
-      } catch (error) {
-        console.error("Failed to fetch business category:", error);
-        setMessage({
-          text: "Failed to load vendor information. Please refresh the page.",
-          type: "error",
-        });
-      } finally {
-        setLoadingCategory(false);
-      }
-    };
-
-    fetchBusinessCategory();
+    const params = new URLSearchParams(window.location.search);
+    const viewOther = params.get("viewOtherProducts") === "true";
+    setViewOtherProducts(viewOther);
   }, []);
 
-  // Validation rules
-  const validate = () => {
-    const newErrors = {};
-
-    // Name validation
-    if (!product.name.trim()) {
-      newErrors.name = "Product name is required";
-    } else if (product.name.length > 100) {
-      newErrors.name = "Product name must be less than 100 characters";
-    }
-
-    // Description validation
-    if (!product.description.trim()) {
-      newErrors.description = "Product description is required";
-    }
-
-    // Price validation
-    if (!product.price) {
-      newErrors.price = "Price is required";
-    } else if (
-      isNaN(parseFloat(product.price)) ||
-      parseFloat(product.price) < 0
-    ) {
-      newErrors.price = "Price must be a valid positive number";
-    } else if (parseFloat(product.price) > 99999.99) {
-      newErrors.price = "Price cannot exceed 99,999.99";
-    }
-
-    // In stock validation (only if category is not food)
-    if (businessCategory !== "food") {
-      if (product.in_stock === "") {
-        newErrors.in_stock = "Stock quantity is required";
-      } else if (parseInt(product.in_stock) < 0) {
-        newErrors.in_stock = "Stock quantity cannot be negative";
-      } else if (!Number.isInteger(Number(product.in_stock))) {
-        newErrors.in_stock = "Stock quantity must be a whole number";
-      }
-    }
-
-    // Image validation - optional but validate if provided
-    if (product.image) {
-      const allowedTypes = [
-        "image/jpeg",
-        "image/png",
-        "image/gif",
-        "image/webp",
-      ];
-      if (!allowedTypes.includes(product.image.type)) {
-        newErrors.image = "Only JPG, PNG, GIF, and WEBP images are allowed";
-      } else if (product.image.size > 5 * 1024 * 1024) {
-        newErrors.image = "Image size must be less than 5MB";
-      }
-    }
-
-    // Fashion specific validations
-    if (businessCategory === "fashion") {
-      // Validate sizes
-      const sizeErrors = [];
-      let hasEmptySize = false;
-
-      sizes.forEach((item, index) => {
-        if (!item.size.trim()) {
-          hasEmptySize = true;
-          sizeErrors[index] = "Size name is required";
-        }
-        if (item.quantity < 0 || !Number.isInteger(Number(item.quantity))) {
-          sizeErrors[index] =
-            sizeErrors[index] || "Quantity must be a valid whole number";
-        }
-      });
-
-      if (hasEmptySize || sizeErrors.length > 0) {
-        newErrors.sizes = sizeErrors;
-      }
-
-      // Validate colors - updated to match size validation including quantity
-      const colorErrors = [];
-      let hasEmptyColor = false;
-
-      colors.forEach((item, index) => {
-        if (!item.color.trim()) {
-          hasEmptyColor = true;
-          colorErrors[index] = "Color name is required";
-        }
-        if (item.quantity < 0 || !Number.isInteger(Number(item.quantity))) {
-          colorErrors[index] =
-            colorErrors[index] || "Quantity must be a valid whole number";
-        }
-      });
-
-      if (hasEmptyColor || colorErrors.length > 0) {
-        newErrors.colors = colorErrors;
-      }
-
-      // Validate gender selection
-      if (!gender) {
-        newErrors.gender = "Please select a gender category";
-      }
-    }
-
-    // Validate additional images
-    additionalImages.forEach((item, index) => {
-      if (item.image) {
-        const allowedTypes = [
-          "image/jpeg",
-          "image/png",
-          "image/gif",
-          "image/webp",
-        ];
-        if (!allowedTypes.includes(item.image.type)) {
-          newErrors.additionalImages = newErrors.additionalImages || [];
-          newErrors.additionalImages[index] =
-            "Only JPG, PNG, GIF, and WEBP images are allowed";
-        } else if (item.image.size > 5 * 1024 * 1024) {
-          newErrors.additionalImages = newErrors.additionalImages || [];
-          newErrors.additionalImages[index] =
-            "Image size must be less than 5MB";
-        }
-      }
-    });
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-
-    // Clear field-specific error when user starts typing
-    if (errors[name]) {
-      setErrors((prev) => ({
-        ...prev,
-        [name]: "",
-      }));
-    }
-
-    setProduct((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-
-    if (file) {
-      // Clear previous error
-      if (errors.image) {
-        setErrors((prev) => ({
-          ...prev,
-          image: "",
-        }));
-      }
-
-      // Image preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-
-      setProduct((prev) => ({
-        ...prev,
-        image: file,
-      }));
-    } else {
-      setImagePreview(null);
-      setProduct((prev) => ({
-        ...prev,
-        image: null,
-      }));
-    }
-  };
-
-  // Handle additional images
-  const handleAdditionalImageChange = (e, index) => {
-    const file = e.target.files[0];
-
-    if (file) {
-      // Clear previous error if exists
-      if (errors.additionalImages && errors.additionalImages[index]) {
-        const newErrors = { ...errors };
-        if (newErrors.additionalImages) {
-          newErrors.additionalImages[index] = "";
-        }
-        setErrors(newErrors);
-      }
-
-      // Create image preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const newAdditionalImages = [...additionalImages];
-        newAdditionalImages[index] = {
-          image: file,
-          preview: reader.result,
-        };
-        setAdditionalImages(newAdditionalImages);
-      };
-      reader.readAsDataURL(file);
-    } else {
-      const newAdditionalImages = [...additionalImages];
-      newAdditionalImages[index] = { image: null, preview: null };
-      setAdditionalImages(newAdditionalImages);
-    }
-  };
-
-  // Add a new additional image field
-  const addImageField = () => {
-    setAdditionalImages([...additionalImages, { image: null, preview: null }]);
-  };
-
-  // Handle size changes
-  const handleSizeChange = (index, field, value) => {
-    const newSizes = [...sizes];
-    newSizes[index][field] = value;
-    setSizes(newSizes);
-
-    // Clear errors if they exist
-    if (errors.sizes && errors.sizes[index]) {
-      const newErrors = { ...errors };
-      if (newErrors.sizes) {
-        newErrors.sizes[index] = "";
-      }
-      setErrors(newErrors);
-    }
-  };
-
-  // Add a new size field
-  const addSizeField = () => {
-    setSizes([...sizes, { size: "", quantity: 0 }]);
-  };
-
-  // Modified: Handle color changes to match size change handler
-  const handleColorChange = (index, field, value) => {
-    const newColors = [...colors];
-    newColors[index][field] = value;
-    setColors(newColors);
-
-    // Clear errors if they exist
-    if (errors.colors && errors.colors[index]) {
-      const newErrors = { ...errors };
-      if (newErrors.colors) {
-        newErrors.colors[index] = "";
-      }
-      setErrors(newErrors);
-    }
-  };
-
-  // Add a new color field
-  const addColorField = () => {
-    setColors([...colors, { color: "", quantity: 0 }]);
-  };
-
-  // Handle gender selection
-  const handleGenderChange = (e) => {
-    setGender(e.target.value);
-
-    // Clear error if exists
-    if (errors.gender) {
-      setErrors((prev) => ({
-        ...prev,
-        gender: "",
-      }));
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!validate()) {
-      return;
-    }
-
-    setIsLoading(true);
-    setMessage({ text: "", type: "" });
-
+  // Modified fetchProducts function
+  const fetchProducts = useCallback(async () => {
     try {
-      // Create form data to handle file upload
-      const formData = new FormData();
-      formData.append("name", product.name.trim());
-      formData.append("description", product.description.trim());
-      formData.append("price", product.price);
-
-      // Only append in_stock if the business category is not food
-      if (businessCategory !== "food") {
-        formData.append("in_stock", product.in_stock);
-      }
-
-      // Add main image if available
-      if (product.image) {
-        formData.append("image", product.image);
-      }
-
-      // Add fashion-specific attributes if applicable
-      if (businessCategory === "fashion") {
-        formData.append("gender", gender);
-
-        // Add sizes as JSON
-        // Add sizes as JSON - keep only size and quantity fields
-        const sizesData = sizes
-          .filter((s) => s.size.trim() !== "")
-          .map(({ size, quantity }) => ({ size, quantity }));
-        formData.append("sizes", JSON.stringify(sizesData));
-
-        // Add colors as JSON - keep only color and quantity fields
-        const colorsData = colors
-          .filter((c) => c.color.trim() !== "")
-          .map(({ color, quantity }) => ({ color, quantity }));
-        formData.append("colors", JSON.stringify(colorsData));
-      }
-
-      // Add additional images
-      // Add additional images - with clearer naming
-      additionalImages.forEach((item, index) => {
-        if (item.image) {
-          // Use a consistent name pattern
-          formData.append(`additional_images_${index}`, item.image);
-          console.log(
-            `Appending image: additional_images_${index}`,
-            item.image.name
-          );
-        }
+      setLoading(true);
+      const params = new URLSearchParams({
+        ...filters,
+        viewOtherProducts: (viewMode === "other").toString(),
       });
 
-      // Include CSRF token if using Django's CSRF protection
-      const csrfToken = document.querySelector(
-        "[name=csrfmiddlewaretoken]"
-      )?.value;
-      const headers = {
-        "Content-Type": "multipart/form-data",
-      };
+      const response = await api.get(`/all-products/?${params.toString()}`);
+      setProducts(response.data.results || []);
+      setTotalProducts(response.data.total_products || 0);
 
-      if (csrfToken) {
-        headers["X-CSRFToken"] = csrfToken;
+      if (response.data.user_institution_product_count !== undefined) {
+        setUserInstitutionProductCount(
+          response.data.user_institution_product_count
+        );
       }
 
-      // Send API request
-      const response = await api.post("vendor-products/", formData, {
-        headers,
-      });
+      // Extract categories and vendors
+      const uniqueCategories = [
+        ...new Set(
+          response.data.results
+            .map((product) => product.vendor_category)
+            .filter(Boolean)
+        ),
+      ].sort();
 
-      if (response.status === 201) {
-        Toast.fire({
-          icon: "success",
-          title: "Product added successfully",
-        });
+      setCategories(uniqueCategories);
 
-        resetForm();
-      }
-    } catch (error) {
-      console.error("API Error:", error.response?.data || error.message);
+      const uniqueVendors = [
+        ...new Set(
+          response.data.results.map((product) => ({
+            id: product.vendor_id,
+            name: product.vendor_name,
+          }))
+        ),
+      ].filter((vendor) => vendor.name);
 
-      if (error.response?.status === 400) {
-        const serverErrors = error.response.data.errors;
-        if (serverErrors) {
-          const fieldErrors = {};
-          Object.keys(serverErrors).forEach((field) => {
-            fieldErrors[field] = Array.isArray(serverErrors[field])
-              ? serverErrors[field][0]
-              : serverErrors[field];
-          });
-          setErrors(fieldErrors);
-        }
-
-        Toast.fire({
-          icon: "error",
-          title: "Please correct the form errors",
-        });
-      } else if (error.response?.status === 403) {
-        Toast.fire({
-          icon: "error",
-          title: "Permission denied",
-          text: "Your account must be registered as a vendor",
-        });
-      } else if (error.response?.status === 401) {
-        Toast.fire({
-          icon: "error",
-          title: "Authentication required",
-          text: "Please log in to add products",
-        });
-      } else {
-        Toast.fire({
-          icon: "error",
-          title: "Failed to add product",
-          text: "Please try again later",
-        });
-      }
+      setVendors(uniqueVendors);
+      setError(null);
+    } catch (err) {
+      console.error("Fetch error:", err);
+      setError("Failed to fetch products");
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  };
+  }, [filters, viewMode]); // Add viewMode to dependencies
 
-  const resetForm = () => {
-    setProduct({
-      name: "",
-      description: "",
-      price: "",
-      in_stock: 0,
-      image: null,
+  // Add an effect to handle view mode changes
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams);
+
+    if (viewMode === "other") {
+      params.set("viewOtherProducts", "true");
+    } else {
+      params.delete("viewOtherProducts");
+    }
+
+    setSearchParams(params);
+    fetchProducts();
+  }, [viewMode, setSearchParams]);
+
+  // Modified useEffect for fetching
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts, viewOtherProducts]);
+
+  const handleFilterChange = (name, value) => {
+    setFilters((prev) => ({ ...prev, [name]: value }));
+    setSearchParams((prev) => {
+      const params = new URLSearchParams(prev);
+      params.set(name, value);
+      if (viewOtherProducts) {
+        params.set("viewOtherProducts", "true");
+      }
+      return params;
     });
-    setErrors({});
-    setImagePreview(null);
-    setMessage({ text: "", type: "" });
+  };
 
-    // Reset fashion specific fields
-    setSizes([{ size: "", quantity: 0 }]);
-    setColors([{ color: "", quantity: 0 }]); // Updated with quantity
-    setAdditionalImages([{ image: null, preview: null }]);
-    setGender("");
-
-    // Reset file inputs
-    const fileInputs = document.querySelectorAll('input[type="file"]');
-    fileInputs.forEach((input) => {
-      if (input) input.value = "";
+  // Updated clearFilters function to accept a parameter
+  const clearFilters = (maintainViewOtherProducts = false) => {
+    setFilters({
+      category: "",
+      minPrice: "",
+      maxPrice: "",
+      sort: "newest",
+      search: "",
+      school: "",
+      vendor: "",
+      state: "",
     });
+
+    // Use the parameter instead of the state value to avoid timing issues
+    setSearchParams(
+      maintainViewOtherProducts ? { viewOtherProducts: "true" } : {}
+    );
   };
 
-  // Calculate total variations
-  const getTotalVariations = () => {
-    if (businessCategory !== "fashion") return 0;
+  // Modify handleViewOtherProducts
+  const handleViewOtherProducts = useCallback(() => {
+    setViewMode("other");
+    setFilters({
+      category: "",
+      minPrice: "",
+      maxPrice: "",
+      sort: "newest",
+      search: "",
+      school: "",
+      vendor: "",
+      state: "",
+    });
+  }, []);
 
-    const validSizes = sizes.filter((s) => s.size.trim() !== "").length;
-    const validColors = colors.filter((c) => c.color.trim() !== "").length;
+  // Modify handleBackToMySchool
+  const handleBackToMySchool = useCallback(() => {
+    setViewMode("school");
+    setFilters({
+      category: "",
+      minPrice: "",
+      maxPrice: "",
+      sort: "newest",
+      search: "",
+      school: "",
+      vendor: "",
+      state: "",
+    });
+  }, []);
 
-    if (validSizes === 0 || validColors === 0) return 0;
-    return validSizes * validColors;
+  // Determine header content based on authentication and view mode
+  const getHeaderContent = () => {
+    if (!isAuthenticated) {
+      return {
+        title: "All products in registered schools",
+        subtitle:
+          "Use the filter option to see products from a specific school or",
+        subtitle2: "Register to see products from your school",
+      };
+    }
+
+    if (viewOtherProducts) {
+      return {
+        title: "Products from all schools",
+        subtitle: `Showing ${totalProducts} products from all registered schools`,
+        subtitle2:
+          userInstitutionProductCount === 0
+            ? "Your school currently has no products listed"
+            : `Your school (${school}) has ${userInstitutionProductCount} products`,
+      };
+    }
+
+    return {
+      title: `All products in ${school}`,
+      subtitle:
+        userInstitutionProductCount === 0
+          ? "Your school currently has no products listed"
+          : `Showing ${totalProducts} products from your school`,
+      subtitle2:
+        userInstitutionProductCount === 0
+          ? "Click below to explore products from other schools"
+          : "Use the filter option to see other school products",
+    };
   };
 
-  // Calculate total inventory - updated to include color quantities
-  const getTotalInventory = () => {
-    if (businessCategory !== "fashion") return product.in_stock;
+  const headerContent = getHeaderContent();
 
-    // Calculate total from size quantities
-    const sizeTotal = sizes.reduce((total, size) => {
-      return total + (size.quantity ? parseInt(size.quantity) : 0);
-    }, 0);
-
-    // Calculate total from color quantities
-    const colorTotal = colors.reduce((total, color) => {
-      return total + (color.quantity ? parseInt(color.quantity) : 0);
-    }, 0);
-
-    // Return the sum
-    return sizeTotal + colorTotal;
+  // Show information banner when user's school has no products
+  const showNoProductsBanner = () => {
+    return (
+      isAuthenticated &&
+      !viewOtherProducts &&
+      userInstitutionProductCount === 0 &&
+      products.length === 0
+    );
   };
-
-  if (loadingCategory) {
-    return <div className={styles.loading}>Loading product form...</div>;
-  }
 
   return (
-    <div className={styles.container}>
-      <h2 className={styles.title}>Add New Product</h2>
-
-      {businessCategory && (
-        <div className={styles.categoryInfo}>
-          Category: <strong>{businessCategory}</strong>
+    <div className={styles.productsPage}>
+      {isAuthenticated && (
+        <div className={styles.viewToggle}>
+          <select
+            value={viewMode}
+            onChange={(e) => setViewMode(e.target.value)}
+            className={styles.viewSelect}
+          >
+            <option value="school">My School Products</option>
+            <option value="other">Other Schools Products</option>
+          </select>
         </div>
       )}
 
-      <form
-        className={styles.form}
-        onSubmit={handleSubmit}
-        noValidate
-        encType="multipart/form-data"
-      >
-        {/* Include CSRF token if using Django's CSRF protection */}
-        {document.querySelector("[name=csrfmiddlewaretoken]") && (
-          <input
-            type="hidden"
-            name="csrfmiddlewaretoken"
-            value={document.querySelector("[name=csrfmiddlewaretoken]")?.value}
-          />
+      <div className={styles.header}>
+        <h1>All Products</h1>
+        <button
+          className={styles.filterToggle}
+          onClick={() => setShowFilters(!showFilters)}
+        >
+          {showFilters ? <FaTimes /> : <FaFilter />}
+          Filters
+        </button>
+      </div>
+
+      <div style={{ marginBottom: "1.5rem" }}>
+        <h6 style={{ textAlign: "center", marginBottom: "0.5rem" }}>
+          {headerContent.title}
+        </h6>
+        <p
+          style={{
+            textAlign: "center",
+            marginBottom: "1rem",
+            fontSize: "1.3rem",
+          }}
+        >
+          {headerContent.subtitle}
+        </p>
+        {headerContent.subtitle2 && (
+          <p
+            style={{
+              textAlign: "center",
+              marginBottom: "1rem",
+              fontSize: "1.3rem",
+            }}
+          >
+            {headerContent.subtitle2}
+          </p>
         )}
 
-        <div className={styles.formGroup}>
-          <label htmlFor="name" className={styles.label}>
-            Product Name*
-          </label>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            value={product.name}
-            onChange={handleChange}
-            className={`${styles.input} ${
-              errors.name ? styles.inputError : ""
-            }`}
-            placeholder="Enter product name"
-          />
-          {errors.name && (
-            <span className={styles.errorText}>{errors.name}</span>
-          )}
-        </div>
+        {/* Show information banner for users with no products in their school */}
+        {showNoProductsBanner() && (
+          <div
+            style={{
+              backgroundColor: "#e7f3ff",
+              border: "1px solid #b3d9ff",
+              borderRadius: "8px",
+              padding: "15px",
+              margin: "15px auto",
+              maxWidth: "600px",
+              textAlign: "center",
+            }}
+          >
+            <FaInfoCircle style={{ color: "#0066cc", marginRight: "8px" }} />
+            <strong>No products available in your school yet.</strong>
+            <br />
+            <span style={{ fontSize: "0.9rem", color: "#666" }}>
+              Explore products from other schools while waiting for vendors in
+              your school to list their products.
+            </span>
+          </div>
+        )}
 
-        <div className={styles.formGroup}>
-          <label htmlFor="description" className={styles.label}>
-            Description*
-          </label>
-          <textarea
-            id="description"
-            name="description"
-            value={product.description}
-            onChange={handleChange}
-            className={`${styles.textarea} ${
-              errors.description ? styles.inputError : ""
-            }`}
-            rows="4"
-            placeholder="Describe your product"
-          />
-          {errors.description && (
-            <span className={styles.errorText}>{errors.description}</span>
-          )}
-        </div>
-
-        <div className={styles.formRow}>
-          <div className={styles.formGroup}>
-            <label htmlFor="price" className={styles.label}>
-              Price (₦)*
-            </label>
-            <input
-              type="number"
-              id="price"
-              name="price"
-              value={product.price}
-              onChange={handleChange}
-              className={`${styles.input} ${
-                errors.price ? styles.inputError : ""
-              }`}
-              step="0.01"
-              min="0"
-              placeholder="0.00"
-            />
-            {errors.price && (
-              <span className={styles.errorText}>{errors.price}</span>
+        {/* Show navigation buttons for authenticated users */}
+        {isAuthenticated && (
+          <div style={{ textAlign: "center", marginBottom: "1rem" }}>
+            {!viewOtherProducts ? (
+              <button
+                onClick={handleViewOtherProducts}
+                className={styles.switchViewButton}
+                style={{
+                  padding: "10px 20px",
+                  backgroundColor:
+                    userInstitutionProductCount === 0 ? "#28a745" : "#007bff",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "5px",
+                  cursor: "pointer",
+                  fontSize: "1rem",
+                  fontWeight:
+                    userInstitutionProductCount === 0 ? "bold" : "normal",
+                }}
+              >
+                {userInstitutionProductCount === 0
+                  ? "Explore Products from Other Schools"
+                  : "View Other Schools Products"}
+              </button>
+            ) : (
+              <button
+                onClick={handleBackToMySchool}
+                className={styles.switchViewButton}
+                style={{
+                  padding: "10px 20px",
+                  backgroundColor: "#6c757d",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "5px",
+                  cursor: "pointer",
+                  fontSize: "1rem",
+                }}
+              >
+                Back to My School Products
+              </button>
             )}
           </div>
-
-          {/* Show in_stock only for non-food categories */}
-          {businessCategory !== "food" && (
-            <div className={styles.formGroup}>
-              <label htmlFor="in_stock" className={styles.label}>
-                Quantity in Stock*
-              </label>
-              <input
-                type="number"
-                id="in_stock"
-                name="in_stock"
-                value={product.in_stock}
-                onChange={handleChange}
-                className={`${styles.input} ${
-                  errors.in_stock ? styles.inputError : ""
-                }`}
-                min="0"
-                placeholder="0"
-              />
-              {errors.in_stock && (
-                <span className={styles.errorText}>{errors.in_stock}</span>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Main product image */}
-        <div className={styles.formGroup}>
-          <label htmlFor="product-image" className={styles.label}>
-            Product Image
-          </label>
-          <input
-            type="file"
-            id="product-image"
-            name="image"
-            onChange={handleImageChange}
-            className={`${styles.fileInput} ${
-              errors.image ? styles.inputError : ""
-            }`}
-            accept="image/jpeg,image/png,image/gif,image/webp"
-          />
-          <p className={styles.helpText}>
-            Upload a high-quality image of your product (JPG, PNG, GIF, WEBP
-            formats)
-          </p>
-          {errors.image && (
-            <span className={styles.errorText}>{errors.image}</span>
-          )}
-
-          {imagePreview && (
-            <div className={styles.imagePreview}>
-              <img src={imagePreview} alt="Product preview" />
-            </div>
-          )}
-        </div>
-
-        {/* Additional images section */}
-        <div className={styles.formGroup}>
-          <label className={styles.label}>Additional Images</label>
-
-          {additionalImages.map((item, index) => (
-            <div
-              key={`additional-image-${index}`}
-              className={styles.additionalImageItem}
-            >
-              <input
-                type="file"
-                id={`additional-image-${index}`}
-                onChange={(e) => handleAdditionalImageChange(e, index)}
-                className={`${styles.fileInput} ${
-                  errors.additionalImages && errors.additionalImages[index]
-                    ? styles.inputError
-                    : ""
-                }`}
-                accept="image/jpeg,image/png,image/gif,image/webp"
-              />
-              {errors.additionalImages && errors.additionalImages[index] && (
-                <span className={styles.errorText}>
-                  {errors.additionalImages[index]}
-                </span>
-              )}
-
-              {item.preview && (
-                <div className={styles.imagePreview}>
-                  <img
-                    src={item.preview}
-                    alt={`Additional image ${index + 1}`}
-                  />
-                </div>
-              )}
-            </div>
-          ))}
-
-          <button
-            type="button"
-            className={styles.addButton}
-            onClick={addImageField}
-          >
-            + Add Another Image
-          </button>
-        </div>
-
-        {/* Fashion specific fields */}
-        {businessCategory === "fashion" && (
-          <>
-            {/* Gender selection */}
-            <div className={styles.formGroup}>
-              <label className={styles.label}>Gender Category*</label>
-              <div className={styles.radioGroup}>
-                <label className={styles.radioLabel}>
-                  <input
-                    type="radio"
-                    name="gender"
-                    value="men"
-                    checked={gender === "men"}
-                    onChange={handleGenderChange}
-                  />
-                  Men
-                </label>
-                <label className={styles.radioLabel}>
-                  <input
-                    type="radio"
-                    name="gender"
-                    value="women"
-                    checked={gender === "women"}
-                    onChange={handleGenderChange}
-                  />
-                  Women
-                </label>
-                <label className={styles.radioLabel}>
-                  <input
-                    type="radio"
-                    name="gender"
-                    value="unisex"
-                    checked={gender === "unisex"}
-                    onChange={handleGenderChange}
-                  />
-                  Unisex
-                </label>
-                <label className={styles.radioLabel}>
-                  <input
-                    type="radio"
-                    name="gender"
-                    value="kids"
-                    checked={gender === "kids"}
-                    onChange={handleGenderChange}
-                  />
-                  Kids
-                </label>
-              </div>
-              {errors.gender && (
-                <span className={styles.errorText}>{errors.gender}</span>
-              )}
-            </div>
-
-            {/* Size section */}
-            <div className={styles.formGroup}>
-              <label className={styles.label}>Available Sizes*</label>
-
-              {sizes.map((item, index) => (
-                <div key={`size-${index}`} className={styles.variationRow}>
-                  <input
-                    type="text"
-                    value={item.size}
-                    onChange={(e) =>
-                      handleSizeChange(index, "size", e.target.value)
-                    }
-                    className={`${styles.input} ${styles.sizeInput} ${
-                      errors.sizes && errors.sizes[index]
-                        ? styles.inputError
-                        : ""
-                    }`}
-                    placeholder="Size (e.g., S, M, L, XL, 42, 44)"
-                  />
-                  <input
-                    type="number"
-                    value={item.quantity}
-                    onChange={(e) =>
-                      handleSizeChange(index, "quantity", e.target.value)
-                    }
-                    className={`${styles.input} ${styles.quantityInput}`}
-                    min="0"
-                    placeholder="Quantity"
-                  />
-                  {errors.sizes && errors.sizes[index] && (
-                    <span className={styles.errorText}>
-                      {errors.sizes[index]}
-                    </span>
-                  )}
-                </div>
-              ))}
-
-              <button
-                type="button"
-                className={styles.addButton}
-                onClick={addSizeField}
-              >
-                + Add Another Size
-              </button>
-            </div>
-
-            {/* Color section - Modified to match size section structure */}
-            <div className={styles.formGroup}>
-              <label className={styles.label}>Available Colors*</label>
-
-              {colors.map((item, index) => (
-                <div key={`color-${index}`} className={styles.variationRow}>
-                  <input
-                    type="text"
-                    value={item.color}
-                    onChange={(e) =>
-                      handleColorChange(index, "color", e.target.value)
-                    }
-                    className={`${styles.input} ${styles.sizeInput} ${
-                      errors.colors && errors.colors[index]
-                        ? styles.inputError
-                        : ""
-                    }`}
-                    placeholder="Color name (e.g., Red, Blue, Green)"
-                  />
-                  <input
-                    type="number"
-                    value={item.quantity}
-                    onChange={(e) =>
-                      handleColorChange(index, "quantity", e.target.value)
-                    }
-                    className={`${styles.input} ${styles.quantityInput}`}
-                    min="0"
-                    placeholder="Quantity"
-                  />
-                  {errors.colors && errors.colors[index] && (
-                    <span className={styles.errorText}>
-                      {errors.colors[index]}
-                    </span>
-                  )}
-                </div>
-              ))}
-
-              <button
-                type="button"
-                className={styles.addButton}
-                onClick={addColorField}
-              >
-                + Add Another Color
-              </button>
-            </div>
-
-            {/* Variations summary */}
-            <div className={styles.variationsSummary}>
-              <div className={styles.summaryItem}>
-                <span>Total Variations:</span>
-                <strong>{getTotalVariations()}</strong>
-              </div>
-              <div className={styles.summaryItem}>
-                <span>Total Inventory:</span>
-                <strong>{getTotalInventory()}</strong>
-              </div>
-            </div>
-          </>
         )}
+      </div>
 
-        <div className={styles.formActions}>
-          <button
-            type="button"
-            className={styles.resetButton}
-            onClick={resetForm}
-          >
-            Reset Form
-          </button>
+      <div className={`${styles.filters} ${showFilters ? styles.show : ""}`}>
+        <div className={styles.filterGroup}>
+          <input
+            type="text"
+            placeholder="Search products..."
+            value={filters.search}
+            onChange={(e) => handleFilterChange("search", e.target.value)}
+          />
+        </div>
 
-          <button
-            type="submit"
-            className={styles.submitButton}
-            disabled={isLoading}
+        <div className={styles.filterGroup}>
+          <select
+            value={filters.category}
+            onChange={(e) => handleFilterChange("category", e.target.value)}
           >
-            {isLoading ? "Adding Product..." : "Add Product"}
+            <option value="">All Categories</option>
+            {categories.map((category) => (
+              <option key={category} value={category}>
+                {category.replace(/_/g, " ")}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className={styles.filterGroup}>
+          <input
+            type="number"
+            placeholder="Min Price"
+            value={filters.minPrice}
+            onChange={(e) => handleFilterChange("minPrice", e.target.value)}
+          />
+          <input
+            type="number"
+            placeholder="Max Price"
+            value={filters.maxPrice}
+            onChange={(e) => handleFilterChange("maxPrice", e.target.value)}
+          />
+        </div>
+
+        <div className={styles.filterGroup}>
+          <select
+            value={filters.sort}
+            onChange={(e) => handleFilterChange("sort", e.target.value)}
+          >
+            <option value="newest">Newest</option>
+            <option value="price_low">Price: Low to High</option>
+            <option value="price_high">Price: High to Low</option>
+          </select>
+        </div>
+
+        {/* State Filter */}
+        <div className={styles.filterGroup}>
+          <select
+            value={filters.state}
+            onChange={(e) => handleStateChange(e.target.value)}
+          >
+            <option value="">All States</option>
+            {nigeriaStates.map((state) => (
+              <option key={state} value={state}>
+                {state.replace(/_/g, " ")}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* School Filter */}
+        <div className={styles.filterGroup}>
+          <select
+            value={filters.school}
+            onChange={(e) => handleFilterChange("school", e.target.value)}
+            disabled={!selectedState}
+          >
+            <option value="">All Schools</option>
+            {schools.map((institutionName) => (
+              <option key={institutionName} value={institutionName}>
+                {institutionName}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Vendor Filter */}
+        <div className={styles.filterGroup}>
+          <select
+            value={filters.vendor}
+            onChange={(e) => handleFilterChange("vendor", e.target.value)}
+          >
+            <option value="">All Vendors</option>
+            {vendors.map((vendor) => (
+              <option key={vendor.id} value={vendor.id}>
+                {vendor.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <button className={styles.clearFilters} onClick={() => clearFilters()}>
+          Clear Filters
+        </button>
+      </div>
+
+      {showFilters && (
+        <div className={styles.sortBy}>
+          <button
+            className={styles.clearFilterss}
+            onClick={() => clearFilters()}
+          >
+            Clear Filters
           </button>
         </div>
-      </form>
+      )}
+
+      {loading ? (
+        <Spinner />
+      ) : error ? (
+        <div className={styles.error}>{error}</div>
+      ) : products.length === 0 ? (
+        <div className={styles.noProducts}>
+          <FaBox className={styles.noProductsIcon} />
+          <h2>No Products Found</h2>
+          <p>
+            {filters.search ||
+            filters.category ||
+            filters.state ||
+            filters.school ? (
+              <>
+                <FaSadTear className={styles.sadIcon} />
+                No products match your current filters. Try adjusting your
+                search criteria.
+              </>
+            ) : isAuthenticated &&
+              !viewOtherProducts &&
+              userInstitutionProductCount === 0 ? (
+              <>
+                Your school doesn't have any products listed yet.
+                <br />
+                Explore products from other schools or encourage vendors in your
+                school to start listing their products.
+              </>
+            ) : (
+              "No products are available at this time. Please check back later."
+            )}
+          </p>
+          {isAuthenticated && !viewOtherProducts && (
+            <button
+              className={styles.clearButton}
+              onClick={handleViewOtherProducts}
+              style={{
+                marginTop: "15px",
+                padding: "12px 24px",
+                backgroundColor: "#28a745",
+                color: "white",
+                border: "none",
+                borderRadius: "6px",
+                fontSize: "1rem",
+                cursor: "pointer",
+                fontWeight: "bold",
+              }}
+            >
+              Explore Other Schools Products
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className={styles.productsGrid}>
+          {products.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      )}
     </div>
   );
 };
 
-export default AddProduct;
+export default AllProducts;

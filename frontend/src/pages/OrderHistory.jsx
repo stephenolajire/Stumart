@@ -4,6 +4,7 @@ import { useReactToPrint } from "react-to-print";
 import api from "../constant/api";
 import style from "../css/OrderHistory.module.css";
 import Swal from "sweetalert2"; // Add this import
+import { Link } from "react-router-dom";
 
 const OrderHistory = () => {
   const [orders, setOrders] = useState([]);
@@ -182,7 +183,9 @@ const OrderHistory = () => {
             You haven't placed any orders yet. Start shopping to see your orders
             here!
           </p>
-          <button className={style.shopNowBtn}>Shop Now</button>
+          <Link to="/products" className={style.shopNowBtn}>
+            Shop Now
+          </Link>
         </div>
       </div>
     );
