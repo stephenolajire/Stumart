@@ -307,8 +307,8 @@ const Signup = () => {
         },
       });
 
-      if (response.data?.user?.id || response.data?.id) {
-        await Swal.fire({
+      if (response.data?.user?.id || response.data?.user_id) {
+        Swal.fire({
           icon: "success",
           title: "Registration Successful!",
           text: "Please check your email for verification code.",
