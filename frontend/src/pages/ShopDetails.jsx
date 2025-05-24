@@ -13,6 +13,17 @@ const ShopDetails = () => {
     navigate(`/product/${productId}`);
   };
 
+  const handleAddToCart = (e, product) => {
+    // Prevent the click from bubbling up to the card's onClick
+    e.stopPropagation();
+
+    // Add your cart logic here
+    console.log("Adding to cart:", product);
+
+    // Example: You might want to call a context method or API
+    // addToCart(product);
+  };
+
   useEffect(() => {
     fetchProducts(shopId);
   }, []);
@@ -97,6 +108,15 @@ const ShopDetails = () => {
                 <p className={styles.productDescription}>
                   {product.description || "No description available"}
                 </p>
+
+                {/* Add to Cart Button */}
+                <button
+                  className={styles.addToCartButton}
+                  onClick={(e) => handleAddToCart(e, product)}
+                >
+                  <FaShoppingCart className={styles.cartIcon} />
+                  Add to Cart
+                </button>
               </div>
             </div>
           ))}

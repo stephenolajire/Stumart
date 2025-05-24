@@ -34,11 +34,35 @@ const DashboardHome = () => {
       <h2 className={styles.sectionTitle}>Dashboard Overview</h2>
 
       <section className={styles.statsSection}>
+        <h3 className={styles.subTitle}>Financial Overview</h3>
+        <div className={styles.cardsGrid}>
+          <StatCard
+            title="Total Revenue"
+            value={`₦${stats.financial_stats.total_sales.toLocaleString()}`}
+            icon="💰"
+            color="primary"
+          />
+          <StatCard
+            title="Total Profit"
+            value={`₦${stats.financial_stats.total_profit.toLocaleString()}`}
+            icon="💰"
+            color="primary"
+          />
+          <StatCard
+            title="weekly Sales"
+            value={`₦${stats.financial_stats.recent_sales.toLocaleString()}`}
+            icon="💵"
+            color="success"
+          />
+        </div>
+      </section>
+
+      <section className={styles.statsSection}>
         <h3 className={styles.subTitle}>User Statistics</h3>
         <div className={styles.cardsGrid}>
           <StatCard
             title="Total Users"
-            value={stats ?.user_stats?.total}
+            value={stats?.user_stats?.total}
             icon="👥"
             color="primary"
           />
@@ -113,24 +137,6 @@ const DashboardHome = () => {
             value={stats.product_stats.out_of_stock}
             icon="❗"
             color="error"
-          />
-        </div>
-      </section>
-
-      <section className={styles.statsSection}>
-        <h3 className={styles.subTitle}>Financial Overview</h3>
-        <div className={styles.cardsGrid}>
-          <StatCard
-            title="Total Sales"
-            value={`₦${stats.financial_stats.total_sales.toLocaleString()}`}
-            icon="💰"
-            color="primary"
-          />
-          <StatCard
-            title="Recent Sales"
-            value={`₦${stats.financial_stats.recent_sales.toLocaleString()}`}
-            icon="💵"
-            color="success"
           />
         </div>
       </section>

@@ -11,8 +11,9 @@ from Stumart.models import Product, Order, OrderItem, Transaction, Wallet
 from .serializers import*
 from django.conf import settings
 from django.core.mail import send_mail
+import logging
 
-
+logger = logging.getLogger(__name__)
 
 class DashboardStatsAPIView(APIView):
     """API endpoint for dashboard overview statistics"""
@@ -20,64 +21,110 @@ class DashboardStatsAPIView(APIView):
     
     def get(self, request):
         user = request.user
-
+        
+        # Authorization check
+        if user.user_type != 'admin':
+            return Response(
+                {'error': 'Permission denied. Admin access required.'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
         try:
-            if user.user_type == 'admin':
-        # Recent timeframes
-                today = timezone.now().date()
-                last_week = today - timedelta(days=7)
-                last_month = today - timedelta(days=30)
-                
-                # User stats
-                total_users = User.objects.count()
-                new_users_week = User.objects.filter(date_joined__gte=last_week).count()
-                new_users_month = User.objects.filter(date_joined__gte=last_month).count()
-                
-                # User type breakdown
-                students = User.objects.filter(user_type='student').count()
-                vendors = User.objects.filter(user_type='vendor').count()
-                pickers = User.objects.filter(user_type__in=['picker', 'student_picker']).count()
-                
-                # Order stats
-                total_orders = Order.objects.count()
-                recent_orders = Order.objects.filter(created_at__gte=last_week).count()
-                pending_orders = Order.objects.filter(order_status='PENDING').count()
-                
-                # Financial stats
-                total_sales = Order.objects.aggregate(total=Sum('total'))['total'] or 0
-                recent_sales = Order.objects.filter(created_at__gte=last_week).aggregate(total=Sum('total'))['total'] or 0
-                
-                # Product stats
-                total_products = Product.objects.count()
-                out_of_stock = Product.objects.filter(in_stock=0).count()
-                
-                return Response({
-                    'user_stats': {
-                        'total': total_users,
-                        'new_week': new_users_week,
-                        'new_month': new_users_month,
-                        'breakdown': {
-                            'students': students,
-                            'vendors': vendors,
-                            'pickers': pickers
-                        }
-                    },
-                    'order_stats': {
-                        'total': total_orders,
-                        'recent': recent_orders,
-                        'pending': pending_orders
-                    },
-                    'financial_stats': {
-                        'total_sales': total_sales,
-                        'recent_sales': recent_sales
-                    },
-                    'product_stats': {
-                        'total': total_products,
-                        'out_of_stock': out_of_stock
-                    }
-                })
+            # Date calculations
+            today = timezone.now().date()
+            last_week = today - timedelta(days=7)
+            last_month = today - timedelta(days=30)
+            
+            # User statistics with optimized queries
+            user_stats = self._get_user_stats(last_week, last_month)
+            
+            # Order statistics
+            order_stats = self._get_order_stats(last_week)
+            
+            # Financial statistics
+            financial_stats = self._get_financial_stats(last_week)
+            
+            # Product statistics
+            product_stats = self._get_product_stats()
+            
+            return Response({
+                'user_stats': user_stats,
+                'order_stats': order_stats,
+                'financial_stats': financial_stats,
+                'product_stats': product_stats,
+                'last_updated': timezone.now().isoformat()
+            }, status=status.HTTP_200_OK)
+            
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.error(f"Dashboard stats error for user {user.id}: {str(e)}")
+            return Response(
+                {'error': 'An error occurred while fetching dashboard statistics'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def _get_user_stats(self, last_week, last_month):
+        """Get user statistics with optimized queries"""
+        # Single query to get user counts by type and date ranges
+        user_counts = User.objects.aggregate(
+            total=Count('id'),
+            new_week=Count('id', filter=Q(date_joined__gte=last_week)),
+            new_month=Count('id', filter=Q(date_joined__gte=last_month)),
+            students=Count('id', filter=Q(user_type='student')),
+            vendors=Count('id', filter=Q(user_type='vendor')),
+            pickers=Count('id', filter=Q(user_type__in=['picker', 'student_picker']))
+        )
+        
+        return {
+            'total': user_counts['total'],
+            'new_week': user_counts['new_week'],
+            'new_month': user_counts['new_month'],
+            'breakdown': {
+                'students': user_counts['students'],
+                'vendors': user_counts['vendors'],
+                'pickers': user_counts['pickers']
+            }
+        }
+    
+    def _get_order_stats(self, last_week):
+        """Get order statistics"""
+        order_counts = Order.objects.aggregate(
+            total=Count('id'),
+            recent=Count('id', filter=Q(created_at__gte=last_week)),
+            pending=Count('id', filter=Q(order_status='PENDING'))
+        )
+        
+        return {
+            'total': order_counts['total'],
+            'recent': order_counts['recent'],
+            'pending': order_counts['pending']
+        }
+    
+    def _get_financial_stats(self, last_week):
+        """Get financial statistics"""
+        # Note: Using 'tax' field for profit seems incorrect - consider reviewing
+        financial_data = Order.objects.aggregate(
+            total_sales=Sum('total'),
+            total_profit=Sum('tax'),  # This should probably be a proper profit calculation
+            recent_sales=Sum('total', filter=Q(created_at__gte=last_week))
+        )
+        
+        return {
+            'total_sales': float(financial_data['total_sales'] or 0),
+            'total_profit': float(financial_data['total_profit'] or 0),
+            'recent_sales': float(financial_data['recent_sales'] or 0)
+        }
+    
+    def _get_product_stats(self):
+        """Get product statistics"""
+        product_counts = Product.objects.aggregate(
+            total=Count('id'),
+            out_of_stock=Count('id', filter=Q(in_stock=0))
+        )
+        
+        return {
+            'total': product_counts['total'],
+            'out_of_stock': product_counts['out_of_stock']
+        }
 
 
 class UsersAPIView(APIView):

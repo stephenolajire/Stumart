@@ -6,7 +6,6 @@ from .models import *
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
-    # confirm_password = serializers.CharField(write_only=True, required=True)
     image_url = serializers.SerializerMethodField()
 
     class Meta:
@@ -18,15 +17,13 @@ class UserSerializer(serializers.ModelSerializer):
             'first_name': {'required': True},
             'last_name': {'required': True}
         }
+    
     def get_image_url(self, obj):
         if obj.profile_pic:
             return obj.profile_pic.url
         return None
 
     def validate(self, attrs):
-        # if attrs['password'] != attrs['confirm_password']:
-        #     raise serializers.ValidationError({"password": "Password fields didn't match."})
-        
         # Phone number validation
         if not attrs['phone_number'].startswith('0'):
             raise serializers.ValidationError({"phone_number": "Phone number must start with 0"})
@@ -34,43 +31,138 @@ class UserSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
-        # validated_data.pop('confirm_password')
         user = User.objects.create_user(**validated_data)
         return user
 
 class StudentSerializer(serializers.ModelSerializer):
-    user = UserSerializer()
+    # Flatten user fields
+    email = serializers.EmailField(write_only=True)
+    username = serializers.CharField(write_only=True)
+    password = serializers.CharField(write_only=True, validators=[validate_password])
+    first_name = serializers.CharField(write_only=True)
+    last_name = serializers.CharField(write_only=True)
+    phone_number = serializers.CharField(write_only=True)
+    user_type = serializers.CharField(write_only=True)
+    state = serializers.CharField(write_only=True)
+    institution = serializers.CharField(write_only=True)
+    profile_pic = serializers.ImageField(write_only=True)
+    
+    # Include user data in response
+    user = UserSerializer(read_only=True)
 
     class Meta:
         model = Student
-        fields = ('id', 'user', 'matric_number', 'department')
+        fields = ('id', 'user', 'matric_number', 'department',
+                 'email', 'username', 'password', 'first_name', 'last_name',
+                 'phone_number', 'user_type', 'state', 'institution', 'profile_pic')
+
+    def validate_phone_number(self, value):
+        if not value.startswith('0'):
+            raise serializers.ValidationError("Phone number must start with 0")
+        return value
 
     def create(self, validated_data):
-        user_data = validated_data.pop('user')
-        user = UserSerializer().create(user_data)
+        # Extract user data
+        user_data = {
+            'email': validated_data.pop('email'),
+            'username': validated_data.pop('username'),
+            'password': validated_data.pop('password'),
+            'first_name': validated_data.pop('first_name'),
+            'last_name': validated_data.pop('last_name'),
+            'phone_number': validated_data.pop('phone_number'),
+            'user_type': validated_data.pop('user_type'),
+            'state': validated_data.pop('state'),
+            'institution': validated_data.pop('institution'),
+            'profile_pic': validated_data.pop('profile_pic'),
+        }
+        
+        # Create user
+        user = User.objects.create_user(**user_data)
+        
+        # Create student
         student = Student.objects.create(user=user, **validated_data)
         return student
 
 class VendorSerializer(serializers.ModelSerializer):
-    user = UserSerializer()
+    # Flatten user fields
+    email = serializers.EmailField(write_only=True)
+    username = serializers.CharField(write_only=True)
+    password = serializers.CharField(write_only=True, validators=[validate_password])
+    first_name = serializers.CharField(write_only=True)
+    last_name = serializers.CharField(write_only=True)
+    phone_number = serializers.CharField(write_only=True)
+    user_type = serializers.CharField(write_only=True)
+    state = serializers.CharField(write_only=True)
+    institution = serializers.CharField(write_only=True)
+    profile_pic = serializers.ImageField(write_only=True)
+    
+    # Include user data in response
+    user = UserSerializer(read_only=True)
 
     class Meta:
         model = Vendor
         fields = '__all__'
+        # Add the flattened fields
+        extra_kwargs = {
+            'email': {'write_only': True},
+            'username': {'write_only': True},
+            'password': {'write_only': True},
+            'first_name': {'write_only': True},
+            'last_name': {'write_only': True},
+            'phone_number': {'write_only': True},
+            'user_type': {'write_only': True},
+            'state': {'write_only': True},
+            'institution': {'write_only': True},
+            'profile_pic': {'write_only': True},
+        }
 
     def validate_account_number(self, value):
         if not value.isdigit() or len(value) != 10:
             raise serializers.ValidationError("Account number must be 10 digits")
         return value
+        
+    def validate_phone_number(self, value):
+        if not value.startswith('0'):
+            raise serializers.ValidationError("Phone number must start with 0")
+        return value
 
     def create(self, validated_data):
-        user_data = validated_data.pop('user')
-        user = UserSerializer().create(user_data)
+        # Extract user data
+        user_data = {
+            'email': validated_data.pop('email'),
+            'username': validated_data.pop('username'),
+            'password': validated_data.pop('password'),
+            'first_name': validated_data.pop('first_name'),
+            'last_name': validated_data.pop('last_name'),
+            'phone_number': validated_data.pop('phone_number'),
+            'user_type': validated_data.pop('user_type'),
+            'state': validated_data.pop('state'),
+            'institution': validated_data.pop('institution'),
+            'profile_pic': validated_data.pop('profile_pic'),
+        }
+        
+        # Create user
+        user = User.objects.create_user(**user_data)
+        
+        # Create vendor
         vendor = Vendor.objects.create(user=user, **validated_data)
         return vendor
 
 class PickerSerializer(serializers.ModelSerializer):
-    user = UserSerializer()
+    # Flatten user fields
+    email = serializers.EmailField(write_only=True)
+    username = serializers.CharField(write_only=True)
+    password = serializers.CharField(write_only=True, validators=[validate_password])
+    first_name = serializers.CharField(write_only=True)
+    last_name = serializers.CharField(write_only=True)
+    phone_number = serializers.CharField(write_only=True)
+    user_type = serializers.CharField(write_only=True)
+    state = serializers.CharField(write_only=True)
+    institution = serializers.CharField(write_only=True)
+    profile_pic = serializers.ImageField(write_only=True)
+    
+    # Include user data in response
+    user = UserSerializer(read_only=True)
 
     class Meta:
         model = Picker
@@ -80,15 +172,49 @@ class PickerSerializer(serializers.ModelSerializer):
         if not value.isdigit() or len(value) != 10:
             raise serializers.ValidationError("Account number must be 10 digits")
         return value
+        
+    def validate_phone_number(self, value):
+        if not value.startswith('0'):
+            raise serializers.ValidationError("Phone number must start with 0")
+        return value
 
     def create(self, validated_data):
-        user_data = validated_data.pop('user')
-        user = UserSerializer().create(user_data)
+        # Extract user data
+        user_data = {
+            'email': validated_data.pop('email'),
+            'username': validated_data.pop('username'),
+            'password': validated_data.pop('password'),
+            'first_name': validated_data.pop('first_name'),
+            'last_name': validated_data.pop('last_name'),
+            'phone_number': validated_data.pop('phone_number'),
+            'user_type': validated_data.pop('user_type'),
+            'state': validated_data.pop('state'),
+            'institution': validated_data.pop('institution'),
+            'profile_pic': validated_data.pop('profile_pic'),
+        }
+        
+        # Create user
+        user = User.objects.create_user(**user_data)
+        
+        # Create picker
         picker = Picker.objects.create(user=user, **validated_data)
         return picker
 
 class StudentPickerSerializer(serializers.ModelSerializer):
-    user = UserSerializer()
+    # Flatten user fields
+    email = serializers.EmailField(write_only=True)
+    username = serializers.CharField(write_only=True)
+    password = serializers.CharField(write_only=True, validators=[validate_password])
+    first_name = serializers.CharField(write_only=True)
+    last_name = serializers.CharField(write_only=True)
+    phone_number = serializers.CharField(write_only=True)
+    user_type = serializers.CharField(write_only=True)
+    state = serializers.CharField(write_only=True)
+    institution = serializers.CharField(write_only=True)
+    profile_pic = serializers.ImageField(write_only=True)
+    
+    # Include user data in response
+    user = UserSerializer(read_only=True)
 
     class Meta:
         model = StudentPicker
@@ -98,13 +224,35 @@ class StudentPickerSerializer(serializers.ModelSerializer):
         if not value.isdigit() or len(value) != 10:
             raise serializers.ValidationError("Account number must be 10 digits")
         return value
+        
+    def validate_phone_number(self, value):
+        if not value.startswith('0'):
+            raise serializers.ValidationError("Phone number must start with 0")
+        return value
 
     def create(self, validated_data):
-        user_data = validated_data.pop('user')
-        user = UserSerializer().create(user_data)
+        # Extract user data
+        user_data = {
+            'email': validated_data.pop('email'),
+            'username': validated_data.pop('username'),
+            'password': validated_data.pop('password'),
+            'first_name': validated_data.pop('first_name'),
+            'last_name': validated_data.pop('last_name'),
+            'phone_number': validated_data.pop('phone_number'),
+            'user_type': validated_data.pop('user_type'),
+            'state': validated_data.pop('state'),
+            'institution': validated_data.pop('institution'),
+            'profile_pic': validated_data.pop('profile_pic'),
+        }
+        
+        # Create user
+        user = User.objects.create_user(**user_data)
+        
+        # Create student picker
         student_picker = StudentPicker.objects.create(user=user, **validated_data)
         return student_picker
 
+# Keep your other serializers unchanged
 class KYCVerificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = KYCVerification

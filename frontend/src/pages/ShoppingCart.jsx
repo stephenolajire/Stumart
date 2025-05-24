@@ -112,7 +112,7 @@ const ShoppingCart = () => {
       {cartItems.length === 0 ? (
         <div className={styles.emptyCart}>
           <p className={styles.emptyMessage}>Your cart is empty</p>
-          <Link to="/" className={styles.primaryButton}>
+          <Link to="/products" className={styles.primaryButton}>
             Continue Shopping
           </Link>
         </div>

@@ -211,7 +211,6 @@ const Signup = () => {
     }
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm() || throttleWaitTime > 0) return;
@@ -223,25 +222,21 @@ const Signup = () => {
       // Create form data
       const formDataToSend = new FormData();
 
-      // Add all user fields
-      const userData = {
-        email: formData.email,
-        username: formData.email,
-        password: formData.password,
-        first_name: formData.firstName,
-        last_name: formData.lastName,
-        phone_number: formData.phoneNumber,
-        state: formData.state,
-        institution: formData.institution,
-        user_type: formData.userType.toLowerCase().replace(" ", "_"),
-      };
+      // Add common user fields directly (not nested)
+      formDataToSend.append("email", formData.email);
+      formDataToSend.append("username", formData.email);
+      formDataToSend.append("password", formData.password);
+      formDataToSend.append("first_name", formData.firstName);
+      formDataToSend.append("last_name", formData.lastName);
+      formDataToSend.append("phone_number", formData.phoneNumber);
+      formDataToSend.append("state", formData.state);
+      formDataToSend.append("institution", formData.institution);
+      formDataToSend.append(
+        "user_type",
+        formData.userType.toLowerCase().replace(" ", "_")
+      );
 
-      // Append each user field separately
-      Object.keys(userData).forEach((key) => {
-        formDataToSend.append(`user.${key}`, userData[key]);
-      });
-
-      // Handle profile picture
+      // Handle profile picture - THIS IS THE KEY FIX
       if (formData.profilePic) {
         formDataToSend.append("profile_pic", formData.profilePic);
       }
@@ -264,10 +259,9 @@ const Signup = () => {
             formData.businessCategory.toLowerCase()
           );
           if (formData.businessCategory === "Others") {
-            // Use the value from the selected option
             formDataToSend.append(
               "specific_category",
-              formData.specificCategory // This will now be the value like "laundry", "note_writing", etc.
+              formData.specificCategory
             );
           }
           if (formData.shopImage) {
@@ -313,63 +307,59 @@ const Signup = () => {
         },
       });
 
-      if (response.data?.user_id) {
+      if (response.data?.user?.id || response.data?.id) {
         await Swal.fire({
           icon: "success",
           title: "Registration Successful!",
           text: "Please check your email for verification code.",
           confirmButtonColor: "var(--primary-500)",
         });
-
+        
         // Navigate to verify email with user ID
         navigate("/verify-email", {
-          state: { userId: response.data.user_id },
+          state: { userId: response.data?.user?.id || response.data?.id },
         });
       }
-    } catch (error) {
-      console.error("Registration error:", error);
 
-      // Handle throttle error
-      if (error.response?.status === 429) {
-        const waitSeconds = error.response.data.wait_seconds || 60;
-        setThrottleError(
-          "Too many registration attempts. Please try again later."
-        );
-        setThrottleWaitTime(waitSeconds);
-
-        // Start countdown timer
-        const timer = setInterval(() => {
-          setThrottleWaitTime((prevTime) => {
-            if (prevTime <= 1) {
-              clearInterval(timer);
-              setThrottleError(null);
-              return null;
-            }
-            return prevTime - 1;
-          });
-        }, 1000);
-
-        Swal.fire({
-          icon: "warning",
-          title: "Too Many Attempts",
-          text: `Please wait ${waitSeconds} seconds before trying again.`,
-          timer: waitSeconds * 1000,
-          timerProgressBar: true,
-          confirmButtonColor: "var(--primary-500)",
-        });
-      } else {
-        // Handle different types of errors
-        const errorMessage =
-          error.response?.data?.detail ||
-          error.response?.data?.message ||
-          Object.values(error.response?.data || {})[0]?.[0] ||
-          error.message ||
-          "Registration failed. Please try again.";
-
+      if (response.data.status === 500) {
         Swal.fire({
           icon: "error",
           title: "Registration Failed",
-          text: errorMessage,
+          text: "User with that email already exists.",
+          confirmButtonColor: "var(--primary-500)",
+        });
+      }
+    } catch (error) {
+     console.error("Error during signup:", error);
+      if (error.response) {
+        // Handle specific error responses
+        if (error.response.status === 429) {
+          setThrottleError("Too many requests. Please try again later.");
+          setThrottleWaitTime(4000); // Set a wait time of 30 seconds
+          const interval = setInterval(() => {
+            setThrottleWaitTime((prev) => {
+              if (prev <= 1) {
+                clearInterval(interval);
+                return null; // Reset throttle error after countdown
+              }
+              return prev - 1;
+            });
+          }, 1000);
+        } else if (error.response.status === 500) {
+          setErrors(error.response.data);
+        } else {
+          Swal.fire({
+            icon: "error",
+            title: "Registration Failed",
+            text: error.response.data.detail || "An unexpected error occurred.",
+            confirmButtonColor: "var(--primary-500)",
+          });
+        }
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Registration Failed",
+          text: "An unexpected error occurred. Please try again.",
           confirmButtonColor: "var(--primary-500)",
         });
       }
