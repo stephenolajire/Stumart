@@ -317,7 +317,7 @@ const Signup = () => {
         
         // Navigate to verify email with user ID
         navigate("/verify-email", {
-          state: { userId: response.data?.user?.id || response.data?.id },
+          state: { userId: response.data?.user?.id || response.data?.user_id },
         });
       }
     } catch (error) {
