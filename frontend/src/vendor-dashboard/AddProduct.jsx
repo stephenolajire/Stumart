@@ -375,7 +375,7 @@ const AddProduct = () => {
 
       // Add additional images
       // Add additional images - with clearer naming
-      additionalImages.forEach((item, index) => {
+      additionalImages.forEach((item, index) => { 
         if (item.image) {
           // Use a consistent name pattern
           formData.append(`additional_images_${index}`, item.image);

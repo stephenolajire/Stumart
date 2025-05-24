@@ -79,6 +79,7 @@ const Login = () => {
       localStorage.setItem("refresh", refresh);
       localStorage.setItem("institution", institution); // Set default auth header for future requests
       api.defaults.headers.common["Authorization"] = `Bearer ${access}`;
+      localStorage.setItem("user_id", user_id);
 
       // If user is not verified, send OTP and navigate to email verification
       if (!is_verified) {
@@ -114,7 +115,7 @@ const Login = () => {
           return;
         }
 
-        if (kyc_status === "PENDING") {
+        if (kyc_status === "pending") {
           navigate("/kyc-status");
           return;
         }

@@ -36,6 +36,7 @@ urlpatterns = [
     # KYC Verification URL
     path('verify-email/', VerificationViewSet.as_view(), name='verify-email'),
     path('kyc/', KYCVerificationView.as_view(), name='kyc-verification'),
+     path('kyc-status/<str:user_type>/<int:user_id>/', KYCStatusView.as_view(), name='kyc-status'),
 
     # Forgot Password URL
     path('request-otp/', RequestOTPView.as_view(), name='forgot-password'),

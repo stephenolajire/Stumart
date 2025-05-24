@@ -15,6 +15,8 @@ from .models import OTP
 from rest_framework import permissions
 from .throttles import LoginRateThrottle
 from .throttles import RegisterThrottle, EmailVerificationThrottle
+import logging
+logger = logging.getLogger(__name__)
 
 class BaseAPIView(APIView):
     model = None
@@ -597,3 +599,90 @@ class AllPlansView(APIView):
         plans = SubscriptionPlan.objects.filter(is_active=True)
         serializer = SubscriptionPlanSerializer(plans, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+
+class KYCStatusView(APIView):
+
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, user_type, user_id):
+        try:
+            # Validate user_type
+            valid_user_types = ['student', 'vendor', 'picker', 'student_picker', 'admin']
+            if user_type not in valid_user_types:
+                return Response(
+                    {'error': 'Invalid user type'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Get user
+            user = get_object_or_404(User, id=user_id, user_type=user_type)
+            
+            # Check if requesting user has permission to view this data
+            if request.user.id != int(user_id) and not request.user.is_staff:
+                return Response(
+                    {'error': 'Permission denied'}, 
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            # Get or create KYC verification record
+            kyc_verification, created = KYCVerification.objects.get_or_create(
+                user=user,
+                defaults={'verification_status': 'none'}
+            )
+            
+            # Prepare response data
+            response_data = {
+                'user_id': user.id,
+                'user_type': user.user_type,
+                'email': user.email,
+                'is_verified': user.is_verified,
+                'status': kyc_verification.verification_status,
+                'submission_date': kyc_verification.submission_date,
+                'verification_date': kyc_verification.verification_date,
+                'rejection_reason': kyc_verification.rejection_reason,
+                'id_type': kyc_verification.id_type,
+            }
+            
+            # Add user-type specific data
+            if user_type == 'vendor':
+                try:
+                    vendor_profile = user.vendor_profile
+                    response_data.update({
+                        'business_name': vendor_profile.business_name,
+                        'business_category': vendor_profile.business_category,
+                        'needs_subscription': vendor_profile.needs_subscription,
+                        'has_active_subscription': vendor_profile.has_active_subscription,
+                        'subscription_status': vendor_profile.subscription_status,
+                    })
+                except Vendor.DoesNotExist:
+                    response_data['profile_complete'] = False
+                    
+            elif user_type in ['picker', 'student_picker']:
+                try:
+                    if user_type == 'picker':
+                        picker_profile = user.picker_profile
+                    else:
+                        picker_profile = user.student_picker_profile
+                        
+                    response_data.update({
+                        'is_available': picker_profile.is_available,
+                        'total_deliveries': picker_profile.total_deliveries,
+                        'rating': float(picker_profile.rating),
+                    })
+                except (Picker.DoesNotExist, StudentPicker.DoesNotExist):
+                    response_data['profile_complete'] = False
+            
+            return Response(response_data, status=status.HTTP_200_OK)
+            
+        except User.DoesNotExist:
+            return Response(
+                {'error': 'User not found'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            logger.error(f"Error checking KYC status: {str(e)}")
+            return Response(
+                {'error': 'Internal server error'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

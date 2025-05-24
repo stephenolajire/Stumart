@@ -314,6 +314,11 @@ const Signup = () => {
           text: "Please check your email for verification code.",
           confirmButtonColor: "var(--primary-500)",
         });
+
+        const user_id = response.data?.user?.id || response.data?.user_id;
+        // Store user ID in local storage
+        localStorage.setItem("user_id", user_id);
+        localStorage.setItem("user_type", formData.userType.toLowerCase());
         
         // Navigate to verify email with user ID
         navigate("/verify-email", {
