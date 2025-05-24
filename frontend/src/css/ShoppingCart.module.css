@@ -8,12 +8,77 @@
   margin-top: 10rem;
 }
 
+/* Enhanced Cart Header with Back Button */
+.cartHeaderSection {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 3rem;
+  padding-bottom: 2rem;
+  border-bottom: 2px solid var(--neutral-gray-200);
+}
+
+.backButtonContainer {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  cursor: pointer;
+  padding: 1rem 1.5rem;
+  border-radius: 0.8rem;
+  background-color: var(--neutral-white);
+  border: 1px solid var(--neutral-gray-300);
+  transition: all 0.3s ease;
+  color: var(--text-secondary);
+  font-size: 1.5rem;
+  font-weight: 500;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.backButtonContainer:hover {
+  background-color: var(--primary-100);
+  border-color: var(--primary-300);
+  color: var(--primary-600);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.backButtonContainer:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.backIcon {
+  font-size: 1.6rem;
+  transition: transform 0.3s ease;
+}
+
+.backButtonContainer:hover .backIcon {
+  transform: translateX(-2px);
+}
+
+.backText {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
 .cartTitle {
   font-size: var(--h2-desktop);
-  margin-bottom: 3rem;
-  text-align: center;
   font-weight: 700;
   color: var(--primary-500);
+  text-align: center;
+  flex: 1;
+  margin: 0 2rem;
+}
+
+.cartItemCount {
+  background-color: var(--primary-500);
+  color: var(--neutral-white);
+  padding: 0.6rem 1.2rem;
+  border-radius: 2rem;
+  font-size: 1.4rem;
+  font-weight: 600;
+  min-width: 4rem;
+  text-align: center;
 }
 
 .loading {
@@ -318,9 +383,27 @@
     padding: 2rem 1.6rem;
   }
   
+  .cartHeaderSection {
+    flex-direction: column;
+    gap: 2rem;
+    align-items: stretch;
+  }
+  
+  .backButtonContainer {
+    align-self: flex-start;
+    padding: 0.8rem 1.2rem;
+    font-size: 1.4rem;
+  }
+  
   .cartTitle {
     font-size: var(--h3-mobile);
-    margin-bottom: 2rem;
+    margin: 0;
+    text-align: center;
+  }
+  
+  .cartItemCount {
+    align-self: center;
+    margin-top: -1rem;
   }
   
   .desktopOnly {
@@ -415,5 +498,13 @@
   
   .cartSummary {
     max-width: 36rem;
+  }
+  
+  .cartHeaderSection {
+    margin-bottom: 2.5rem;
+  }
+  
+  .cartTitle {
+    font-size: 3.6rem;
   }
 }

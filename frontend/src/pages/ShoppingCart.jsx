@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import api from "../constant/api";
 import { GlobalContext } from "../constant/GlobalContext";
 import { useNavigate } from "react-router-dom";
+import { FaArrowLeft } from "react-icons/fa";
 
 const ShoppingCart = () => {
 //   const [cartItems, setCartItems] = useState([]);
@@ -107,7 +108,20 @@ const ShoppingCart = () => {
 
   return (
     <div className={styles.cartContainer}>
-      <h2 className={styles.cartTitle}>Your Shopping Cart</h2>
+      <div className={styles.cartHeaderSection}>
+        <div className={styles.backButtonContainer} onClick={goBack}>
+          <FaArrowLeft className={styles.backIcon} />
+          <span className={styles.backText}>Back</span>
+        </div>
+
+        <h2 className={styles.cartTitle}>Your Shopping Cart</h2>
+
+        {cartItems.length > 0 && (
+          <div className={styles.cartItemCount}>
+            {cartItems.length} {cartItems.length === 1 ? "Item" : "Items"}
+          </div>
+        )}
+      </div>
 
       {cartItems.length === 0 ? (
         <div className={styles.emptyCart}>
@@ -124,7 +138,7 @@ const ShoppingCart = () => {
             <span>Product Name</span>
             <span>Price</span>
             <span>Quantity</span>
-            <span>Subtotal</span>
+            {/* <span>Subtotal</span> */}
             <span>Delete</span>
           </div>
 
@@ -181,10 +195,10 @@ const ShoppingCart = () => {
                 </div>
 
                 {/* Item Subtotal */}
-                <div className={styles.itemSubtotal}>
+                {/* <div className={styles.itemSubtotal}>
                   <span className={styles.mobileLabel}>Subtotal:</span>
                   <span>{cartSummary.subtotal}</span>
-                </div>
+                </div> */}
 
                 {/* Remove Button */}
                 <button
@@ -217,9 +231,9 @@ const ShoppingCart = () => {
             <button onClick={clearCart} className={styles.clearCartButton}>
               Clear Cart
             </button>
-            <button onClick={goBack} className={styles.continueShoppingButton}>
-              Continue Shopping
-            </button>
+            <Link to="/products" className={styles.continueShoppingButton}>
+              Continue Shopping   
+            </Link>
           </div>
 
           {/* Cart Summary */}

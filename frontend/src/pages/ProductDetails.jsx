@@ -4,6 +4,7 @@ import styles from "../css/ProductDetails.module.css";
 import { GlobalContext } from "../constant/GlobalContext";
 import api from "../constant/api";
 import Swal from "sweetalert2";
+import { FaArrowLeft } from "react-icons/fa";
 
 const Toast = Swal.mixin({
   toast: true,
@@ -154,6 +155,13 @@ const ProductDetails = () => {
 
   return (
     <div className={styles.productDetails}>
+      <div className={styles.header}>
+        <div className={styles.backButton} onClick={() => window.history.back()}>
+          <FaArrowLeft size={20}/>
+          <span className={styles.backText}>Back</span>
+        </div>
+        <h2 className={styles.title}>Product Details</h2>
+      </div>
       <div className={styles.container}>
         <div className={styles.productGrid}>
           <div className={styles.imageSection}>

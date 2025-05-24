@@ -11,7 +11,7 @@
 
 .cartIcon {
   color: var(--text-primary);
-  display: none;
+  /* display: none; */
 }
 
 .container {
