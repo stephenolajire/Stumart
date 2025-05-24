@@ -121,10 +121,6 @@ const KYCStatus = () => {
             "Check Status Again"
           )}
         </button>
-
-        <button onClick={() => navigate("/")} className={styles.homeButton}>
-          Back to Home
-        </button>
       </div>
     </div>
   );
