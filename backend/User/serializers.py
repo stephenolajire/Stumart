@@ -128,8 +128,8 @@ class StudentSerializer(serializers.ModelSerializer):
             'user_type': validated_data.pop('user_type'),
             'state': validated_data.pop('state'),
             'institution': validated_data.pop('institution'),
-            'matric_number': validated_data.pop('matric_number', None),
-            'department': validated_data.pop('department', None),
+            # 'matric_number': validated_data.pop('matric_number', None),
+            # 'department': validated_data.pop('department', None),
         }
         
         # Handle optional profile_pic
