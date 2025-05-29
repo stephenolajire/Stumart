@@ -706,16 +706,6 @@ const Home = memo(() => {
   // UI COMPONENTS SECTION
   return (
     <main className={styles.homeContainer}>
-      {/* Error Display */}
-      {error && (
-        <div className={styles.errorBanner}>
-          <p>{error}</p>
-          <button onClick={clearError} className={styles.closeError}>
-            <FaTimes />
-          </button>
-        </div>
-      )}
-
       {/* Hero Banner Section with Search */}
       <div className={styles.heroGrid}>
         {/* {isAuthenticated && (

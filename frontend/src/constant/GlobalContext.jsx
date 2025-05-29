@@ -673,7 +673,7 @@ export const GlobalProvider = ({ children }) => {
           cart_code: cartCode,
         });
 
-        if (response.status === 200 || response.status === 201) {
+        if (response.data) {
           // Reset cart fetch flag to allow fresh data
           hasFetchedCart.current = false;
           // Refresh cart data
@@ -787,28 +787,36 @@ export const GlobalProvider = ({ children }) => {
     if ((isAuthenticated || getCartCode()) && !hasFetchedCart.current) {
       fetchCartData();
     }
-  }, [isAuthenticated]); // Removed fetchCartData from dependencies
+  }, [isAuthenticated]); 
 
 
-  // Fetch orders for authenticated users
   const [orders, setOrders] = useState([]);
-  const fetchOrders = async () => {
-      try {
-        const response = await api.get("orders/");
-        setOrders(response.data);
-        setLoading(false);
-        // console.log(response.data);
-      } catch (err) {
-        setError("Failed to load your order history. Please try again later.");
-        setLoading(false);
-      }
-    };
-
-  useEffect(()=>{
-    if (orders.length === 0) {
-      fetchOrders()
+  const fetchOrders = useCallback(async () => {
+    // Only fetch if user is authenticated
+    if (!isAuthenticated) {
+      return;
     }
-  }, [])
+
+    try {
+      setLoading(true);
+      const response = await api.get("orders/");
+      console.log("Fetched orders:", response.data);
+      setOrders(response.data);
+      setError(null);
+    } catch (err) {
+      console.error("Error fetching orders:", err);
+      setError("Failed to load your order history. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
+  }, [isAuthenticated]);
+
+  // Update the useEffect to depend on authentication status
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchOrders();
+    }
+  }, [isAuthenticated, fetchOrders]);
 
   const contextValue = {
     // Authentication
@@ -825,6 +833,7 @@ export const GlobalProvider = ({ children }) => {
     searchResults,
     count,
     cartSummary,
+    setCount,
 
     // AllProducts specific data
     allProducts,
@@ -870,6 +879,7 @@ export const GlobalProvider = ({ children }) => {
     // order history
     orders,
     setOrders,
+    fetchOrders,
   };
 
   return (

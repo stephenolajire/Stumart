@@ -4,7 +4,8 @@ import styles from "../css/ProductDetails.module.css";
 import { GlobalContext } from "../constant/GlobalContext";
 import api from "../constant/api";
 import Swal from "sweetalert2";
-import { FaArrowLeft } from "react-icons/fa";
+import { FaArrowLeft, FaStar, FaStarHalfAlt, FaRegStar } from "react-icons/fa";
+import Spinner from "../components/Spinner";
 
 const Toast = Swal.mixin({
   toast: true,
@@ -28,6 +29,55 @@ const ProductDetails = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [selectedColor, setSelectedColor] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
+
+  // Review states
+  const [reviews, setReviews] = useState([]);
+  const [reviewStats, setReviewStats] = useState({
+    total_reviews: 0,
+    average_rating: 0,
+    rating_breakdown: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+  });
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [showAllReviews, setShowAllReviews] = useState(false);
+
+  // Star Rating Component
+  const StarRating = ({ rating, size = 16 }) => {
+    const stars = [];
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 !== 0;
+    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+
+    // Full stars
+    for (let i = 0; i < fullStars; i++) {
+      stars.push(<FaStar key={`full-${i}`} color="#daa520" size={size} />);
+    }
+
+    // Half star
+    if (hasHalfStar) {
+      stars.push(<FaStarHalfAlt key="half" color="#daa520" size={size} />);
+    }
+
+    // Empty stars
+    for (let i = 0; i < emptyStars; i++) {
+      stars.push(<FaRegStar key={`empty-${i}`} color="#d1d5db" size={size} />);
+    }
+
+    return <div className={styles.starRating}>{stars}</div>;
+  };
+
+  // Fetch reviews
+  const fetchReviews = async () => {
+    setReviewsLoading(true);
+    try {
+      const response = await api.get(`products/${productId}/reviews/`);
+      setReviews(response.data.reviews);
+      setReviewStats(response.data.stats);
+    } catch (error) {
+      console.error("Error fetching reviews:", error);
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
 
   // Handle Add to Cart
   const handleAddToCart = async () => {
@@ -83,6 +133,12 @@ const ProductDetails = () => {
   }, [productId]);
 
   useEffect(() => {
+    if (productId) {
+      fetchReviews();
+    }
+  }, [productId]);
+
+  useEffect(() => {
     // Set default selections when product loads
     const isFashionProduct = product?.vendor_category === "fashion";
 
@@ -114,7 +170,7 @@ const ProductDetails = () => {
   }, [product]);
 
   if (loading) {
-    return <div className={styles.loading}>Loading...</div>;
+    return <div className={styles.loading}> <Spinner/> </div>;
   }
 
   // Handle carousel navigation
@@ -153,11 +209,17 @@ const ProductDetails = () => {
   const hasCarousel =
     product.additional_images && product.additional_images.length > 0;
 
+  // Display limited reviews
+  const displayedReviews = showAllReviews ? reviews : reviews.slice(0, 3);
+
   return (
     <div className={styles.productDetails}>
       <div className={styles.header}>
-        <div className={styles.backButton} onClick={() => window.history.back()}>
-          <FaArrowLeft size={20}/>
+        <div
+          className={styles.backButton}
+          onClick={() => window.history.back()}
+        >
+          <FaArrowLeft size={20} />
           <span className={styles.backText}>Back</span>
         </div>
         <h2 className={styles.title}>Product Details</h2>
@@ -333,16 +395,108 @@ const ProductDetails = () => {
                   isFashionProduct && isOutOfStock ? styles.disabledButton : ""
                 }`}
                 disabled={isFashionProduct && isOutOfStock}
-                onClick={() => {
-                  handleAddToCart();
-                  incrementCount();
-                }}
+                onClick={handleAddToCart}
               >
                 {isFashionProduct && isOutOfStock
                   ? "Out of Stock"
                   : "Add to Cart"}
               </button>
             </div>
+          </div>
+        </div>
+
+        {/* Reviews Section */}
+        <div className={styles.reviewsSection}>
+          <div className={styles.reviewsHeader}>
+            <h2>Customer Reviews</h2>
+            {reviewStats.total_reviews > 0 && (
+              <div className={styles.reviewsSummary}>
+                <div className={styles.averageRating}>
+                  <StarRating rating={reviewStats.average_rating} size={20} />
+                  <span className={styles.ratingNumber}>
+                    {reviewStats.average_rating} out of 5
+                  </span>
+                  <span className={styles.totalReviews}>
+                    ({reviewStats.total_reviews} review
+                    {reviewStats.total_reviews !== 1 ? "s" : ""})
+                  </span>
+                </div>
+
+                <div className={styles.ratingBreakdown}>
+                  {[5, 4, 3, 2, 1].map((rating) => (
+                    <div key={rating} className={styles.ratingBar}>
+                      <span className={styles.ratingLabel}>{rating} star</span>
+                      <div className={styles.barContainer}>
+                        <div
+                          className={styles.barFill}
+                          style={{
+                            width:
+                              reviewStats.total_reviews > 0
+                                ? `${
+                                    (reviewStats.rating_breakdown[rating] /
+                                      reviewStats.total_reviews) *
+                                    100
+                                  }%`
+                                : "0%",
+                          }}
+                        ></div>
+                      </div>
+                      <span className={styles.ratingCount}>
+                        {reviewStats.rating_breakdown[rating]}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className={styles.reviewsList}>
+            {reviewsLoading ? (
+              <div className={styles.reviewsLoading}>Loading reviews...</div>
+            ) : reviews.length === 0 ? (
+              <div className={styles.noReviews}>
+                <p>No reviews yet for this vendor's products.</p>
+                <p>Be the first to leave a review after your purchase!</p>
+              </div>
+            ) : (
+              <>
+                {displayedReviews.map((review) => (
+                  <div key={review.id} className={styles.reviewItem}>
+                    <div className={styles.reviewHeader}>
+                      <div className={styles.reviewerInfo}>
+                        <span className={styles.reviewerName}>
+                          {review.reviewer_name}
+                        </span>
+                        <span className={styles.reviewDate}>
+                          {review.created_at}
+                        </span>
+                      </div>
+                      <StarRating rating={review.rating} size={16} />
+                    </div>
+                    {review.comment && (
+                      <p className={styles.reviewComment}>{review.comment}</p>
+                    )}
+                    {review.order_number && (
+                      <div className={styles.orderInfo}>
+                        Order: {review.order_number}
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {reviews.length > 3 && (
+                  <button
+                    className={styles.showMoreButton}
+                    onClick={() => setShowAllReviews(!showAllReviews)}
+                  >
+                    {showAllReviews
+                      ? "Show Less Reviews"
+                      : `Show All ${reviews.length} Reviews`}
+                  </button>
+                )}
+              </>
+            )}
           </div>
         </div>
       </div>

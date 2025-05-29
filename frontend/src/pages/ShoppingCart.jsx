@@ -6,12 +6,38 @@ import api from "../constant/api";
 import { GlobalContext } from "../constant/GlobalContext";
 import { useNavigate } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
+import Swal from "sweetalert2";
+
+const Toast = Swal.mixin({
+  toast: true,
+  position: "top-right",
+  iconColor: "white",
+  customClass: {
+    popup: "colored-toast",
+  },
+  showConfirmButton: false,
+  timer: 3000,
+  timerProgressBar: true,
+  didOpen: (toast) => {
+    toast.addEventListener("mouseenter", Swal.stopTimer);
+    toast.addEventListener("mouseleave", Swal.resumeTimer);
+  },
+});
 
 const ShoppingCart = () => {
-//   const [cartItems, setCartItems] = useState([]);
-//   const [loading, setLoading] = useState(true);
-//   const [error, setError] = useState(null);
-  const {cartItems, cartSummary, fetchCartData, loading, error, getCartCode, setError,setCartItems} = useContext(GlobalContext)
+  //   const [cartItems, setCartItems] = useState([]);
+  //   const [loading, setLoading] = useState(true);
+  //   const [error, setError] = useState(null);
+  const {
+    cartItems,
+    cartSummary,
+    fetchCartData,
+    loading,
+    error,
+    getCartCode,
+    setError,
+    setCartItems,
+  } = useContext(GlobalContext);
 
   // Calculate cart totals
   const subtotal = cartItems.reduce(
@@ -54,11 +80,19 @@ const ShoppingCart = () => {
             : item
         )
       );
-      fetchCartData()
+      fetchCartData();
     } catch (err) {
       setError("Failed to update quantity. Please try again.");
       console.error("Error updating quantity:", err);
     }
+  };
+
+  // Add Toast notifications
+  const handleError = (message) => {
+    Toast.fire({
+      icon: "error",
+      title: message,
+    });
   };
 
   // Remove item from cart
@@ -69,12 +103,14 @@ const ShoppingCart = () => {
       const params = cartCode ? { cart_code: cartCode } : {};
 
       await api.delete(`remove-cart-item/${itemId}/`, { params });
+      await fetchCartData();
 
-      // Update local state
-      setCartItems(cartItems.filter((item) => item.id !== itemId));
-      fetchCartData();
+      Toast.fire({
+        icon: "success",
+        title: "Item removed from cart",
+      });
     } catch (err) {
-      setError("Failed to remove item. Please try again.");
+      handleError("Failed to remove item");
       console.error("Error removing item:", err);
     }
   };
@@ -87,12 +123,14 @@ const ShoppingCart = () => {
       const params = cartCode ? { cart_code: cartCode } : {};
 
       await api.delete("clear-cart/", { params });
+      await fetchCartData();
 
-      // Update local state
-      setCartItems([]);
-      fetchCartData();
+      Toast.fire({
+        icon: "success",
+        title: "Cart cleared successfully",
+      });
     } catch (err) {
-      setError("Failed to clear cart. Please try again.");
+      handleError("Failed to clear cart");
       console.error("Error clearing cart:", err);
     }
   };
@@ -103,7 +141,11 @@ const ShoppingCart = () => {
   }, []);
 
   if (loading) {
-    return <div style={{paddingTop:"10rem"}} className={styles.loading}>Loading your cart...</div>;
+    return (
+      <div style={{ paddingTop: "10rem" }} className={styles.loading}>
+        Loading your cart...
+      </div>
+    );
   }
 
   return (
@@ -176,7 +218,10 @@ const ShoppingCart = () => {
                   <span className={styles.mobileLabel}>Qty:</span>
                   <div className={styles.quantityControl}>
                     <button
-                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                      onClick={() => [
+                        updateQuantity(item.id, item.quantity - 1),
+                        fetchCartData(),
+                      ]}
                       className={styles.quantityButton}
                       disabled={item.quantity <= 1}
                     >
@@ -186,7 +231,10 @@ const ShoppingCart = () => {
                       {item.quantity}
                     </span>
                     <button
-                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                      onClick={() => [
+                        updateQuantity(item.id, item.quantity + 1),
+                        fetchCartData(),
+                      ]}
                       className={styles.quantityButton}
                     >
                       +
@@ -202,7 +250,7 @@ const ShoppingCart = () => {
 
                 {/* Remove Button */}
                 <button
-                  onClick={() => removeItem(item.id)}
+                  onClick={() => [removeItem(item.id), fetchCartData()]}
                   className={styles.removeButton}
                   aria-label="Remove item"
                 >
@@ -232,7 +280,7 @@ const ShoppingCart = () => {
               Clear Cart
             </button>
             <Link to="/products" className={styles.continueShoppingButton}>
-              Continue Shopping   
+              Continue Shopping
             </Link>
           </div>
 

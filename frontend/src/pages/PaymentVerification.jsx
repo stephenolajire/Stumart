@@ -1,13 +1,16 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import styles from "../css/PaymentVerification.module.css";
 import api from "../constant/api";
+import { GlobalContext } from "../constant/GlobalContext";
 
 const PaymentVerification = () => {
   const [verificationStatus, setVerificationStatus] = useState("verifying");
   const [orderDetails, setOrderDetails] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
+
+  const {setCount, fetchCartData} = useContext(GlobalContext)
 
   useEffect(() => {
     const verifyPayment = async () => {
@@ -49,6 +52,8 @@ const PaymentVerification = () => {
 
           // Clear the cart from localStorage after successful payment
           localStorage.removeItem("cart_code");
+          setCount(0);
+          fetchCartData();
 
           // Update state with order details
           setVerificationStatus("success");

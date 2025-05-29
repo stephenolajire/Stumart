@@ -27,5 +27,9 @@ urlpatterns = [
     path('settings/', views.SettingsView.as_view(), name='settings'),
 
     # confirm order
-    path('confirm/<int:id>/', views.ConfirmDeliveryView.as_view(), name="confirm-order")
+    path('confirm/<int:id>/', views.ConfirmDeliveryView.as_view(), name="confirm-order"),
+
+    # Picker Reviews
+    path('picker-reviews/<int:picker_id>/', views.PickerReviewListView.as_view(), name='picker_reviews'),
+
 ]

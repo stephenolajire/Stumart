@@ -8,6 +8,8 @@ import { Link } from "react-router-dom";
 import { GlobalContext } from "../constant/GlobalContext";
 import Spinner from "../components/Spinner";
 import ReviewModal from "../components/ReviewModal";
+import { FaArrowLeft } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 const OrderHistory = () => {
   const [expandedOrder, setExpandedOrder] = useState(null);
@@ -15,12 +17,16 @@ const OrderHistory = () => {
   const [ordersPerPage] = useState(5);
   const printRefs = useRef({});
   const [reviewOrder, setReviewOrder] = useState(null);
+  const navigate = useNavigate();
+  const user_type = localStorage.getItem("user_type");
 
-  const { orders, setOrders, loading, error } = useContext(GlobalContext);
+  const { orders, setOrders, loading, error} = useContext(GlobalContext);
 
   const toggleOrderDetails = (orderId) => {
     setExpandedOrder((prev) => (prev === orderId ? null : orderId));
   };
+
+  // console.log("Orders:", orders);
 
   const handleMarkAsDelivered = async (orderId) => {
     try {
@@ -103,25 +109,53 @@ const OrderHistory = () => {
 
   const handleReviewSubmit = async (reviews) => {
     try {
-      // Submit vendor review
-      await api.post(`vendor-reviews/`, {
-        order_id: reviewOrder.id,
-        vendor_id: reviewOrder.vendor_id,
-        rating: reviews.vendor.rating,
-        comment: reviews.vendor.comment,
+      // Get the picker info from the order level
+      const pickerId = reviewOrder.picker?.profile_id;
+
+      // Check if picker exists (some orders might not have a picker assigned yet)
+      if (!pickerId) {
+        Swal.fire({
+          icon: "warning",
+          title: "Cannot Submit Review",
+          text: "This order doesn't have a picker assigned yet.",
+        });
+        return;
+      }
+
+      // Get unique vendors from order items
+      const uniqueVendors = new Set();
+      reviewOrder.order_items?.forEach((item) => {
+        uniqueVendors.add(item.vendor_id);
       });
 
-      // Submit picker review
-      await api.post(`picker-reviews/`, {
-        order_id: reviewOrder.id,
-        picker_id: reviewOrder.picker_id,
-        rating: reviews.picker.rating,
-        comment: reviews.picker.comment,
+      // Submit one review for the picker and one review for each vendor
+      const reviewPromises = [];
+
+      // Submit review for each unique vendor with the same picker
+      Array.from(uniqueVendors).forEach((vendorId) => {
+        reviewPromises.push(
+          api.post(`submit-reviews/`, {
+            order_id: reviewOrder.id,
+            vendor_id: vendorId,
+            picker_id: pickerId,
+            vendor_rating: reviews.vendor.rating,
+            vendor_comment: reviews.vendor.comment,
+            picker_rating: reviews.picker.rating,
+            picker_comment: reviews.picker.comment,
+          })
+        );
       });
 
-      Toast.fire({
+      // Wait for all reviews to be submitted
+      await Promise.all(reviewPromises);
+
+      Swal.fire({
         icon: "success",
         title: "Thank you for your reviews!",
+        text:
+          uniqueVendors.size > 1
+            ? `Reviews submitted for ${uniqueVendors.size} vendors and 1 picker.`
+            : "Reviews submitted successfully!",
       });
 
       // Update local state to show review submitted
@@ -132,10 +166,10 @@ const OrderHistory = () => {
       );
     } catch (error) {
       console.error("Error submitting reviews:", error);
-      Toast.fire({
+      Swal.fire({
         icon: "error",
         title: "Failed to submit reviews",
-        text: "Please try again later",
+        text: error.response?.data?.error || "Please try again later",
       });
     }
     setReviewOrder(null);
@@ -187,7 +221,7 @@ const OrderHistory = () => {
 
   if (loading) {
     return (
-      <div className={style.orderHistoryContainer}>
+      <div className={style.orderHistoryContainer} style={{marginTop: "10rem"}}>
         <Spinner />
       </div>
     );
@@ -220,7 +254,14 @@ const OrderHistory = () => {
 
   return (
     <div className={style.orderHistoryContainer}>
-      <h1 className={style.orderHistoryTitle}>My Orders</h1>
+      <div className={style.header}>
+        <div onClick={() => navigate(-1)} className={style.backButton}>
+          <FaArrowLeft size={32} />
+        </div>
+        <div>
+          <h1 className={style.orderHistoryTitle}>My Orders</h1>
+        </div>
+      </div>
 
       <div className={style.ordersList}>
         {currentOrders.map((order) => (

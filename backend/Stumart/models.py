@@ -140,7 +140,8 @@ class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     picker = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE, related_name="picker")
     confirm = models.BooleanField(default=False, blank=True, null=True)
-    packed = models.BooleanField(default=False, blank=True, null=True) 
+    packed = models.BooleanField(default=False, blank=True, null=True)
+    reviewed = models.BooleanField(default=False)
     
 
     def __str__(self):
@@ -224,3 +225,74 @@ class ServiceApplication(models.Model):
         
     def __str__(self):
         return f"Application for {self.service.business_name} by {self.name}"
+    
+
+# Add these models to your stumart/models.py file
+
+class VendorReview(models.Model):
+    """Model for vendor reviews"""
+    order = models.ForeignKey(
+        Order, 
+        on_delete=models.CASCADE, 
+        related_name='vendor_reviews'
+    )
+    vendor = models.ForeignKey(
+        Vendor, 
+        on_delete=models.CASCADE, 
+        related_name='reviews'
+    )
+    reviewer = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='vendor_reviews_given'
+    )
+    rating = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)]
+    )
+    comment = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ('order', 'vendor')  # One review per vendor per order
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Review for {self.vendor.business_name} - {self.rating} stars"
+
+
+class PickerReview(models.Model):
+    """Model for picker reviews"""
+    order = models.ForeignKey(
+        Order, 
+        on_delete=models.CASCADE, 
+        related_name='picker_reviews'
+    )
+    picker = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='picker_reviews_received'
+    )
+    reviewer = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='picker_reviews_given'
+    )
+    rating = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)]
+    )
+    comment = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ('order', 'picker')  # One review per picker per order
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        picker_name = f"{self.picker.first_name} {self.picker.last_name}"
+        return f"Review for picker {picker_name} - {self.rating} stars"

@@ -10,6 +10,7 @@ import {
   FaBox,
   FaSadTear,
   FaArrowLeft,
+  FaStore,
 } from "react-icons/fa";
 import { nigeriaInstitutions, nigeriaStates } from "../constant/data";
 import { GlobalContext } from "../constant/GlobalContext";
@@ -78,6 +79,27 @@ const AllProducts = () => {
     filters.vendor,
     filters.state,
   ]);
+
+  // Check if all products belong to the same vendor
+  const singleVendorInfo = useMemo(() => {
+    if (!allProducts || allProducts.length === 0) return null;
+
+    // Get unique vendor IDs from products
+    const uniqueVendorIds = [
+      ...new Set(
+        allProducts.map((product) => product.vendor_id || product.vendorId)
+      ),
+    ];
+
+    // If there's only one unique vendor ID, find the vendor details
+    if (uniqueVendorIds.length === 1 && uniqueVendorIds[0]) {
+      const vendorId = uniqueVendorIds[0];
+      const vendor = allProductsVendors.find((v) => v.id === vendorId);
+      return vendor ? { id: vendorId, name: vendor.name } : null;
+    }
+
+    return null;
+  }, [allProducts, allProductsVendors]);
 
   // Handle state change for school filtering
   const handleStateChange = useCallback((state) => {
@@ -250,8 +272,11 @@ const AllProducts = () => {
       <div className={styles.header}>
         <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
           <div className={styles.backButton}>
-            <button style={{border:"none", backgroundColor:"#fff", width:"auto"}} onClick={() => navigate(-1)}>
-              <FaArrowLeft size={32} color="#000"/>
+            <button
+              style={{ border: "none", backgroundColor: "#fff", width: "auto" }}
+              onClick={() => navigate(-1)}
+            >
+              <FaArrowLeft size={32} color="#000" />
             </button>
           </div>
           <div>
@@ -311,6 +336,39 @@ const AllProducts = () => {
           </>
         )}
       </div>
+
+      {/* Single Vendor Display */}
+      {singleVendorInfo && productsCount > 0 && !allProductsLoading && (
+        <div
+          className={styles.singleVendorBanner}
+          style={{
+            backgroundColor: "#f8f9fa",
+            border: "1px solid #e9ecef",
+            borderRadius: "8px",
+            padding: "1rem",
+            marginBottom: "1.5rem",
+            textAlign: "center",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "0.5rem",
+          }}
+        >
+          <FaStore style={{ color: "#007bff", fontSize: "1.2rem" }} />
+          <span
+            style={{
+              fontSize: "1.1rem",
+              fontWeight: "600",
+              color: "#495057",
+            }}
+          >
+            All products by:{" "}
+            <strong style={{ color: "#007bff" }}>
+              {singleVendorInfo.name}
+            </strong>
+          </span>
+        </div>
+      )}
 
       <div className={`${styles.filters} ${showFilters ? styles.show : ""}`}>
         <div className={styles.filterGroup}>
@@ -397,7 +455,11 @@ const AllProducts = () => {
             onChange={(e) => handleFilterChange("vendor", e.target.value)}
           >
             <option value="">All Vendors</option>
-            {allProductsVendors.map((vendor) => (
+            {Array.from(
+              new Map(
+                allProductsVendors.map((vendor) => [vendor.name, vendor])
+              ).values()
+            ).map((vendor) => (
               <option key={vendor.id} value={vendor.id}>
                 {vendor.name}
               </option>

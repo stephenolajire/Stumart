@@ -1,88 +1,261 @@
+/* Modal Overlay */
 .modalOverlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.6);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  padding: 2rem;
+  backdrop-filter: blur(4px);
 }
 
+/* Modal Content Container */
 .modalContent {
-  background: white;
-  padding: 2rem;
-  border-radius: 8px;
-  width: 90%;
-  max-width: 500px;
+  background: var(--neutral-white);
+  padding: 3rem;
+  border-radius: 1.6rem;
+  box-shadow: 0 2rem 4rem rgba(0, 0, 0, 0.15);
+  max-width: 50rem;
+  width: 100%;
   max-height: 90vh;
   overflow-y: auto;
+  position: relative;
+  animation: modalSlideIn 0.3s ease-out;
 }
 
-.reviewSection {
-  margin: 1.5rem 0;
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-2rem) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
-.starsContainer {
-  display: flex;
-  gap: 0.5rem;
-  margin: 0.5rem 0;
-}
-
-.star {
-  font-size: 1.5rem;
-  color: #ddd;
-  cursor: pointer;
-  transition: color 0.2s;
-}
-
-.star.active {
-  color: #ffd700;
-}
-
-.reviewInput {
-  width: 100%;
-  min-height: 100px;
-  padding: 0.5rem;
-  margin: 0.5rem 0;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  resize: vertical;
-}
-
-.modalActions {
-  display: flex;
-  gap: 1rem;
-  margin-top: 1.5rem;
-}
-
-.submitButton,
-.cancelButton {
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  border: none;
-  cursor: pointer;
-  font-weight: 500;
-}
-
-.submitButton {
-  background-color: var(--primary-500);
-  color: white;
-}
-
-.submitButton:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-}
-
-.cancelButton {
-  background-color: #f0f0f0;
-  color: #333;
+/* Modal Header */
+.modalContent h2 {
+  font-size: var(--h2-desktop);
+  color: var(--text-primary);
+  margin-bottom: 0.8rem;
+  text-align: center;
 }
 
 .orderNumber {
-  color: #666;
-  margin-bottom: 1rem;
+  font-size: 1.4rem;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-bottom: 3rem;
+  font-weight: 500;
+}
+
+/* Review Section */
+.reviewSection {
+  margin-bottom: 3rem;
+  padding: 2.4rem;
+  background: var(--neutral-gray-50);
+  border-radius: 1.2rem;
+  border: 1px solid var(--neutral-gray-200);
+}
+
+.reviewSection h3 {
+  font-size: var(--h4-desktop);
+  color: var(--text-primary);
+  margin-bottom: 1.6rem;
+  font-weight: 600;
+}
+
+/* Star Rating Container */
+.starsContainer {
+  display: flex;
+  gap: 0.8rem;
+  margin-bottom: 1.6rem;
+  justify-content: flex-start;
+}
+
+/* Individual Star */
+.star {
+  font-size: 2.4rem;
+  color: var(--neutral-gray-300);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.star:hover {
+  color: var(--primary-400);
+  transform: scale(1.1);
+}
+
+.star.active {
+  color: var(--primary-500);
+}
+
+.star.active:hover {
+  color: var(--primary-600);
+}
+
+/* Review Input Textarea */
+.reviewInput {
+  width: 100%;
+  min-height: 10rem;
+  padding: 1.2rem;
+  border: 2px solid var(--neutral-gray-200);
+  border-radius: 0.8rem;
+  font-family: inherit;
+  font-size: 1.4rem;
+  color: var(--text-primary);
+  background: var(--neutral-white);
+  resize: vertical;
+  transition: border-color 0.2s ease;
+}
+
+.reviewInput:focus {
+  outline: none;
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 3px rgba(218, 165, 32, 0.1);
+}
+
+.reviewInput::placeholder {
+  color: var(--neutral-gray-400);
+}
+
+/* Modal Actions */
+.modalActions {
+  display: flex;
+  gap: 1.2rem;
+  justify-content: flex-end;
+  margin-top: 3rem;
+  padding-top: 2.4rem;
+  border-top: 1px solid var(--neutral-gray-200);
+}
+
+/* Submit Button */
+.submitButton {
+  background: var(--primary-500);
+  color: var(--neutral-white);
+  border: none;
+  padding: 1.2rem 2.4rem;
+  border-radius: 0.8rem;
+  font-size: 1.4rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.submitButton:hover:not(:disabled) {
+  background: var(--primary-600);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(218, 165, 32, 0.3);
+}
+
+.submitButton:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.submitButton:disabled {
+  background: var(--neutral-gray-300);
+  cursor: not-allowed;
+  color: var(--neutral-gray-400);
+}
+
+/* Cancel Button */
+.cancelButton {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 2px solid var(--neutral-gray-300);
+  padding: 1.2rem 2.4rem;
+  border-radius: 0.8rem;
+  font-size: 1.4rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.cancelButton:hover {
+  border-color: var(--neutral-gray-400);
+  color: var(--text-primary);
+  background: var(--neutral-gray-50);
+}
+
+/* Mobile Responsive Styles */
+@media screen and (max-width: 768px) {
+  .modalOverlay {
+    padding: 1rem;
+  }
+
+  .modalContent {
+    padding: 2rem;
+    border-radius: 1.2rem;
+    max-height: 95vh;
+  }
+
+  .modalContent h2 {
+    font-size: var(--h2-mobile);
+  }
+
+  .reviewSection {
+    padding: 1.6rem;
+    margin-bottom: 2rem;
+  }
+
+  .reviewSection h3 {
+    font-size: var(--h4-mobile);
+    margin-bottom: 1.2rem;
+  }
+
+  .starsContainer {
+    gap: 0.6rem;
+    justify-content: center;
+  }
+
+  .star {
+    font-size: 2rem;
+  }
+
+  .reviewInput {
+    min-height: 8rem;
+    font-size: 1.6rem;
+  }
+
+  .modalActions {
+    flex-direction: column-reverse;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1.6rem;
+  }
+
+  .submitButton,
+  .cancelButton {
+    width: 100%;
+    padding: 1.4rem;
+    font-size: 1.6rem;
+  }
+}
+
+/* Extra Small Mobile */
+@media screen and (max-width: 480px) {
+  .modalOverlay {
+    padding: 0.5rem;
+  }
+
+  .modalContent {
+    padding: 1.6rem;
+    border-radius: 1rem;
+  }
+
+  .reviewSection {
+    padding: 1.2rem;
+  }
+
+  .star {
+    font-size: 1.8rem;
+  }
 }

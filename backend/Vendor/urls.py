@@ -16,4 +16,6 @@ urlpatterns = [
     path('webhooks/paystack/', views.paystack_webhook, name='paystack_webhook'),
     path('vendor-orders/', views.OrderView.as_view(), name='vendor-orders'),
     path('vendor-details/', views.VendorDetailsView.as_view(), name='vendor-details'),
+    # picker reviews
+    path('vendor-reviews/<int:vendor_id>/', views.VendorReviewListView.as_view(), name='vendor_reviews'),
 ]

@@ -16,6 +16,8 @@ const Navigation = () => {
   const handleLogout = () => {
     localStorage.removeItem("access");
     localStorage.removeItem("refresh");
+    localStorage.removeItem("user_type");
+    localStorage.removeItem("institution");
     navigate("/");
     window.location.reload();
   };

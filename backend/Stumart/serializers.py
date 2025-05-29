@@ -288,7 +288,7 @@ class OrderSerializer(serializers.ModelSerializer):
             'id', 'order_number', 'user', 'first_name', 'last_name',
             'email', 'phone', 'address', 'room_number', 'subtotal',
             'shipping_fee', 'tax', 'total', 'order_status', 'created_at',
-            'order_items', 'transaction', 'image_url', 'confirm', 'picker', 'packed',
+            'order_items', 'transaction', 'image_url', 'confirm', 'picker', 'packed', 'reviewed',
         ]
     
     def create(self, validated_data):
@@ -374,6 +374,71 @@ class ServiceApplicationSerializer(serializers.ModelSerializer):
         
         if 'preferred_date' in data and data['preferred_date'].date() < timezone.now().date():
             raise serializers.ValidationError({"preferred_date": "Please select a future date"})
-
         
         return data
+
+class VendorReviewSerializer(serializers.ModelSerializer):
+    reviewer_name = serializers.SerializerMethodField()
+    vendor_name = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = VendorReview
+        fields = [
+            'id', 'order', 'vendor', 'reviewer', 'rating', 
+            'comment', 'created_at', 'reviewer_name', 'vendor_name'
+        ]
+        read_only_fields = ['reviewer', 'created_at']
+    
+    def get_reviewer_name(self, obj):
+        if obj.reviewer:
+            return f"{obj.reviewer.first_name} {obj.reviewer.last_name}"
+        return "Anonymous"
+    
+    def get_vendor_name(self, obj):
+        return obj.vendor.business_name
+    
+    def create(self, validated_data):
+        # Get the user from the request context
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            validated_data['reviewer'] = request.user
+        return super().create(validated_data)
+
+
+class PickerReviewSerializer(serializers.ModelSerializer):
+    reviewer_name = serializers.SerializerMethodField()
+    picker_name = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = PickerReview
+        fields = [
+            'id', 'order', 'picker', 'reviewer', 'rating', 
+            'comment', 'created_at', 'reviewer_name', 'picker_name'
+        ]
+        read_only_fields = ['reviewer', 'created_at']
+    
+    def get_reviewer_name(self, obj):
+        if obj.reviewer:
+            return f"{obj.reviewer.first_name} {obj.reviewer.last_name}"
+        return "Anonymous"
+    
+    def get_picker_name(self, obj):
+        return f"{obj.picker.first_name} {obj.picker.last_name}"
+    
+    def create(self, validated_data):
+        # Get the user from the request context
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            validated_data['reviewer'] = request.user
+        return super().create(validated_data)
+
+
+class ReviewSubmissionSerializer(serializers.Serializer):
+    """Serializer for submitting both vendor and picker reviews together"""
+    order_id = serializers.IntegerField()
+    vendor_id = serializers.IntegerField()
+    picker_id = serializers.IntegerField()
+    vendor_rating = serializers.IntegerField(min_value=1, max_value=5)
+    vendor_comment = serializers.CharField(max_length=1000, required=False, allow_blank=True)
+    picker_rating = serializers.IntegerField(min_value=1, max_value=5)
+    picker_comment = serializers.CharField(max_length=1000, required=False, allow_blank=True)

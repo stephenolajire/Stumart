@@ -22,6 +22,9 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.http import HttpResponse
 from decimal import Decimal
+from rest_framework import generics
+from Stumart.serializers import VendorReviewSerializer
+from Stumart.models import VendorReview
 
 class DashboardStatsView(views.APIView):
     permission_classes = [IsAuthenticated]
@@ -594,3 +597,12 @@ class VendorDetailsView(APIView):
         }
         
         return Response(vendor_details)
+    
+# Get reviews for a vendor
+class VendorReviewListView(generics.ListAPIView):
+    serializer_class = VendorReviewSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        vendor_id = self.kwargs['vendor_id']
+        return VendorReview.objects.filter(vendor_id=vendor_id)

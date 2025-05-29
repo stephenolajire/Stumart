@@ -35,6 +35,15 @@ from django.db.models import Q
 from django.utils import timezone
 from django.core.mail import send_mail
 from rest_framework.pagination import PageNumberPagination
+from django.db import transaction
+from rest_framework import generics, status
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from django.db.models import Avg, Count, Q
+from django.shortcuts import get_object_or_404
+from .models import Product, VendorReview, Vendor
+from .serializers import VendorReviewSerializer
+from User.models import Vendor
 
 class ProductsView(APIView):
     def get(self, request, id):
@@ -1065,29 +1074,46 @@ class OrderDetailView(APIView):
         
 
 class OrderHistoryView(APIView):
-    def get(self, request):  # changed from 'requests' to 'request'
+    def get(self, request):
         """Get all orders for the authenticated user"""
         try:
             user = request.user
             
-            # Get all orders for the user
-            orders = Order.objects.filter(user=user).order_by('-created_at')
+            # Get all orders for the user with related data to reduce DB queries
+            orders = Order.objects.filter(user=user).select_related('picker').prefetch_related(
+                'order_items__product',
+                'order_items__vendor',
+                'picker__picker_profile',  # Add this to prefetch picker profile
+                'picker__student_picker_profile'  # Add this to prefetch student picker profile
+            ).order_by('-created_at')
             
             order_data = []
             for order in orders:
-                order_items = OrderItem.objects.filter(order=order)
-                
                 items_data = []
-                for item in order_items:
+                for item in order.order_items.all():  # Use prefetched data
                     image_url = None
                     if item.product.image:
                         image_url = request.build_absolute_uri(item.product.image.url)
-
+                    
                     product_data = {
                         'id': item.product.id,
                         'name': item.product.name,
                         'image': image_url
                     }
+                    
+                    # Get picker profile ID based on user type
+                    picker_profile_id = None
+                    picker_type = None
+                    if order.picker:
+                        try:
+                            if hasattr(order.picker, 'picker_profile'):
+                                picker_profile_id = order.picker.picker_profile.id
+                                picker_type = 'picker'
+                            elif hasattr(order.picker, 'student_picker_profile'):
+                                picker_profile_id = order.picker.student_picker_profile.id
+                                picker_type = 'student_picker'
+                        except Exception as e:
+                            print(f"Error getting picker profile: {e}")
                     
                     items_data.append({
                         'id': item.id,
@@ -1096,9 +1122,44 @@ class OrderHistoryView(APIView):
                         'price': float(item.price),
                         'size': item.size,
                         'color': item.color,
-                        'vendor': item.vendor.business_name if item.vendor else None
+                        'vendor': item.vendor.business_name if item.vendor else None,
+                        'vendor_id': item.vendor.id if item.vendor else None,
                     })
-
+                
+                # Also add picker info at order level
+                picker_info = None
+                if order.picker:
+                    picker_profile_id = None
+                    picker_type = None
+                    picker_name = f"{order.picker.first_name} {order.picker.last_name}"
+                    
+                    try:
+                        if hasattr(order.picker, 'picker_profile'):
+                            picker_profile_id = order.picker.picker_profile.id
+                            picker_type = 'picker'
+                            picker_info = {
+                                'user_id': order.picker.id,
+                                'profile_id': picker_profile_id,
+                                'name': picker_name,
+                                'type': picker_type,
+                                'fleet_type': order.picker.picker_profile.fleet_type,
+                                'rating': float(order.picker.picker_profile.rating)
+                            }
+                        elif hasattr(order.picker, 'student_picker_profile'):
+                            picker_profile_id = order.picker.student_picker_profile.id
+                            picker_type = 'student_picker'
+                            picker_info = {
+                                'user_id': order.picker.id,
+                                'profile_id': picker_profile_id,
+                                'name': picker_name,
+                                'type': picker_type,
+                                'hostel_name': order.picker.student_picker_profile.hostel_name,
+                                'room_number': order.picker.student_picker_profile.room_number,
+                                'rating': float(order.picker.student_picker_profile.rating)
+                            }
+                    except Exception as e:
+                        print(f"Error getting picker info: {e}")
+                
                 order_data.append({
                     'id': order.id,
                     'order_number': order.order_number,
@@ -1107,8 +1168,10 @@ class OrderHistoryView(APIView):
                     'tax': float(order.tax),
                     'total': float(order.total),
                     'order_status': order.order_status,
-                    'created_at': order.created_at,
+                    'created_at': order.created_at.isoformat(),  # Better date formatting
                     'order_items': items_data,
+                    'picker': picker_info,  # Complete picker information
+                    'reviewed': order.reviewed,
                     'shipping': {
                         'address': order.address,
                         'room_number': order.room_number,
@@ -1122,6 +1185,9 @@ class OrderHistoryView(APIView):
             return Response(order_data, status=200)
         
         except Exception as e:
+            import traceback
+            print(f"Error in OrderHistoryView: {str(e)}")
+            print(traceback.format_exc())  # This will help debug future issues
             return Response({'error': str(e)}, status=400)
 
 class ServiceDetailAPIView(APIView):
@@ -1908,3 +1974,272 @@ class PackOrderView(APIView):
             return Response({
                 'error': f'An error occurred: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+class CreateVendorReviewView(APIView):
+    """Create a vendor review"""
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        try:
+            serializer = VendorReviewSerializer(data=request.data, context={'request': request})
+            
+            if serializer.is_valid():
+                order_id = serializer.validated_data['order'].id
+                vendor_id = serializer.validated_data['vendor'].id
+                
+                # Check if order belongs to the current user
+                order = get_object_or_404(Order, id=order_id, user=request.user)
+                
+                # Check if review already exists
+                if VendorReview.objects.filter(order=order, vendor_id=vendor_id).exists():
+                    return Response({
+                        'error': 'You have already reviewed this vendor for this order'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                
+                # Check if order is completed
+                if order.order_status.upper() != 'COMPLETED':
+                    return Response({
+                        'error': 'You can only review completed orders'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                
+                review = serializer.save()
+                
+                # Update vendor's average rating
+                update_vendor_rating(vendor_id)
+                
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        except Exception as e:
+            return Response({
+                'error': f'An error occurred: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class CreatePickerReviewView(APIView):
+    """Create a picker review"""
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        try:
+            serializer = PickerReviewSerializer(data=request.data, context={'request': request})
+            
+            if serializer.is_valid():
+                order_id = serializer.validated_data['order'].id
+                picker_id = serializer.validated_data['picker'].id
+                
+                # Check if order belongs to the current user
+                order = get_object_or_404(Order, id=order_id, user=request.user)
+                
+                # Check if review already exists
+                if PickerReview.objects.filter(order=order, picker_id=picker_id).exists():
+                    return Response({
+                        'error': 'You have already reviewed this picker for this order'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                
+                # Check if order is completed
+                if order.order_status.upper() != 'COMPLETED':
+                    return Response({
+                        'error': 'You can only review completed orders'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                
+                review = serializer.save()
+                
+                # Update picker's average rating
+                update_picker_rating(picker_id)
+                
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        except Exception as e:
+            return Response({
+                'error': f'An error occurred: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class SubmitReviewsView(APIView):
+    """Submit both vendor and picker reviews in one request"""
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        try:
+            serializer = ReviewSubmissionSerializer(data=request.data)
+            
+            if serializer.is_valid():
+                data = serializer.validated_data
+                order_id = data['order_id']
+                
+                # Check if order belongs to the current user
+                order = get_object_or_404(Order, id=order_id, user=request.user)
+                
+                # Check if order is completed
+                if order.order_status.upper() != 'COMPLETED':
+                    return Response({
+                        'error': 'You can only review completed orders'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                
+                # Check if reviews already exist
+                vendor_review_exists = VendorReview.objects.filter(
+                    order=order, vendor_id=data['vendor_id']
+                ).exists()
+                picker_review_exists = PickerReview.objects.filter(
+                    order=order, picker_id=data['picker_id']
+                ).exists()
+                
+                if vendor_review_exists or picker_review_exists:
+                    return Response({
+                        'error': 'You have already reviewed this order'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                
+                # Create both reviews in a transaction
+                with transaction.atomic():
+                    # Create vendor review
+                    vendor_review = VendorReview.objects.create(
+                        order=order,
+                        vendor_id=data['vendor_id'],
+                        reviewer=request.user,
+                        rating=data['vendor_rating'],
+                        comment=data.get('vendor_comment', '')
+                    )
+                    
+                    # Create picker review
+                    picker_review = PickerReview.objects.create(
+                        order=order,
+                        picker_id=data['picker_id'],
+                        reviewer=request.user,
+                        rating=data['picker_rating'],
+                        comment=data.get('picker_comment', '')
+                    )
+                    
+                    # Mark order as reviewed
+                    order.reviewed = True
+                    order.save()
+                    
+                    # Update ratings
+                    update_vendor_rating(data['vendor_id'])
+                    update_picker_rating(data['picker_id'])
+                
+                return Response({
+                    'message': 'Reviews submitted successfully',
+                    'vendor_review': VendorReviewSerializer(vendor_review).data,
+                    'picker_review': PickerReviewSerializer(picker_review).data
+                }, status=status.HTTP_201_CREATED)
+            
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        except Exception as e:
+            return Response({
+                'error': f'An error occurred: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+def update_vendor_rating(vendor_id):
+    """Update vendor's average rating"""
+    try:
+        vendor = Vendor.objects.get(id=vendor_id)
+        reviews = VendorReview.objects.filter(vendor=vendor)
+        
+        if reviews.exists():
+            total_rating = sum(review.rating for review in reviews)
+            avg_rating = total_rating / reviews.count()
+            vendor.rating = round(avg_rating, 2)
+            vendor.total_ratings = reviews.count()
+            vendor.save()
+    except Vendor.DoesNotExist:
+        pass
+
+
+def update_picker_rating(picker_id):
+    """Update picker's average rating"""
+    try:
+        picker_user = User.objects.get(id=picker_id)
+        reviews = PickerReview.objects.filter(picker=picker_user)
+        
+        if reviews.exists():
+            total_rating = sum(review.rating for review in reviews)
+            avg_rating = total_rating / reviews.count()
+            
+            # Update rating based on user type
+            if hasattr(picker_user, 'picker_profile'):
+                picker_user.picker_profile.rating = round(avg_rating, 2)
+                picker_user.picker_profile.save()
+            elif hasattr(picker_user, 'student_picker_profile'):
+                picker_user.student_picker_profile.rating = round(avg_rating, 2)
+                picker_user.student_picker_profile.save()
+    except User.DoesNotExist:
+        pass
+
+
+class ProductReviewsAPIView(APIView):
+    """
+    Get all reviews for a vendor that owns the specified product
+    Returns reviews with statistics
+    """
+    
+    def get(self, request, product_id):
+        try:
+            # Get the product and its vendor
+            product = get_object_or_404(Product, id=product_id)
+            vendor = get_object_or_404(Vendor, user=product.vendor)
+            
+            # Get all reviews for this vendor
+            reviews = VendorReview.objects.filter(vendor=vendor).select_related(
+                'reviewer', 'order', 'vendor'
+            ).order_by('-created_at')
+            
+            # Calculate review statistics
+            stats = reviews.aggregate(
+                total_reviews=Count('id'),
+                average_rating=Avg('rating') or 0
+            )
+            
+            # Get rating breakdown (count of each rating 1-5)
+            rating_breakdown = {}
+            for rating in range(1, 6):
+                rating_breakdown[rating] = reviews.filter(rating=rating).count()
+            
+            stats['rating_breakdown'] = rating_breakdown
+            
+            # Serialize reviews
+            review_serializer = VendorReviewSerializer(
+                reviews, 
+                many=True, 
+                context={'request': request}
+            )
+            
+            # Format the response data
+            response_data = {
+                'reviews': review_serializer.data,
+                'stats': {
+                    'total_reviews': stats['total_reviews'],
+                    'average_rating': round(stats['average_rating'], 1),
+                    'rating_breakdown': stats['rating_breakdown']
+                },
+                'vendor_info': {
+                    'id': vendor.id,
+                    'business_name': vendor.business_name,
+                    'business_category': vendor.business_category
+                }
+            }
+            
+            return Response(response_data, status=status.HTTP_200_OK)
+            
+        except Product.DoesNotExist:
+            return Response(
+                {'error': 'Product not found'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Vendor.DoesNotExist:
+            return Response(
+                {'error': 'Vendor not found for this product'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {'error': 'An error occurred while fetching reviews'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+

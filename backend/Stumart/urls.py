@@ -35,4 +35,10 @@ urlpatterns = [
     path('search-products/', SearchProductsView.as_view(), name='search-products'),
     path('search-specific-services/', SearchSpecificServiceView.as_view(), name='search-specific-services'),
     path('pack-order/', PackOrderView.as_view(), name='pack-order'),
+
+    # review
+    path('vendor-review/', CreateVendorReviewView.as_view(), name='create_vendor_review'),
+    path('picker-review/', CreatePickerReviewView.as_view(), name='create_picker_review'),
+    path('submit-reviews/', SubmitReviewsView.as_view(), name='submit_reviews'),
+    path('products/<int:product_id>/reviews/', ProductReviewsAPIView.as_view(), name='product-reviews'),
 ]

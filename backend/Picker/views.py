@@ -18,6 +18,11 @@ from django.core.mail import send_mail
 from decimal import Decimal
 import logging
 from User.models import Vendor
+# from Stumart.models import PickerWallet
+from django.db import transaction
+from Stumart.models import PickerReview
+from Stumart.serializers import PickerReviewSerializer
+from rest_framework import generics
 
 logger = logging.getLogger(__name__)
 
@@ -832,3 +837,13 @@ class ConfirmDeliveryView(APIView):
                 "status": "error",
                 "message": f"An error occurred: {str(e)}"
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+# Get reviews for a picker
+class PickerReviewListView(generics.ListAPIView):
+    serializer_class = PickerReviewSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        picker_id = self.kwargs['picker_id']
+        return PickerReview.objects.filter(picker_id=picker_id)
