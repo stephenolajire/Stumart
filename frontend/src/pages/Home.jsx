@@ -718,7 +718,7 @@ const Home = memo(() => {
 
       {/* Hero Banner Section with Search */}
       <div className={styles.heroGrid}>
-        {isAuthenticated && (
+        {/* {isAuthenticated && (
           <div className={styles.heroSwitch}>
             <button
               onClick={handleResetFilter}
@@ -727,8 +727,8 @@ const Home = memo(() => {
               Switch Institution
             </button>
           </div>
-        )}
-        <div className={isAuthenticated ? styles.heroForm : styles.heroForms}>
+        )} */}
+        <div className={ styles.heroForms}>
           <form onSubmit={handleProductSearch} className={styles.searchBar}>
             <input
               type="text"

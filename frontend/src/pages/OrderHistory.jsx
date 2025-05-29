@@ -7,15 +7,16 @@ import Swal from "sweetalert2"; // Add this import
 import { Link } from "react-router-dom";
 import { GlobalContext } from "../constant/GlobalContext";
 import Spinner from "../components/Spinner";
+import ReviewModal from "../components/ReviewModal";
 
 const OrderHistory = () => {
   const [expandedOrder, setExpandedOrder] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [ordersPerPage] = useState(5);
   const printRefs = useRef({});
+  const [reviewOrder, setReviewOrder] = useState(null);
 
-  const {orders, setOrders, loading, error} = useContext(GlobalContext)
-  
+  const { orders, setOrders, loading, error } = useContext(GlobalContext);
 
   const toggleOrderDetails = (orderId) => {
     setExpandedOrder((prev) => (prev === orderId ? null : orderId));
@@ -100,6 +101,46 @@ const OrderHistory = () => {
     }
   };
 
+  const handleReviewSubmit = async (reviews) => {
+    try {
+      // Submit vendor review
+      await api.post(`vendor-reviews/`, {
+        order_id: reviewOrder.id,
+        vendor_id: reviewOrder.vendor_id,
+        rating: reviews.vendor.rating,
+        comment: reviews.vendor.comment,
+      });
+
+      // Submit picker review
+      await api.post(`picker-reviews/`, {
+        order_id: reviewOrder.id,
+        picker_id: reviewOrder.picker_id,
+        rating: reviews.picker.rating,
+        comment: reviews.picker.comment,
+      });
+
+      Toast.fire({
+        icon: "success",
+        title: "Thank you for your reviews!",
+      });
+
+      // Update local state to show review submitted
+      setOrders((prevOrders) =>
+        prevOrders.map((order) =>
+          order.id === reviewOrder.id ? { ...order, reviewed: true } : order
+        )
+      );
+    } catch (error) {
+      console.error("Error submitting reviews:", error);
+      Toast.fire({
+        icon: "error",
+        title: "Failed to submit reviews",
+        text: "Please try again later",
+      });
+    }
+    setReviewOrder(null);
+  };
+
   const getStatusClass = (status) => {
     switch (status.toUpperCase()) {
       case "PENDING":
@@ -147,7 +188,7 @@ const OrderHistory = () => {
   if (loading) {
     return (
       <div className={style.orderHistoryContainer}>
-        <Spinner/>
+        <Spinner />
       </div>
     );
   }
@@ -298,6 +339,17 @@ const OrderHistory = () => {
                 </div>
 
                 <div className={style.orderActions}>
+                  {order.order_status.toUpperCase() === "COMPLETED" &&
+                    (order.reviewed ? (
+                      <span className={style.reviewedBadge}>Reviewed</span>
+                    ) : (
+                      <button
+                        className={style.reviewButton}
+                        onClick={() => setReviewOrder(order)}
+                      >
+                        Write Review
+                      </button>
+                    ))}
                   {order.order_status.toUpperCase() === "DELIVERED" &&
                     !order.confirm && (
                       <button
@@ -366,6 +418,13 @@ const OrderHistory = () => {
           </button>
         </div>
       )}
+
+      <ReviewModal
+        isOpen={!!reviewOrder}
+        onClose={() => setReviewOrder(null)}
+        onSubmit={handleReviewSubmit}
+        order={reviewOrder || {}}
+      />
     </div>
   );
 };
