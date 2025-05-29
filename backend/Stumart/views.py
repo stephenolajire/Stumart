@@ -859,19 +859,19 @@ class PaystackPaymentVerifyView(APIView):
                         logger.error(f"Failed to send out-of-stock email to vendor {vendor.id}: {str(e)}")
 
                 # Update vendor wallets - with better error handling
-                for vendor_id, amount in vendor_totals.items():
-                    try:
-                        vendor = Vendor.objects.get(id=vendor_id)
-                        wallet, created = Wallet.objects.get_or_create(
-                            vendor=vendor,
-                            defaults={'balance': 0}
-                        )
-                        wallet.balance += amount
-                        wallet.save()
-                        logger.info(f"Updated wallet for vendor {vendor_id}, new balance: {wallet.balance}")
-                    except Vendor.DoesNotExist:
-                        logger.error(f"Vendor with ID {vendor_id} not found when processing payment")
-                        continue
+                # for vendor_id, amount in vendor_totals.items():
+                #     try:
+                #         vendor = Vendor.objects.get(id=vendor_id)
+                #         wallet, created = Wallet.objects.get_or_create(
+                #             vendor=vendor,
+                #             defaults={'balance': 0}
+                #         )
+                #         wallet.balance += amount
+                #         wallet.save()
+                #         logger.info(f"Updated wallet for vendor {vendor_id}, new balance: {wallet.balance}")
+                #     except Vendor.DoesNotExist:
+                #         logger.error(f"Vendor with ID {vendor_id} not found when processing payment")
+                #         continue
 
                 # Send order notifications to all vendors - improved implementation
                 for vendor in vendors_to_notify:
@@ -1670,13 +1670,7 @@ class AllProductsView(APIView):
         return queryset
 
     def _handle_anonymous_user(self, request, filters):
-        """
-        ANONYMOUS USER (not logged in)
         
-        Anonymous users can see products from any school.
-        They can optionally filter by a specific school using the 'school' parameter.
-        If no school is specified, they see products from ALL schools.
-        """
         print("Anonymous user browsing products")
         
         # Start with all products

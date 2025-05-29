@@ -1,23 +1,41 @@
-import { useState, useEffect, useContext } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useState, useEffect, useContext, useCallback, useMemo } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
 import Spinner from "../components/Spinner";
-import api from "../constant/api";
 import styles from "../css/AllProducts.module.css";
-import { FaFilter, FaSort, FaTimes, FaBox, FaSadTear } from "react-icons/fa";
+import {
+  FaFilter,
+  FaSort,
+  FaTimes,
+  FaBox,
+  FaSadTear,
+  FaArrowLeft,
+} from "react-icons/fa";
 import { nigeriaInstitutions, nigeriaStates } from "../constant/data";
 import { GlobalContext } from "../constant/GlobalContext";
 
 const AllProducts = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [products, setProducts] = useState([]);
-  const [vendors, setVendors] = useState([]);
   const [selectedState, setSelectedState] = useState("");
   const [schools, setSchools] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [toggleLoading, setToggleLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [toggleLoading, setToggleLoading] = useState(false);
+
+  // Get data and functions from global context
+  const {
+    allProducts,
+    allProductsVendors,
+    allProductsCategories,
+    allProductsLoading,
+    allProductsError,
+    fetchAllProducts,
+    debouncedFetchAllProducts,
+    isAuthenticated,
+  } = useContext(GlobalContext);
+
+  const navigate = useNavigate();
+
+  // Initialize filters from URL params
   const [filters, setFilters] = useState({
     category: searchParams.get("category") || "",
     minPrice: searchParams.get("minPrice") || "",
@@ -28,90 +46,28 @@ const AllProducts = () => {
     vendor: searchParams.get("vendor") || "",
     state: searchParams.get("state") || "",
   });
-  const [categories, setCategories] = useState([]);
+
+  // Initialize view mode from URL params
   const [viewMode, setViewMode] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     return params.get("viewOtherProducts") === "true" ? "other" : "school";
   });
 
   const school = localStorage.getItem("institution");
-  const { isAuthenticated } = useContext(GlobalContext);
   const viewingOtherSchools = viewMode === "other";
 
-  const handleStateChange = (state) => {
-    setSelectedState(state);
-    setSchools(state ? nigeriaInstitutions[state] || [] : []);
-    handleFilterChange("state", state);
-    handleFilterChange("school", "");
-  };
-
-  const fetchProducts = async (showToggleLoader = false) => {
-    try {
-      if (showToggleLoader) {
-        setToggleLoading(true);
-      } else {
-        setLoading(true);
-      }
-
-      const apiParams = new URLSearchParams();
-
-      // Add filter parameters
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value) {
-          apiParams.set(key, value);
-        }
-      });
-
-      // Handle view mode logic
-      if (isAuthenticated) {
-        if (viewMode === "school") {
-          apiParams.set("viewOtherProducts", "false");
-        } else if (viewMode === "other") {
-          apiParams.set("viewOtherProducts", "true");
-        }
-      }
-
-      console.log("Making API request with params:", apiParams.toString());
-
-      const response = await api.get(`/all-products/?${apiParams}`);
-      setProducts(response.data.results);
-
-      const uniqueCategories = [
-        ...new Set(
-          response.data.results.map((product) => product.vendor_category)
-        ),
-      ]
-        .filter(Boolean)
-        .sort();
-      setCategories(uniqueCategories);
-
-      const uniqueVendors = [
-        ...new Set(
-          response.data.results.map((product) => ({
-            id: product.vendor_id,
-            name: product.vendor_name,
-          }))
-        ),
-      ].filter((vendor) => vendor.name);
-
-      setVendors(uniqueVendors);
-      setError(null);
-    } catch (err) {
-      setError("Failed to fetch products");
-      console.error(err);
-    } finally {
-      if (showToggleLoader) {
-        setToggleLoading(false);
-      } else {
-        setLoading(false);
-      }
-    }
-  };
-
-  // 1. Initial load and filter changes (NOT view mode changes)
-  useEffect(() => {
-    console.log("Filter useEffect triggered");
-    fetchProducts();
+  // Memoize the current filter state to prevent unnecessary API calls
+  const currentFilters = useMemo(() => {
+    return {
+      category: filters.category,
+      minPrice: filters.minPrice,
+      maxPrice: filters.maxPrice,
+      sort: filters.sort,
+      search: filters.search,
+      school: filters.school,
+      vendor: filters.vendor,
+      state: filters.state,
+    };
   }, [
     filters.category,
     filters.minPrice,
@@ -123,73 +79,71 @@ const AllProducts = () => {
     filters.state,
   ]);
 
-  // 2. Handle view mode changes specifically
-  useEffect(() => {
-    console.log("View mode useEffect triggered, viewMode:", viewMode);
+  // Handle state change for school filtering
+  const handleStateChange = useCallback((state) => {
+    setSelectedState(state);
+    setSchools(state ? nigeriaInstitutions[state] || [] : []);
+    handleFilterChange("state", state);
+    handleFilterChange("school", "");
+  }, []);
 
-    // Skip initial render - let the filter useEffect handle it
-    if (loading) return;
+  // Handle filter changes
+  const handleFilterChange = useCallback(
+    (name, value) => {
+      console.log("Filter changed:", name, value);
+      setFilters((prev) => ({ ...prev, [name]: value }));
+      setSearchParams((prev) => {
+        if (value) {
+          prev.set(name, value);
+        } else {
+          prev.delete(name);
+        }
+        return prev;
+      });
+    },
+    [setSearchParams]
+  );
 
-    fetchProducts(true); // Use toggle loader for view mode changes
-  }, [viewMode]);
+  // Handle view mode changes
+  const handleViewModeChange = useCallback(
+    (newViewMode) => {
+      console.log("View mode changing from", viewMode, "to", newViewMode);
 
-  // 3. Handle authentication state changes
-  useEffect(() => {
-    console.log("Auth useEffect triggered, isAuthenticated:", isAuthenticated);
+      setToggleLoading(true);
+      setViewMode(newViewMode);
 
-    // Only refetch if not initial load
-    if (!loading) {
-      fetchProducts();
-    }
-  }, [isAuthenticated]);
+      const params = new URLSearchParams(searchParams);
 
-  const handleFilterChange = (name, value) => {
-    console.log("Filter changed:", name, value);
-    setFilters((prev) => ({ ...prev, [name]: value }));
-    setSearchParams((prev) => {
-      if (value) {
-        prev.set(name, value);
+      if (newViewMode === "other") {
+        params.set("viewOtherProducts", "true");
+        // Clear school filter when switching to other schools
+        if (filters.school) {
+          setFilters((prev) => ({ ...prev, school: "" }));
+          params.delete("school");
+        }
       } else {
-        prev.delete(name);
+        params.delete("viewOtherProducts");
+        // Add own school filter when switching to my school
+        if (school && !filters.school) {
+          setFilters((prev) => ({ ...prev, school: school }));
+          params.set("school", school);
+        }
       }
-      return prev;
-    });
-  };
 
-  const handleViewModeChange = (newViewMode) => {
-    console.log("View mode changing from", viewMode, "to", newViewMode);
+      setSearchParams(params);
+    },
+    [viewMode, searchParams, filters.school, school, setSearchParams]
+  );
 
-    setViewMode(newViewMode);
-
-    const params = new URLSearchParams(searchParams);
-
-    if (newViewMode === "other") {
-      params.set("viewOtherProducts", "true");
-      // Clear school filter when switching to other schools
-      if (filters.school) {
-        setFilters((prev) => ({ ...prev, school: "" }));
-        params.delete("school");
-      }
-    } else {
-      params.delete("viewOtherProducts");
-      // Add own school filter when switching to my school
-      if (school && !filters.school) {
-        setFilters((prev) => ({ ...prev, school: school }));
-        params.set("school", school);
-      }
-    }
-
-    setSearchParams(params);
-  };
-
-  const clearFilters = () => {
+  // Clear all filters
+  const clearFilters = useCallback(() => {
     const resetFilters = {
       category: "",
       minPrice: "",
       maxPrice: "",
       sort: "newest",
       search: "",
-      school: viewMode === "school" && school ? school : "", // Keep school filter for "My School" mode
+      school: viewMode === "school" && school ? school : "",
       vendor: "",
       state: "",
     };
@@ -208,7 +162,69 @@ const AllProducts = () => {
       }
     }
     setSearchParams(params);
-  };
+  }, [viewMode, school, setSearchParams]);
+
+  // Effect for initial load and filter changes
+  useEffect(() => {
+    console.log(
+      "Fetching products with filters:",
+      currentFilters,
+      "viewMode:",
+      viewMode
+    );
+
+    // Use debounced version for search to avoid too many API calls
+    if (filters.search) {
+      debouncedFetchAllProducts(currentFilters, viewMode);
+    } else {
+      fetchAllProducts(currentFilters, viewMode);
+    }
+  }, [
+    currentFilters,
+    viewMode,
+    fetchAllProducts,
+    debouncedFetchAllProducts,
+    filters.search,
+  ]);
+
+  // Effect to stop toggle loading when main loading stops
+  useEffect(() => {
+    if (!allProductsLoading && toggleLoading) {
+      setToggleLoading(false);
+    }
+  }, [allProductsLoading, toggleLoading]);
+
+  // Effect to set school filter when authenticated and in school mode
+  useEffect(() => {
+    if (isAuthenticated && viewMode === "school" && school && !filters.school) {
+      setFilters((prev) => ({ ...prev, school: school }));
+      setSearchParams((prev) => {
+        prev.set("school", school);
+        return prev;
+      });
+    }
+  }, [isAuthenticated, viewMode, school, filters.school, setSearchParams]);
+
+  // Memoized products count for performance
+  const productsCount = useMemo(() => allProducts.length, [allProducts.length]);
+
+  // Memoized no products message
+  const noProductsMessage = useMemo(() => {
+    const hasActiveFilters =
+      filters.search || filters.category || filters.state || filters.school;
+
+    if (hasActiveFilters) {
+      return (
+        <>
+          <FaSadTear className={styles.sadIcon} />
+          No products match your current filters. Try adjusting your search
+          criteria.
+        </>
+      );
+    }
+
+    return "No products are available at this time. Please check back later.";
+  }, [filters.search, filters.category, filters.state, filters.school]);
 
   return (
     <div className={styles.productsPage}>
@@ -218,7 +234,7 @@ const AllProducts = () => {
             value={viewMode}
             onChange={(e) => handleViewModeChange(e.target.value)}
             className={styles.viewSelect}
-            disabled={toggleLoading}
+            disabled={toggleLoading || allProductsLoading}
           >
             <option value="school">My School Products</option>
             <option value="other">Other Schools Products</option>
@@ -232,7 +248,16 @@ const AllProducts = () => {
       )}
 
       <div className={styles.header}>
-        <h1>All Products</h1>
+        <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
+          <div className={styles.backButton}>
+            <button style={{border:"none", backgroundColor:"#fff", width:"auto"}} onClick={() => navigate(-1)}>
+              <FaArrowLeft size={32} color="#000"/>
+            </button>
+          </div>
+          <div>
+            <h1>All Products</h1>
+          </div>
+        </div>
         <button
           className={styles.filterToggle}
           onClick={() => setShowFilters(!showFilters)}
@@ -303,7 +328,7 @@ const AllProducts = () => {
             onChange={(e) => handleFilterChange("category", e.target.value)}
           >
             <option value="">All Categories</option>
-            {categories.map((category) => (
+            {allProductsCategories.map((category) => (
               <option key={category} value={category}>
                 {category.replace(/_/g, " ")}
               </option>
@@ -372,7 +397,7 @@ const AllProducts = () => {
             onChange={(e) => handleFilterChange("vendor", e.target.value)}
           >
             <option value="">All Vendors</option>
-            {vendors.map((vendor) => (
+            {allProductsVendors.map((vendor) => (
               <option key={vendor.id} value={vendor.id}>
                 {vendor.name}
               </option>
@@ -393,32 +418,19 @@ const AllProducts = () => {
         </div>
       )}
 
-      {loading || toggleLoading ? (
+      {allProductsLoading || toggleLoading ? (
         <Spinner />
-      ) : error ? (
-        <div className={styles.error}>{error}</div>
-      ) : products.length === 0 ? (
+      ) : allProductsError ? (
+        <div className={styles.error}>{allProductsError}</div>
+      ) : productsCount === 0 ? (
         <div className={styles.noProducts}>
           <FaBox className={styles.noProductsIcon} />
           <h2>No Products Found</h2>
-          <p>
-            {filters.search ||
-            filters.category ||
-            filters.state ||
-            filters.school ? (
-              <>
-                <FaSadTear className={styles.sadIcon} />
-                No products match your current filters. Try adjusting your
-                search criteria.
-              </>
-            ) : (
-              "No products are available at this time. Please check back later."
-            )}
-          </p>
+          <p>{noProductsMessage}</p>
         </div>
       ) : (
         <div className={styles.productsGrid}>
-          {products.map((product) => (
+          {allProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>

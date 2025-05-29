@@ -1,35 +1,21 @@
 // OrderHistory.jsx
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import { useReactToPrint } from "react-to-print";
 import api from "../constant/api";
 import style from "../css/OrderHistory.module.css";
 import Swal from "sweetalert2"; // Add this import
 import { Link } from "react-router-dom";
+import { GlobalContext } from "../constant/GlobalContext";
+import Spinner from "../components/Spinner";
 
 const OrderHistory = () => {
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [expandedOrder, setExpandedOrder] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [ordersPerPage] = useState(5);
   const printRefs = useRef({});
 
-  const fetchOrders = async () => {
-    try {
-      const response = await api.get("orders/");
-      setOrders(response.data);
-      setLoading(false);
-      console.log(response.data);
-    } catch (err) {
-      setError("Failed to load your order history. Please try again later.");
-      setLoading(false);
-    }
-  };
+  const {orders, setOrders, loading, error} = useContext(GlobalContext)
   
-  useEffect(() => {
-    fetchOrders();
-  }, []);
 
   const toggleOrderDetails = (orderId) => {
     setExpandedOrder((prev) => (prev === orderId ? null : orderId));
@@ -161,7 +147,7 @@ const OrderHistory = () => {
   if (loading) {
     return (
       <div className={style.orderHistoryContainer}>
-        <div className={style.loadingSpinner}>Loading your orders...</div>
+        <Spinner/>
       </div>
     );
   }

@@ -6,22 +6,16 @@ import styles from "../css/ShopDetails.module.css";
 
 const ShopDetails = () => {
   const { shopId } = useParams();
-  const { fetchProducts, products, details } = useContext(GlobalContext);
+  const { fetchProducts, products, details, handleAddToCart } = useContext(GlobalContext);
   const navigate = useNavigate();
 
   const handleProductClick = (productId) => {
     navigate(`/product/${productId}`);
   };
 
-  const handleAddToCart = (e, product) => {
-    // Prevent the click from bubbling up to the card's onClick
-    e.stopPropagation();
-
-    // Add your cart logic here
-    console.log("Adding to cart:", product);
-
-    // Example: You might want to call a context method or API
-    // addToCart(product);
+  const handleAddToCartClick = (e, productId) => {
+    e.stopPropagation(); 
+    handleAddToCart();
   };
 
   useEffect(() => {
@@ -110,13 +104,13 @@ const ShopDetails = () => {
                 </p>
 
                 {/* Add to Cart Button */}
-                <button
+                {/* <button
                   className={styles.addToCartButton}
-                  onClick={(e) => handleAddToCart(e, product)}
+                  onClick={(e) => handleAddToCartClick(e, product.id)}
                 >
                   <FaShoppingCart className={styles.cartIcon} />
                   Add to Cart
-                </button>
+                </button> */}
               </div>
             </div>
           ))}

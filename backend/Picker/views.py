@@ -9,12 +9,17 @@ import random
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from datetime import timedelta
-from Stumart.models import Order, OrderItem, Transaction
-from User.models import User, Picker, StudentPicker, KYCVerification
+from Stumart.models import Order, OrderItem, Transaction, Wallet
+from User.models import User, Picker, StudentPicker, KYCVerification, Vendor
 from .serializers import *
 from .models import*
 from django.conf import settings
 from django.core.mail import send_mail
+from decimal import Decimal
+import logging
+from User.models import Vendor
+
+logger = logging.getLogger(__name__)
 
 class PickerDashboardView(APIView):
     """
@@ -704,28 +709,27 @@ class OrderDetailView(APIView):
 
 class ConfirmDeliveryView(APIView):
     permission_classes = [IsAuthenticated]
-
+    
     def post(self, request, id):
         user = request.user
-
-        try: 
+        
+        try:
             if user.user_type != 'student':
                 return Response("You are not permitted", status=status.HTTP_401_UNAUTHORIZED)
-            
+                        
             order = Order.objects.get(id=id)
             picker = order.picker
-
+            
             if order.order_status == "DELIVERED":
                 # First, update order status to COMPLETED
                 order.order_status = "COMPLETED"
                 order.save()
                 
-                # Try to get existing wallet or create a new one
+                # Update picker wallet
                 wallet, created = PickerWallet.objects.get_or_create(picker=picker)
                 
                 if not created:
                     # Convert both values to Decimal for consistent arithmetic
-                    from decimal import Decimal
                     current_amount = Decimal(str(wallet.amount if wallet.amount else '0'))
                     shipping_fee = Decimal(str(order.shipping_fee))
                     wallet.amount = current_amount + shipping_fee
@@ -734,24 +738,97 @@ class ConfirmDeliveryView(APIView):
                     wallet.amount = order.shipping_fee
                 
                 wallet.save()
+                
+                # Calculate vendor totals from order items
+                order_items = order.order_items.all()  # Assuming reverse FK name is orderitem_set
+                vendor_totals = {}
+                
+                for item in order_items:
+                    vendor_id = item.vendor.id
+                    item_total = item.quantity * item.price
+                    
+                    if vendor_id in vendor_totals:
+                        vendor_totals[vendor_id] += item_total
+                    else:
+                        vendor_totals[vendor_id] = item_total
+                
+                # Update vendor wallets and send emails
+                vendor_emails_sent = []
+                for vendor_id, amount in vendor_totals.items():
+                    try:
+                        vendor = Vendor.objects.get(id=vendor_id)
+                        wallet, created = Wallet.objects.get_or_create(
+                            vendor=vendor,
+                            defaults={'balance': 0}
+                        )
+                        wallet.balance += amount
+                        wallet.save()
+                        logger.info(f"Updated wallet for vendor {vendor_id}, new balance: {wallet.balance}")
+                        
+                        # Send email notification to vendor
+                        try:
+                            subject = f"Order #{order.id} Delivered - Payment Credited"
+                            message = f"""
+                            Dear {vendor.name if hasattr(vendor, 'name') else 'Vendor'},
 
+                            We are pleased to inform you that Order #{order.id} has been successfully delivered.
+
+                            Order Details:
+                            - Order ID: {order.id}
+                            - Amount Credited: ${amount}
+                            - Current Wallet Balance: ${wallet.balance}
+                            - Delivery Date: {order.updated_at.strftime('%Y-%m-%d %H:%M:%S') if order.updated_at else 'N/A'}
+
+                            The payment for your items has been credited to your wallet.
+
+                            Thank you for your business!
+
+                            Best regards,
+                            Your Platform Team
+                            """
+                            
+                            send_mail(
+                                subject=subject,
+                                message=message,
+                                from_email=settings.DEFAULT_FROM_EMAIL,
+                                recipient_list=[vendor.email] if hasattr(vendor, 'email') and vendor.email else [],
+                                fail_silently=False,
+                            )
+                            vendor_emails_sent.append(vendor_id)
+                            logger.info(f"Email sent to vendor {vendor_id}")
+                            
+                        except Exception as email_error:
+                            logger.error(f"Failed to send email to vendor {vendor_id}: {str(email_error)}")
+                            # Continue processing other vendors even if email fails
+                            
+                    except Vendor.DoesNotExist:
+                        logger.error(f"Vendor with ID {vendor_id} not found when processing payment")
+                        continue
+                
                 return Response({
                     "status": "success",
-                    "message": "Order has been delivered successfully"
+                    "message": "Order has been delivered successfully",
+                    "details": {
+                        "order_id": order.id,
+                        "picker_payment": float(order.shipping_fee),
+                        "vendor_payments": {str(k): float(v) for k, v in vendor_totals.items()},
+                        "emails_sent_to_vendors": vendor_emails_sent
+                    }
                 }, status=status.HTTP_200_OK)
             else:
                 return Response({
                     "status": "error",
                     "message": "Order is not in DELIVERED status"
                 }, status=status.HTTP_400_BAD_REQUEST)
-            
+                    
         except Order.DoesNotExist:
             return Response({
                 "status": "error",
                 "message": "Order does not exist"
             }, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
+            logger.error(f"Error in ConfirmDeliveryView: {str(e)}")
             return Response({
                 "status": "error",
                 "message": f"An error occurred: {str(e)}"
-            }, status=status.HTTP_500_INTERNAL_ERROR)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

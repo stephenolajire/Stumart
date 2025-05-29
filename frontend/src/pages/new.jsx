@@ -1,4 +1,4 @@
-import React, {
+import {
   useContext,
   useState,
   useEffect,
@@ -6,12 +6,15 @@ import React, {
   memo,
   useMemo,
 } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { GlobalContext } from "../constant/GlobalContext";
+import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
+import "sweetalert2/dist/sweetalert2.css";
 import styles from "../css/Home.module.css";
-import { MEDIA_BASE_URL } from "../constant/api";
-import { nigeriaInstitutions } from "../constant/data";
 import Spinner from "../components/Spinner";
+import ourwife from "../assets/our-wife.jpg";
+import abu from "../assets/abu.jpg";
+import james from "../assets/james.jpg";
+// import Spinner from "../components/Spinner";
 import {
   FaBook,
   FaUtensils,
@@ -32,11 +35,12 @@ import {
   FaClock,
   FaShoppingCart,
 } from "react-icons/fa";
-import Swal from "sweetalert2";
+import { GlobalContext } from "../constant/GlobalContext";
+import { nigeriaInstitutions } from "../constant/data";
+import api from "../constant/api";
+import { MEDIA_BASE_URL } from "../constant/api";
+import { Link } from "react-router-dom";
 import debounce from "lodash/debounce";
-import ourwife from "../assets/our-wife.jpg";
-import abu from "../assets/abu.jpg";
-import james from "../assets/james.jpg";
 
 // Categories with icons
 const categories = [
@@ -79,70 +83,10 @@ const promotions = [
   },
 ];
 
-// Move constants outside component
-const SHOPS_PER_PAGE = 12;
-
-// Separate components
-const CategoryCard = memo(({ category, isActive, onClick }) => (
-  <button
-    className={`${styles.categoryCard} ${
-      isActive ? styles.activeCategory : ""
-    }`}
-    onClick={() => onClick(category.name.toLowerCase())}
-  >
-    <div className={styles.categoryIcon}>{category.icon}</div>
-    <span className={styles.categoryName}>{category.name}</span>
-  </button>
-));
-
-const ShopCard = memo(({ shop }) => (
-  <div className={styles.shopCard}>
-    <Link to={`/shop/${shop.id}`} className={styles.shopLink}>
-      <div className={styles.shopImage}>
-        <img
-          src={`${MEDIA_BASE_URL}${shop.shop_image}`}
-          alt={shop.business_name}
-        />
-      </div>
-      <div className={styles.shopDetails}>
-        <h3 className={styles.shopName}>{shop.business_name}</h3>
-        <div className={styles.shopMeta}>
-          <span className={styles.shopCategory}>{shop.business_category}</span>
-          <div className={styles.shopRating}>
-            <FaStar className={styles.starIcon} />
-            <span>{shop.rating}</span>
-          </div>
-        </div>
-        <div className={styles.shopLocation}>
-          <FaMapMarkerAlt className={styles.locationIcon} />
-          <span>{shop.user.institution}</span>
-        </div>
-        <div className={styles.shopDelivery}>
-          <FaClock className={styles.clockIcon} />
-          <span>15-30 mins</span>
-        </div>
-        <button className={styles.viewShopButton}>
-          <FaShoppingCart /> Shop Now
-        </button>
-      </div>
-    </Link>
-  </div>
-));
-
 const Home = memo(() => {
-  // Get all necessary functions and data from GlobalContext
-  const {
-    shopsData,
-    searchResults,
-    fetchShopsBySchool,
-    searchProducts,
-    loading,
-    error,
-    isAuthenticated,
-    clearError,
-  } = useContext(GlobalContext);
-
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+  const { shopsData, fetchShopsBySchool, loading, isAuthenticated } =
+    useContext(GlobalContext);
 
   // Consolidated state
   const [filters, setFilters] = useState({
@@ -170,6 +114,7 @@ const Home = memo(() => {
 
   // Constants
   const institution = localStorage.getItem("institution");
+  const shopsPerPage = 12;
 
   // Get all states from Nigeria institutions
   const states = useMemo(() => Object.keys(nigeriaInstitutions), []);
@@ -194,15 +139,15 @@ const Home = memo(() => {
 
   // Computed properties
   const totalPages = useMemo(() => {
-    return Math.ceil((shopState.filteredShops?.length || 0) / SHOPS_PER_PAGE);
-  }, [shopState.filteredShops, SHOPS_PER_PAGE]);
+    return Math.ceil((shopState.filteredShops?.length || 0) / shopsPerPage);
+  }, [shopState.filteredShops, shopsPerPage]);
 
   const currentShops = useMemo(() => {
     const { currentPage } = uiState;
-    const indexOfLastShop = currentPage * SHOPS_PER_PAGE;
-    const indexOfFirstShop = indexOfLastShop - SHOPS_PER_PAGE;
+    const indexOfLastShop = currentPage * shopsPerPage;
+    const indexOfFirstShop = indexOfLastShop - shopsPerPage;
     return shopState.filteredShops?.slice(indexOfFirstShop, indexOfLastShop);
-  }, [shopState.filteredShops, uiState.currentPage, SHOPS_PER_PAGE]);
+  }, [shopState.filteredShops, uiState.currentPage, shopsPerPage]);
 
   // Format category name - memoized helper function
   const formatCategoryName = useCallback((category) => {
@@ -275,7 +220,7 @@ const Home = memo(() => {
     return () => clearInterval(timer);
   }, []);
 
-  // Centralized shop fetching function using GlobalContext
+  // Centralized shop fetching function - memoized with useCallback
   const fetchShops = useCallback(
     async (schoolName) => {
       try {
@@ -565,7 +510,7 @@ const Home = memo(() => {
     requestInstitutionSwitch,
   ]);
 
-  // Handle product search using GlobalContext searchProducts function
+  // Handle product search
   const handleProductSearch = useCallback(
     async (e) => {
       e.preventDefault();
@@ -585,18 +530,22 @@ const Home = memo(() => {
       setUiState((prev) => ({ ...prev, isSearching: true }));
 
       try {
-        const searchParams = {
-          productName: uiState.productName,
+        const params = {
+          product_name: uiState.productName,
           ...(filters.school && { institution: filters.school }),
           ...(filters.state && { state: filters.state }),
         };
 
-        const result = await searchProducts(searchParams);
+        const response = await api.get("search-products/", { params });
 
-        if (result.success && result.products && result.products.length > 0) {
+        if (
+          response.data &&
+          response.data.products &&
+          response.data.products.length > 0
+        ) {
           navigate("/search", {
             state: {
-              products: result.products,
+              products: response.data.products,
               searchParams: {
                 productName: uiState.productName,
                 school: filters.school,
@@ -608,18 +557,24 @@ const Home = memo(() => {
           Swal.fire({
             icon: "info",
             title: "No Products Found",
-            text:
-              result.message ||
-              `No products matching "${uiState.productName}" found in the selected location.`,
+            text: `No products matching "${uiState.productName}" found in the selected location.`,
           });
         }
       } catch (error) {
         console.error("Search error:", error);
-        Swal.fire({
-          icon: "error",
-          title: "Search Error",
-          text: "An error occurred while searching. Please try again.",
-        });
+        if (isAuthenticated && error.status === 404) {
+          Swal.fire({
+            icon: "error",
+            title: "Search Error",
+            text: `Product not found in your school .`,
+          });
+        } else {
+          Swal.fire({
+            icon: "error",
+            title: "Search Error",
+            text: "Product is not availbale.",
+          });
+        }
       } finally {
         setUiState((prev) => ({ ...prev, isSearching: false }));
       }
@@ -633,7 +588,6 @@ const Home = memo(() => {
       filters.state,
       navigate,
       requestInstitutionSwitch,
-      searchProducts,
     ]
   );
 
@@ -693,29 +647,9 @@ const Home = memo(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
-  // Clear errors when component unmounts or error changes
-  useEffect(() => {
-    if (error) {
-      const timer = setTimeout(() => {
-        clearError();
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [error, clearError]);
-
   // UI COMPONENTS SECTION
   return (
     <main className={styles.homeContainer}>
-      {/* Error Display */}
-      {error && (
-        <div className={styles.errorBanner}>
-          <p>{error}</p>
-          <button onClick={clearError} className={styles.closeError}>
-            <FaTimes />
-          </button>
-        </div>
-      )}
-
       {/* Hero Banner Section with Search */}
       <div className={styles.heroGrid}>
         {isAuthenticated && (
@@ -807,12 +741,18 @@ const Home = memo(() => {
 
         <div className={styles.categoryGrid}>
           {categories.map((category) => (
-            <CategoryCard
+            <button
               key={category.id}
-              category={category}
-              isActive={filters.category === category.name.toLowerCase()}
-              onClick={handleCategoryChange}
-            />
+              className={`${styles.categoryCard} ${
+                filters.category === category.name.toLowerCase()
+                  ? styles.activeCategory
+                  : ""
+              }`}
+              onClick={() => handleCategoryChange(category.name.toLowerCase())}
+            >
+              <div className={styles.categoryIcon}>{category.icon}</div>
+              <span className={styles.categoryName}>{category.name}</span>
+            </button>
           ))}
         </div>
       </section>
@@ -916,7 +856,41 @@ const Home = memo(() => {
             <div className={styles.shopsGrid}>
               {currentShops.map((shop) =>
                 shop.business_category !== "others" ? (
-                  <ShopCard key={shop.id} shop={shop} />
+                  <div key={shop.id} className={styles.shopCard}>
+                    <Link to={`/shop/${shop.id}`} className={styles.shopLink}>
+                      <div className={styles.shopImage}>
+                        <img
+                          src={`${MEDIA_BASE_URL}${shop.shop_image}`}
+                          alt={shop.business_name}
+                        />
+                      </div>
+                      <div className={styles.shopDetails}>
+                        <h3 className={styles.shopName}>
+                          {shop.business_name}
+                        </h3>
+                        <div className={styles.shopMeta}>
+                          <span className={styles.shopCategory}>
+                            {shop.business_category}
+                          </span>
+                          <div className={styles.shopRating}>
+                            <FaStar className={styles.starIcon} />
+                            <span>{shop.rating}</span>
+                          </div>
+                        </div>
+                        <div className={styles.shopLocation}>
+                          <FaMapMarkerAlt className={styles.locationIcon} />
+                          <span>{shop.user.institution}</span>
+                        </div>
+                        <div className={styles.shopDelivery}>
+                          <FaClock className={styles.clockIcon} />
+                          <span>15-30 mins</span>
+                        </div>
+                        <button className={styles.viewShopButton}>
+                          <FaShoppingCart /> Shop Now
+                        </button>
+                      </div>
+                    </Link>
+                  </div>
                 ) : null
               )}
             </div>

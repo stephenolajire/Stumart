@@ -384,9 +384,9 @@
   }
   
   .cartHeaderSection {
-    flex-direction: column;
+    flex-direction: row;
     gap: 2rem;
-    align-items: stretch;
+    /* align-items: stretch; */
   }
   
   .backButtonContainer {
@@ -506,5 +506,11 @@
   
   .cartTitle {
     font-size: 3.6rem;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .cartTitle {
+    font-size: 1.6rem;
   }
 }
