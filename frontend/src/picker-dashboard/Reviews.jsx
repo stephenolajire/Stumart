@@ -26,6 +26,7 @@ const Reviews = () => {
       try {
         setLoading(true);
         const response = await api.get("picker/reviews/");
+        console.log("Response data:", response.data);
 
         // Since we're using axios, data is automatically parsed
         const { data } = response;
@@ -118,12 +119,9 @@ const Reviews = () => {
     });
   };
 
-  const getCustomerName = (reviewer) => {
-    if (!reviewer) return "Anonymous";
-    return (
-      `${reviewer.first_name || ""} ${reviewer.last_name || ""}`.trim() ||
-      "Anonymous"
-    );
+  const getCustomerName = (review) => {
+    if (!review) return "Anonymous";
+    return review || "Anonymous";
   };
 
   if (loading) {
@@ -252,14 +250,11 @@ const Reviews = () => {
                 </div>
                 <div className={styles.reviewMeta}>
                   <p className={styles.customerName}>
-                    {getCustomerName(review.reviewer)}
+                    {getCustomerName(review.reviewer_name)}
                   </p>
                   <p className={styles.reviewDate}>
                     {formatDate(review.created_at)}
                   </p>
-                  {review.order && (
-                    <p className={styles.orderId}>Order #{review.order.id}</p>
-                  )}
                 </div>
               </div>
 

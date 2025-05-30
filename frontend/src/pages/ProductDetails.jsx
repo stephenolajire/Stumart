@@ -659,11 +659,11 @@ const ProductDetails = () => {
                     {review.comment && (
                       <p className={styles.reviewComment}>{review.comment}</p>
                     )}
-                    {review.order_number && (
+                    {/* {review.order_number && (
                       <div className={styles.orderInfo}>
                         Order: {review.order_number}
                       </div>
-                    )}
+                    )} */}
                   </div>
                 ))}
 

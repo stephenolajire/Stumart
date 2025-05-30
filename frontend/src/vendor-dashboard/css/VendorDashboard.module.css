@@ -948,7 +948,7 @@
   }
 }
 
-.updateButton, .shipButton {
+.updateButton, .shipButton, .pickerDetailsButton {
   color: white;
   background-color: var(--primary-500);
   /* padding: 1.5rem; */
@@ -961,4 +961,14 @@
 
 .shipButton {
   background-color: var(--info);
+}
+
+.pickerDetailsButton {
+  background-color: var(--secondary-600);
+  color: var(--neutral-white);
+  display: flex;
+  flex-direction: row;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
 }

@@ -111,3 +111,15 @@ class ServiceApplicationAdmin(admin.ModelAdmin):
         }),
     )
 
+@admin.register(PickerReview)
+class PickerReviewAdmin(admin.ModelAdmin):
+    list_display = ('picker', 'rating', 'comment', 'created_at')
+    search_fields = ('picker__email', 'comment')
+    list_filter = ('rating', 'created_at')
+
+
+@admin.register(VendorReview)
+class VendorReviewAdmin(admin.ModelAdmin):
+    list_display = ('vendor', 'rating', 'comment', 'created_at')
+    search_fields = ('vendor__business_name', 'comment')
+    list_filter = ('rating', 'created_at')

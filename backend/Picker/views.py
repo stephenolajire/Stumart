@@ -96,7 +96,7 @@ class PickerDashboardView(APIView):
             vendor__user__institution=user.institution
         ).values_list('order_id', flat=True).distinct()
 
-        available_orders_qs = Order.objects.filter(id__in=available_order_ids).order_by('-created_at')[:5]
+        available_orders_qs = Order.objects.filter(id__in=available_order_ids).order_by('-created_at')[:2]
 
         for order in available_orders_qs:
             vendor_name = (
@@ -108,7 +108,7 @@ class PickerDashboardView(APIView):
                 'order_number': order.order_number,
                 'vendor_name': vendor_name,
                 'delivery_location': f"{order.address}, Room: {order.room_number}" if order.room_number else order.address,
-                'status': 'Pending'
+                'status': 'Packed'
             })
 
         # Active Orders (IN_TRANSIT)
@@ -120,7 +120,7 @@ class PickerDashboardView(APIView):
 
         active_orders_qs = Order.objects.filter(id__in=active_order_ids).order_by('-created_at')[:5]
 
-        for order in active_orders_qs:
+        for order in available_orders_qs:
             vendor_name = (
                 order.order_items.first().vendor.business_name
                 if order.order_items.exists() else "Unknown"
@@ -130,7 +130,7 @@ class PickerDashboardView(APIView):
                 'order_number': order.order_number,
                 'vendor_name': vendor_name,
                 'delivery_location': f"{order.address}, Room: {order.room_number}" if order.room_number else order.address,
-                'status': 'In Progress'
+                'status': 'Packed'
             })
 
         # Sort by most recent

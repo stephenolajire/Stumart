@@ -3,6 +3,7 @@ import { FaEye } from "react-icons/fa";
 import styles from "./css/VendorDashboard.module.css";
 import api from "../constant/api";
 import Swal from "sweetalert2";
+import PickerDetailsModal from "./PickerDetailsModal";
 
 // Configure toast notification
 const Toast = Swal.mixin({
@@ -21,6 +22,11 @@ const Orders = ({ orders, onOrderUpdate }) => {
   const [filterStatus, setFilterStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [loadingOrders, setLoadingOrders] = useState(new Set());
+  const [selectedPicker, setSelectedPicker] = useState(null);
+  // Replace the single loading state with a Set to track multiple loading states
+  const [loadingPickerDetails, setLoadingPickerDetails] = useState(new Set());
+
+  console.log("Orders component rendered with orders:", orders);
 
   const packedOrders = async (orderId) => {
     setLoadingOrders((prev) => new Set([...prev, orderId]));
@@ -129,6 +135,38 @@ const Orders = ({ orders, onOrderUpdate }) => {
     );
   };
 
+  // Update the handlePickerDetailsClick function
+  const handlePickerDetailsClick = async (orderId) => {
+    try {
+      // Add this order to loading set
+      setLoadingPickerDetails((prev) => new Set([...prev, orderId]));
+
+      const response = await api.get(`assigned/picker/`, {
+        params: { order_id: orderId },
+      });
+
+      if (response.status === 200) {
+        setSelectedPicker(response.data);
+      } else {
+        throw new Error("Failed to fetch picker details");
+      }
+    } catch (error) {
+      console.error("Error fetching picker details:", error);
+      Toast.fire({
+        icon: "error",
+        title: "Failed to load picker details",
+        text: error.response?.data?.message || "Please try again",
+      });
+    } finally {
+      // Remove this order from loading set
+      setLoadingPickerDetails((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(orderId);
+        return newSet;
+      });
+    }
+  };
+
   return (
     <div className={styles.ordersSection}>
       <div className={styles.sectionHeader}>
@@ -172,6 +210,7 @@ const Orders = ({ orders, onOrderUpdate }) => {
                 <th>Items</th>
                 <th>Status</th>
                 <th>Actions</th>
+                <th>Picker</th>
               </tr>
             </thead>
             <tbody>
@@ -196,12 +235,45 @@ const Orders = ({ orders, onOrderUpdate }) => {
                       {getActionButton(order)}
                     </div>
                   </td>
+                  <td>
+                    {order.picker ? (
+                      <button
+                        className={styles.pickerDetailsButton}
+                        onClick={() => handlePickerDetailsClick(order.id)}
+                        disabled={loadingPickerDetails.has(order.id)}
+                      >
+                        {loadingPickerDetails.has(order.id) ? (
+                          "Loading..."
+                        ) : (
+                          <>
+                            <FaEye
+                              color="white"
+                              size={16}
+                              className={styles.viewPicker}
+                            />
+                            Details
+                          </>
+                        )}
+                      </button>
+                    ) : (
+                      <span className={styles.noPicker}>
+                        No Picker Assigned
+                      </span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         )}
       </div>
+
+      {selectedPicker && (
+        <PickerDetailsModal
+          picker={selectedPicker}
+          onClose={() => setSelectedPicker(null)}
+        />
+      )}
     </div>
   );
 };

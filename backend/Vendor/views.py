@@ -657,4 +657,54 @@ class VendorReviewsAPIView(APIView):
                 {'error': 'An error occurred while fetching reviews'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-    
+
+class PickerDetailsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            # Get order_id from query parameters
+            order_id = request.query_params.get('order_id')
+            if not order_id:
+                return Response(
+                    {'error': 'Order ID is required'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Get the order and ensure it belongs to the vendor
+            order = get_object_or_404(
+                Order.objects.select_related('picker'), 
+                id=order_id,
+                order_items__vendor=request.user.vendor_profile
+            )
+
+            if not order.picker:
+                return Response(
+                    {'error': 'No picker assigned to this order'}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            # Get picker details
+            picker = order.picker
+            profile_pic = picker.profile_pic.url if picker.profile_pic else None
+
+            # If profile pic exists, make it an absolute URI
+            if profile_pic:
+                profile_pic = request.build_absolute_uri(profile_pic)
+
+            picker_details = {
+                'id': picker.id,
+                'first_name': picker.first_name,
+                'last_name': picker.last_name,
+                'email': picker.email,
+                'phone_number': picker.phone_number,
+                'profile_picture': profile_pic
+            }
+
+            return Response(picker_details, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

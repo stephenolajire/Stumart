@@ -118,13 +118,11 @@ const Reviews = () => {
     });
   };
 
-  const getCustomerName = (reviewer) => {
-    if (!reviewer) return "Anonymous";
-    return (
-      `${reviewer.first_name || ""} ${reviewer.last_name || ""}`.trim() ||
-      "Anonymous"
-    );
+  const getCustomerName = (review) => {
+    if (!review) return "Anonymous";
+    return review || "Anonymous";
   };
+
 
   if (loading) {
     return (
@@ -155,12 +153,11 @@ const Reviews = () => {
 
   return (
     <div className={styles.reviewsSection}>
-      <div className={styles.sectionHeader}>
-        <h2 style={{ marginBottom: "2rem" }}>Reviews & Ratings</h2>
+      {/* <div className={styles.sectionHeader}>
         {vendorInfo.business_name && (
           <p className={styles.businessName}>{vendorInfo.business_name}</p>
         )}
-      </div>
+      </div> */}
 
       <div className={styles.reviewsSummary}>
         <div className={styles.summaryCard}>
@@ -252,14 +249,14 @@ const Reviews = () => {
                 </div>
                 <div className={styles.reviewMeta}>
                   <p className={styles.customerName}>
-                    {getCustomerName(review.reviewer)}
+                    {getCustomerName(review.reviewer_name)}
                   </p>
                   <p className={styles.reviewDate}>
                     {formatDate(review.created_at)}
                   </p>
-                  {review.order && (
+                  {/* {review.order && (
                     <p className={styles.orderId}>Order #{review.order.id}</p>
-                  )}
+                  )} */}
                 </div>
               </div>
 

@@ -18,4 +18,5 @@ urlpatterns = [
     path('vendor-details/', views.VendorDetailsView.as_view(), name='vendor-details'),
     # picker reviews
     path('vendor/reviews/', views.VendorReviewsAPIView.as_view(), name='vendor_reviews'),
+    path('assigned/picker/', views.PickerDetailsView.as_view(), name='picker-details'),
 ]

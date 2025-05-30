@@ -1,0 +1,112 @@
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background-color: var(--neutral-white);
+  border-radius: 1rem;
+  padding: 3rem;
+  position: relative;
+  width: 90%;
+  max-width: 50rem;
+  box-shadow: 0 0.4rem 0.6rem rgba(0, 0, 0, 0.1);
+}
+
+.closeButton {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 2rem;
+  color: var(--text-tertiary);
+}
+
+.pickerProfile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+
+.imageContainer {
+  width: 12rem;
+  height: 12rem;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 0.3rem solid var(--primary-500);
+}
+
+.profileImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pickerInfo {
+  text-align: center;
+  width: 100%;
+}
+
+.pickerName {
+  color: var(--text-primary);
+  font-size: var(--h3-desktop);
+  margin-bottom: 2rem;
+}
+
+.infoGrid {
+  display: grid;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.infoItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.infoItem label {
+  color: var(--text-tertiary);
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+.infoItem p {
+  color: var(--text-primary);
+  font-size: 1.6rem;
+}
+
+@media screen and (max-width: 768px) {
+  .modalContent {
+    padding: 2rem;
+    width: 95%;
+  }
+
+  .pickerName {
+    font-size: var(--h3-mobile);
+  }
+
+  .imageContainer {
+    width: 10rem;
+    height: 10rem;
+  }
+
+  .infoItem label {
+    font-size: 1.2rem;
+  }
+
+  .infoItem p {
+    font-size: 1.4rem;
+  }
+}
