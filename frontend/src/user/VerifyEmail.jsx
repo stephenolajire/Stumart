@@ -18,18 +18,17 @@ const VerifyEmail = () => {
 
   const handlePaste = (e) => {
     e.preventDefault();
-    const pastedText = e.clipboardData.getData("text").trim();
-
-    // Extract only numbers from pasted text
-    const numbers = pastedText.replace(/[^0-9]/g, "");
-
-    // Take first 6 digits
-    const otpValue = numbers.slice(0, 6);
-
-    // Update OTP state if we have valid numbers
-    if (otpValue) {
-      setOtp(otpValue);
+    const value = e.clipboardData.getData("text");
+    if (isNaN(value) || value.length !== 6) {
+      Swal.fire({
+        icon: "error",
+        title: "Invalid Paste",
+        text: "Please paste a valid 6-digit code",
+        confirmButtonColor: "var(--primary-500)",
+      });
+      return;
     }
+    setOtp(value);
   };
 
   // Initialize timeLeft from localStorage or set new expiration
