@@ -12,6 +12,26 @@ const VerifyEmail = () => {
   const navigate = useNavigate();
   const userId = location.state?.userId;
 
+  const handleChange = (otp) => {
+    setOtp(otp);
+  };
+
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const pastedText = e.clipboardData.getData("text").trim();
+
+    // Extract only numbers from pasted text
+    const numbers = pastedText.replace(/[^0-9]/g, "");
+
+    // Take first 6 digits
+    const otpValue = numbers.slice(0, 6);
+
+    // Update OTP state if we have valid numbers
+    if (otpValue) {
+      setOtp(otpValue);
+    }
+  };
+
   // Initialize timeLeft from localStorage or set new expiration
   const [timeLeft, setTimeLeft] = useState(() => {
     const storedExpiration = localStorage.getItem("otpExpiration");
@@ -77,9 +97,8 @@ const VerifyEmail = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const otpString = otp.join("");
 
-    if (otpString.length !== 6) {
+    if (otp.length !== 6) {
       Swal.fire({
         icon: "error",
         title: "Invalid OTP",
@@ -94,7 +113,7 @@ const VerifyEmail = () => {
     try {
       const response = await api.post("/verify-email/", {
         user_id: userId,
-        otp: otpString,
+        otp: otp, // No need to join since otp is already a string
       });
 
       localStorage.removeItem("otpExpiration"); // Clear timer on success
@@ -223,14 +242,20 @@ const VerifyEmail = () => {
             onChange={setOtp}
             numInputs={6}
             renderInput={(props) => <input {...props} />}
-            inputStyle={styles.otpInput}
-            containerStyle={styles.otpInputs}
             shouldAutoFocus={true}
             inputType="tel"
-            renderSeparator={<span>&nbsp;</span>}
-            onPaste={true}
+            isInputNum={true}
+            onPaste={handlePaste}
+            containerStyle="otpContainer"
+            inputStyle={{
+              width: "2rem",
+              height: "2rem",
+              margin: "0 0.5rem",
+              fontSize: "1.5rem",
+              borderRadius: "4px",
+              border: "1px solid rgba(0,0,0,0.3)",
+            }}
           />
-
           <button
             type="submit"
             className={styles.verifyButton}
@@ -242,7 +267,6 @@ const VerifyEmail = () => {
               ? `Wait ${throttleWaitTime}s`
               : "Verify Email"}
           </button>
-
           <button
             type="button"
             className={styles.resendButton}
