@@ -3,16 +3,16 @@ from rest_framework import viewsets, views, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Sum, Count, Q
+from django.db.models import Sum, Count, Q, Avg
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from datetime import datetime, timedelta
 from User.models import Vendor
 from rest_framework.views import APIView
 from Stumart.models import Product, Order, OrderItem, Transaction, Wallet
-from .models import VendorStats, VendorRevenueData, VendorSalesData, ProductReview, Withdrawal
+from .models import VendorStats, VendorRevenueData, VendorSalesData, Withdrawal
 from .serializers import (
-    ProductSerializer, OrderSerializer, TransactionSerializer, 
-    ReviewSerializer, DashboardStatsSerializer, WithdrawalSerializer
+    ProductSerializer, OrderSerializer, TransactionSerializer,  DashboardStatsSerializer, WithdrawalSerializer
 )
 import requests
 from django.conf import settings
@@ -129,15 +129,15 @@ class DashboardStatsView(views.APIView):
         
         # Get pending reviews count
         products = products_by_user
-        try:
-            pending_reviews = ProductReview.objects.filter(
-                product__in=products, 
-                vendor_response__isnull=True
-            ).count()
-            print(f"Pending reviews: {pending_reviews}")
-        except Exception as e:
-            print(f"Error calculating pending reviews: {e}")
-            pending_reviews = 0
+        # try:
+        #     pending_reviews = ProductReview.objects.filter(
+        #         product__in=products, 
+        #         vendor_response__isnull=True
+        #     ).count()
+        #     print(f"Pending reviews: {pending_reviews}")
+        # except Exception as e:
+        #     print(f"Error calculating pending reviews: {e}")
+        #     pending_reviews = 0
         
         # Create stats object
         stats = VendorStats.objects.create(
@@ -146,7 +146,7 @@ class DashboardStatsView(views.APIView):
             total_orders=total_orders,
             total_products=total_products,
             low_stock_products=low_stock,
-            pending_reviews=pending_reviews
+            # pending_reviews=pending_reviews
         )
         
         # Generate/update chart data
@@ -555,29 +555,6 @@ def paystack_webhook(request):
             pass
     
     return HttpResponse(status=200)
-
-class ReviewViewSet(viewsets.ModelViewSet):
-    serializer_class = ReviewSerializer
-    permission_classes = [IsAuthenticated]
-    
-    def get_queryset(self):
-        vendor = self.request.user.vendor_profile
-        products = Product.objects.filter(vendor=vendor.user)
-        return ProductReview.objects.filter(product__in=products)
-    
-    @action(detail=True, methods=['post'])
-    def respond(self, request, pk=None):
-        review = self.get_object()
-        response = request.data.get('response')
-        
-        if not response:
-            return Response({"error": "Response is required"}, status=400)
-        
-        review.vendor_response = response
-        review.response_date = timezone.now()
-        review.save()
-        
-        return Response({"success": "Response added to review"})
     
 
 class VendorDetailsView(APIView):
@@ -598,11 +575,86 @@ class VendorDetailsView(APIView):
         
         return Response(vendor_details)
     
-# Get reviews for a vendor
-class VendorReviewListView(generics.ListAPIView):
-    serializer_class = VendorReviewSerializer
+
+class VendorReviewsAPIView(APIView):
+    """
+    Get all reviews for a vendor
+    Returns reviews with statistics
+    """
     permission_classes = [IsAuthenticated]
     
-    def get_queryset(self):
-        vendor_id = self.kwargs['vendor_id']
-        return VendorReview.objects.filter(vendor_id=vendor_id)
+    def get(self, request):
+        try:
+            # Get the vendor associated with the authenticated user
+            # Using the related_name="vendor_profile" from the Vendor model
+            vendor = request.user.vendor_profile
+            
+            # Get all reviews for this vendor
+            reviews = VendorReview.objects.filter(
+                vendor=vendor
+            ).select_related(
+                'reviewer', 'order', 'vendor'
+            ).order_by('-created_at')
+            
+            # Calculate review statistics
+            stats = reviews.aggregate(
+                total_reviews=Count('id'),
+                average_rating=Avg('rating')
+            )
+            
+            # Handle case where there are no reviews (Avg returns None)
+            if stats['average_rating'] is None:
+                stats['average_rating'] = 0
+            
+            # Get rating breakdown (count of each rating 1-5)
+            rating_breakdown = {}
+            for rating in range(1, 6):
+                rating_breakdown[rating] = reviews.filter(rating=rating).count()
+            
+            stats['rating_breakdown'] = rating_breakdown
+            
+            # Serialize reviews
+            review_serializer = VendorReviewSerializer(
+                reviews,
+                many=True,
+                context={'request': request}
+            )
+            
+            # Format the response data
+            response_data = {
+                'reviews': review_serializer.data,
+                'stats': {
+                    'total_reviews': stats['total_reviews'],
+                    'average_rating': round(float(stats['average_rating']), 1),
+                    'rating_breakdown': stats['rating_breakdown']
+                },
+                'vendor_info': {
+                    'id': vendor.id,
+                    'business_name': vendor.business_name,
+                    'business_category': vendor.business_category
+                }
+            }
+            
+            return Response(response_data, status=status.HTTP_200_OK)
+            
+        except AttributeError:
+            return Response(
+                {'error': 'No vendor profile found for this user'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Vendor.DoesNotExist:
+            return Response(
+                {'error': 'Vendor profile not found for this user'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            # Log the error for debugging
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error in ProductReviewsAPIView: {str(e)}")
+            
+            return Response(
+                {'error': 'An error occurred while fetching reviews'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    

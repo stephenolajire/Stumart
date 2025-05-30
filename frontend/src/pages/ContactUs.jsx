@@ -11,6 +11,7 @@ import {
 import styles from "../css/Contact.module.css";
 import api from "../constant/api";
 import Swal from "sweetalert2";
+import Header from "../components/Header";
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -83,15 +84,20 @@ const Contact = () => {
   };
 
   return (
-    <div className={styles.contactContainer}>
+    <div className={styles.contactContainer} style={{ marginTop: "2.5rem" }}>
+      {/* <div className={styles.backHeader} style={{ paddingLeft: "2rem" }}>
+        <Header title=" " />
+      </div> */}
       <section className={styles.hero}>
         <div className={styles.container}>
           <h1>Contact Us</h1>
-          <p>Get in touch with our support team</p>
+          <p style={{ marginBottom: "2rem" }}>
+            Get in touch with our support team
+          </p>
         </div>
       </section>
 
-      <section className={styles.contactSection}>
+      <section className={styles.contactSection} style={{ marginTop: "-3rem" }}>
         <div className={styles.container}>
           <div className={styles.contactGrid}>
             <div className={styles.contactInfo}>

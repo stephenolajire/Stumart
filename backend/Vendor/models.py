@@ -45,20 +45,20 @@ class VendorSalesData(models.Model):
         return f"{self.vendor.business_name} - {self.month} {self.year}: {self.value} orders"
 
 
-class ProductReview(models.Model):
-    """Model for product reviews"""
-    RATING_CHOICES = [(i, i) for i in range(1, 6)]  # 1-5 stars
+# class ProductReview(models.Model):
+#     """Model for product reviews"""
+#     RATING_CHOICES = [(i, i) for i in range(1, 6)]  # 1-5 stars
     
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="reviews")
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    rating = models.PositiveSmallIntegerField(choices=RATING_CHOICES)
-    comment = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    vendor_response = models.TextField(null=True, blank=True)
-    response_date = models.DateTimeField(null=True, blank=True)
+#     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="reviews")
+#     user = models.ForeignKey(User, on_delete=models.CASCADE)
+#     rating = models.PositiveSmallIntegerField(choices=RATING_CHOICES)
+#     comment = models.TextField()
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     vendor_response = models.TextField(null=True, blank=True)
+#     response_date = models.DateTimeField(null=True, blank=True)
 
-    def __str__(self):
-        return f"Review for {self.product.name} by {self.user.email}"
+#     def __str__(self):
+#         return f"Review for {self.product.name} by {self.user.email}"
     
 
 class Withdrawal(models.Model):

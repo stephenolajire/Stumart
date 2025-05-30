@@ -840,10 +840,114 @@ class ConfirmDeliveryView(APIView):
         
 
 # Get reviews for a picker
-class PickerReviewListView(generics.ListAPIView):
-    serializer_class = PickerReviewSerializer
+class PickerReviewsAPIView(APIView):
+    """
+    Get all reviews for a picker (either regular picker or student picker)
+    Returns reviews with statistics
+    """
     permission_classes = [IsAuthenticated]
     
-    def get_queryset(self):
-        picker_id = self.kwargs['picker_id']
-        return PickerReview.objects.filter(picker_id=picker_id)
+    def get(self, request):
+        try:
+            user = request.user
+            picker_profile = None
+            picker_type = None
+            
+            # Check if user is a regular picker
+            if user.user_type == 'picker':
+                try:
+                    picker_profile = user.picker_profile
+                    picker_type = 'picker'
+                except AttributeError:
+                    pass
+            
+            # Check if user is a student picker
+            elif user.user_type == 'student_picker':
+                try:
+                    picker_profile = user.student_picker_profile
+                    picker_type = 'student_picker'
+                except AttributeError:
+                    pass
+            
+            # If no picker profile found, return error
+            if not picker_profile:
+                return Response(
+                    {'error': 'No picker profile found for this user'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # Get all reviews for this picker
+            reviews = PickerReview.objects.filter(
+                picker=user
+            ).select_related(
+                'reviewer', 'order', 'picker'
+            ).order_by('-created_at')
+            
+            # Calculate review statistics
+            stats = reviews.aggregate(
+                total_reviews=Count('id'),
+                average_rating=Avg('rating')
+            )
+            
+            # Handle case where there are no reviews (Avg returns None)
+            if stats['average_rating'] is None:
+                stats['average_rating'] = 0
+            
+            # Get rating breakdown (count of each rating 1-5)
+            rating_breakdown = {}
+            for rating in range(1, 6):
+                rating_breakdown[rating] = reviews.filter(rating=rating).count()
+            
+            stats['rating_breakdown'] = rating_breakdown
+            
+            # Serialize reviews
+            review_serializer = PickerReviewSerializer(
+                reviews,
+                many=True,
+                context={'request': request}
+            )
+            
+            # Format picker info based on picker type
+            if picker_type == 'picker':
+                picker_info = {
+                    'id': picker_profile.id,
+                    'picker_name': f"{user.first_name} {user.last_name}",
+                    'fleet_type': picker_profile.fleet_type,
+                    'total_deliveries': picker_profile.total_deliveries,
+                    'is_available': picker_profile.is_available,
+                    'picker_type': 'Regular Picker'
+                }
+            else:  # student_picker
+                picker_info = {
+                    'id': picker_profile.id,
+                    'picker_name': f"{user.first_name} {user.last_name}",
+                    'hostel_name': picker_profile.hostel_name,
+                    'room_number': picker_profile.room_number,
+                    'total_deliveries': picker_profile.total_deliveries,
+                    'is_available': picker_profile.is_available,
+                    'picker_type': 'Student Picker'
+                }
+            
+            # Format the response data
+            response_data = {
+                'reviews': review_serializer.data,
+                'stats': {
+                    'total_reviews': stats['total_reviews'],
+                    'average_rating': round(float(stats['average_rating']), 1),
+                    'rating_breakdown': stats['rating_breakdown']
+                },
+                'picker_info': picker_info
+            }
+            
+            return Response(response_data, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            # Log the error for debugging
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error in PickerReviewsAPIView: {str(e)}")
+            
+            return Response(
+                {'error': 'An error occurred while fetching picker reviews'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

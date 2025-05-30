@@ -2,6 +2,10 @@
   margin-top: 8rem;
 }
 
+.backHeader{
+  display: none;
+}
+
 .container {
   width: 100%;
   margin: 0 auto;
@@ -176,6 +180,13 @@
     /* max-width: 80rem; */
     margin: 0 auto;
     line-height: 3rem;
+}
+
+@media screen and (max-width: 768px) {
+  .backHeader{
+    display: block;
+  }
+  
 }
 
 @media (max-width: 968px) {

@@ -442,3 +442,83 @@ class ReviewSubmissionSerializer(serializers.Serializer):
     vendor_comment = serializers.CharField(max_length=1000, required=False, allow_blank=True)
     picker_rating = serializers.IntegerField(min_value=1, max_value=5)
     picker_comment = serializers.CharField(max_length=1000, required=False, allow_blank=True)
+
+
+class ProductReviewSerializer(serializers.ModelSerializer):
+    reviewer_name = serializers.CharField(read_only=True)
+    product_name = serializers.CharField(source='product.name', read_only=True)
+    order_number = serializers.CharField(source='order.order_number', read_only=True)
+    created_at_formatted = serializers.SerializerMethodField()
+    updated_at_formatted = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = ProductReview
+        fields = [
+            'id', 'product', 'product_name', 'reviewer', 'reviewer_name', 
+            'order', 'order_number', 'rating', 'comment', 
+            'created_at', 'created_at_formatted', 
+            'updated_at', 'updated_at_formatted'
+        ]
+        read_only_fields = ['id', 'reviewer', 'created_at', 'updated_at']
+    
+    def get_created_at_formatted(self, obj):
+        return obj.created_at.strftime('%B %d, %Y')
+    
+    def get_updated_at_formatted(self, obj):
+        return obj.updated_at.strftime('%B %d, %Y')
+    
+    def validate_rating(self, value):
+        if value < 1 or value > 5:
+            raise serializers.ValidationError("Rating must be between 1 and 5")
+        return value
+    
+    def validate(self, data):
+        """
+        Check that the user has bought the product before allowing review
+        """
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            user = request.user
+            product = data.get('product')
+            
+            if product and user.is_authenticated:
+                # Check if user has bought this product
+                from .models import OrderItem
+                has_bought = OrderItem.objects.filter(
+                    product=product,
+                    order__user=user,
+                    order__order_status__in=['DELIVERED', 'COMPLETED']
+                ).exists()
+                
+                if not has_bought:
+                    raise serializers.ValidationError(
+                        "You can only review products you have purchased"
+                    )
+        
+        return data
+
+
+class ProductReviewCreateSerializer(serializers.ModelSerializer):
+    """Simplified serializer for creating reviews"""
+    
+    class Meta:
+        model = ProductReview
+        fields = ['rating', 'comment']
+    
+    def validate_rating(self, value):
+        if value < 1 or value > 5:
+            raise serializers.ValidationError("Rating must be between 1 and 5")
+        return value
+
+
+class ProductReviewStatsSerializer(serializers.Serializer):
+    """Serializer for review statistics"""
+    total_reviews = serializers.IntegerField()
+    average_rating = serializers.FloatField()
+    rating_breakdown = serializers.DictField()
+
+
+class ProductReviewListSerializer(serializers.Serializer):
+    """Serializer for the complete review list response"""
+    reviews = ProductReviewSerializer(many=True)
+    stats = ProductReviewStatsSerializer()

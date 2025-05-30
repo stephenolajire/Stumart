@@ -140,6 +140,14 @@ const ShoppingCart = () => {
     fetchCartData();
   }, []);
 
+  // Add this function to format prices
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat("en-NG", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(price || 0);
+  };
+
   if (loading) {
     return (
       <div style={{ paddingTop: "10rem" }} className={styles.loading}>
@@ -210,7 +218,7 @@ const ShoppingCart = () => {
                 {/* Item Price */}
                 <div className={styles.itemPrice}>
                   <span className={styles.mobileLabel}>Price:</span>
-                  <span>{item.product_price}</span>
+                  <span>₦{formatPrice(item.product_price)}</span>
                 </div>
 
                 {/* Item Quantity */}
@@ -290,22 +298,22 @@ const ShoppingCart = () => {
 
             <div className={styles.summaryRow}>
               <span>Subtotal</span>
-              <span>{cartSummary.subTotal}</span>
+              <span>₦{formatPrice(cartSummary.subTotal)}</span>
             </div>
 
             <div className={styles.summaryRow}>
               <span>Shipping</span>
-              <span>{cartSummary.shippingFee}</span>
+              <span>₦{formatPrice(cartSummary.shippingFee)}</span>
             </div>
 
             <div className={styles.summaryRow}>
               <span>Tax</span>
-              <span>{cartSummary.tax}</span>
+              <span>₦{formatPrice(cartSummary.tax)}</span>
             </div>
 
             <div className={`${styles.summaryRow} ${styles.totalRow}`}>
               <span>Total</span>
-              <span>{cartSummary.total}</span>
+              <span>₦{formatPrice(cartSummary.total)}</span>
             </div>
 
             <button className={styles.checkoutButton}>

@@ -14,6 +14,7 @@ import {
 } from "react-icons/fa";
 import { nigeriaInstitutions, nigeriaStates } from "../constant/data";
 import { GlobalContext } from "../constant/GlobalContext";
+import Header from "../components/Header";
 
 const AllProducts = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -270,19 +271,7 @@ const AllProducts = () => {
       )}
 
       <div className={styles.header}>
-        <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
-          <div className={styles.backButton}>
-            <button
-              style={{ border: "none", backgroundColor: "#fff", width: "auto" }}
-              onClick={() => navigate(-1)}
-            >
-              <FaArrowLeft size={32} color="#000" />
-            </button>
-          </div>
-          <div>
-            <h1>All Products</h1>
-          </div>
-        </div>
+        <Header title="All Products" />
         <button
           className={styles.filterToggle}
           onClick={() => setShowFilters(!showFilters)}

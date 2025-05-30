@@ -4,6 +4,7 @@ import { GlobalContext } from "../constant/GlobalContext";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import api from "../constant/api";
+import Header from "../components/Header";
 
 const Checkout = () => {
   // Form states
@@ -98,7 +99,7 @@ const Checkout = () => {
 
   return (
     <div className={styles.checkoutContainer}>
-      <h2 className={styles.checkoutTitle}>Checkout</h2>
+      <Header title="Checkout" />
 
       {error && <div className={styles.errorMessage}>{error}</div>}
 

@@ -3,7 +3,7 @@
 from django.contrib import admin
 from .models import (
     VendorStats, VendorRevenueData, VendorSalesData,
-    ProductReview, Withdrawal
+    Withdrawal
 )
 
 
@@ -27,11 +27,11 @@ class VendorSalesDataAdmin(admin.ModelAdmin):
     list_filter = ('year', 'month')
 
 
-@admin.register(ProductReview)
-class ProductReviewAdmin(admin.ModelAdmin):
-    list_display = ('product', 'user', 'rating', 'created_at', 'vendor_response')
-    search_fields = ('product__name', 'user__email')
-    list_filter = ('rating', 'created_at')
+# @admin.register(ProductReview)
+# class ProductReviewAdmin(admin.ModelAdmin):
+#     list_display = ('product', 'user', 'rating', 'created_at', 'vendor_response')
+#     search_fields = ('product__name', 'user__email')
+#     list_filter = ('rating', 'created_at')
 
 
 @admin.register(Withdrawal)

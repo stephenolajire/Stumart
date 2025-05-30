@@ -30,6 +30,6 @@ urlpatterns = [
     path('confirm/<int:id>/', views.ConfirmDeliveryView.as_view(), name="confirm-order"),
 
     # Picker Reviews
-    path('picker-reviews/<int:picker_id>/', views.PickerReviewListView.as_view(), name='picker_reviews'),
+    path('picker/reviews/', views.PickerReviewsAPIView.as_view(), name='picker_reviews'),
 
 ]

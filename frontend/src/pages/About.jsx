@@ -7,6 +7,7 @@ import delivery from "../assets/del.jpeg";
 import campus from "../assets/uni.jpeg";
 import { Link } from "react-router-dom";
 import { GlobalContext } from "../constant/GlobalContext";
+import Header from "../components/Header";
 
 const About = () => {
   const { isAuthenticated } = useContext(GlobalContext);
@@ -19,6 +20,9 @@ const About = () => {
 
   return (
     <div className={styles.aboutContainer}>
+      {/* <div className={styles.backHeader} style={{ paddingLeft: "2rem" }}>
+        <Header title=" " />
+      </div> */}
       <section className={styles.hero} data-aos="fade-down">
         <h1>About StuMart</h1>
         <p>Connecting Campus Communities Through Commerce</p>

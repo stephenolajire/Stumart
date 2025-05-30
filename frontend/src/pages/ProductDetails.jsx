@@ -4,8 +4,15 @@ import styles from "../css/ProductDetails.module.css";
 import { GlobalContext } from "../constant/GlobalContext";
 import api from "../constant/api";
 import Swal from "sweetalert2";
-import { FaArrowLeft, FaStar, FaStarHalfAlt, FaRegStar } from "react-icons/fa";
+import {
+  FaArrowLeft,
+  FaStar,
+  FaStarHalfAlt,
+  FaRegStar,
+  FaTimes,
+} from "react-icons/fa";
 import Spinner from "../components/Spinner";
+import Header from "../components/Header";
 
 const Toast = Swal.mixin({
   toast: true,
@@ -40,6 +47,22 @@ const ProductDetails = () => {
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [showAllReviews, setShowAllReviews] = useState(false);
 
+  // User review states
+  const [userReviewStatus, setUserReviewStatus] = useState({
+    hasBought: false,
+    hasReviewed: false,
+    existingReview: null,
+    loading: true,
+  });
+
+  // Review modal states
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewForm, setReviewForm] = useState({
+    rating: 0,
+    comment: "",
+  });
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+
   // Star Rating Component
   const StarRating = ({ rating, size = 16 }) => {
     const stars = [];
@@ -65,6 +88,59 @@ const ProductDetails = () => {
     return <div className={styles.starRating}>{stars}</div>;
   };
 
+  // Interactive Star Rating Component for modal
+  const InteractiveStarRating = ({ rating, onRatingChange, size = 20 }) => {
+    const [hoverRating, setHoverRating] = useState(0);
+
+    return (
+      <div className={styles.interactiveStarRating}>
+        {[1, 2, 3, 4, 5].map((star) => (
+          <FaStar
+            key={star}
+            size={size}
+            color={star <= (hoverRating || rating) ? "#daa520" : "#d1d5db"}
+            style={{ cursor: "pointer", marginRight: "4px" }}
+            onClick={() => onRatingChange(star)}
+            onMouseEnter={() => setHoverRating(star)}
+            onMouseLeave={() => setHoverRating(0)}
+          />
+        ))}
+      </div>
+    );
+  };
+
+  // Check user's review status for this product
+  const checkUserReviewStatus = async () => {
+    try {
+      setUserReviewStatus((prev) => ({ ...prev, loading: true }));
+
+      // Match the exact backend URL pattern
+      const response = await api.get(
+        `products/${productId}/user-review-status/`
+      );
+
+      console.log("Review status response:", response.data); // Debug log
+
+      setUserReviewStatus({
+        hasBought: response.data.has_bought,
+        hasReviewed: response.data.has_reviewed,
+        existingReview: response.data.existing_review,
+        loading: false,
+      });
+    } catch (error) {
+      console.error(
+        "Error checking review status:",
+        error.response?.data || error
+      );
+      setUserReviewStatus({
+        hasBought: false,
+        hasReviewed: false,
+        existingReview: null,
+        loading: false,
+      });
+    }
+  };
+
   // Fetch reviews
   const fetchReviews = async () => {
     setReviewsLoading(true);
@@ -77,6 +153,93 @@ const ProductDetails = () => {
     } finally {
       setReviewsLoading(false);
     }
+  };
+
+  // Handle review submission
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+
+    if (reviewForm.rating === 0) {
+      Toast.fire({
+        icon: "warning",
+        title: "Please select a rating",
+      });
+      return;
+    }
+
+    setReviewSubmitting(true);
+
+    try {
+      const token = localStorage.getItem("access_token");
+
+      // Updated endpoint URLs
+      const endpoint = userReviewStatus.hasReviewed
+        ? `products/${productId}/reviews/${userReviewStatus.existingReview.id}/`
+        : `products/${productId}/reviews/create/`;
+
+      const method = userReviewStatus.hasReviewed ? "put" : "post";
+
+      const response = await api[method](
+        endpoint,
+        {
+          product_id: productId,
+          rating: reviewForm.rating,
+          comment: reviewForm.comment,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status === 200 || response.status === 201) {
+        Toast.fire({
+          icon: "success",
+          title: userReviewStatus.hasReviewed
+            ? "Review updated successfully!"
+            : "Review submitted successfully!",
+        });
+
+        // Close modal and refresh data
+        setShowReviewModal(false);
+        fetchReviews();
+        checkUserReviewStatus();
+      }
+    } catch (error) {
+      console.error("Error submitting review:", error);
+      Toast.fire({
+        icon: "error",
+        title: "Failed to submit review. Please try again.",
+      });
+    } finally {
+      setReviewSubmitting(false);
+    }
+  };
+
+  // Handle opening review modal
+  const handleOpenReviewModal = () => {
+    if (userReviewStatus.hasReviewed && userReviewStatus.existingReview) {
+      setReviewForm({
+        rating: userReviewStatus.existingReview.rating,
+        comment: userReviewStatus.existingReview.comment || "",
+      });
+    } else {
+      setReviewForm({
+        rating: 0,
+        comment: "",
+      });
+    }
+    setShowReviewModal(true);
+  };
+
+  // Handle closing review modal
+  const handleCloseReviewModal = () => {
+    setShowReviewModal(false);
+    setReviewForm({
+      rating: 0,
+      comment: "",
+    });
   };
 
   // Handle Add to Cart
@@ -135,6 +298,7 @@ const ProductDetails = () => {
   useEffect(() => {
     if (productId) {
       fetchReviews();
+      checkUserReviewStatus();
     }
   }, [productId]);
 
@@ -169,8 +333,13 @@ const ProductDetails = () => {
     }
   }, [product]);
 
-  if (loading) {
-    return <div className={styles.loading}> <Spinner/> </div>;
+  // Combine the loading states
+  if (loading || reviewsLoading) {
+    return (
+      <div style={{marginTop: "10rem"}}>
+        <Spinner />
+      </div>
+    );
   }
 
   // Handle carousel navigation
@@ -214,16 +383,7 @@ const ProductDetails = () => {
 
   return (
     <div className={styles.productDetails}>
-      <div className={styles.header}>
-        <div
-          className={styles.backButton}
-          onClick={() => window.history.back()}
-        >
-          <FaArrowLeft size={20} />
-          <span className={styles.backText}>Back</span>
-        </div>
-        <h2 className={styles.title}>Product Details</h2>
-      </div>
+      <Header title="Product Details"/>
       <div className={styles.container}>
         <div className={styles.productGrid}>
           <div className={styles.imageSection}>
@@ -408,7 +568,31 @@ const ProductDetails = () => {
         {/* Reviews Section */}
         <div className={styles.reviewsSection}>
           <div className={styles.reviewsHeader}>
-            <h2>Customer Reviews</h2>
+            <div className={styles.reviewsHeaderTop}>
+              <h2>Customer Reviews</h2>
+
+              {/* User Review Action Buttons */}
+              {!userReviewStatus.loading && userReviewStatus.hasBought && (
+                <div className={styles.userReviewActions}>
+                  {userReviewStatus.hasReviewed ? (
+                    <button
+                      className={styles.editReviewButton}
+                      onClick={handleOpenReviewModal}
+                    >
+                      Edit Your Review
+                    </button>
+                  ) : (
+                    <button
+                      className={styles.addReviewButton}
+                      onClick={handleOpenReviewModal}
+                    >
+                      Write a Review
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
             {reviewStats.total_reviews > 0 && (
               <div className={styles.reviewsSummary}>
                 <div className={styles.averageRating}>
@@ -452,9 +636,7 @@ const ProductDetails = () => {
           </div>
 
           <div className={styles.reviewsList}>
-            {reviewsLoading ? (
-              <div className={styles.reviewsLoading}>Loading reviews...</div>
-            ) : reviews.length === 0 ? (
+            {reviews.length === 0 ? (
               <div className={styles.noReviews}>
                 <p>No reviews yet for this vendor's products.</p>
                 <p>Be the first to leave a review after your purchase!</p>
@@ -500,6 +682,77 @@ const ProductDetails = () => {
           </div>
         </div>
       </div>
+
+      {/* Review Modal */}
+      {showReviewModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <div className={styles.modalHeader}>
+              <h3>
+                {userReviewStatus.hasReviewed
+                  ? "Edit Your Review"
+                  : "Write a Review"}
+              </h3>
+              <button
+                className={styles.modalClose}
+                onClick={handleCloseReviewModal}
+              >
+                <FaTimes />
+              </button>
+            </div>
+
+            <form onSubmit={handleReviewSubmit} className={styles.reviewForm}>
+              <div className={styles.formGroup}>
+                <label>Rating *</label>
+                <InteractiveStarRating
+                  rating={reviewForm.rating}
+                  onRatingChange={(rating) =>
+                    setReviewForm((prev) => ({ ...prev, rating }))
+                  }
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label>Comment (Optional)</label>
+                <textarea
+                  value={reviewForm.comment}
+                  onChange={(e) =>
+                    setReviewForm((prev) => ({
+                      ...prev,
+                      comment: e.target.value,
+                    }))
+                  }
+                  placeholder="Share your experience with this product..."
+                  rows={4}
+                  className={styles.reviewTextarea}
+                />
+              </div>
+
+              <div className={styles.modalActions}>
+                <button
+                  type="button"
+                  className={styles.cancelButton}
+                  onClick={handleCloseReviewModal}
+                  disabled={reviewSubmitting}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className={styles.submitButton}
+                  disabled={reviewSubmitting || reviewForm.rating === 0}
+                >
+                  {reviewSubmitting
+                    ? "Submitting..."
+                    : userReviewStatus.hasReviewed
+                    ? "Update Review"
+                    : "Submit Review"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

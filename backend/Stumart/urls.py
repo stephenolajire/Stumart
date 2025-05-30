@@ -40,5 +40,20 @@ urlpatterns = [
     path('vendor-review/', CreateVendorReviewView.as_view(), name='create_vendor_review'),
     path('picker-review/', CreatePickerReviewView.as_view(), name='create_picker_review'),
     path('submit-reviews/', SubmitReviewsView.as_view(), name='submit_reviews'),
-    path('products/<int:product_id>/reviews/', ProductReviewsAPIView.as_view(), name='product-reviews'),
+
+    # Product Review endpoints
+    # Get all reviews for a product
+    path('products/<int:product_id>/reviews/', ProductReviewListView.as_view(), name='get_product_reviews'),
+    
+    # Check user's review status for a product
+    path('products/<int:product_id>/user-review-status/', UserReviewStatusView.as_view(), name='get_user_review_status'),
+    
+    # Create a new review for a product
+    path('products/<int:product_id>/reviews/create/', ProductReviewCreateView.as_view(), name='create_product_review'),
+    
+    # Update or delete a specific review
+    path('products/<int:product_id>/reviews/<int:review_id>/', ProductReviewDetailView.as_view(), name='update_delete_product_review'),
+    
+    # Get all reviews by the current user
+    path('user/reviews/', UserReviewListView.as_view(), name='get_user_reviews'),
 ]

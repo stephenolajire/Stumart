@@ -2,7 +2,7 @@
 from rest_framework import serializers
 from User.models import Vendor
 from Stumart.models import Product, Order, OrderItem, Transaction, Wallet
-from .models import VendorStats, VendorRevenueData, VendorSalesData, ProductReview, Withdrawal
+from .models import VendorStats, VendorRevenueData, VendorSalesData, Withdrawal
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -69,16 +69,16 @@ class TransactionSerializer(serializers.ModelSerializer):
         return f"{obj.order.first_name} {obj.order.last_name}"
 
 
-class ReviewSerializer(serializers.ModelSerializer):
-    product_name = serializers.CharField(source='product.name')
-    customer_name = serializers.SerializerMethodField()
+# class ReviewSerializer(serializers.ModelSerializer):
+#     product_name = serializers.CharField(source='product.name')
+#     customer_name = serializers.SerializerMethodField()
     
-    class Meta:
-        model = ProductReview
-        fields = ['id', 'product', 'product_name', 'user', 'customer_name', 'rating', 'comment', 'created_at', 'vendor_response', 'response_date']
+#     class Meta:
+#         model = ProductReview
+#         fields = ['id', 'product', 'product_name', 'user', 'customer_name', 'rating', 'comment', 'created_at', 'vendor_response', 'response_date']
     
-    def get_customer_name(self, obj):
-        return f"{obj.user.first_name} {obj.user.last_name}"
+#     def get_customer_name(self, obj):
+#         return f"{obj.user.first_name} {obj.user.last_name}"
 
 
 class StatisticsSerializer(serializers.ModelSerializer):

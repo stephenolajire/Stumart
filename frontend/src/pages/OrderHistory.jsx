@@ -10,6 +10,7 @@ import Spinner from "../components/Spinner";
 import ReviewModal from "../components/ReviewModal";
 import { FaArrowLeft } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import Header from "../components/Header";
 
 const OrderHistory = () => {
   const [expandedOrder, setExpandedOrder] = useState(null);
@@ -254,14 +255,7 @@ const OrderHistory = () => {
 
   return (
     <div className={style.orderHistoryContainer}>
-      <div className={style.header}>
-        <div onClick={() => navigate(-1)} className={style.backButton}>
-          <FaArrowLeft size={32} />
-        </div>
-        <div>
-          <h1 className={style.orderHistoryTitle}>My Orders</h1>
-        </div>
-      </div>
+      <Header title="Order History" />
 
       <div className={style.ordersList}>
         {currentOrders.map((order) => (

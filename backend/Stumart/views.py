@@ -2173,73 +2173,292 @@ def update_picker_rating(picker_id):
         pass
 
 
-class ProductReviewsAPIView(APIView):
+class ProductReviewListView(APIView):
     """
-    Get all reviews for a vendor that owns the specified product
-    Returns reviews with statistics
+    Get all reviews for a specific product with statistics
     """
     
     def get(self, request, product_id):
         try:
-            # Get the product and its vendor
             product = get_object_or_404(Product, id=product_id)
-            vendor = get_object_or_404(Vendor, user=product.vendor)
-            
-            # Get all reviews for this vendor
-            reviews = VendorReview.objects.filter(vendor=vendor).select_related(
-                'reviewer', 'order', 'vendor'
-            ).order_by('-created_at')
+            reviews = ProductReview.objects.filter(product=product).select_related('reviewer', 'order')
             
             # Calculate review statistics
-            stats = reviews.aggregate(
+            review_stats = reviews.aggregate(
                 total_reviews=Count('id'),
-                average_rating=Avg('rating') or 0
+                average_rating=Avg('rating')
             )
             
-            # Get rating breakdown (count of each rating 1-5)
+            # Rating breakdown (count of each rating 1-5)
             rating_breakdown = {}
-            for rating in range(1, 6):
-                rating_breakdown[rating] = reviews.filter(rating=rating).count()
-            
-            stats['rating_breakdown'] = rating_breakdown
+            for i in range(1, 6):
+                rating_breakdown[i] = reviews.filter(rating=i).count()
             
             # Serialize reviews
-            review_serializer = VendorReviewSerializer(
-                reviews, 
-                many=True, 
-                context={'request': request}
-            )
+            serialized_reviews = []
+            for review in reviews:
+                serialized_reviews.append({
+                    'id': review.id,
+                    'rating': review.rating,
+                    'comment': review.comment,
+                    'reviewer_name': review.reviewer_name,
+                    'created_at': review.created_at.strftime('%B %d, %Y'),
+                    'order_number': review.order.order_number if review.order else None,
+                })
             
-            # Format the response data
-            response_data = {
-                'reviews': review_serializer.data,
+            return Response({
+                'reviews': serialized_reviews,
                 'stats': {
-                    'total_reviews': stats['total_reviews'],
-                    'average_rating': round(stats['average_rating'], 1),
-                    'rating_breakdown': stats['rating_breakdown']
-                },
-                'vendor_info': {
-                    'id': vendor.id,
-                    'business_name': vendor.business_name,
-                    'business_category': vendor.business_category
+                    'total_reviews': review_stats['total_reviews'] or 0,
+                    'average_rating': round(review_stats['average_rating'] or 0, 1),
+                    'rating_breakdown': rating_breakdown
                 }
-            }
+            }, status=status.HTTP_200_OK)
             
-            return Response(response_data, status=status.HTTP_200_OK)
-            
-        except Product.DoesNotExist:
+        except Exception as e:
+            logger.error(f"Error fetching product reviews: {str(e)}")
             return Response(
-                {'error': 'Product not found'}, 
-                status=status.HTTP_404_NOT_FOUND
+                {'error': 'Failed to fetch reviews'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-        except Vendor.DoesNotExist:
+
+
+class UserReviewStatusView(APIView):
+    """
+    Check if user has bought the product and if they've already reviewed it
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, product_id):
+        try:
+            product = get_object_or_404(Product, id=product_id)
+            user = request.user
+            
+            # Check if user has bought this product
+            has_bought = OrderItem.objects.filter(
+                product=product,
+                order__user=user,
+                order__order_status__in=['DELIVERED', 'COMPLETED']  # Only completed orders
+            ).exists()
+            
+            # Check if user has already reviewed this product
+            existing_review = ProductReview.objects.filter(
+                product=product,
+                reviewer=user
+            ).first()
+            
+            has_reviewed = existing_review is not None
+            
+            review_data = None
+            if existing_review:
+                review_data = {
+                    'id': existing_review.id,
+                    'rating': existing_review.rating,
+                    'comment': existing_review.comment,
+                    'created_at': existing_review.created_at.strftime('%B %d, %Y'),
+                }
+            
+            return Response({
+                'has_bought': has_bought,
+                'has_reviewed': has_reviewed,
+                'existing_review': review_data
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Error checking user review status: {str(e)}")
             return Response(
-                {'error': 'Vendor not found for this product'}, 
-                status=status.HTTP_404_NOT_FOUND
+                {'error': 'Failed to check review status'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class ProductReviewCreateView(APIView):
+    """
+    Create a new product review
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, product_id):
+        try:
+            product = get_object_or_404(Product, id=product_id)
+            user = request.user
+            
+            # Validate request data
+            rating = request.data.get('rating')
+            comment = request.data.get('comment', '').strip()
+            
+            if not rating or not isinstance(rating, int) or rating < 1 or rating > 5:
+                return Response(
+                    {'error': 'Rating must be an integer between 1 and 5'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Check if user has bought this product
+            order_item = OrderItem.objects.filter(
+                product=product,
+                order__user=user,
+                order__order_status__in=['DELIVERED', 'COMPLETED']
+            ).select_related('order').first()
+            
+            if not order_item:
+                return Response(
+                    {'error': 'You can only review products you have purchased'}, 
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            # Check if user has already reviewed this product
+            existing_review = ProductReview.objects.filter(
+                product=product,
+                reviewer=user
+            ).first()
+            
+            if existing_review:
+                return Response(
+                    {'error': 'You have already reviewed this product'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Create the review
+            review = ProductReview.objects.create(
+                product=product,
+                reviewer=user,
+                order=order_item.order,
+                rating=rating,
+                comment=comment if comment else None
+            )
+            
+            return Response({
+                'message': 'Review created successfully',
+                'review': {
+                    'id': review.id,
+                    'rating': review.rating,
+                    'comment': review.comment,
+                    'reviewer_name': review.reviewer_name,
+                    'created_at': review.created_at.strftime('%B %d, %Y'),
+                }
+            }, status=status.HTTP_201_CREATED)
+            
+        except ValueError as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_400_BAD_REQUEST
             )
         except Exception as e:
+            logger.error(f"Error creating product review: {str(e)}")
             return Response(
-                {'error': 'An error occurred while fetching reviews'}, 
+                {'error': 'Failed to create review'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class ProductReviewDetailView(APIView):
+    """
+    Update or delete an existing product review
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def put(self, request, product_id, review_id):
+        """Update an existing product review"""
+        try:
+            product = get_object_or_404(Product, id=product_id)
+            review = get_object_or_404(
+                ProductReview, 
+                id=review_id, 
+                product=product, 
+                reviewer=request.user
+            )
+            
+            # Validate request data
+            rating = request.data.get('rating')
+            comment = request.data.get('comment', '').strip()
+            
+            if not rating or not isinstance(rating, int) or rating < 1 or rating > 5:
+                return Response(
+                    {'error': 'Rating must be an integer between 1 and 5'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Update the review
+            review.rating = rating
+            review.comment = comment if comment else None
+            review.updated_at = timezone.now()
+            review.save()
+            
+            return Response({
+                'message': 'Review updated successfully',
+                'review': {
+                    'id': review.id,
+                    'rating': review.rating,
+                    'comment': review.comment,
+                    'reviewer_name': review.reviewer_name,
+                    'created_at': review.created_at.strftime('%B %d, %Y'),
+                    'updated_at': review.updated_at.strftime('%B %d, %Y'),
+                }
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Error updating product review: {str(e)}")
+            return Response(
+                {'error': 'Failed to update review'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def delete(self, request, product_id, review_id):
+        """Delete a product review"""
+        try:
+            product = get_object_or_404(Product, id=product_id)
+            review = get_object_or_404(
+                ProductReview, 
+                id=review_id, 
+                product=product, 
+                reviewer=request.user
+            )
+            
+            review.delete()
+            
+            return Response(
+                {'message': 'Review deleted successfully'}, 
+                status=status.HTTP_200_OK
+            )
+            
+        except Exception as e:
+            logger.error(f"Error deleting product review: {str(e)}")
+            return Response(
+                {'error': 'Failed to delete review'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class UserReviewListView(APIView):
+    """
+    Get all reviews written by the current user
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        try:
+            reviews = ProductReview.objects.filter(reviewer=request.user).select_related('product', 'order')
+            
+            serialized_reviews = []
+            for review in reviews:
+                serialized_reviews.append({
+                    'id': review.id,
+                    'product_name': review.product.name,
+                    'product_id': review.product.id,
+                    'rating': review.rating,
+                    'comment': review.comment,
+                    'created_at': review.created_at.strftime('%B %d, %Y'),
+                    'order_number': review.order.order_number if review.order else None,
+                })
+            
+            return Response({
+                'reviews': serialized_reviews
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Error fetching user reviews: {str(e)}")
+            return Response(
+                {'error': 'Failed to fetch user reviews'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 

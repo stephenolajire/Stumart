@@ -1,110 +1,76 @@
-import React, { useState } from "react";
-import { FaSearch, FaReply, FaStar, FaFilter } from "react-icons/fa";
+import React, { useState, useEffect } from "react";
+import { FaSearch, FaStar, FaFilter, FaSpinner } from "react-icons/fa";
 import styles from "./css/VendorDashboard.module.css";
+import api from "../constant/api";
 
 const Reviews = () => {
   const [filterRating, setFilterRating] = useState("all");
-  const [filterResponded, setFilterResponded] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("date");
   const [expandedReview, setExpandedReview] = useState(null);
 
-  // Mock reviews data
-  const reviews = [
-    {
-      id: 1,
-      productId: "P1001",
-      productName: "Premium Coffee Maker",
-      customerName: "Sarah Johnson",
-      date: "2025-03-28",
-      rating: 5,
-      content:
-        "This coffee maker is amazing! The temperature control is perfect and it makes delicious coffee every time. I love the design and how easy it is to clean.",
-      responded: true,
-      response:
-        "Thank you for your wonderful review, Sarah! We're thrilled that you're enjoying your Premium Coffee Maker.",
-    },
-    {
-      id: 2,
-      productId: "P1002",
-      productName: "Smart Blender Pro",
-      customerName: "Michael Thompson",
-      date: "2025-03-25",
-      rating: 2,
-      content:
-        "Disappointed with this purchase. The blender is very noisy and doesn't blend smoothly. The app connection is unreliable too.",
-      responded: false,
-      response: "",
-    },
-    {
-      id: 3,
-      productId: "P1003",
-      productName: "Ergonomic Office Chair",
-      customerName: "Emily Davis",
-      date: "2025-03-20",
-      rating: 4,
-      content:
-        "Very comfortable chair that has helped with my back pain. The only reason I'm not giving 5 stars is because assembly was quite difficult.",
-      responded: true,
-      response:
-        "Thanks for your feedback, Emily! We appreciate the 4-star review and we're working on improving our assembly instructions.",
-    },
-    {
-      id: 4,
-      productId: "P1004",
-      productName: "Wireless Headphones",
-      customerName: "Robert Wilson",
-      date: "2025-03-18",
-      rating: 5,
-      content:
-        "Excellent sound quality and very comfortable to wear for long periods. Battery life is impressive too!",
-      responded: false,
-      response: "",
-    },
-    {
-      id: 5,
-      productId: "P1005",
-      productName: "Smart Home Hub",
-      customerName: "Jennifer Brown",
-      date: "2025-03-15",
-      rating: 3,
-      content:
-        "The device works well most of the time but has connectivity issues with some of my other smart devices. Customer service was helpful but couldn't fully resolve the problem.",
-      responded: true,
-      response:
-        "Hi Jennifer, thank you for your honest feedback. We'd like to follow up with you to see if we can resolve the connectivity issues you're experiencing. Our support team will contact you soon.",
-    },
-    {
-      id: 6,
-      productId: "P1001",
-      productName: "Premium Coffee Maker",
-      customerName: "David Martinez",
-      date: "2025-03-10",
-      rating: 1,
-      content:
-        "Arrived damaged and stopped working after three uses. Very disappointed with the quality.",
-      responded: true,
-      response:
-        "David, we're very sorry to hear about your experience. We've sent you a replacement unit and would like to offer a partial refund for the inconvenience.",
-    },
-  ];
+  // API data state
+  const [reviews, setReviews] = useState([]);
+  const [stats, setStats] = useState({
+    total_reviews: 0,
+    average_rating: 0,
+    rating_breakdown: {},
+  });
+  const [vendorInfo, setVendorInfo] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Calculate review stats
-  const averageRating =
-    reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length;
-  const fiveStarCount = reviews.filter((review) => review.rating === 5).length;
-  const fiveStarPercentage = (fiveStarCount / reviews.length) * 100;
-  const unrepliedCount = reviews.filter((review) => !review.responded).length;
+  // Fetch reviews data from API
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        setLoading(true);
+        const response = await api.get("vendor/reviews/");
+
+        // Since we're using axios, data is automatically parsed
+        const { data } = response;
+
+        setReviews(data.reviews || []);
+        setStats({
+          total_reviews: data.stats?.total_reviews || 0,
+          average_rating: data.stats?.average_rating || 0,
+          rating_breakdown: data.stats?.rating_breakdown || {},
+        });
+        setVendorInfo(data.vendor_info || {});
+        setError(null);
+      } catch (err) {
+        setError(
+          err.response?.data?.message ||
+            "Failed to fetch reviews. Please try again."
+        );
+        console.error("Error fetching reviews:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReviews();
+  }, []);
+
+  // Calculate additional stats
+  const fiveStarPercentage =
+    stats.total_reviews > 0
+      ? ((stats.rating_breakdown[5] || 0) / stats.total_reviews) * 100
+      : 0;
 
   const filterReviews = () => {
     return reviews
       .filter((review) => {
         const matchesSearch =
-          review.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          review.customerName
+          (review.reviewer?.first_name || "")
             .toLowerCase()
             .includes(searchTerm.toLowerCase()) ||
-          review.content.toLowerCase().includes(searchTerm.toLowerCase());
+          (review.reviewer?.last_name || "")
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          (review.comment || "")
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase());
 
         const matchesRating =
           filterRating === "all" ||
@@ -115,16 +81,11 @@ const Reviews = () => {
           (filterRating === "1star" && review.rating === 1) ||
           (filterRating === "negative" && review.rating <= 3);
 
-        const matchesResponded =
-          filterResponded === "all" ||
-          (filterResponded === "responded" && review.responded) ||
-          (filterResponded === "unreplied" && !review.responded);
-
-        return matchesSearch && matchesRating && matchesResponded;
+        return matchesSearch && matchesRating;
       })
       .sort((a, b) => {
         if (sortBy === "date") {
-          return new Date(b.date) - new Date(a.date);
+          return new Date(b.created_at) - new Date(a.created_at);
         } else if (sortBy === "rating-high") {
           return b.rating - a.rating;
         } else if (sortBy === "rating-low") {
@@ -149,10 +110,56 @@ const Reviews = () => {
     setExpandedReview(expandedReview === id ? null : id);
   };
 
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  const getCustomerName = (reviewer) => {
+    if (!reviewer) return "Anonymous";
+    return (
+      `${reviewer.first_name || ""} ${reviewer.last_name || ""}`.trim() ||
+      "Anonymous"
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className={styles.reviewsSection}>
+        <div className={styles.loadingContainer}>
+          <FaSpinner className={styles.spinner} />
+          <p>Loading reviews...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={styles.reviewsSection}>
+        <div className={styles.errorContainer}>
+          <p>Error loading reviews: {error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className={styles.retryButton}
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.reviewsSection}>
       <div className={styles.sectionHeader}>
         <h2 style={{ marginBottom: "2rem" }}>Reviews & Ratings</h2>
+        {vendorInfo.business_name && (
+          <p className={styles.businessName}>{vendorInfo.business_name}</p>
+        )}
       </div>
 
       <div className={styles.reviewsSummary}>
@@ -160,10 +167,10 @@ const Reviews = () => {
           <h3>Average Rating</h3>
           <div className={styles.ratingDisplay}>
             <span className={styles.ratingNumber}>
-              {averageRating.toFixed(1)}
+              {stats.average_rating.toFixed(1)}
             </span>
             <div className={styles.starsContainer}>
-              {renderStars(Math.round(averageRating))}
+              {renderStars(Math.round(stats.average_rating))}
             </div>
           </div>
         </div>
@@ -175,11 +182,18 @@ const Reviews = () => {
         </div>
         <div className={styles.summaryCard}>
           <h3>Total Reviews</h3>
-          <p className={styles.summaryValue}>{reviews.length}</p>
+          <p className={styles.summaryValue}>{stats.total_reviews}</p>
         </div>
         <div className={styles.summaryCard}>
-          <h3>Awaiting Response</h3>
-          <p className={styles.summaryValue}>{unrepliedCount}</p>
+          <h3>Rating Breakdown</h3>
+          <div className={styles.ratingBreakdown}>
+            {[5, 4, 3, 2, 1].map((rating) => (
+              <div key={rating} className={styles.ratingRow}>
+                <span>{rating}★</span>
+                <span>{stats.rating_breakdown[rating] || 0}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -197,16 +211,6 @@ const Reviews = () => {
             <option value="2star">2 Star</option>
             <option value="1star">1 Star</option>
             <option value="negative">Negative Reviews</option>
-          </select>
-
-          <select
-            value={filterResponded}
-            onChange={(e) => setFilterResponded(e.target.value)}
-            className={styles.filterSelect}
-          >
-            <option value="all">All Reviews</option>
-            <option value="responded">Responded</option>
-            <option value="unreplied">Awaiting Response</option>
           </select>
 
           <select
@@ -233,54 +237,43 @@ const Reviews = () => {
       </div>
 
       <div className={styles.reviewsList}>
-        {filterReviews().map((review) => (
-          <div className={styles.reviewCard} key={review.id}>
-            <div className={styles.reviewHeader}>
-              <div className={styles.reviewInfo}>
-                <h3>{review.productName}</h3>
-                <div className={styles.starsContainer}>
-                  {renderStars(review.rating)}
-                </div>
-              </div>
-              <div className={styles.reviewMeta}>
-                <p className={styles.customerName}>{review.customerName}</p>
-                <p className={styles.reviewDate}>
-                  {new Date(review.date).toLocaleDateString()}
-                </p>
-              </div>
-            </div>
-
-            <div
-              className={`${styles.reviewContent} ${
-                expandedReview === review.id ? styles.expanded : ""
-              }`}
-              onClick={() => toggleExpandReview(review.id)}
-            >
-              <p>{review.content}</p>
-            </div>
-
-            {review.responded && (
-              <div className={styles.responseContainer}>
-                <div className={styles.responseHeader}>
-                  <FaReply /> <span>Your Response</span>
-                </div>
-                <p className={styles.responseContent}>{review.response}</p>
-              </div>
-            )}
-
-            <div className={styles.reviewActions}>
-              {!review.responded ? (
-                <button className={styles.replyButton}>
-                  <FaReply /> Reply to Review
-                </button>
-              ) : (
-                <button className={styles.editReplyButton}>
-                  Edit Response
-                </button>
-              )}
-            </div>
+        {filterReviews().length === 0 ? (
+          <div className={styles.noReviews}>
+            <p>No reviews found matching your criteria.</p>
           </div>
-        ))}
+        ) : (
+          filterReviews().map((review) => (
+            <div className={styles.reviewCard} key={review.id}>
+              <div className={styles.reviewHeader}>
+                <div className={styles.reviewInfo}>
+                  <div className={styles.starsContainer}>
+                    {renderStars(review.rating)}
+                  </div>
+                </div>
+                <div className={styles.reviewMeta}>
+                  <p className={styles.customerName}>
+                    {getCustomerName(review.reviewer)}
+                  </p>
+                  <p className={styles.reviewDate}>
+                    {formatDate(review.created_at)}
+                  </p>
+                  {review.order && (
+                    <p className={styles.orderId}>Order #{review.order.id}</p>
+                  )}
+                </div>
+              </div>
+
+              <div
+                className={`${styles.reviewContent} ${
+                  expandedReview === review.id ? styles.expanded : ""
+                }`}
+                onClick={() => toggleExpandReview(review.id)}
+              >
+                <p>{review.comment || "No comment provided"}</p>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );

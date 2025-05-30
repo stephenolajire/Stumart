@@ -3,10 +3,20 @@ import { Link, useParams, useNavigate } from "react-router-dom";
 import { FaBuilding, FaClock, FaStar, FaShoppingCart } from "react-icons/fa";
 import { GlobalContext } from "../constant/GlobalContext";
 import styles from "../css/ShopDetails.module.css";
+import Spinner from "../components/Spinner";
+import Header from "../components/Header";
+
+const formatPrice = (price) => {
+  return new Intl.NumberFormat("en-NG", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(price || 0);
+};
 
 const ShopDetails = () => {
   const { shopId } = useParams();
-  const { fetchProducts, products, details, handleAddToCart } = useContext(GlobalContext);
+  const { fetchProducts, products, details, handleAddToCart } =
+    useContext(GlobalContext);
   const navigate = useNavigate();
 
   const handleProductClick = (productId) => {
@@ -14,7 +24,7 @@ const ShopDetails = () => {
   };
 
   const handleAddToCartClick = (e, productId) => {
-    e.stopPropagation(); 
+    e.stopPropagation();
     handleAddToCart();
   };
 
@@ -26,8 +36,7 @@ const ShopDetails = () => {
   if (!Array.isArray(products.products)) {
     return (
       <div className={styles.loadingContainer}>
-        <div className={styles.loader}></div>
-        <h2>Loading products...</h2>
+        <Spinner />
       </div>
     );
   }
@@ -35,7 +44,10 @@ const ShopDetails = () => {
   // No products state
   if (products.products.length === 0) {
     return (
-      <div className={styles.noProductsContainer}>
+      <div
+        className={styles.noProductsContainer}
+        style={{ marginTop: "10rem" }}
+      >
         <FaBuilding size={48} className={styles.noProductsIcon} />
         <h2>No product is available yet for the selected shop</h2>
         <Link to="/" className={styles.backButton}>
@@ -48,9 +60,10 @@ const ShopDetails = () => {
   return (
     <div className={styles.shopDetailsContainer}>
       {/* Shop Header Section */}
+      <Header title={details.business_name} />
       <div className={styles.shopHeader}>
         <div className={styles.shopInfo}>
-          <h1 className={styles.shopName}>{details.business_name}</h1>
+          {/* <h1 className={styles.shopName}>{details.business_name}</h1> */}
           <p className={styles.shopCategory}>{details.business_category}</p>
           <p className={styles.shopDescription}>
             Discover quality {details.business_category} and excellence at{" "}
@@ -97,10 +110,12 @@ const ShopDetails = () => {
               <div className={styles.productDetails}>
                 <h3 className={styles.productName}>{product.name}</h3>
                 <p className={styles.productPrice}>
-                  ₦{product.price || "0.00"}
+                  ₦{formatPrice(product.price)}
                 </p>
                 <p className={styles.productDescription}>
-                  {product.description || "No description available"}
+                  {product.description.length > 100
+                    ? product.description.substring(0, 90) + "..."
+                    : product.description}
                 </p>
 
                 {/* Add to Cart Button */}

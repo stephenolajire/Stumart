@@ -296,7 +296,6 @@
 }
 
 .addButton {
-  /* flex: 1; */
   height: 4rem;
   border: none;
   border-radius: 0.8rem;
@@ -357,84 +356,10 @@
   }
 }
 
-/* Responsive */
-@media screen and (max-width: 992px) {
-  .productGrid {
-    gap: 3rem;
-  }
-}
-
-@media screen and (max-width: 768px) {
-  .productDetails {
-    padding: 2rem 1.5rem;
-  }
-  
-  .productGrid {
-    grid-template-columns: 1fr;
-    gap: 3rem;
-  }
-  
-  .infoSection h1 {
-    font-size: var(--h2-mobile);
-  }
-  
-  .price {
-    font-size: 2.8rem;
-  }
-  
-  /* .addToCart {
-    flex-direction: column;
-  } */
-  
-  .quantity {
-    width: 100%;
-  }
-  
-  .quantity button {
-    flex: 1;
-  }
-  
-  /* .quantity span {
-    flex: 2;
-  } */
-}
-
-@media screen and (max-width: 480px) {
-  .productDetails {
-    padding: 1.5rem 1rem;
-  }
-  
-  .thumbnail {
-    flex: 0 0 60px;
-    height: 60px;
-  }
-  
-  .shopInfo {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-  
-  .colorOption,
-  .sizeOption {
-    padding: 0.6rem 1.2rem;
-    font-size: 1.3rem;
-  }
-
-  .addButton {
-    width: 100%;
-    height: 4rem;
-  }
-
-  .title {
-    font-size: 2.4rem;
-  }
-}
-
 .header {
   display: flex;
   flex-direction: row;
-  gap: 4rem;
+  gap: 1rem;
   margin-top: 2rem;
   margin-bottom: 2rem;
   align-items: center;
@@ -449,7 +374,7 @@
   color: var(--text-secondary);
   cursor: pointer;
   transition: color 0.2s ease;
-  font-size: bold;
+  font-weight: bold;
   text-align: center;
 }
 
@@ -465,8 +390,11 @@
   transition: all 0.2s ease;
 }
 
-
-/* Add these styles to your existing ProductDetails.module.css file */
+.backButton:hover {
+  border-color: var(--primary-500);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(218, 165, 32, 0.15);
+}
 
 /* Reviews Section Styles */
 .reviewsSection {
@@ -479,10 +407,62 @@
   margin-bottom: 3rem;
 }
 
+.reviewsHeaderTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
 .reviewsHeader h2 {
   font-size: var(--h2-desktop);
   color: var(--text-primary);
-  margin-bottom: 2rem;
+  margin: 0;
+}
+
+/* User Review Action Buttons */
+.userReviewActions {
+  display: flex;
+  gap: 1rem;
+}
+
+.addReviewButton,
+.editReviewButton {
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 0.6rem;
+  font-size: 1.4rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.addReviewButton {
+  background-color: var(--primary-500);
+  color: var(--neutral-white);
+}
+
+.addReviewButton:hover {
+  background-color: var(--primary-600);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(218, 165, 32, 0.3);
+}
+
+.editReviewButton {
+  background-color: var(--neutral-white);
+  color: var(--primary-500);
+  border: 2px solid var(--primary-500);
+}
+
+.editReviewButton:hover {
+  background-color: var(--primary-100);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(218, 165, 32, 0.2);
 }
 
 .reviewsSummary {
@@ -665,8 +645,221 @@
   transform: translateY(0);
 }
 
-/* Mobile Responsive Styles for Reviews */
+/* Review Modal Styles */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 2rem;
+  backdrop-filter: blur(4px);
+}
+
+.modalContent {
+  background-color: var(--neutral-white);
+  border-radius: 1.2rem;
+  max-width: 50rem;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-3rem) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2.5rem 3rem 1.5rem;
+  border-bottom: 1px solid var(--neutral-gray-200);
+}
+
+.modalHeader h3 {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.modalClose {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.8rem;
+  border-radius: 0.6rem;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modalClose:hover {
+  background-color: var(--neutral-gray-100);
+  color: var(--text-primary);
+}
+
+.reviewForm {
+  padding: 2.5rem 3rem;
+}
+
+.formGroup {
+  margin-bottom: 2.5rem;
+}
+
+.formGroup label {
+  display: block;
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+
+/* Interactive Star Rating */
+.interactiveStarRating {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.interactiveStarRating svg {
+  transition: all 0.2s ease;
+}
+
+.interactiveStarRating svg:hover {
+  transform: scale(1.1);
+}
+
+.reviewTextarea {
+  width: 100%;
+  min-height: 12rem;
+  padding: 1.5rem;
+  border: 2px solid var(--neutral-gray-300);
+  border-radius: 0.8rem;
+  font-size: 1.5rem;
+  font-family: inherit;
+  line-height: 1.5;
+  resize: vertical;
+  transition: all 0.2s ease;
+}
+
+.reviewTextarea:focus {
+  outline: none;
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 3px rgba(218, 165, 32, 0.1);
+}
+
+.reviewTextarea::placeholder {
+  color: var(--text-tertiary);
+}
+
+.modalActions {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: flex-end;
+  padding-top: 2rem;
+  border-top: 1px solid var(--neutral-gray-200);
+}
+
+.cancelButton,
+.submitButton {
+  padding: 1.2rem 2.4rem;
+  border: none;
+  border-radius: 0.8rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 10rem;
+}
+
+.cancelButton {
+  background-color: var(--neutral-gray-100);
+  color: var(--text-secondary);
+  border: 2px solid var(--neutral-gray-300);
+}
+
+.cancelButton:hover:not(:disabled) {
+  background-color: var(--neutral-gray-200);
+  color: var(--text-primary);
+}
+
+.submitButton {
+  background-color: var(--primary-500);
+  color: var(--neutral-white);
+}
+
+.submitButton:hover:not(:disabled) {
+  background-color: var(--primary-600);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(218, 165, 32, 0.3);
+}
+
+.submitButton:disabled {
+  background-color: var(--neutral-gray-300);
+  color: var(--text-tertiary);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.cancelButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Responsive Styles */
+@media screen and (max-width: 992px) {
+  .productGrid {
+    gap: 3rem;
+  }
+}
+
 @media screen and (max-width: 768px) {
+  .productDetails {
+    padding: 2rem 1.5rem;
+  }
+  
+  .productGrid {
+    grid-template-columns: 1fr;
+    gap: 3rem;
+  }
+  
+  .infoSection h1 {
+    font-size: var(--h2-mobile);
+  }
+  
+  .price {
+    font-size: 2.8rem;
+  }
+  
+  .quantity {
+    width: 100%;
+  }
+  
+  .quantity button {
+    flex: 1;
+  }
+
+  /* Reviews Mobile Styles */
   .reviewsSection {
     margin-top: 3rem;
     padding: 2rem 0;
@@ -675,6 +868,24 @@
   .reviewsHeader h2 {
     font-size: var(--h2-mobile);
     margin-bottom: 1.5rem;
+  }
+
+  .reviewsHeaderTop {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.5rem;
+  }
+
+  .userReviewActions {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .addReviewButton,
+  .editReviewButton {
+    flex: 1;
+    justify-content: center;
+    min-width: 0;
   }
 
   .reviewsSummary {
@@ -739,9 +950,87 @@
     padding: 1rem 2rem;
     font-size: 1.4rem;
   }
+
+  /* Modal Mobile Styles */
+  .modalOverlay {
+    padding: 1rem;
+  }
+
+  .modalContent {
+    max-height: 95vh;
+  }
+
+  .modalHeader {
+    padding: 2rem 2rem 1.5rem;
+  }
+
+  .modalHeader h3 {
+    font-size: 2rem;
+  }
+
+  .reviewForm {
+    padding: 2rem;
+  }
+
+  .formGroup {
+    margin-bottom: 2rem;
+  }
+
+  .formGroup label {
+    font-size: 1.5rem;
+  }
+
+  .reviewTextarea {
+    min-height: 10rem;
+    padding: 1.2rem;
+    font-size: 1.4rem;
+  }
+
+  .modalActions {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .cancelButton,
+  .submitButton {
+    width: 100%;
+    padding: 1.2rem;
+    font-size: 1.4rem;
+  }
 }
 
 @media screen and (max-width: 480px) {
+  .productDetails {
+    padding: 1.5rem 1rem;
+  }
+  
+  .thumbnail {
+    flex: 0 0 60px;
+    height: 60px;
+  }
+  
+  .shopInfo {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .colorOption,
+  .sizeOption {
+    padding: 0.6rem 1.2rem;
+    font-size: 1.3rem;
+  }
+
+  .addButton {
+    width: 100%;
+    height: 4rem;
+  }
+
+  .title {
+    font-size: 2rem;
+  }
+
+  /* Reviews Mobile Extra Small */
   .reviewsSection {
     margin-top: 2rem;
     padding: 1.5rem 0;
@@ -779,6 +1068,39 @@
     padding: 0.8rem 1.6rem;
     font-size: 1.3rem;
   }
-}
 
-/* Additional existing styles adjustments */
+  .addReviewButton,
+  .editReviewButton {
+    font-size: 1.3rem;
+    padding: 0.8rem 1.5rem;
+  }
+
+  /* Modal Extra Small Mobile */
+  .modalHeader {
+    padding: 1.5rem 1.5rem 1rem;
+  }
+
+  .modalHeader h3 {
+    font-size: 1.8rem;
+  }
+
+  .reviewForm {
+    padding: 1.5rem;
+  }
+
+  .formGroup {
+    margin-bottom: 1.5rem;
+  }
+
+  .reviewTextarea {
+    min-height: 8rem;
+    padding: 1rem;
+    font-size: 1.3rem;
+  }
+
+  .cancelButton,
+  .submitButton {
+    padding: 1rem;
+    font-size: 1.3rem;
+  }
+}

@@ -296,3 +296,72 @@ class PickerReview(models.Model):
     def __str__(self):
         picker_name = f"{self.picker.first_name} {self.picker.last_name}"
         return f"Review for picker {picker_name} - {self.rating} stars"
+
+
+# Add this to your stumart/models.py file
+
+class ProductReview(models.Model):
+    """Model for product reviews"""
+    product = models.ForeignKey(
+        Product, 
+        on_delete=models.CASCADE, 
+        related_name='reviews'
+    )
+    reviewer = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='product_reviews_given'
+    )
+    order = models.ForeignKey(
+        Order, 
+        on_delete=models.CASCADE, 
+        related_name='product_reviews',
+        help_text="The order through which this product was purchased"
+    )
+    rating = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        help_text="Rating from 1 to 5 stars"
+    )
+    comment = models.TextField(
+        blank=True, 
+        null=True,
+        help_text="Optional review comment"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ('product', 'reviewer', 'order')  # One review per product per order per user
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['product', '-created_at']),
+            models.Index(fields=['reviewer']),
+            models.Index(fields=['rating']),
+        ]
+    
+    def __str__(self):
+        reviewer_name = f"{self.reviewer.first_name} {self.reviewer.last_name}" if self.reviewer else "Anonymous"
+        return f"Review for {self.product.name} by {reviewer_name} - {self.rating} stars"
+    
+    @property
+    def reviewer_name(self):
+        """Return the reviewer's display name"""
+        if self.reviewer:
+            return f"{self.reviewer.first_name} {self.reviewer.last_name}".strip()
+        return "Anonymous"
+    
+    def save(self, *args, **kwargs):
+        # Ensure the reviewer actually bought this product in the specified order
+        if self.order and self.reviewer:
+            order_item_exists = OrderItem.objects.filter(
+                order=self.order,
+                product=self.product,
+                order__user=self.reviewer
+            ).exists()
+            
+            if not order_item_exists:
+                raise ValueError("Cannot review a product that wasn't purchased in this order")
+        
+        super().save(*args, **kwargs)

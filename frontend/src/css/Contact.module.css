@@ -232,6 +232,10 @@
   border: 1px solid var(--error-200);
 }
 
+.backHeader {
+  display: none;
+}
+
 @media screen and (max-width: 968px) {
   .contactGrid {
     grid-template-columns: 1fr;
@@ -245,6 +249,12 @@
 
   .hero p {
     font-size: 1.8rem;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .backHeader {
+    display: block;
   }
 }
 
