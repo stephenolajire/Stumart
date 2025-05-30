@@ -37,7 +37,7 @@ const VendorDashboard = () => {
   const handleLogout = () => {
     localStorage.removeItem("access");
     localStorage.removeItem("refresh");
-    navigate("/");
+    navigate("/login");
     window.location.reload();
   };
 
@@ -161,16 +161,17 @@ const VendorDashboard = () => {
         return <Reviews onRespondToReview={handleRespondToReview} />;
       case "settings":
         return <Settings />;
-      case "logout":
-        return (
-          <button className={styles.logout} onClick={handleLogout}>
-            Logout
-          </button>
-        );
       default:
         return null;
     }
   };
+
+  // Add useEffect to watch for activeTab changes
+  useEffect(() => {
+    if (activeTab === "logout") {
+      handleLogout();
+    }
+  }, [activeTab]);
 
   return (
     <div className={styles.dashboardContainer}>

@@ -402,14 +402,14 @@ const OrderHistory = () => {
                       Cancel Order
                     </button>
                   )}
-                  {order.order_status.toUpperCase() !== "PENDING" && (
+                  {/* {order.order_status.toUpperCase() !== "PENDING" && (
                     <button
                       className={style.cancelOrderBtn}
                       onClick={() => handlePrint(order.order_number)}
                     >
                       Print Receipt
                     </button>
-                  )}
+                  )} */}
                 </div>
               </div>
             )}

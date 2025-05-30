@@ -528,6 +528,42 @@
   color: var(--neutral-white);
 }
 
+/* Print Styles */
+.printReceipt {
+  padding: 20px;
+  background: white;
+}
+
+.receiptHeader {
+  text-align: center;
+  margin-bottom: 20px;
+  border-bottom: 1px dashed var(--neutral-gray-300);
+  padding-bottom: 10px;
+}
+
+.receiptHeader h2 {
+  font-size: var(--h4-desktop);
+  margin-bottom: 10px;
+}
+
+@media print {
+  .orderHistoryContainer *:not(.printReceipt *) {
+    display: none !important;
+  }
+
+  .printReceipt {
+    display: block !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+
+  .orderItem {
+    break-inside: avoid;
+  }
+}
+
 /* Mobile Responsive Styles */
 @media screen and (max-width: 768px) {
   .orderHistoryContainer {
@@ -588,6 +624,15 @@
   .cancelOrderBtn {
     width: 100%;
     padding: 1.4rem;
+  }
+
+  .reviewedBadge {
+    width: 100%;
+    text-align: center;
+    height: 4.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .pagination {
