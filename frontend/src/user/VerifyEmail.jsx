@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
+import OtpInput from "react-otp-input";
 import { useLocation, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import api from "../constant/api";
 import styles from "../css/VerifyEmail.module.css";
 
 const VerifyEmail = () => {
-  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -56,29 +57,6 @@ const VerifyEmail = () => {
     const minutes = Math.floor(timeLeft / 60);
     const seconds = timeLeft % 60;
     return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
-  };
-
-  const handleChange = (index, value) => {
-    // Only allow numbers
-    if (value && !/^\d+$/.test(value)) return;
-
-    const newOtp = [...otp];
-    newOtp[index] = value;
-    setOtp(newOtp);
-
-    // Auto-focus next input
-    if (value && index < 5) {
-      const nextInput = document.getElementById(`otp-${index + 1}`);
-      if (nextInput) nextInput.focus();
-    }
-  };
-
-  const handleKeyDown = (index, e) => {
-    // Handle backspace
-    if (e.key === "Backspace" && !otp[index] && index > 0) {
-      const prevInput = document.getElementById(`otp-${index - 1}`);
-      if (prevInput) prevInput.focus();
-    }
   };
 
   const handleThrottleError = (waitSeconds) => {
@@ -240,21 +218,18 @@ const VerifyEmail = () => {
         )}
 
         <form onSubmit={handleSubmit} className={styles.verifyForm}>
-          <div className={styles.otpInputs}>
-            {otp.map((digit, index) => (
-              <input
-                key={index}
-                type="text"
-                id={`otp-${index}`}
-                maxLength={1}
-                value={digit}
-                onChange={(e) => handleChange(index, e.target.value)}
-                onKeyDown={(e) => handleKeyDown(index, e)}
-                className={styles.otpInput}
-                required
-              />
-            ))}
-          </div>
+          <OtpInput
+            value={otp}
+            onChange={setOtp}
+            numInputs={6}
+            renderInput={(props) => <input {...props} />}
+            inputStyle={styles.otpInput}
+            containerStyle={styles.otpInputs}
+            shouldAutoFocus={true}
+            inputType="tel"
+            renderSeparator={<span>&nbsp;</span>}
+            onPaste={true}
+          />
 
           <button
             type="submit"
