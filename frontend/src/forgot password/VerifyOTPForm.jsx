@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import api from "../constant/api";
 import styles from "../css/VerifyEmail.module.css";
+import OtpInput from "react-otp-input";
 
 const VerifyOTPForm = () => {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
@@ -195,6 +196,14 @@ const VerifyOTPForm = () => {
                 onKeyDown={(e) => handleKeyDown(index, e)}
                 className={styles.otpInput}
                 required
+                onPaste={(e) => {
+                  e.preventDefault();
+                  const pastedValue = e.clipboardData.getData("text");
+                  if (/^\d{6}$/.test(pastedValue)) {
+                    setOtp(pastedValue.split(""));
+                    document.getElementById(`otp-6`).focus(); // Focus last input
+                  }
+                }}
               />
             ))}
           </div>

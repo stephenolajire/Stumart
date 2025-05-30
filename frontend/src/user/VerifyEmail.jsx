@@ -1,35 +1,15 @@
 import React, { useState, useEffect } from "react";
-import OtpInput from "react-otp-input";
 import { useLocation, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import api from "../constant/api";
 import styles from "../css/VerifyEmail.module.css";
 
 const VerifyEmail = () => {
-  const [otp, setOtp] = useState("");
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [isLoading, setIsLoading] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const userId = location.state?.userId;
-
-  const handleChange = (otp) => {
-    setOtp(otp);
-  };
-
-  const handlePaste = (e) => {
-    e.preventDefault();
-    const value = e.clipboardData.getData("text");
-    if (isNaN(value) || value.length !== 6) {
-      Swal.fire({
-        icon: "error",
-        title: "Invalid Paste",
-        text: "Please paste a valid 6-digit code",
-        confirmButtonColor: "var(--primary-500)",
-      });
-      return;
-    }
-    setOtp(value);
-  };
 
   // Initialize timeLeft from localStorage or set new expiration
   const [timeLeft, setTimeLeft] = useState(() => {
@@ -78,6 +58,29 @@ const VerifyEmail = () => {
     return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
   };
 
+  const handleChange = (index, value) => {
+    // Only allow numbers
+    if (value && !/^\d+$/.test(value)) return;
+
+    const newOtp = [...otp];
+    newOtp[index] = value;
+    setOtp(newOtp);
+
+    // Auto-focus next input
+    if (value && index < 5) {
+      const nextInput = document.getElementById(`otp-${index + 1}`);
+      if (nextInput) nextInput.focus();
+    }
+  };
+
+  const handleKeyDown = (index, e) => {
+    // Handle backspace
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
+      const prevInput = document.getElementById(`otp-${index - 1}`);
+      if (prevInput) prevInput.focus();
+    }
+  };
+
   const handleThrottleError = (waitSeconds) => {
     setThrottleError("Too many attempts. Please wait before trying again.");
     setThrottleWaitTime(waitSeconds);
@@ -96,8 +99,9 @@ const VerifyEmail = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const otpString = otp.join("");
 
-    if (otp.length !== 6) {
+    if (otpString.length !== 6) {
       Swal.fire({
         icon: "error",
         title: "Invalid OTP",
@@ -112,7 +116,7 @@ const VerifyEmail = () => {
     try {
       const response = await api.post("/verify-email/", {
         user_id: userId,
-        otp: otp, // No need to join since otp is already a string
+        otp: otpString,
       });
 
       localStorage.removeItem("otpExpiration"); // Clear timer on success
@@ -236,25 +240,30 @@ const VerifyEmail = () => {
         )}
 
         <form onSubmit={handleSubmit} className={styles.verifyForm}>
-          <OtpInput
-            value={otp}
-            onChange={setOtp}
-            numInputs={6}
-            renderInput={(props) => <input {...props} />}
-            shouldAutoFocus={true}
-            inputType="tel"
-            isInputNum={true}
-            onPaste={handlePaste}
-            containerStyle="otpContainer"
-            inputStyle={{
-              width: "2rem",
-              height: "2rem",
-              margin: "0 0.5rem",
-              fontSize: "1.5rem",
-              borderRadius: "4px",
-              border: "1px solid rgba(0,0,0,0.3)",
-            }}
-          />
+          <div className={styles.otpInputs}>
+            {otp.map((digit, index) => (
+              <input
+                key={index}
+                type="text"
+                id={`otp-${index}`}
+                maxLength={1}
+                value={digit}
+                onChange={(e) => handleChange(index, e.target.value)}
+                onKeyDown={(e) => handleKeyDown(index, e)}
+                className={styles.otpInput}
+                required
+                onPaste={(e) => {
+                  e.preventDefault();
+                  const pastedValue = e.clipboardData.getData("text");
+                  if (/^\d{6}$/.test(pastedValue)) {
+                    setOtp(pastedValue.split(""));
+                    document.getElementById(`otp-6`).focus(); // Focus last input
+                  }
+                }}
+              />
+            ))}
+          </div>
+
           <button
             type="submit"
             className={styles.verifyButton}
@@ -266,6 +275,7 @@ const VerifyEmail = () => {
               ? `Wait ${throttleWaitTime}s`
               : "Verify Email"}
           </button>
+
           <button
             type="button"
             className={styles.resendButton}
