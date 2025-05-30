@@ -21,7 +21,7 @@ const OrderHistory = () => {
   const navigate = useNavigate();
   const user_type = localStorage.getItem("user_type");
 
-  const { orders, setOrders, loading, error} = useContext(GlobalContext);
+  const { orders, setOrders, loading, error, fetchOrders} = useContext(GlobalContext);
 
   const toggleOrderDetails = (orderId) => {
     setExpandedOrder((prev) => (prev === orderId ? null : orderId));

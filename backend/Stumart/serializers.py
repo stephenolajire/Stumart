@@ -63,7 +63,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'id', 'name', 'description', 'price', 'in_stock',
             'gender', 'created_at', 'updated_at',
             'additional_images', 'sizes', 'colors', 'image_url',
-            'vendor_name', 'vendor_rating','vendor_category'
+            'vendor_name', 'vendor_rating','vendor_category', 'keyword'
         ]
     
     def get_vendor_name(self, obj):
@@ -114,6 +114,7 @@ class ProductSerializer(serializers.ModelSerializer):
 class ProductCreateSerializer(serializers.ModelSerializer):
     sizes = serializers.CharField(required=False)
     colors = serializers.CharField(required=False)
+    keyword = serializers.CharField(required=True)  # Make keyword required
     
     class Meta:
         model = Product
@@ -127,8 +128,26 @@ class ProductCreateSerializer(serializers.ModelSerializer):
             'gender',
             'sizes',
             'colors',
+            'keyword'
         ]
         read_only_fields = ['vendor']
+    
+    def validate_keyword(self, value):
+        """
+        Validate the keyword field
+        """
+        if not value.strip():
+            raise serializers.ValidationError("Keywords are required")
+        
+        if len(value) > 200:
+            raise serializers.ValidationError("Keywords must be less than 200 characters")
+        
+        # Ensure keywords are comma-separated
+        keywords = [kw.strip() for kw in value.split(',')]
+        if not all(keywords):
+            raise serializers.ValidationError("Invalid keyword format. Use comma-separated values")
+            
+        return value.strip()
     
     def validate(self, data):
         """
@@ -147,6 +166,11 @@ class ProductCreateSerializer(serializers.ModelSerializer):
         
         # Call specific validator based on business category
         validation_method = getattr(self, f'validate_{business_category}', self.validate_default)
+        
+        # Ensure keywords are provided
+        if not data.get('keyword'):
+            raise serializers.ValidationError({"keyword": "Keywords are required for all products"})
+
         return validation_method(data)
     
     def validate_fashion(self, data):

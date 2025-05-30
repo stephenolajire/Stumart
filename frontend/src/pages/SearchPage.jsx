@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import styles from "../css/SearchPage.module.css";
 import ProductCard from "../components/ProductCard";
 import Spinner from "../components/Spinner";
+import Header from "../components/Header";
 
 const SearchPage = () => {
   const location = useLocation();
@@ -99,10 +100,10 @@ const SearchPage = () => {
   }
 
   return (
-    <div className={styles.searchPage}>
+    <div className={styles.searchPage} style={{marginTop: "3rem"}}>
       <div className={styles.container}>
         <div className={styles.searchHeader}>
-          <h1>Search Results</h1>
+          <Header title="Search Results"/>
           <p>
             Showing results for "{searchParams.productName}"
             {searchParams.school && ` in ${searchParams.school}`}

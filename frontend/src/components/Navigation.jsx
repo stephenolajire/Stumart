@@ -18,7 +18,7 @@ const Navigation = () => {
     localStorage.removeItem("refresh");
     localStorage.removeItem("user_type");
     localStorage.removeItem("institution");
-    navigate("/");
+    navigate("/login");
     window.location.reload();
   };
 

@@ -26,7 +26,7 @@ const Orders = ({ orders, onOrderUpdate }) => {
   // Replace the single loading state with a Set to track multiple loading states
   const [loadingPickerDetails, setLoadingPickerDetails] = useState(new Set());
 
-  console.log("Orders component rendered with orders:", orders);
+  // console.log("Orders component rendered with orders:", orders);
 
   const packedOrders = async (orderId) => {
     setLoadingOrders((prev) => new Set([...prev, orderId]));

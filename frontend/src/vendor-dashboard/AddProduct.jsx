@@ -3,6 +3,7 @@ import axios from "axios";
 import styles from "./css/AddProduct.module.css";
 import api from "../constant/api";
 import Swal from "sweetalert2";
+import Header from "../components/Header";
 
 // Configure toast notification
 const Toast = Swal.mixin({
@@ -24,6 +25,7 @@ const AddProduct = () => {
     price: "",
     in_stock: 0,
     image: null,
+    keyword: "", // Change from keywords to keyword
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -182,6 +184,13 @@ const AddProduct = () => {
         }
       }
     });
+
+    // Keywords validation
+    if (!product.keyword.trim()) {
+      newErrors.keywords = "Keywords are required";
+    } else if (product.keyword.length > 200) {
+      newErrors.keywords = "Keywords must be less than 200 characters";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -375,7 +384,7 @@ const AddProduct = () => {
 
       // Add additional images
       // Add additional images - with clearer naming
-      additionalImages.forEach((item, index) => { 
+      additionalImages.forEach((item, index) => {
         if (item.image) {
           // Use a consistent name pattern
           formData.append(`additional_images_${index}`, item.image);
@@ -385,6 +394,9 @@ const AddProduct = () => {
           );
         }
       });
+
+      // Change keywords to keyword
+      formData.append("keyword", product.keyword.trim());
 
       // Include CSRF token if using Django's CSRF protection
       const csrfToken = document.querySelector(
@@ -461,6 +473,7 @@ const AddProduct = () => {
       price: "",
       in_stock: 0,
       image: null,
+      keyword: "", // Change from keywords to keyword
     });
     setErrors({});
     setImagePreview(null);
@@ -514,7 +527,7 @@ const AddProduct = () => {
 
   return (
     <div className={styles.container}>
-      <h2 className={styles.title}>Add New Product</h2>
+      <Header title= "Add Product"/>
 
       {businessCategory && (
         <div className={styles.categoryInfo}>
@@ -859,6 +872,29 @@ const AddProduct = () => {
             </div>
           </>
         )}
+
+        <div className={styles.formGroup}>
+          <label htmlFor="keyword" className={styles.label}>
+            Keywords*
+          </label>
+          <input
+            type="text"
+            id="keyword"
+            name="keyword" // Change from keywords to keyword
+            value={product.keyword}
+            onChange={handleChange}
+            className={`${styles.input} ${
+              errors.keyword ? styles.inputError : ""
+            }`}
+            placeholder="eg: shoes, jeans, shirts"
+          />
+          <p className={styles.helpText}>
+            Add keywords separated by commas to help customers find your product
+          </p>
+          {errors.keyword && (
+            <span className={styles.errorText}>{errors.keyword}</span>
+          )}
+        </div>
 
         <div className={styles.formActions}>
           <button

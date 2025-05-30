@@ -1412,7 +1412,8 @@ class SearchProductsView(APIView):
             if product_name:
                 products_query = products_query.filter(
                     Q(name__icontains=product_name) |
-                    Q(description__icontains=product_name)
+                    Q(description__icontains=product_name)|
+                    Q(keyword__icontains=product_name)
                 )
                 print(f"After product name filter: Found {products_query.count()} products matching '{product_name}'")
                 print("Products found:", [p.name for p in products_query])

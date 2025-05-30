@@ -12,7 +12,7 @@
 
 .searchHeader {
   margin-bottom: 4rem;
-  text-align: center;
+  /* text-align: center; */
   animation: fadeIn 0.5s ease-out;
 }
 
@@ -351,23 +351,41 @@
 
 @media screen and (max-width: 480px) {
   .searchPage {
-    padding: 2.4rem 1.2rem;
+    padding: 2rem 1rem;
   }
 
   .productsGrid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+    gap: 1.2rem;
+    padding: 0 0.5rem;
+  }
+
+  .container {
+    margin-top: 8rem;
   }
 
   .noResults {
-    padding: 4rem 1.6rem;
+    padding: 3rem 1.2rem;
   }
 
   .backButton {
-    width: 100%;
-    justify-content: center;
+    padding: 1rem 2rem;
+    font-size: 1.4rem;
   }
 
   .priceInputs {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Add a smaller breakpoint for very small devices */
+@media screen and (max-width: 360px) {
+  .productsGrid {
+    grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+    gap: 1rem;
+  }
+
+  .searchPage {
+    padding: 1.6rem 0.8rem;
   }
 }

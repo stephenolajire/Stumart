@@ -155,3 +155,35 @@
   text-decoration: none;
   font-weight: 500;
 }
+
+
+.passwordWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.passwordWrapper input {
+  width: 100%;
+  padding-right: 4rem;
+}
+
+.passwordToggle {
+  position: absolute;
+  right: 1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  color: var(--secondary-600);
+}
+
+.passwordToggle:hover {
+  color: var(--primary-500);
+}
+
+.passwordToggle svg {
+  font-size: 1.6rem;
+}

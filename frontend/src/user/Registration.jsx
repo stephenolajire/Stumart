@@ -12,6 +12,8 @@ import {
   FaLock,
   FaCreditCard,
   FaMoneyBill,
+  FaEye,
+  FaEyeSlash,
 } from "react-icons/fa";
 import Swal from "sweetalert2";
 import styles from "../css/SignUp.module.css";
@@ -64,6 +66,8 @@ const Signup = () => {
   const [showOtherCategories, setShowOtherCategories] = useState(false);
   const [throttleError, setThrottleError] = useState(null);
   const [throttleWaitTime, setThrottleWaitTime] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Validate form inputs
   const validateForm = () => {
@@ -319,14 +323,14 @@ const Signup = () => {
         // Store user ID in local storage
         localStorage.setItem("user_id", user_id);
         localStorage.setItem("user_type", formData.userType.toLowerCase());
-        
+
         // Navigate to verify email with user ID
         navigate("/verify-email", {
           state: { userId: response.data?.user?.id || response.data?.user_id },
         });
       }
     } catch (error) {
-     console.error("Error during signup:", error);
+      console.error("Error during signup:", error);
       if (error.response) {
         // Handle specific error responses
         if (error.response.status === 429) {
@@ -551,14 +555,23 @@ const Signup = () => {
           <label>
             <FaLock /> Password
           </label>
-          <input
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            className={styles.formControl}
-            placeholder="Enter password"
-          />
+          <div className={styles.passwordWrapper}>
+            <input
+              type={showPassword ? "text" : "password"}
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              className={styles.formControl}
+              placeholder="Enter password"
+            />
+            <button
+              type="button"
+              className={styles.passwordToggle}
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? <FaEyeSlash /> : <FaEye />}
+            </button>
+          </div>
           {errors.password && (
             <span className={styles.error}>{errors.password}</span>
           )}
@@ -568,14 +581,23 @@ const Signup = () => {
           <label>
             <FaLock /> Confirm Password
           </label>
-          <input
-            type="password"
-            name="confirmPassword"
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            className={styles.formControl}
-            placeholder="Confirm password"
-          />
+          <div className={styles.passwordWrapper}>
+            <input
+              type={showConfirmPassword ? "text" : "password"}
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              className={styles.formControl}
+              placeholder="Confirm password"
+            />
+            <button
+              type="button"
+              className={styles.passwordToggle}
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+            >
+              {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+            </button>
+          </div>
           {errors.confirmPassword && (
             <span className={styles.error}>{errors.confirmPassword}</span>
           )}

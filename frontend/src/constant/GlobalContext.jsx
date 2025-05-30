@@ -800,7 +800,7 @@ export const GlobalProvider = ({ children }) => {
     try {
       setLoading(true);
       const response = await api.get("orders/");
-      console.log("Fetched orders:", response.data);
+      // console.log("Fetched orders:", response.data);
       setOrders(response.data);
       setError(null);
     } catch (err) {
