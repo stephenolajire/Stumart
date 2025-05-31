@@ -17,8 +17,6 @@ import cloudinary
 import dj_database_url
 from dotenv import load_dotenv
 from datetime import timedelta
-import json
-import tempfile
 
 load_dotenv()
 
@@ -257,27 +255,11 @@ if not DEBUG:
 
 # Dialogflow Settings
 DIALOGFLOW_PROJECT_ID = config('DIALOGFLOW_PROJECT_ID')
+GOOGLE_APPLICATION_CREDENTIALS = os.path.join(
+    BASE_DIR, 
+    config('GOOGLE_APPLICATION_CREDENTIALS')
+)
 
-if DEBUG:
-    # Development settings - use file path
-    GOOGLE_APPLICATION_CREDENTIALS = os.path.join(
-        BASE_DIR, 
-        config('GOOGLE_APPLICATION_CREDENTIALS')
-    )
-else:
-    # Production settings - use environment variable
-    try:
-        # Get credentials from environment variable
-        credentials_json = config('DIALOGFLOW_CREDENTIALS', None)
-        if credentials_json:
-            # Create temporary file with credentials
-            temp_cred_file = tempfile.NamedTemporaryFile(delete=False)
-            temp_cred_file.write(json.dumps(json.loads(credentials_json)).encode())
-            temp_cred_file.close()
-            GOOGLE_APPLICATION_CREDENTIALS = temp_cred_file.name
-        else:
-            raise ValueError("DIALOGFLOW_CREDENTIALS environment variable not set")
-    except Exception as e:
-        print(f"Error setting up Dialogflow credentials: {str(e)}")
-        raise
+# Ensure the path exists in settings
+print(f"Dialogflow Credentials Path: {GOOGLE_APPLICATION_CREDENTIALS}")
 
