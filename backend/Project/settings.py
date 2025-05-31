@@ -17,6 +17,8 @@ import cloudinary
 import dj_database_url
 from dotenv import load_dotenv
 from datetime import timedelta
+import json
+import tempfile
 
 load_dotenv()
 
@@ -29,7 +31,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('SECRET_KEY')
-DEBUG = config('DEBUG')
+DEBUG = config('DEBUG', default=False, cast=bool)
 ALLOWED_HOSTS = ["*"]
 
 
@@ -255,11 +257,71 @@ if not DEBUG:
 
 # Dialogflow Settings
 DIALOGFLOW_PROJECT_ID = config('DIALOGFLOW_PROJECT_ID')
-GOOGLE_APPLICATION_CREDENTIALS = os.path.join(
-    BASE_DIR, 
-    config('GOOGLE_APPLICATION_CREDENTIALS')
-)
 
-# Ensure the path exists in settings
-print(f"Dialogflow Credentials Path: {GOOGLE_APPLICATION_CREDENTIALS}")
+# Handle Dialogflow credentials for both development and production
+if DEBUG:
+    # Development: use JSON file
+    GOOGLE_APPLICATION_CREDENTIALS = os.path.join(
+        BASE_DIR, 
+        config('GOOGLE_APPLICATION_CREDENTIALS')
+    )
+    print(f"Development - Dialogflow Credentials Path: {GOOGLE_APPLICATION_CREDENTIALS}")
+else:
+    # Production: use environment variable
+    try:
+        credentials_json = config('DIALOGFLOW_CREDENTIALS', None)
+        if credentials_json:
+            # Parse and validate JSON
+            credentials_data = json.loads(credentials_json)
+            
+            # Create temporary file for Google Cloud client
+            temp_cred_file = tempfile.NamedTemporaryFile(
+                mode='w+', 
+                suffix='.json', 
+                delete=False,
+                prefix='dialogflow_creds_'
+            )
+            
+            json.dump(credentials_data, temp_cred_file, indent=2)
+            temp_cred_file.flush()
+            temp_cred_file.close()
+            
+            # Set restrictive permissions
+            if hasattr(os, 'chmod'):
+                os.chmod(temp_cred_file.name, 0o600)
+            
+            GOOGLE_APPLICATION_CREDENTIALS = temp_cred_file.name
+            print(f"Production - Dialogflow Credentials created at: {GOOGLE_APPLICATION_CREDENTIALS}")
+        else:
+            raise ValueError("DIALOGFLOW_CREDENTIALS environment variable not set")
+    except Exception as e:
+        print(f"Error setting up Dialogflow credentials: {str(e)}")
+        GOOGLE_APPLICATION_CREDENTIALS = None
 
+# Function to get Dialogflow client (alternative approach)
+def get_dialogflow_client():
+    """Returns a configured Dialogflow client without using files."""
+    from google.cloud import dialogflow_v2
+    from google.oauth2 import service_account
+    
+    if DEBUG:
+        # Development: use service account file
+        credentials_path = os.path.join(
+            BASE_DIR,
+            config('GOOGLE_APPLICATION_CREDENTIALS')
+        )
+        credentials = service_account.Credentials.from_service_account_file(
+            credentials_path
+        )
+    else:
+        # Production: use JSON from environment variable
+        credentials_json = config('DIALOGFLOW_CREDENTIALS')
+        if not credentials_json:
+            raise ValueError("DIALOGFLOW_CREDENTIALS environment variable not set")
+        
+        credentials_info = json.loads(credentials_json)
+        credentials = service_account.Credentials.from_service_account_info(
+            credentials_info
+        )
+    
+    return dialogflow_v2.SessionsClient(credentials=credentials)
