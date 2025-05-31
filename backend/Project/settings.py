@@ -261,23 +261,34 @@ DIALOGFLOW_PROJECT_ID = config('DIALOGFLOW_PROJECT_ID')
 try:
     from google.oauth2 import service_account
     from google.cloud import dialogflow_v2 as dialogflow
-
-    GOOGLE_CREDENTIALS = {
-        "type": config("GOOGLE_TYPE"),
-        "project_id": config("GOOGLE_PROJECT_ID"),
+    
+    # Create temp file with credentials in both environments
+    credentials_dict = {
+        "type": config("GOOGLE_TYPE", "service_account"),
+        "project_id": DIALOGFLOW_PROJECT_ID,
         "private_key_id": config("GOOGLE_PRIVATE_KEY_ID"),
         "private_key": config("GOOGLE_PRIVATE_KEY").replace("\\n", "\n"),
         "client_email": config("GOOGLE_CLIENT_EMAIL"),
         "client_id": config("GOOGLE_CLIENT_ID"),
-        "auth_uri": config("GOOGLE_AUTH_URI"),
-        "token_uri": config("GOOGLE_TOKEN_URI"),
-        "auth_provider_x509_cert_url": config("GOOGLE_AUTH_PROVIDER_X509_CERT_URL"),
+        "auth_uri": config("GOOGLE_AUTH_URI", "https://accounts.google.com/o/oauth2/auth"),
+        "token_uri": config("GOOGLE_TOKEN_URI", "https://oauth2.googleapis.com/token"),
+        "auth_provider_x509_cert_url": config("GOOGLE_AUTH_PROVIDER_X509_CERT_URL", "https://www.googleapis.com/oauth2/v1/certs"),
         "client_x509_cert_url": config("GOOGLE_CLIENT_X509_CERT_URL"),
-        "universe_domain": config("GOOGLE_UNIVERSE_DOMAIN")
+        "universe_domain": config("GOOGLE_UNIVERSE_DOMAIN", "googleapis.com")
     }
 
-    credentials = service_account.Credentials.from_service_account_info(GOOGLE_CREDENTIALS)
+    # Write credentials to temporary file
+    with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
+        json.dump(credentials_dict, temp_file)
+        temp_file_path = temp_file.name
+
+    # Set environment variable for Google credentials
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = temp_file_path
+    
+    # Initialize client
+    credentials = service_account.Credentials.from_service_account_file(temp_file_path)
     session_client = dialogflow.SessionsClient(credentials=credentials)
-except ImportError:
-    print("Warning: Google Cloud libraries not installed. Dialogflow functionality will be disabled.")
+
+except Exception as e:
+    print(f"Dialogflow initialization error: {str(e)}")
     session_client = None
