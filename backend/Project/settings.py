@@ -258,17 +258,26 @@ if not DEBUG:
 # Dialogflow Settings
 DIALOGFLOW_PROJECT_ID = config('DIALOGFLOW_PROJECT_ID')
 
-GOOGLE_APPLICATION_CREDENTIALS = {
-    "type": config('GOOGLE_TYPE'),
-    "project_id": config('GOOGLE_PROJECT_ID'),
-    "private_key_id": config('GOOGLE_PRIVATE_KEY_ID'),
-    "private_key": config('GOOGLE_PRIVATE_KEY').replace('\\n', '\n'),
-    "client_email": config('GOOGLE_CLIENT_EMAIL'),
-    "client_id": config('GOOGLE_CLIENT_ID'),
-    "auth_uri": config('GOOGLE_AUTH_URI'),
-    "token_uri": config('GOOGLE_TOKEN_URI'),
-    "auth_provider_x509_cert_url": config('GOOGLE_AUTH_PROVIDER_X509_CERT_URL'),
-    "client_x509_cert_url": config('GOOGLE_CLIENT_X509_CERT_URL'),
-    "universe_domain": config('GOOGLE_UNIVERSE_DOMAIN')
-}
+try:
+    from google.oauth2 import service_account
+    from google.cloud import dialogflow_v2 as dialogflow
 
+    GOOGLE_CREDENTIALS = {
+        "type": config("GOOGLE_TYPE"),
+        "project_id": config("GOOGLE_PROJECT_ID"),
+        "private_key_id": config("GOOGLE_PRIVATE_KEY_ID"),
+        "private_key": config("GOOGLE_PRIVATE_KEY").replace("\\n", "\n"),
+        "client_email": config("GOOGLE_CLIENT_EMAIL"),
+        "client_id": config("GOOGLE_CLIENT_ID"),
+        "auth_uri": config("GOOGLE_AUTH_URI"),
+        "token_uri": config("GOOGLE_TOKEN_URI"),
+        "auth_provider_x509_cert_url": config("GOOGLE_AUTH_PROVIDER_X509_CERT_URL"),
+        "client_x509_cert_url": config("GOOGLE_CLIENT_X509_CERT_URL"),
+        "universe_domain": config("GOOGLE_UNIVERSE_DOMAIN")
+    }
+
+    credentials = service_account.Credentials.from_service_account_info(GOOGLE_CREDENTIALS)
+    session_client = dialogflow.SessionsClient(credentials=credentials)
+except ImportError:
+    print("Warning: Google Cloud libraries not installed. Dialogflow functionality will be disabled.")
+    session_client = None
