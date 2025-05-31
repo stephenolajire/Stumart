@@ -2,13 +2,16 @@ import React, { useState } from "react";
 import Navigation from "../components/Navigation";
 import Footer from "../components/Footer";
 import { Outlet } from "react-router-dom";
-import { FaPlayCircle, FaTimes } from "react-icons/fa";
+import { FaPlayCircle, FaTimes, FaComments } from "react-icons/fa";
+import Chatbot from "../chatbot/Chatbot";
 import styles from "../css/Layout.module.css";
 
 const Layout = () => {
   const [showModal, setShowModal] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   const toggleModal = () => setShowModal(!showModal);
+  const toggleChat = () => setIsChatOpen(!isChatOpen);
 
   return (
     <div className={styles.layoutWrapper}>
@@ -22,8 +25,16 @@ const Layout = () => {
         onClick={toggleModal}
         aria-label="Learn how to use platform"
       >
-        <FaPlayCircle /> Learn More
+        <FaPlayCircle  size={24}/>
       </button>
+
+      <div
+        className={`${styles.chatContainer} ${
+          isChatOpen ? styles.open : ""
+        }`}
+      >
+        <Chatbot />
+      </div>
 
       {/* Video Modal */}
       {showModal && (

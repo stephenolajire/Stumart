@@ -43,6 +43,7 @@ import OtherDashboard from "./other-dashboard/OtherDashboard";
 import SearchPage from "./pages/SearchPage";
 import DeliveryDetail from "./picker-dashboard/DeliveryDetail";
 import AllProducts from "./pages/AllProducts";
+import Chatbot from "./chatbot/Chatbot";
 
 function App() {
   return (
@@ -183,6 +184,7 @@ function App() {
           <Route path="/forgot-password" element={<RequestOTPForm />} />
           <Route path="/verify-otp" element={<VerifyOTPForm />} />
           <Route path="/reset-password" element={<SetNewPasswordForm />} />
+          <Route path="/chatbot" element={<Chatbot />} />
         </Routes>
       </Router>
     </GlobalProvider>

@@ -1,0 +1,92 @@
+.chatContainer {
+  position: fixed;
+  bottom: 12rem;
+  right: 2rem;
+  width: 50rem;
+  height: 40rem;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+}
+
+.chatToggle {
+  position: fixed;
+  bottom: 1rem;
+  right: 2rem;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  background: green;
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.chatHeader {
+  padding: 1.5rem;
+  background: var(--primary-500);
+  color: white;
+  border-radius: 10px 10px 0 0;
+}
+
+.messagesContainer {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+}
+
+.message {
+  margin: 1rem 0;
+  padding: 1rem;
+  border-radius: 10px;
+  max-width: 80%;
+}
+
+.userMessage {
+  background: var(--primary-200);
+  margin-left: auto;
+}
+
+.botMessage {
+  background: var(--neutral-gray-100);
+}
+
+.inputForm {
+  padding: 1.5rem;
+  border-top: 1px solid var(--neutral-gray-200);
+  display: flex;
+  gap: 1rem;
+}
+
+.input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid var(--neutral-gray-300);
+  border-radius: 5px;
+}
+
+.sendButton {
+  padding: 8px 15px;
+  background: var(--primary-500);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+@media (max-width: 480px) {
+  .chatContainer {
+    width: 90%;
+    height: 70vh;
+    right: 5%;
+    left: 5%;
+    bottom: 7rem;
+  }
+}
