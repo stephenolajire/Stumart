@@ -22,16 +22,8 @@ class ChatbotView(APIView):
             print(f"Processing message: {message} for session: {session_id}")
             print(f"Using project ID: {settings.DIALOGFLOW_PROJECT_ID}")
 
-            # Use the new client function instead of relying on environment variable
-            try:
-                session_client = settings.get_dialogflow_client()
-                print("Successfully created Dialogflow client")
-            except Exception as client_error:
-                print(f"Failed to create Dialogflow client: {str(client_error)}")
-                # Fallback to original method if function fails
-                session_client = dialogflow_v2.SessionsClient()
-                print("Using fallback Dialogflow client")
-
+            # Create a session client
+            session_client = dialogflow_v2.SessionsClient()
             session = session_client.session_path(
                 settings.DIALOGFLOW_PROJECT_ID, 
                 session_id
@@ -61,6 +53,6 @@ class ChatbotView(APIView):
         except Exception as e:
             print(f"Error in ChatbotView: {str(e)}")
             return Response(
-                {'error': str(e)}, 
+                {'error': f'Chatbot service error: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
