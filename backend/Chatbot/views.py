@@ -1,4 +1,3 @@
-from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -11,16 +10,13 @@ class ChatbotView(APIView):
         try:
             # Get the message from request
             message = request.data.get('message')
-            session_id = request.data.get('session_id')
+            session_id = request.data.get('session_id')  # User's session ID
 
             if not message:
                 return Response(
                     {'error': 'No message provided'}, 
                     status=status.HTTP_400_BAD_REQUEST
                 )
-
-            print(f"Processing message: {message} for session: {session_id}")
-            print(f"Using project ID: {settings.DIALOGFLOW_PROJECT_ID}")
 
             # Create a session client
             session_client = dialogflow_v2.SessionsClient()
@@ -41,18 +37,14 @@ class ChatbotView(APIView):
                 request={"session": session, "query_input": query_input}
             )
 
-            print(f"Got response: {response.query_result.fulfillment_text}")
-
             return Response({
                 'response': response.query_result.fulfillment_text,
                 'intent': response.query_result.intent.display_name,
-                'confidence': response.query_result.intent_detection_confidence,
-                'session_id': session_id
+                'confidence': response.query_result.intent_detection_confidence
             })
 
         except Exception as e:
-            print(f"Error in ChatbotView: {str(e)}")
             return Response(
-                {'error': f'Chatbot service error: {str(e)}'}, 
+                {'error': str(e)}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
