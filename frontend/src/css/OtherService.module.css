@@ -1,228 +1,47 @@
 /* OtherService.module.css */
+
 .otherServiceContainer {
-  max-width: 1200px;
-  margin: 0 auto;
   padding: 2rem;
-  font-family: Montserrat, Poppins, sans-serif;
+  background-color: var(--background);
+  color: var(--text-primary);
+  min-height: 100vh;
+  transition: background-color 0.3s ease, color 0.3s ease;
   margin-top: 10rem;
 }
 
 .header {
-  display: flex;
-  align-items: center;
   margin-bottom: 3rem;
-  position: relative;
+  text-align: center;
 }
 
 .header h1 {
-  font-size: var(--h2-desktop);
-  color: var(--primary-600);
-  margin: 0 auto;
-  text-align: center;
-}
-
-.backButton {
-  position: absolute;
-  left: 0;
-  background-color: var(--primary-500);
-  color: var(--neutral-white);
-  border: none;
-  padding: 1rem 2rem;
-  border-radius: 0.8rem;
-  font-size: 1.6rem;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.backButton:hover {
-  background-color: var(--primary-600);
-}
-
-.filterContainer {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 3rem;
-  gap: 1.5rem;
-}
-
-.filterContainer label {
-  font-size: 1.8rem;
-  color: var(--text-secondary);
-}
-
-.selectInput {
-  padding: 1rem 2rem;
-  border: 2px solid var(--primary-300);
-  border-radius: 0.8rem;
-  font-size: 1.6rem;
-  min-width: 25rem;
-  background-color: var(--surface);
   color: var(--text-primary);
-  cursor: pointer;
-}
-
-.selectInput:focus {
-  outline: none;
-  border-color: var(--primary-500);
-  box-shadow: 0 0 0 2px rgba(218, 165, 32, 0.2);
-}
-
-.serviceCardGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 3rem;
-  margin-top: 3rem;
-}
-
-.serviceCard {
-  background-color: var(--surface);
-  border-radius: 1.2rem;
-  overflow: hidden;
-  box-shadow: 0 4px 10px var(--shadow);
-  border: 0.1rem solid var(--border);
-  transition: transform 0.3s, box-shadow 0.3s;
-  display: flex;
-  flex-direction: column;
-}
-
-.serviceCard:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 20px var(--shadow);
-}
-
-.serviceImageContainer {
-  height: 200px;
-  overflow: hidden;
-  position: relative;
-}
-
-.serviceImage {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.serviceImageOverlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0.1),
-    rgba(0, 0, 0, 0.6)
-  );
-}
-
-.serviceCategory {
-  position: absolute;
-  top: 1.5rem;
-  right: 1.5rem;
-  background-color: var(--primary-500);
-  color: var(--neutral-white);
-  padding: 0.5rem 1.5rem;
-  border-radius: 2rem;
-  font-size: 1.2rem;
-  font-weight: 600;
-}
-
-.serviceDetails {
-  padding: 2rem;
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.serviceName {
-  font-size: 2rem;
-  color: var(--text-primary);
+  font-weight: 700;
   margin-bottom: 1rem;
 }
 
-.providerName {
-  font-size: 1.4rem;
-  color: var(--text-secondary);
-  margin-bottom: 1.5rem;
-}
-
-.serviceLocation {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 1.4rem;
-  color: var(--text-secondary);
-  margin-bottom: 1.5rem;
-}
-
-.serviceRating {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 2rem;
-}
-
-.ratingValue {
-  font-size: 1.4rem;
-  font-weight: 600;
-  color: var(--primary-600);
-}
-
-.starIcon {
-  color: var(--warning);
-}
-
-.serviceDescription {
-  font-size: 1.4rem;
-  color: var(--text-secondary);
-  margin-bottom: 2rem;
-  flex-grow: 1;
-}
-
-.applyButton {
-  width: 100%;
-  background-color: var(--primary-500);
-  color: var(--neutral-white);
-  border: none;
-  padding: 1.2rem;
-  border-radius: 0.8rem;
-  font-size: 1.6rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.3s;
-  text-align: center;
-}
-
-.applyButton:hover {
-  background-color: var(--primary-600);
-}
-
-.loadingMessage,
-.noShopsMessage {
-  text-align: center;
-  font-size: 1.8rem;
-  color: var(--text-secondary);
-  padding: 5rem 0;
-}
-
+/* Search Section Styling */
 .searchSection {
-  background-color: var(--surface);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 1.2rem;
   padding: 2.4rem;
-  margin: 2.4rem 0;
-  box-shadow: 0 2px 8px var(--shadow);
-  border: 0.1rem solid var(--border);
+  margin-bottom: 3rem;
+  box-shadow: 0 4px 6px var(--shadow);
+  transition: all 0.3s ease;
+}
+
+.searchSection:hover {
+  box-shadow: 0 8px 12px var(--shadow);
 }
 
 .searchForm {
-  max-width: 120rem;
-  margin: 0 auto;
+  width: 100%;
 }
 
 .formGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(25rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 2rem;
   margin-bottom: 2rem;
 }
@@ -230,110 +49,398 @@
 .formGroup {
   display: flex;
   flex-direction: column;
-  gap: 0.8rem;
 }
 
 .formGroup label {
   font-size: 1.4rem;
-  color: var(--text-secondary);
-  font-weight: 500;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.8rem;
 }
 
 .selectInput {
-  padding: 1.2rem;
-  border: 1px solid var(--border);
+  padding: 1.2rem 1.6rem;
+  border: 2px solid var(--border);
   border-radius: 0.8rem;
-  font-size: 1.4rem;
+  background-color: var(--background);
   color: var(--text-primary);
-  background-color: var(--surface);
+  font-size: 1.4rem;
   transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.selectInput:hover {
+  border-color: var(--primary-400);
 }
 
 .selectInput:focus {
   outline: none;
   border-color: var(--primary-500);
-  box-shadow: 0 0 0 2px var(--primary-100);
+  box-shadow: 0 0 0 3px rgba(218, 165, 32, 0.1);
 }
 
 .selectInput:disabled {
-  background-color: var(--hover-bg);
+  background-color: var(--neutral-gray-100);
+  color: var(--text-secondary);
   cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .buttonGroup {
   display: flex;
   justify-content: center;
-  gap: 1.6rem;
+  margin-top: 1rem;
 }
 
 .searchButton {
-  padding: 1.2rem 3.2rem;
-  background-color: var(--primary-500);
+  padding: 1.4rem 3.2rem;
+  background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
   color: var(--neutral-white);
   border: none;
   border-radius: 0.8rem;
-  font-size: 1.4rem;
-  font-weight: 500;
+  font-size: 1.6rem;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
+  box-shadow: 0 4px 8px rgba(218, 165, 32, 0.2);
 }
 
 .searchButton:hover:not(:disabled) {
-  background-color: var(--primary-600);
+  background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
   transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(218, 165, 32, 0.3);
+}
+
+.searchButton:active {
+  transform: translateY(0);
 }
 
 .searchButton:disabled {
-  background-color: var(--text-secondary);
+  background: var(--neutral-gray-100);
+  color: var(--text-secondary);
   cursor: not-allowed;
-  opacity: 0.6;
+  transform: none;
+  box-shadow: none;
 }
 
-/* Media Queries */
+/* Filter Container */
+.filterContainer {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  padding: 2rem;
+  margin-bottom: 3rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  box-shadow: 0 2px 4px var(--shadow);
+  transition: all 0.3s ease;
+}
+
+.filterContainer label {
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+/* Service Grid Styling */
+.shopsContainer {
+  margin-top: 2rem;
+}
+
+.serviceCardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 2.4rem;
+  padding: 1rem 0;
+}
+
+/* Service Card Styling */
+.serviceCard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1.6rem;
+  overflow: hidden;
+  box-shadow: 0 4px 8px var(--shadow);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.serviceCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px var(--shadow);
+  border-color: var(--primary-300);
+}
+
+.serviceImageContainer {
+  position: relative;
+  height: 200px;
+  overflow: hidden;
+}
+
+.serviceImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.serviceCard:hover .serviceImage {
+  transform: scale(1.05);
+}
+
+.serviceImageOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.3) 70%,
+    rgba(0, 0, 0, 0.7) 100%
+  );
+}
+
+.serviceCategory {
+  position: absolute;
+  top: 1.2rem;
+  right: 1.2rem;
+  background: var(--primary-500);
+  color: var(--neutral-white);
+  padding: 0.6rem 1.2rem;
+  border-radius: 2rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.serviceDetails {
+  padding: 2rem;
+}
+
+.serviceName {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.8rem;
+  line-height: 1.3;
+}
+
+.providerName {
+  font-size: 1.4rem;
+  color: var(--text-secondary);
+  margin-bottom: 1.2rem;
+  font-weight: 500;
+}
+
+.serviceLocation {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 1.2rem;
+  font-size: 1.4rem;
+  color: var(--text-secondary);
+}
+
+.serviceLocation svg {
+  color: var(--primary-500);
+  font-size: 1.6rem;
+}
+
+.serviceRating {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 2rem;
+  font-size: 1.4rem;
+  color: var(--text-secondary);
+}
+
+.starIcon {
+  color: var(--warning);
+  font-size: 1.6rem;
+}
+
+.ratingValue {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.applyButton {
+  display: block;
+  width: 100%;
+  padding: 1.2rem 2rem;
+  background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+  color: var(--neutral-white);
+  text-align: center;
+  border-radius: 0.8rem;
+  font-size: 1.4rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(218, 165, 32, 0.2);
+}
+
+.applyButton:hover {
+  background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(218, 165, 32, 0.3);
+}
+
+.applyButton:active {
+  transform: translateY(0);
+}
+
+/* Loading and Message States */
+.loadingMessage {
+  text-align: center;
+  font-size: 1.8rem;
+  color: var(--text-secondary);
+  padding: 4rem 2rem;
+  background: var(--surface);
+  border-radius: 1.2rem;
+  border: 1px solid var(--border);
+}
+
+.noShopsMessage {
+  text-align: center;
+  font-size: 1.8rem;
+  color: var(--text-secondary);
+  padding: 4rem 2rem;
+  background: var(--surface);
+  border-radius: 1.2rem;
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 4px var(--shadow);
+}
+
+/* Responsive Design */
 @media screen and (max-width: 768px) {
-  .header h1 {
-    font-size: var(--h2-mobile);
-    margin-left: 0;
-    margin-top: 5rem;
-    text-align: center;
-    width: 100%;
+  .otherServiceContainer {
+    padding: 1.6rem;
   }
 
-  .backButton {
-    position: relative;
+  .searchSection {
+    padding: 2rem;
     margin-bottom: 2rem;
-    width: 100%;
   }
 
-  .header {
-    flex-direction: column;
-    align-items: flex-start;
+  .formGrid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
   }
 
   .filterContainer {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
+    gap: 1rem;
+    padding: 1.6rem;
   }
 
-  .selectInput {
-    width: 100%;
-    min-width: unset;
+  .filterContainer label {
+    font-size: 1.4rem;
   }
 
   .serviceCardGrid {
     grid-template-columns: 1fr;
+    gap: 1.6rem;
+  }
+
+  .serviceName {
+    font-size: 1.6rem;
+  }
+
+  .searchButton {
+    padding: 1.2rem 2.4rem;
+    font-size: 1.4rem;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .otherServiceContainer {
+    padding: 1.2rem;
   }
 
   .searchSection {
     padding: 1.6rem;
   }
 
-  .formGrid {
-    grid-template-columns: 1fr;
-    gap: 1.6rem;
+  .serviceImageContainer {
+    height: 160px;
   }
 
-  .searchButton {
-    width: 100%;
+  .serviceDetails {
+    padding: 1.6rem;
+  }
+
+  .serviceName {
+    font-size: 1.4rem;
+  }
+
+  .providerName,
+  .serviceLocation,
+  .serviceRating {
+    font-size: 1.2rem;
+  }
+
+  .applyButton {
+    padding: 1rem 1.6rem;
+    font-size: 1.3rem;
+  }
+}
+
+/* Animation for smooth transitions */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.serviceCard {
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* Focus states for accessibility */
+.selectInput:focus,
+.searchButton:focus,
+.applyButton:focus {
+  outline: 2px solid var(--primary-500);
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .serviceCard {
+    border-width: 2px;
+  }
+  
+  .selectInput {
+    border-width: 2px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .serviceCard,
+  .searchSection,
+  .selectInput,
+  .searchButton,
+  .applyButton {
+    transition: none;
+  }
+  
+  .serviceCard:hover {
+    transform: none;
+  }
+  
+  .serviceCard:hover .serviceImage {
+    transform: none;
   }
 }

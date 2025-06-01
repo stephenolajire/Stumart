@@ -14,41 +14,42 @@ const ProductCard = ({ product }) => {
     in_stock,
     colors,
     additional_images,
-    description
+    description,
   } = product;
 
   return (
     <Link to={`/product/${id}`} className={styles.productCard}>
       <div className={styles.imageWrapper}>
-        <img 
-          src={image_url} 
-          alt={name} 
-          className={styles.productImage}
-        />
-        {vendor_category !== 'food' && in_stock  === 0 && (
+        <img src={image_url} alt={name} className={styles.productImage} />
+        {vendor_category !== "food" && in_stock === 0 && (
           <div className={styles.outOfStock}>
             <span>Out of Stock</span>
           </div>
         )}
         {colors?.length > 0 && (
           <div className={styles.colorBadge}>
-            {colors.length} {colors.length === 1 ? 'color' : 'colors'}
+            {colors.length} {colors.length === 1 ? "color" : "colors"}
           </div>
         )}
       </div>
-      
+
       <div className={styles.productInfo}>
         <h3 className={styles.productName}>{name}</h3>
-        <p className={styles.description}>{description}</p>
-        
+        <p className={styles.description}>
+          {description?.length > 100 ? `${description.substring(0, 40)}...` :
+          description}
+        </p>
+
         <div className={styles.priceRow}>
-          <span className={styles.price}>₦{Number(price).toLocaleString()}</span>
+          <span className={styles.price}>
+            ₦{Number(price).toLocaleString()}
+          </span>
           <div className={styles.rating}>
             <FaStar className={styles.starIcon} />
-            <span>{vendor_rating?.toFixed(1) || '0.0'}</span>
+            <span>{vendor_rating?.toFixed(1) || "0.0"}</span>
           </div>
         </div>
-        
+
         {/* <div className={styles.vendorInfo}>
           <p className={styles.vendorName}>{vendor_name}</p>
           <p className={styles.category}>{vendor_category}</p>
