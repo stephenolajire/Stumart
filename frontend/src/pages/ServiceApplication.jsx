@@ -4,6 +4,7 @@ import { GlobalContext } from "../constant/GlobalContext";
 import api from "../constant/api";
 import styles from "../css/ServiceApplication.module.css";
 import { MEDIA_BASE_URL } from "../constant/api";
+import Header from "../components/Header";
 
 const ServiceApplication = () => {
   const { serviceId } = useParams();
@@ -109,10 +110,7 @@ const ServiceApplication = () => {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <button onClick={handleBackToServices} className={styles.backButton}>
-          ← Back to Services
-        </button>
-        <h1>Apply for Service</h1>
+        <Header title="Apply for Service"/>
       </div>
 
       <div className={styles.serviceInfoSection}>

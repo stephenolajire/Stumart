@@ -187,14 +187,14 @@
   /* Large Desktop */
   @media screen and (min-width: 1400px) {
     .serviceGrid {
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(6, 1fr);
     }
   }
   
   /* Desktop */
   @media screen and (max-width: 1200px) {
     .serviceGrid {
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(5, 1fr);
       gap: 1.6rem;
     }
     
@@ -303,7 +303,7 @@
   /* Very Small Screens - Single Column */
   @media screen and (max-width: 360px) {
     .serviceGrid {
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(2, 1fr);
       gap: 1rem;
     }
     
