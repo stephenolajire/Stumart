@@ -5,6 +5,7 @@ import { Outlet } from "react-router-dom";
 import { FaPlayCircle, FaTimes, FaComments } from "react-icons/fa";
 import Chatbot from "../chatbot/Chatbot";
 import styles from "../css/Layout.module.css";
+// import ThemeToggle from "../components/ThemeToggle";
 
 const Layout = () => {
   const [showModal, setShowModal] = useState(false);
@@ -18,7 +19,7 @@ const Layout = () => {
       <Navigation />
       <Outlet />
       <Footer />
-
+      {/* <ThemeToggle/> */}
       {/* Learn More Button */}
       <button
         className={styles.learnMoreBtn}

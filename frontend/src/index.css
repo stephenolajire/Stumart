@@ -12,6 +12,52 @@ a {
   text-decoration: none;
 }
 
+
+:root {
+  /* ...existing code... */
+
+  /* Theme Colors */
+  --background-light: #ffffff;
+  --background-dark: #1a1a1a;
+  --text-light: #000000;
+  --text-dark: #ffffff;
+  --surface-light: #f3f4f6;
+  --surface-dark: #2d2d2d;
+  --border-light: #e5e7eb;
+  --border-dark: #404040;
+}
+
+/* Light Theme (default) */
+:root[data-theme="light"] {
+  --background: var(--background-light);
+  --text-color: var(--text-light);
+  --surface: var(--surface-light);
+  --border: var(--border-light);
+  --shadow: rgba(0, 0, 0, 0.1);
+}
+
+/* Dark Theme */
+:root[data-theme="dark"] {
+  --background: var(--background-dark);
+  --text-color: var(--text-light);
+  --surface: var(--surface-dark);
+  --border: var(--border-dark);
+  --shadow: rgba(255, 255, 255, 0.1);
+}
+
+/* Update existing body styles */
+body {
+  font-family: Montserrat, Poppins, sans-serif;
+  background-color: var(--background);
+  color: var(--text-color);
+  transition: background-color 0.3s, color 0.3s;
+}
+
+/* Update heading colors */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-color);
+}
+
 :root {
   /* Make 1rem = 10px */
   font-size: 62.5%;
@@ -75,7 +121,7 @@ a {
 }
 
 /* Heading Styles */
-h1,
+/* h1,
 h2,
 h3,
 h4,
@@ -84,7 +130,7 @@ h6 {
   font-weight: 700;
   line-height: 1.2;
   color: var(--text-primary);
-}
+} */
 
 /* Desktop Heading Sizes (default) */
 h1 {

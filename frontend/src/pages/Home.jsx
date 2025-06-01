@@ -12,6 +12,7 @@ import styles from "../css/Home.module.css";
 import { MEDIA_BASE_URL } from "../constant/api";
 import { nigeriaInstitutions } from "../constant/data";
 import Spinner from "../components/Spinner";
+import ThemeToggle from "../components/ThemeToggle";
 import {
   FaBook,
   FaUtensils,
@@ -737,6 +738,7 @@ const Home = memo(() => {
               {uiState.isSearching ? "..." : <FaSearch />}
             </button>
           </form>
+          <ThemeToggle/>
         </div>
       </div>
 
