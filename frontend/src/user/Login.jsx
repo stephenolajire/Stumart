@@ -142,10 +142,11 @@ const Login = () => {
             auth();
             return;
           }
-        } else {
-          navigate("/picker");
-          auth();
-          return;
+        }
+        if (kyc_status === "approved") {
+          if (user_type === "picker" || user_type === "student_picker") {
+            navigate("/picker");
+          }
         }
       }
 
