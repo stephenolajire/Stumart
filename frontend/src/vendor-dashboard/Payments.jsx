@@ -242,7 +242,7 @@ const Payments = () => {
   return (
     <div className={styles.paymentsSection}>
       <div className={styles.sectionHeader}>
-        <h2 style={{ marginBottom: "2rem" }}>Payment Management</h2>
+        {/* <h2 style={{ marginBottom: "2rem" }}>Payment Management</h2> */}
         <div className={styles.actionPayments}>
           <button
             style={{ backgroundColor: "black" }}
@@ -274,12 +274,12 @@ const Payments = () => {
             {paymentStats.total_transactions}
           </p>
         </div>
-        <div className={styles.summaryCard}>
+        {/* <div className={styles.summaryCard}>
           <h5>Total Revenue</h5>
           <p className={styles.summaryValue}>
             {formatAmount(paymentStats.total_amount)}
           </p>
-        </div>
+        </div> */}
         <div className={styles.summaryCard}>
           <h5>Wallet Balance</h5>
           <p className={styles.summaryValue}>

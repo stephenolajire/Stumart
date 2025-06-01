@@ -1,77 +1,131 @@
-/* src/components/PickerDashboard/Earnings/Earnings.module.css */
+/* Earnings.module.css */
 
 .earnings {
-  padding: 1rem;
+  width: 100%;
+  margin: 0 auto;
+  padding: 2rem;
+  background-color: var(--background);
+  color: var(--text-primary);
+  min-height: 100vh;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .pageTitle {
-  font-size: var(--h3-desktop);
-  margin-bottom: 2.5rem;
+  font-size: var(--h1-desktop);
+  font-weight: 700;
   color: var(--text-primary);
+  margin-bottom: 3rem;
+  text-align: center;
+  position: relative;
 }
 
+.pageTitle::after {
+  content: '';
+  position: absolute;
+  bottom: -1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8rem;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary-400), var(--primary-600));
+  border-radius: 2px;
+}
+
+/* Period Filters */
 .periodFilters {
   display: flex;
-  gap: 1.5rem;
-  margin-bottom: 2.5rem;
-  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 3rem;
+  background-color: var(--surface);
+  border-radius: 1.2rem;
+  padding: 0.8rem;
+  box-shadow: 0 4px 12px var(--shadow);
+  border: 1px solid var(--border);
+  max-width: 50rem;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 3rem;
 }
 
 .periodButton {
-  padding: 1rem 2rem;
-  border: 1px solid var(--neutral-gray-300);
-  background-color: var(--neutral-white);
-  border-radius: 3rem;
+  flex: 1;
+  padding: 1.2rem 2rem;
+  border: none;
+  background-color: transparent;
+  color: var(--text-secondary);
   font-size: 1.4rem;
   font-weight: 500;
-  color: var(--text-tertiary);
   cursor: pointer;
-  transition: all 0.2s ease;
+  border-radius: 0.8rem;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .periodButton:hover {
-  border-color: var(--primary-500);
-  color: var(--primary-500);
+  background-color: var(--hover-bg);
+  color: var(--text-primary);
+  transform: translateY(-1px);
 }
 
 .periodButton.active {
   background-color: var(--primary-500);
-  border-color: var(--primary-500);
   color: var(--neutral-white);
+  font-weight: 600;
+  box-shadow: 0 4px 8px rgba(218, 165, 32, 0.3);
+  transform: translateY(-1px);
 }
 
+/* Stats Cards */
 .statsCards {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(28rem, 1fr));
   gap: 2rem;
-  margin-bottom: 3rem;
+  margin-bottom: 4rem;
 }
 
 .statCard {
-  background-color: var(--neutral-white);
-  border-radius: 1rem;
-  padding: 2rem;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1.2rem;
+  padding: 2.5rem 2rem;
+  box-shadow: 0 4px 12px var(--shadow);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
   display: flex;
   align-items: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  transition: transform 0.2s ease;
+  gap: 2rem;
 }
 
 .statCard:hover {
-  transform: translateY(-3px);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px var(--shadow);
+  border-color: var(--primary-300);
+}
+
+.statCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary-400), var(--primary-600));
 }
 
 .statIcon {
-  width: 5rem;
-  height: 5rem;
-  background-color: var(--primary-100);
-  color: var(--primary-500);
-  border-radius: 1rem;
+  width: 6rem;
+  height: 6rem;
+  background: linear-gradient(135deg, var(--primary-400), var(--primary-600));
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  color: var(--neutral-white);
   font-size: 2.4rem;
-  margin-right: 1.5rem;
+  box-shadow: 0 4px 12px rgba(218, 165, 32, 0.3);
+  flex-shrink: 0;
 }
 
 .statInfo {
@@ -79,72 +133,303 @@
 }
 
 .statInfo h3 {
-  font-size: 2.4rem;
+  font-size: var(--h3-desktop);
   font-weight: 700;
-  margin-bottom: 0.5rem;
   color: var(--text-primary);
+  margin-bottom: 0.8rem;
+  line-height: 1.2;
 }
 
 .statInfo p {
+  color: var(--text-secondary);
   font-size: 1.4rem;
-  color: var(--text-tertiary);
+  font-weight: 500;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
+/* Chart Card */
 .chartCard {
-  background-color: var(--neutral-white);
-  border-radius: 1rem;
-  padding: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1.2rem;
+  padding: 3rem 2rem;
+  box-shadow: 0 4px 12px var(--shadow);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.chartCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary-400), var(--primary-600));
 }
 
 .chartTitle {
-  font-size: var(--h5-desktop);
-  margin-bottom: 2rem;
+  font-size: var(--h3-desktop);
+  font-weight: 600;
   color: var(--text-primary);
+  margin-bottom: 2.5rem;
+  text-align: center;
 }
 
 .chartContainer {
-  height: 300px;
   width: 100%;
+  height: 30rem;
+  padding: 1rem 0;
 }
 
+/* Custom tooltip styling */
+.chartContainer .recharts-tooltip-wrapper {
+  background-color: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 0.8rem !important;
+  box-shadow: 0 4px 12px var(--shadow) !important;
+}
+
+.chartContainer .recharts-tooltip-label {
+  color: var(--text-primary) !important;
+  font-weight: 600 !important;
+}
+
+.chartContainer .recharts-tooltip-item {
+  color: var(--primary-600) !important;
+  font-weight: 500 !important;
+}
+
+/* No Chart Data */
 .noChartData {
   text-align: center;
-  padding: 5rem 0;
-  color: var(--text-tertiary);
+  padding: 4rem 2rem;
+  color: var(--text-secondary);
   font-size: 1.6rem;
+  background-color: var(--neutral-gray-100);
+  border-radius: 0.8rem;
+  border: 2px dashed var(--border);
+  margin: 2rem 0;
 }
 
-@media screen and (max-width: 1024px) {
-  .statsCards {
-    grid-template-columns: repeat(2, 1fr);
-  }
+/* Loading State */
+.earnings.loading {
+  opacity: 0.7;
+  pointer-events: none;
 }
 
+.earnings.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 4rem;
+  height: 4rem;
+  border: 3px solid var(--border);
+  border-top: 3px solid var(--primary-500);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Mobile Responsiveness */
 @media screen and (max-width: 768px) {
-  .pageTitle {
-    font-size: var(--h3-mobile);
-  }
-  
-  .statsCards {
-    grid-template-columns: 1fr;
-  }
-  
-  .statCard {
+  .earnings {
     padding: 1.5rem;
   }
-  
+
+  .pageTitle {
+    font-size: var(--h1-mobile);
+    margin-bottom: 2rem;
+  }
+
+  .periodFilters {
+    flex-direction: column;
+    gap: 0.5rem;
+    max-width: 100%;
+    margin-bottom: 2rem;
+  }
+
+  .periodButton {
+    padding: 1rem 1.5rem;
+    font-size: 1.3rem;
+  }
+
+  .statsCards {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+  }
+
+  .statCard {
+    padding: 2rem 1.5rem;
+    flex-direction: column;
+    text-align: center;
+    gap: 1.5rem;
+  }
+
   .statIcon {
-    width: 4rem;
-    height: 4rem;
+    width: 5rem;
+    height: 5rem;
     font-size: 2rem;
   }
-  
+
+  .statInfo h3 {
+    font-size: var(--h3-mobile);
+  }
+
+  .chartCard {
+    padding: 2rem 1rem;
+  }
+
+  .chartTitle {
+    font-size: var(--h3-mobile);
+    margin-bottom: 2rem;
+  }
+
+  .chartContainer {
+    height: 25rem;
+  }
+
+  .noChartData {
+    padding: 3rem 1.5rem;
+    font-size: 1.4rem;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .earnings {
+    padding: 1rem;
+  }
+
+  .periodFilters {
+    padding: 0.5rem;
+  }
+
+  .periodButton {
+    padding: 0.8rem 1rem;
+    font-size: 1.2rem;
+  }
+
+  .statCard {
+    padding: 1.5rem 1rem;
+  }
+
+  .statIcon {
+    width: 4.5rem;
+    height: 4.5rem;
+    font-size: 1.8rem;
+  }
+
   .statInfo h3 {
     font-size: 2rem;
   }
-  
+
   .chartCard {
-    padding: 1.5rem;
+    padding: 1.5rem 0.8rem;
+  }
+
+  .chartContainer {
+    height: 22rem;
+  }
+}
+
+/* Animation for stat cards */
+.statCard {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.statCard:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.statCard:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.statCard:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Focus states for accessibility */
+.periodButton:focus {
+  outline: 2px solid var(--primary-500);
+  outline-offset: 2px;
+}
+
+/* Dark mode specific adjustments */
+:root[data-theme="dark"] .chartCard,
+:root[data-theme="dark"] .statCard {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+:root[data-theme="dark"] .chartCard:hover,
+:root[data-theme="dark"] .statCard:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+:root[data-theme="dark"] .statIcon {
+  box-shadow: 0 4px 12px rgba(218, 165, 32, 0.4);
+}
+
+/* Custom scrollbar for chart area */
+.chartContainer::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.chartContainer::-webkit-scrollbar-track {
+  background-color: var(--neutral-gray-100);
+  border-radius: 3px;
+}
+
+.chartContainer::-webkit-scrollbar-thumb {
+  background-color: var(--primary-400);
+  border-radius: 3px;
+}
+
+.chartContainer::-webkit-scrollbar-thumb:hover {
+  background-color: var(--primary-500);
+}
+
+/* Enhance chart grid and axis styling */
+.chartContainer .recharts-cartesian-grid-horizontal line {
+  stroke: var(--border) !important;
+  stroke-dasharray: 3 3 !important;
+}
+
+.chartContainer .recharts-xAxis .recharts-cartesian-axis-tick text,
+.chartContainer .recharts-yAxis .recharts-cartesian-axis-tick text {
+  fill: var(--text-secondary) !important;
+  font-size: 1.2rem !important;
+}
+
+/* Responsive chart adjustments */
+@media screen and (max-width: 600px) {
+  .chartContainer .recharts-xAxis .recharts-cartesian-axis-tick text {
+    font-size: 1rem !important;
+  }
+  
+  .chartContainer .recharts-yAxis .recharts-cartesian-axis-tick text {
+    font-size: 1rem !important;
   }
 }

@@ -1,222 +1,382 @@
-/* src/components/PickerDashboard/MyDeliveries/MyDeliveries.module.css */
+/* MyDeliveries.module.css */
 
 .myDeliveries {
-  padding: 1rem;
+  width: 100%;
+  margin: 0 auto;
+  padding: 2rem;
+  background-color: var(--background);
+  color: var(--text-primary);
+  min-height: 100vh;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .pageTitle {
-  font-size: var(--h3-desktop);
-  margin-bottom: 2.5rem;
+  font-size: var(--h1-desktop);
+  font-weight: 700;
   color: var(--text-primary);
+  margin-bottom: 3rem;
+  text-align: center;
 }
 
+/* Tabs Container */
 .tabsContainer {
   display: flex;
-  gap: 2rem;
-  margin-bottom: 2.5rem;
-  border-bottom: 1px solid var(--neutral-gray-200);
+  justify-content: center;
+  margin-bottom: 4rem;
+  background-color: var(--surface);
+  border-radius: 1rem;
+  padding: 0.5rem;
+  box-shadow: 0 2px 8px var(--shadow);
+  border: 1px solid var(--border);
 }
 
 .tabButton {
-  padding: 1.5rem 1rem;
-  background: none;
+  flex: 1;
+  max-width: 20rem;
+  padding: 1.2rem 2rem;
   border: none;
+  background-color: transparent;
+  color: var(--text-secondary);
   font-size: 1.6rem;
-  font-weight: 600;
-  color: var(--text-tertiary);
+  font-weight: 500;
   cursor: pointer;
-  position: relative;
+  border-radius: 0.8rem;
+  transition: all 0.3s ease;
+}
+
+.tabButton:hover {
+  background-color: var(--hover-bg);
+  color: var(--text-primary);
 }
 
 .tabButton.active {
-  color: var(--primary-500);
+  background-color: var(--primary-500);
+  color: var(--neutral-white);
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(218, 165, 32, 0.3);
 }
 
-.tabButton.active::after {
+/* Loading and Empty States */
+.loading,
+.noDeliveries {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--text-secondary);
+  font-size: 1.8rem;
+  background-color: var(--surface);
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+}
+
+.loading {
+  color: var(--primary-500);
+  font-weight: 500;
+}
+
+/* Deliveries List */
+.deliveriesList {
+  display: grid;
+  gap: 2rem;
+  grid-template-columns: repeat(auto-fill, minmax(35rem, 1fr));
+}
+
+/* Delivery Card */
+.deliveryCard {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1.2rem;
+  padding: 2rem;
+  box-shadow: 0 4px 12px var(--shadow);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.deliveryCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px var(--shadow);
+  border-color: var(--primary-300);
+}
+
+.deliveryCard::before {
   content: '';
   position: absolute;
-  bottom: -1px;
+  top: 0;
   left: 0;
-  width: 100%;
-  height: 3px;
-  background-color: var(--primary-500);
-  border-radius: 3px 3px 0 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary-400), var(--primary-600));
 }
 
-.loading, .noDeliveries {
-  text-align: center;
-  padding: 5rem 0;
-  color: var(--text-tertiary);
-  font-size: 1.6rem;
-  background-color: var(--neutral-white);
-  border-radius: 1rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.deliveriesList {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
-
-.deliveryCard {
-  background-color: var(--neutral-white);
-  border-radius: 1rem;
-  padding: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
+/* Delivery Header */
 .deliveryHeader {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
 }
 
 .deliveryHeader h3 {
-  font-size: 1.8rem;
+  font-size: var(--h4-desktop);
+  font-weight: 600;
   color: var(--text-primary);
   margin-bottom: 0.5rem;
 }
 
 .timestamp {
+  color: var(--text-secondary);
   font-size: 1.4rem;
-  color: var(--text-tertiary);
+  margin: 0;
 }
 
+/* Status Badge */
 .status {
-  padding: 0.6rem 1.2rem;
+  padding: 0.8rem 1.2rem;
   border-radius: 2rem;
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .statusActive {
-  background-color: var(--info);
-  color: var(--neutral-white);
+  background-color: rgba(59, 130, 246, 0.1);
+  color: var(--info);
+  border: 1px solid var(--info);
 }
 
 .statusCompleted {
-  background-color: var(--success);
-  color: var(--neutral-white);
+  background-color: rgba(34, 197, 94, 0.1);
+  color: var(--success);
+  border: 1px solid var(--success);
 }
 
+/* Delivery Details */
 .deliveryDetails {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2rem;
-  padding-bottom: 2rem;
-  border-bottom: 1px solid var(--neutral-gray-200);
+  margin-bottom: 2rem;
 }
 
 .detailItem {
   display: flex;
   align-items: flex-start;
-  gap: 1rem;
-  flex: 1;
-  min-width: 20rem;
+  gap: 1.2rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background-color: var(--neutral-gray-100);
+  border-radius: 0.8rem;
+  border: 1px solid var(--border);
 }
 
 .detailIcon {
   color: var(--primary-500);
-  margin-top: 0.4rem;
+  font-size: 1.8rem;
+  margin-top: 0.2rem;
+  flex-shrink: 0;
 }
 
 .detailLabel {
   display: block;
-  font-size: 1.3rem;
-  color: var(--text-tertiary);
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   margin-bottom: 0.4rem;
 }
 
 .detailItem p {
+  color: var(--text-primary);
   font-size: 1.5rem;
-  color: var(--text-secondary);
+  font-weight: 500;
+  margin: 0;
+  line-height: 1.4;
 }
 
+/* Delivery Footer */
 .deliveryFooter {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 2rem;
-  flex-wrap: wrap;
-  gap: 1.5rem;
+  border-top: 1px solid var(--border);
+  padding-top: 2rem;
 }
 
 .deliveryFinancials {
   display: flex;
-  gap: 2.5rem;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background-color: var(--neutral-gray-100);
+  border-radius: 0.8rem;
+  border: 1px solid var(--border);
 }
 
 .financialLabel {
   display: block;
-  font-size: 1.3rem;
-  color: var(--text-tertiary);
-  margin-bottom: 0.4rem;
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
 }
 
 .financialValue {
   font-size: 1.8rem;
-  font-weight: 600;
-  color: var(--text-primary);
+  font-weight: 700;
+  color: var(--primary-600);
+  margin: 0;
 }
 
+/* Delivery Actions */
 .deliveryActions {
   display: flex;
-  gap: 1.5rem;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
-.viewButton, .deliveredButton {
-  padding: 1rem 1.5rem;
-  border-radius: 0.5rem;
+.viewButton,
+.deliveredButton {
+  flex: 1;
+  min-width: 14rem;
+  padding: 1.2rem 2rem;
+  border: none;
+  border-radius: 0.8rem;
   font-size: 1.4rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
-  border: none;
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .viewButton {
-  background-color: var(--neutral-gray-200);
-  color: var(--text-tertiary);
+  background-color: transparent;
+  color: var(--primary-600);
+  border: 2px solid var(--primary-500);
 }
 
 .viewButton:hover {
-  background-color: var(--neutral-gray-300);
+  background-color: var(--primary-500);
+  color: var(--neutral-white);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(218, 165, 32, 0.3);
 }
 
 .deliveredButton {
   background-color: var(--success);
   color: var(--neutral-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
 }
 
 .deliveredButton:hover {
-  background-color: #1fab54;
+  background-color: #16a34a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
 }
 
+.deliveredButton:active {
+  transform: translateY(0);
+}
+
+/* Mobile Responsiveness */
 @media screen and (max-width: 768px) {
-  .pageTitle {
-    font-size: var(--h3-mobile);
+  .myDeliveries {
+    padding: 1.5rem;
   }
-  
+
+  .pageTitle {
+    font-size: var(--h1-mobile);
+    margin-bottom: 2rem;
+  }
+
+  .tabsContainer {
+    margin-bottom: 2.5rem;
+  }
+
+  .tabButton {
+    padding: 1rem 1.5rem;
+    font-size: 1.4rem;
+  }
+
+  .deliveriesList {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
   .deliveryCard {
     padding: 1.5rem;
   }
-  
-  .deliveryFooter {
+
+  .deliveryHeader h3 {
+    font-size: var(--h4-mobile);
+  }
+
+  .deliveryFinancials {
     flex-direction: column;
-    align-items: flex-start;
+    gap: 1rem;
   }
-  
+
   .deliveryActions {
-    width: 100%;
+    flex-direction: column;
   }
-  
-  .viewButton, .deliveredButton {
-    flex: 1;
-    justify-content: center;
+
+  .viewButton,
+  .deliveredButton {
+    min-width: 100%;
   }
+
+  .detailItem {
+    padding: 0.8rem;
+  }
+
+  .financialValue {
+    font-size: 1.6rem;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .myDeliveries {
+    padding: 1rem;
+  }
+
+  .deliveryCard {
+    padding: 1.2rem;
+  }
+
+  .tabsContainer {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .tabButton {
+    max-width: 100%;
+  }
+}
+
+/* Focus states for accessibility */
+.tabButton:focus,
+.viewButton:focus,
+.deliveredButton:focus {
+  outline: 2px solid var(--primary-500);
+  outline-offset: 2px;
+}
+
+/* Dark mode specific adjustments */
+:root[data-theme="dark"] .deliveryCard {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+:root[data-theme="dark"] .deliveryCard:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+:root[data-theme="dark"] .statusActive {
+  background-color: rgba(59, 130, 246, 0.2);
+}
+
+:root[data-theme="dark"] .statusCompleted {
+  background-color: rgba(34, 197, 94, 0.2);
 }

@@ -1,169 +1,255 @@
 /* Settings.module.css */
+
 .settingsContainer {
-  padding: 2.4rem;
-  color: var(--text-primary);
-  max-width: 120rem;
+  max-width: 100%;
   margin: 0 auto;
+  padding: 2.4rem;
+  background-color: var(--background);
+  color: var(--text-primary);
+  transition: all 0.3s ease;
 }
 
+/* Header Section */
 .header {
-  margin-bottom: 2.4rem;
+  text-align: center;
+  margin-bottom: 4rem;
+  padding-bottom: 2.4rem;
+  border-bottom: 2px solid var(--border);
 }
 
 .header h2 {
-  font-size: var(--h4-desktop);
+  font-size: var(--h2-desktop);
+  font-weight: 700;
   color: var(--text-primary);
   margin-bottom: 0.8rem;
 }
 
 .header p {
   font-size: 1.6rem;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
+  font-weight: 400;
 }
 
+/* Loading State */
+.loader {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 50vh;
+  font-size: 1.8rem;
+  color: var(--text-secondary);
+  background-color: var(--background);
+}
+
+/* Alert Messages */
+.errorMessage,
+.successMessage {
+  padding: 1.6rem 2rem;
+  border-radius: 0.8rem;
+  margin-bottom: 2.4rem;
+  font-size: 1.4rem;
+  font-weight: 500;
+  text-align: center;
+  animation: slideIn 0.3s ease-out;
+}
+
+.errorMessage {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--error);
+  border: 1px solid var(--error);
+}
+
+.successMessage {
+  background-color: rgba(34, 197, 94, 0.1);
+  color: var(--success);
+  border: 1px solid var(--success);
+}
+
+/* Form Styling */
 .form {
-  background-color: var(--neutral-white);
-  border-radius: 1.2rem;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 3.2rem;
 }
 
+/* Section Styling */
 .section {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1.6rem;
   padding: 2.4rem;
-  border-bottom: 1px solid var(--neutral-gray-200);
+  box-shadow: 0 2px 8px var(--shadow);
+  transition: all 0.3s ease;
+}
+
+.section:hover {
+  box-shadow: 0 4px 16px var(--shadow);
 }
 
 .section h3 {
-  font-size: 1.8rem;
-  margin-bottom: 2rem;
+  font-size: var(--h3-desktop);
+  font-weight: 600;
   color: var(--text-primary);
+  margin-bottom: 2.4rem;
+  padding-bottom: 1.2rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
+/* Profile Image Section */
 .profileImageSection {
   display: flex;
   align-items: center;
+  gap: 2.4rem;
   margin-bottom: 2.4rem;
+  padding: 2rem;
+  background-color: var(--hover-bg);
+  border-radius: 1.2rem;
+  border: 1px solid var(--border);
 }
 
 .profileImageContainer {
-  width: 8rem;
-  height: 8rem;
-  border-radius: 50%;
-  overflow: hidden;
-  background-color: var(--neutral-gray-200);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 2.4rem;
+  position: relative;
 }
 
 .profileImage {
-  width: 100%;
-  height: 100%;
+  width: 10rem;
+  height: 10rem;
+  border-radius: 50%;
   object-fit: cover;
+  border: 3px solid var(--primary-500);
+  box-shadow: 0 4px 12px var(--shadow);
 }
 
 .profileImagePlaceholder {
+  width: 10rem;
+  height: 10rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary-400), var(--primary-600));
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 3.2rem;
-  color: var(--neutral-gray-400);
+  color: var(--neutral-white);
+  border: 3px solid var(--primary-500);
+  box-shadow: 0 4px 12px var(--shadow);
 }
 
-.profileImageUpload p {
-  margin-top: 0.8rem;
-  font-size: 1.4rem;
-  color: var(--text-tertiary);
+.profileImageUpload {
+  flex: 1;
 }
 
 .uploadButton {
   display: inline-block;
-  padding: 0.8rem 1.6rem;
-  background-color: var(--primary-500);
-  color: white;
-  border-radius: 0.4rem;
+  background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+  color: var(--neutral-white);
+  padding: 1.2rem 2.4rem;
+  border-radius: 0.8rem;
+  font-weight: 600;
   font-size: 1.4rem;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.3s ease;
+  border: none;
+  margin-bottom: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .uploadButton:hover {
-  background-color: var(--primary-600);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(218, 165, 32, 0.3);
+  background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
 }
 
 .fileInput {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  border: 0;
+  display: none;
 }
 
+.profileImageUpload p {
+  font-size: 1.3rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Field Groups */
 .fieldGroup {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.6rem;
-  margin-bottom: 1.6rem;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
 }
 
-@media (min-width: 768px) {
-  .fieldGroup {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
+/* Form Fields */
 .formField {
-  margin-bottom: 1.6rem;
+  margin-bottom: 2rem;
 }
 
 .formField label {
   display: flex;
   align-items: center;
+  gap: 0.8rem;
   font-size: 1.4rem;
   font-weight: 600;
+  color: var(--text-primary);
   margin-bottom: 0.8rem;
-  color: var(--text-secondary);
 }
 
 .fieldIcon {
-  margin-right: 0.8rem;
   color: var(--primary-500);
+  font-size: 1.6rem;
 }
 
-.formField input, 
+.formField input,
 .formField select {
   width: 100%;
-  padding: 1.2rem;
-  border: 1px solid var(--neutral-gray-300);
-  border-radius: 0.6rem;
-  font-size: 1.6rem;
+  padding: 1.4rem 1.6rem;
+  border: 1px solid var(--border);
+  border-radius: 0.8rem;
+  background-color: var(--background);
   color: var(--text-primary);
-  background-color: var(--neutral-white);
-  transition: border-color 0.2s;
+  font-size: 1.4rem;
+  transition: all 0.3s ease;
 }
 
-.formField input:focus, 
+.formField input:focus,
 .formField select:focus {
   outline: none;
   border-color: var(--primary-500);
-  box-shadow: 0 0 0 2px rgba(218, 165, 32, 0.1);
+  box-shadow: 0 0 0 3px rgba(218, 165, 32, 0.1);
+  background-color: var(--surface);
+}
+
+.formField input:hover,
+.formField select:hover {
+  border-color: var(--primary-400);
 }
 
 .readonlyField {
   background-color: var(--neutral-gray-100) !important;
+  color: var(--text-secondary) !important;
   cursor: not-allowed;
 }
 
+.formField select {
+  cursor: pointer;
+}
+
+.formField select option {
+  background-color: var(--surface);
+  color: var(--text-primary);
+  padding: 1rem;
+}
+
+/* Toggle Field */
 .toggleField {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.2rem 0;
-}
-
-.toggleLabel {
-  flex: 1;
+  padding: 2rem;
+  background-color: var(--hover-bg);
+  border-radius: 1.2rem;
+  border: 1px solid var(--border);
 }
 
 .toggleLabel label {
@@ -175,15 +261,16 @@
 }
 
 .toggleLabel p {
-  font-size: 1.4rem;
-  color: var(--text-tertiary);
+  font-size: 1.3rem;
+  color: var(--text-secondary);
+  margin: 0;
 }
 
 .toggleSwitch {
   position: relative;
   display: inline-block;
-  width: 5rem;
-  height: 2.6rem;
+  width: 6rem;
+  height: 3.2rem;
   cursor: pointer;
 }
 
@@ -194,148 +281,302 @@
 }
 
 .toggleSlider {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--border);
+  border-radius: 3.2rem;
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2.4rem;
-  color: var(--primary-500);
+}
+
+.toggleSwitch input:checked + .toggleSlider {
+  background-color: var(--primary-500);
 }
 
 .toggleIcon {
-  transition: 0.2s;
+  font-size: 2.4rem;
+  color: var(--neutral-white);
+  transition: all 0.3s ease;
 }
 
+.toggleSwitch input:checked + .toggleSlider .toggleIcon {
+  color: var(--neutral-white);
+}
+
+/* Verification Status */
 .verificationStatus {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  padding: 2.4rem;
-  background-color: var(--neutral-gray-50);
+  align-items: center;
+  padding: 2rem;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1.2rem;
+  margin-top: 2rem;
 }
 
 .verificationLabel h4 {
-  font-size: 1.6rem;
+  font-size: var(--h4-desktop);
+  font-weight: 600;
+  color: var(--text-primary);
   margin-bottom: 0.4rem;
 }
 
 .verificationLabel p {
-  font-size: 1.4rem;
-  color: var(--text-tertiary);
+  font-size: 1.3rem;
+  color: var(--text-secondary);
+  margin: 0;
 }
 
 .verificationBadgeVerified,
 .verificationBadgePending {
-  padding: 0.6rem 1.2rem;
+  padding: 0.8rem 1.6rem;
   border-radius: 2rem;
-  font-size: 1.4rem;
+  font-size: 1.3rem;
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .verificationBadgeVerified {
-  background-color: rgba(34, 197, 94, 0.1);
+  background-color: rgba(34, 197, 94, 0.15);
   color: var(--success);
+  border: 1px solid var(--success);
 }
 
 .verificationBadgePending {
-  background-color: rgba(245, 158, 11, 0.1);
+  background-color: rgba(251, 191, 36, 0.15);
   color: var(--warning);
+  border: 1px solid var(--warning);
 }
 
+/* Form Actions */
 .formActions {
-  padding: 2.4rem;
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
+  padding-top: 2.4rem;
+  border-top: 1px solid var(--border);
 }
 
 .saveButton {
-  padding: 1.2rem 2.4rem;
-  background-color: var(--primary-500);
-  color: white;
+  background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+  color: var(--neutral-white);
+  padding: 1.6rem 4rem;
   border: none;
-  border-radius: 0.6rem;
+  border-radius: 0.8rem;
   font-size: 1.6rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  min-width: 20rem;
 }
 
 .saveButton:hover:not(:disabled) {
-  background-color: var(--primary-600);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(218, 165, 32, 0.4);
+  background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
 }
 
 .saveButton:disabled {
-  background-color: var(--neutral-gray-300);
+  opacity: 0.6;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
-.errorMessage,
-.successMessage {
-  margin-bottom: 2rem;
-  padding: 1.6rem;
-  border-radius: 0.6rem;
-  font-size: 1.6rem;
-  font-weight: 500;
+.saveButton:active:not(:disabled) {
+  transform: translateY(0);
 }
 
-.errorMessage {
-  background-color: rgba(239, 68, 68, 0.1);
-  color: var(--error);
+/* Animations */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.successMessage {
-  background-color: rgba(34, 197, 94, 0.1);
-  color: var(--success);
+.settingsContainer {
+  animation: fadeIn 0.5s ease-out;
 }
 
-.loader {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 20rem;
-  font-size: 1.8rem;
-  color: var(--text-tertiary);
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(2rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-/* Media Queries */
+/* Mobile Responsiveness */
 @media screen and (max-width: 768px) {
   .settingsContainer {
     padding: 1.6rem;
   }
 
+  .header {
+    margin-bottom: 2.4rem;
+    padding-bottom: 1.6rem;
+  }
+
   .header h2 {
+    font-size: var(--h2-mobile);
+  }
+
+  .header p {
+    font-size: 1.4rem;
+  }
+
+  .section {
+    padding: 2rem;
+  }
+
+  .section h3 {
+    font-size: var(--h3-mobile);
+    margin-bottom: 2rem;
+  }
+
+  .profileImageSection {
+    flex-direction: column;
+    text-align: center;
+    gap: 1.6rem;
+  }
+
+  .profileImage,
+  .profileImagePlaceholder {
+    width: 8rem;
+    height: 8rem;
+  }
+
+  .profileImagePlaceholder {
+    font-size: 2.4rem;
+  }
+
+  .fieldGroup {
+    grid-template-columns: 1fr;
+    gap: 1.6rem;
+  }
+
+  .toggleField {
+    flex-direction: column;
+    gap: 1.6rem;
+    text-align: center;
+  }
+
+  .verificationStatus {
+    flex-direction: column;
+    gap: 1.6rem;
+    text-align: center;
+  }
+
+  .verificationLabel h4 {
     font-size: var(--h4-mobile);
   }
-  
+
+  .saveButton {
+    width: 100%;
+    padding: 1.4rem 2rem;
+    font-size: 1.4rem;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .settingsContainer {
+    padding: 1.2rem;
+  }
+
+  .header h2 {
+    font-size: 2.4rem;
+  }
+
   .section {
     padding: 1.6rem;
   }
-  
-  .profileImageSection {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
+
+  .section h3 {
+    font-size: 2rem;
   }
-  
-  .profileImageContainer {
-    margin-right: 0;
-    margin-bottom: 1.6rem;
+
+  .profileImage,
+  .profileImagePlaceholder {
+    width: 7rem;
+    height: 7rem;
   }
-  
-  .toggleField {
-    flex-direction: column;
-    align-items: flex-start;
+
+  .profileImagePlaceholder {
+    font-size: 2rem;
   }
-  
-  .toggleLabel {
-    margin-bottom: 1.2rem;
+
+  .uploadButton {
+    padding: 1rem 2rem;
+    font-size: 1.3rem;
   }
-  
+
+  .formField input,
+  .formField select {
+    padding: 1.2rem;
+    font-size: 1.3rem;
+  }
+
+  .toggleSwitch {
+    width: 5rem;
+    height: 2.8rem;
+  }
+
+  .toggleIcon {
+    font-size: 2rem;
+  }
+}
+
+/* Accessibility */
+.formField input:focus,
+.formField select:focus,
+.uploadButton:focus,
+.saveButton:focus,
+.toggleSwitch:focus-within {
+  outline: 2px solid var(--primary-500);
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .section,
+  .profileImageSection,
+  .toggleField,
   .verificationStatus {
-    flex-direction: column;
-    align-items: flex-start;
+    border-width: 2px;
   }
   
-  .verificationLabel {
-    margin-bottom: 1.2rem;
+  .formField input,
+  .formField select {
+    border-width: 2px;
+  }
+  
+  .verificationBadgeVerified,
+  .verificationBadgePending {
+    border-width: 2px;
+  }
+}
+
+/* Dark mode specific adjustments */
+@media (prefers-color-scheme: dark) {
+  .formField input::placeholder,
+  .formField select::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.7;
   }
 }

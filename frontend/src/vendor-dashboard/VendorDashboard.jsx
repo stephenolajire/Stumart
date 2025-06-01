@@ -13,6 +13,7 @@ import Swal from "sweetalert2";
 import Inventory from "./Inventory";
 import Settings from "./Settings";
 import vendorApi from "../services/vendorApi";
+import ThemeToggle from "../components/ThemeToggle";
 
 const VendorDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -176,6 +177,9 @@ const VendorDashboard = () => {
   return (
     <div className={styles.dashboardContainer}>
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <div style={{position:"fixed", bottom:"2rem", right:"2rem"}}>
+        <ThemeToggle/>
+      </div>
       <div className={styles.mainContent}>
         <Bar activeTab={activeTab} />
         {renderContent()}

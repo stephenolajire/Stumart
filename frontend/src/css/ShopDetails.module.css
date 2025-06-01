@@ -4,7 +4,8 @@
   padding: 6rem;
   margin-top: 10rem;
   padding-top: 3rem;
-  
+  background-color: var(--background);
+  color: var(--text-primary);
 }
 
 /* Loading and No Products States */
@@ -17,6 +18,7 @@
   min-height: 50vh;
   text-align: center;
   padding: 2rem;
+  color: var(--text-primary);
 }
 
 .noProductsIcon {
@@ -29,7 +31,7 @@
   margin-top: 2rem;
   padding: 1rem 2rem;
   background-color: var(--primary-500);
-  color: var(--neutral-white);
+  color: white;
   border-radius: 0.4rem;
   font-weight: 600;
   font-size: 1.6rem;
@@ -44,7 +46,7 @@
 .shopHeader {
   margin-bottom: 4rem;
   padding-bottom: 2rem;
-  border-bottom: 1px solid var(--neutral-gray-200);
+  border-bottom: 1px solid var(--border);
 }
 
 .shopInfo {
@@ -67,7 +69,7 @@
 
 .shopDescription {
   font-size: 1.6rem;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   line-height: 1.6;
   margin-bottom: 2rem;
 }
@@ -106,16 +108,17 @@
 .productCard {
   display: flex;
   flex-direction: column;
-  background-color: var(--neutral-white);
+  background-color: var(--surface);
   border-radius: 0.8rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px var(--shadow);
   overflow: hidden;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid var(--border);
 }
 
 .productCard:hover {
   transform: translateY(-5px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 6px 12px var(--shadow);
 }
 
 .productImageContainer {
@@ -156,7 +159,7 @@
 
 .productDescription {
   font-size: 1.4rem;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   line-height: 1.5;
   margin-bottom: 1.5rem;
   flex-grow: 1;
@@ -169,7 +172,7 @@
   gap: 0.8rem;
   padding: 1rem;
   background-color: var(--primary-500);
-  color: var(--neutral-white);
+  color: white;
   border: none;
   border-radius: 0.4rem;
   font-size: 1.4rem;

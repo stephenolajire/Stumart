@@ -2,7 +2,7 @@
 .dashboardContainer {
   display: flex;
   min-height: 100vh;
-  background-color: var(--neutral-gray-50);
+  background-color: var(--background);
   font-size: 1.6rem;
 }
 
@@ -16,20 +16,20 @@
 .sidebar {
   width: 24rem;
   min-height: 100vh;
-  background-color: var(--neutral-white);
-  border-right: 1px solid var(--neutral-gray-200);
+  background-color: var(--surface);
+  border-right: 1px solid var(--border);
   position: fixed;
   left: 0;
   top: 0;
   bottom: 0;
   z-index: 10;
   transition: all 0.3s ease;
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+  box-shadow: 2px 0 10px var(--shadow);
 }
 
 .logoContainer {
   padding: 2rem;
-  border-bottom: 1px solid var(--neutral-gray-200);
+  border-bottom: 1px solid var(--border);
 }
 
 .logo {
@@ -46,7 +46,7 @@
   display: flex;
   align-items: center;
   padding: 1.2rem 2rem;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -86,8 +86,8 @@
     font-size: 1.6rem;
     text-align: center;
     border: none;
-    color: white;
-    background-color: var(--secondary-600);
+    color: var(--background);
+    background-color: var(--error);
 }
 
 .topBar {
@@ -96,7 +96,7 @@
   align-items: center;
   margin-bottom: 2.5rem;
   padding-bottom: 1.5rem;
-  border-bottom: 1px solid var(--neutral-gray-200);
+  border-bottom: 1px solid var(--border);
 }
 
 .topBar h1 {
@@ -136,12 +136,12 @@
 }
 
 .statCard{
-  background-color: var(--neutral-white);
+  background-color: var(--surface);
   border-radius: 0.8rem;
   padding: 2rem;
   display: flex;
   align-items: center;
-  box-shadow: 0 0.2rem 0.8rem rgba(0, 0, 0, 0.05);
+  box-shadow: 0 0.2rem 0.8rem var(--shadow);
   transition: transform 0.2s ease;
 }
 
@@ -176,10 +176,10 @@
 
 /* Chart styles */
 .chartCard {
-  background-color: var(--neutral-white);
+  background-color: var(--surface);
   border-radius: 0.8rem;
   padding: 2rem;
-  box-shadow: 0 0.2rem 0.8rem rgba(0, 0, 0, 0.05);
+  box-shadow: 0 0.2rem 0.8rem var(--shadow);
   height: 30rem;
 }
 
@@ -234,9 +234,9 @@
   width: 100%;
   overflow-x: auto; /* Creates horizontal scrolling */
   margin-bottom: 3rem;
-  background-color: var(--neutral-white);
+  background-color: var(--surface);
   border-radius: 1rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px var(--shadow);
 }
 
 .dataTable {
@@ -245,18 +245,18 @@
 }
 
 .dataTable th {
-  background-color: var(--neutral-gray-100);
+  background-color: var(--hover-bg);
   text-align: left;
   padding: 1.5rem;
   font-size: 1.4rem;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   font-weight: 600;
   min-width: 10rem; /* Prevent excessive column squishing */
 }
 
 .dataTable td {
   padding: 1.5rem;
-  border-bottom: 1px solid var(--neutral-gray-200);
+  border-bottom: 1px solid var(--border);
   font-size: 1.4rem;
   min-width: 10rem; /* Prevent excessive column squishing */
 }
@@ -266,7 +266,7 @@
 }
 
 .dataTable tr:hover {
-  background-color: var(--neutral-gray-50);
+  background-color: var(--hover-bg);
 }
 
 .productName {
@@ -279,7 +279,7 @@
 }
 
 .sortableHeader:hover {
-  background-color: var(--neutral-gray-200);
+  background-color: var(--border);
 }
 
 /* Status Indicators */
@@ -328,11 +328,11 @@
 
 .filterSelect {
   padding: 1rem 1.5rem;
-  border: 1px solid var(--neutral-gray-300);
+  border: 1px solid var(--border);
   border-radius: 0.5rem;
   font-size: 1.4rem;
   color: var(--text-primary);
-  background-color: var(--neutral-white);
+  background-color: var(--background);
   outline: none;
   min-width: 15rem;
 }
@@ -348,17 +348,17 @@
   left: 1.5rem;
   top: 50%;
   transform: translateY(-50%);
-  color: var(--neutral-gray-400);
+  color: var(--text-secondary);
 }
 
 .searchInput {
   width: 100%;
   padding: 1rem 1.5rem 1rem 4rem;
-  border: 1px solid var(--neutral-gray-300);
+  border: 1px solid var(--border);
   border-radius: 0.5rem;
   font-size: 1.4rem;
   color: var(--text-primary);
-  background-color: var(--neutral-white);
+  background-color: var(--background);
   outline: none;
 }
 
@@ -380,16 +380,16 @@
 }
 
 .summaryCard {
-  background-color: var(--neutral-white);
+  background-color: var(--surface);
   border-radius: 1rem;
   padding: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px var(--shadow);
   text-align: center;
 }
 
 .summaryCard h3, .summaryCard h5 {
   font-size: 1.6rem;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   margin-bottom: 1rem;
 }
 
@@ -426,10 +426,10 @@
 
 /* Reviews Section */
 .reviewCard {
-  background-color: var(--neutral-white);
+  background-color: var(--surface);
   border-radius: 1rem;
   padding: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px var(--shadow);
   margin-bottom: 2rem;
 }
 
@@ -456,7 +456,7 @@
 }
 
 .starEmpty {
-  color: var(--neutral-gray-300);
+  color: var(--border);
 }
 
 .reviewMeta {
@@ -470,7 +470,7 @@
 
 .reviewDate {
   font-size: 1.3rem;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
 }
 
 .reviewContent {
@@ -489,7 +489,7 @@
 }
 
 .responseContainer {
-  background-color: var(--neutral-gray-50);
+  background-color: var(--hover-bg);
   border-radius: 0.8rem;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
@@ -528,7 +528,7 @@
 
 .replyButton {
   background-color: var(--primary-500);
-  color: var(--neutral-white);
+  color: var(--background);
 }
 
 .replyButton:hover {
@@ -536,12 +536,12 @@
 }
 
 .editReplyButton {
-  background-color: var(--neutral-gray-200);
+  background-color: var(--hover-bg);
   color: var(--text-secondary);
 }
 
 .editReplyButton:hover {
-  background-color: var(--neutral-gray-300);
+  background-color: var(--border);
 }
 
 .ratingDisplay {
@@ -561,16 +561,16 @@
 .settingsLayout {
   display: flex;
   gap: 3rem;
-  background-color: var(--neutral-white);
+  background-color: var(--surface);
   border-radius: 1rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px var(--shadow);
   overflow: hidden;
   flex-wrap: wrap;
 }
 
 .settingsSidebar {
   width: 25rem;
-  background-color: var(--neutral-gray-100);
+  background-color: var(--hover-bg);
   padding: 2rem 0;
 }
 
@@ -584,15 +584,15 @@
   padding: 1.2rem 2rem;
   cursor: pointer;
   transition: all 0.2s ease;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
 }
 
 .settingsTab:hover {
-  background-color: var(--neutral-gray-200);
+  background-color: var(--border);
 }
 
 .settingsTab.activeTab {
-  background-color: var(--neutral-white);
+  background-color: var(--surface);
   color: var(--primary-500);
   font-weight: 600;
   border-left: 3px solid var(--primary-500);
@@ -627,11 +627,11 @@
 .formInput, .formTextarea {
   width: 100%;
   padding: 1.2rem;
-  border: 1px solid var(--neutral-gray-300);
+  border: 1px solid var(--border);
   border-radius: 0.5rem;
   font-size: 1.5rem;
   color: var(--text-primary);
-  background-color: var(--neutral-white);
+  background-color: var(--background);
   outline: none;
 }
 
@@ -640,13 +640,13 @@
 }
 
 .formInput:disabled {
-  background-color: var(--neutral-gray-100);
+  background-color: var(--hover-bg);
   cursor: not-allowed;
 }
 
 .formHelper {
   font-size: 1.2rem;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   margin-top: 0.5rem;
   display: block;
 }
@@ -680,25 +680,25 @@
 .fileLabel {
   display: inline-block;
   padding: 1.2rem;
-  background-color: var(--neutral-gray-100);
-  border: 1px solid var(--neutral-gray-300);
+  background-color: var(--hover-bg);
+  border: 1px solid var(--border);
   border-radius: 0.5rem;
   cursor: pointer;
   width: 100%;
   font-size: 1.5rem;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
 }
 
 .fileLabel:hover {
-  background-color: var(--neutral-gray-200);
+  background-color: var(--border);
 }
 
 .saveButton {
   background-color: var(--primary-500);
-  color: var(--neutral-white);
+  color: var(--background);
   border: none;
   padding: 1.2rem 2rem;
   border-radius: 0.5rem;
@@ -718,7 +718,7 @@
 
 .logout {
   background-color: var(--error);
-  color: var(--neutral-white);
+  color: var(--background);
   border: none;
   padding: 1.5rem 3rem;
   border-radius: 0.5rem;
@@ -737,7 +737,7 @@
 
 .saveButton {
   background-color: var(--primary-500);
-  color: var(--neutral-white);
+  color: var(--background);
   border: none;
   padding: 1.2rem 2rem;
   border-radius: 0.5rem;
@@ -757,7 +757,7 @@
 
 .logout {
   background-color: var(--error);
-  color: var(--neutral-white);
+  color: var(--background);
   border: none;
   padding: 1.5rem 3rem;
   border-radius: 0.5rem;
@@ -793,12 +793,12 @@
 }
 
 .viewButton {
-  background-color: var(--neutral-gray-100);
+  background-color: var(--hover-bg);
   color: var(--text-secondary);
 }
 
 .viewButton:hover {
-  background-color: var(--neutral-gray-200);
+  background-color: var(--border);
 }
 
 .editButton {
@@ -821,7 +821,7 @@
 
 .updateStockButton {
   background-color: var(--primary-500);
-  color: var(--neutral-white);
+  color: var(--background);
   padding: 0.8rem 1.2rem;
   border-radius: 0.5rem;
   font-size: 1.3rem;
@@ -835,7 +835,7 @@
 
 .addButton {
   background-color: var(--primary-500);
-  color: var(--neutral-white);
+  color: var(--background);
   border: none;
   padding: 1rem 1.5rem;
   border-radius: 0.5rem;
@@ -858,11 +858,11 @@
 
 /* Placeholder section */
 .placeholderSection {
-  background-color: var(--neutral-white);
+  background-color: var(--surface);
   border-radius: 0.8rem;
   padding: 3rem;
   text-align: center;
-  box-shadow: 0 0.2rem 0.8rem rgba(0, 0, 0, 0.05);
+  box-shadow: 0 0.2rem 0.8rem var(--shadow);
 }
 
 .placeholderSection h2 {
@@ -872,7 +872,7 @@
 
 .placeholderSection p {
   font-size: 1.6rem;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
 }
 
 .actionPayments {
@@ -949,7 +949,7 @@
 }
 
 .updateButton, .shipButton, .pickerDetailsButton {
-  color: white;
+  color: var(--background);
   background-color: var(--primary-500);
   /* padding: 1.5rem; */
   border: none;
@@ -964,8 +964,8 @@
 }
 
 .pickerDetailsButton {
-  background-color: var(--secondary-600);
-  color: var(--neutral-white);
+  background-color: var(--primary-600);
+  color: var(--background);
   display: flex;
   flex-direction: row;
   gap: 0.5rem;

@@ -170,7 +170,7 @@ const Orders = ({ orders, onOrderUpdate }) => {
   return (
     <div className={styles.ordersSection}>
       <div className={styles.sectionHeader}>
-        <h2 style={{ marginBottom: "2rem" }}>Order Management</h2>
+        {/* <h2 style={{ marginBottom: "2rem" }}>Order Management</h2> */}
         <div className={styles.orderFilters}>
           <select
             className={styles.filterSelect}

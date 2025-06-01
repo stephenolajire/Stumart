@@ -65,12 +65,12 @@ const DashboardLayout = () => {
       >
         <Sidebar activeView={activeView} onViewChange={handleViewChange} />
       </div>
-      <div
+      {/* <div
         className={styles.mobileMenuButton}
         onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
       >
         <IoMenuOutline />
-      </div>
+      </div> */}
       <div className={styles.content}>{renderContent()}</div>
     </div>
   );

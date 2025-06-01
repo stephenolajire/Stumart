@@ -2,6 +2,8 @@
   max-width: 120rem;
   margin: 0 auto;
   padding: 4rem 2rem;
+  background-color: var(--background);
+  color: var(--text-primary);
 }
 
 .header {
@@ -16,7 +18,7 @@
 
 .subtitle {
   font-size: 1.8rem;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   margin-bottom: 3rem;
 }
 
@@ -26,6 +28,7 @@
   padding: 2rem;
   max-width: 60rem;
   margin: 0 auto;
+  border: 1px solid var(--border);
 }
 
 .currentTitle {
@@ -51,8 +54,8 @@
 }
 
 .planCard {
-  background-color: var(--neutral-white);
-  border: 1px solid var(--neutral-gray-200);
+  background-color: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 1rem;
   padding: 3rem 2rem;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -60,7 +63,7 @@
 
 .planCard:hover {
   transform: translateY(-0.5rem);
-  box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1rem 2rem var(--shadow);
 }
 
 .planName {
@@ -71,7 +74,7 @@
 
 .planDuration {
   font-size: 1.6rem;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   text-align: center;
   margin-bottom: 2rem;
 }
@@ -121,6 +124,34 @@
   padding: 2rem;
 }
 
+.subscribeButton {
+  width: 100%;
+  padding: 1.6rem 2.4rem;
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: white;
+  background-color: var(--primary-500);
+  border: none;
+  border-radius: 0.8rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  font-family: inherit;
+}
+
+.subscribeButton:hover {
+  background-color: var(--primary-600);
+}
+
+.subscribeButton:active {
+  background-color: var(--primary-700);
+}
+
+.subscribeButton:disabled {
+  background-color: var(--neutral-gray-100);
+  color: var(--text-secondary);
+  cursor: not-allowed;
+}
+
 /* Media Queries */
 @media screen and (max-width: 768px) {
   .container {
@@ -143,41 +174,7 @@
   .featureItem {
     font-size: 1.3rem;
   }
-}
 
-/* ...existing code... */
-
-.subscribeButton {
-  width: 100%;
-  padding: 1.6rem 2.4rem;
-  font-size: 1.6rem;
-  font-weight: 600;
-  color: var(--neutral-white);
-  background-color: var(--primary-500);
-  border: none;
-  border-radius: 0.8rem;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  font-family: inherit;
-}
-
-.subscribeButton:hover {
-  background-color: var(--primary-600);
-}
-
-.subscribeButton:active {
-  background-color: var(--primary-700);
-}
-
-.subscribeButton:disabled {
-  background-color: var(--neutral-gray-300);
-  cursor: not-allowed;
-}
-
-/* Add to the existing media query section */
-@media screen and (max-width: 768px) {
-  /* ...existing media query styles... */
-  
   .subscribeButton {
     padding: 1.4rem 2rem;
     font-size: 1.4rem;

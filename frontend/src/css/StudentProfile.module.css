@@ -109,12 +109,12 @@
 .studentName {
   font-size: var(--h4-desktop);
   margin-bottom: 0.8rem;
-  color: var(--text-primary);
+  color: #333;
 }
 
 .studentEmail {
   font-size: 1.6rem;
-  color: var(--text-secondary);
+  color: #333;
   margin-bottom: 1.6rem;
 }
 

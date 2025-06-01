@@ -104,10 +104,10 @@ const Inventory = ({ products, onUpdateStock }) => {
 
   return (
     <div className={styles.inventorySection}>
-      <div className={styles.sectionHeader}>
+      {/* <div className={styles.sectionHeader}>
         <h2 style={{marginBottom:"2rem"}}>Inventory Management</h2>
-        {/* <button className={styles.addButton}>Bulk Update</button> */}
-      </div>
+        
+      </div> */}
 
       <div className={styles.inventorySummary}>
         <div className={styles.summaryCard}>

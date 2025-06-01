@@ -38,12 +38,12 @@ const Overview = ({ stats }) => {
         icon={<FaBoxes />}
         color="var(--warning)"
       />
-      <StatCard
+      {/* <StatCard
         title="Pending Reviews"
         value={stats.pendingReviews || 0}
         icon={<FaStar />}
         color="var(--info)"
-      />
+      /> */}
       <RevenueChart data={stats.revenueData || []} />
       <SalesChart data={stats.salesData || []} />
     </div>

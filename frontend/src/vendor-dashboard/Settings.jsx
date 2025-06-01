@@ -446,7 +446,7 @@ const Settings = () => {
 
   return (
     <div className={styles.settingsContainer}>
-      <h2 className={styles.sectionTitle}>Settings</h2>
+      {/* <h2 className={styles.sectionTitle}>Settings</h2> */}
 
       <div className={styles.settingsLayout}>
         <div className={styles.settingsSidebar}>

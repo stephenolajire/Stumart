@@ -24,13 +24,13 @@
   position: absolute;
   left: 0;
   background-color: var(--primary-500);
-  color: white;
+  color: var(--background);
   border: none;
   padding: 1rem 2rem;
   border-radius: 0.8rem;
   font-size: 1.6rem;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: background-color 0.3s ease;
 }
 
 .backButton:hover {
@@ -41,10 +41,11 @@
   display: flex;
   gap: 3rem;
   margin-bottom: 4rem;
-  background-color: var(--neutral-gray-50);
+  background-color: var(--surface);
   border-radius: 1.2rem;
   padding: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px var(--shadow);
+  border: 1px solid var(--border);
 }
 
 .serviceImageContainer {
@@ -75,19 +76,16 @@
 
 .serviceCategory {
   display: inline-block;
-  /* background-color: var(--primary-500); */
-  color: green;
-  /* padding: 0.5rem 1.5rem; */
+  color: var(--success);
   border-radius: 2rem;
   font-size: 1.6rem;
   margin-bottom: 1.5rem;
   font-weight: 900;
-
 }
 
 .serviceProvider, .serviceLocation {
   font-size: 1.6rem;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   margin-bottom: 1rem;
 }
 
@@ -101,10 +99,11 @@
 }
 
 .formContainer {
-  background-color: var(--neutral-white);
+  background-color: var(--surface);
   border-radius: 1.2rem;
   padding: 3rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 12px var(--shadow);
+  border: 1px solid var(--border);
 }
 
 .formContainer h3 {
@@ -130,12 +129,13 @@
 .formGroup textarea {
   width: 100%;
   padding: 1rem;
-  border: 1px solid var(--neutral-gray-300);
+  border: 1px solid var(--border);
   border-radius: 0.8rem;
   font-size: 1.6rem;
   color: var(--text-primary);
-  background-color: var(--neutral-white);
+  background-color: var(--background);
   font-family: inherit;
+  transition: border-color 0.3s ease, background-color 0.3s ease, color 0.3s ease;
 }
 
 .formGroup input:focus,
@@ -145,22 +145,29 @@
   box-shadow: 0 0 0 2px rgba(218, 165, 32, 0.2);
 }
 
+.formGroup input::placeholder,
+.formGroup textarea::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
 .formGroup input:disabled {
-  background-color: var(--neutral-gray-100);
+  background-color: var(--hover-bg);
   cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .submitButton {
   width: 100%;
   background-color: var(--primary-500);
-  color: white;
+  color: var(--background);
   border: none;
   padding: 1.5rem;
   border-radius: 0.8rem;
   font-size: 1.8rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: background-color 0.3s ease;
   margin-top: 1rem;
 }
 
@@ -169,14 +176,15 @@
 }
 
 .submitButton:disabled {
-  background-color: var(--neutral-gray-400);
+  background-color: var(--text-secondary);
   cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .loadingMessage {
   text-align: center;
   font-size: 1.8rem;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   padding: 5rem 0;
 }
 
@@ -188,6 +196,7 @@
   margin-bottom: 2rem;
   font-size: 1.6rem;
   text-align: center;
+  border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
 .successMessage {
@@ -198,6 +207,7 @@
   margin-bottom: 2rem;
   font-size: 1.6rem;
   text-align: center;
+  border: 1px solid rgba(34, 197, 94, 0.2);
 }
 
 /* Media Queries */

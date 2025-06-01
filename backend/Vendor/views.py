@@ -39,6 +39,9 @@ class DashboardStatsView(views.APIView):
         
         # Get or create fresh stats (don't delete existing ones unnecessarily)
         stats = self._get_or_create_vendor_stats(vendor)
+
+        all_products = Product.objects.filter(vendor=request.user)
+        low_stock = all_products.filter(in_stock__lt=5).count()
         
         # Get chart data
         revenue_data = VendorRevenueData.objects.filter(vendor=vendor).order_by('year', 'month')[:6]
@@ -55,15 +58,14 @@ class DashboardStatsView(views.APIView):
         data = {
             'totalSales': wallet_balance,  # Use actual wallet balance
             'totalOrders': stats.total_orders,
-            'totalProducts': stats.total_products,
-            'lowStock': stats.low_stock_products,
+            'totalProducts': all_products.count(),
+            'lowStock': low_stock,
             'totalRevenue': wallet_balance,  # Use actual wallet balance
             'pendingReviews': stats.pending_reviews,
             'revenueData': [{'month': rd.month, 'value': float(rd.value)} for rd in revenue_data],
             'salesData': [{'month': sd.month, 'value': sd.value} for sd in sales_data],
         }
         
-        print(f"Final data being returned: {data}")
         return Response(data, status=status.HTTP_200_OK)
     
     def _get_or_create_vendor_stats(self, vendor):
@@ -99,21 +101,17 @@ class DashboardStatsView(views.APIView):
         return stats
     
     def _create_vendor_stats(self, vendor):
-        print(f"=== CREATING VENDOR STATS ===")
         
         # Debug products
         products_by_user = Product.objects.filter(vendor=vendor.user)
         
         # Calculate all statistics
         total_products = products_by_user.count()
-        low_stock = products_by_user.filter(in_stock__lt=10).count()
+        low_stock = products_by_user.filter(in_stock__lt=5).count()
         
-        print(f"Total products: {total_products}")
-        print(f"Low stock products: {low_stock}")
         
         # Get order items for this vendor
         order_items = OrderItem.objects.filter(vendor=vendor)
-        print(f"OrderItems found: {order_items.count()}")
         
         total_orders = order_items.values('order').distinct().count()
         
@@ -121,23 +119,11 @@ class DashboardStatsView(views.APIView):
         try:
             wallet = Wallet.objects.get(vendor=vendor)
             total_sales = wallet.balance
-            print(f"Wallet balance: {total_sales}")
+            
         except Wallet.DoesNotExist:
             # Fallback to calculation if no wallet exists
             total_sales = order_items.aggregate(Sum('price'))['price__sum'] or 0
-            print(f"Calculated sales (no wallet): {total_sales}")
-        
-        # Get pending reviews count
-        products = products_by_user
-        # try:
-        #     pending_reviews = ProductReview.objects.filter(
-        #         product__in=products, 
-        #         vendor_response__isnull=True
-        #     ).count()
-        #     print(f"Pending reviews: {pending_reviews}")
-        # except Exception as e:
-        #     print(f"Error calculating pending reviews: {e}")
-        #     pending_reviews = 0
+            
         
         # Create stats object
         stats = VendorStats.objects.create(
@@ -146,7 +132,6 @@ class DashboardStatsView(views.APIView):
             total_orders=total_orders,
             total_products=total_products,
             low_stock_products=low_stock,
-            # pending_reviews=pending_reviews
         )
         
         # Generate/update chart data
@@ -155,7 +140,7 @@ class DashboardStatsView(views.APIView):
         return stats
     
     def _update_chart_data(self, vendor, order_items=None):
-        print(f"=== UPDATING CHART DATA ===")
+       
         
         # If order_items not provided, try to get them
         if order_items is None:

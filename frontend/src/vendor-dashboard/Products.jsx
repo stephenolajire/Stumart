@@ -33,7 +33,7 @@ const Products = ({ products, onDeleteProduct }) => {
 
   return (
     <div className={styles.productsSection}>
-      <h2 style={{marginBottom:"2rem"}}>Product Management</h2>
+      {/* <h2 style={{marginBottom:"2rem"}}>Product Management</h2> */}
       <div className={styles.flex}>
         <div className={styles.sectionHeader}>
           <Link to="/add-product">
