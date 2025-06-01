@@ -24,11 +24,12 @@
 }
 
 .formSection {
-  background-color: var(--neutral-white);
+  background-color: var(--surface);
   padding: 2rem;
   border-radius: 0.8rem;
   margin-bottom: 2rem;
-  box-shadow: 0 0.2rem 0.4rem rgba(0, 0, 0, 0.05);
+  box-shadow: 0 0.2rem 0.4rem var(--shadow);
+  border: 1px solid var(--border);
 }
 
 .sectionTitle {
@@ -53,7 +54,7 @@
   display: block;
   font-size: 1.4rem;
   margin-bottom: 0.8rem;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
@@ -61,17 +62,28 @@
 .formGroup select {
   width: 100%;
   padding: 1.2rem;
-  border: 0.1rem solid var(--neutral-gray-300);
+  border: 0.1rem solid var(--border);
   border-radius: 0.4rem;
   font-size: 1.6rem;
   color: var(--text-primary);
-  transition: border-color 0.3s;
+  background-color: var(--background);
+  transition: border-color 0.3s, box-shadow 0.3s;
 }
 
 .formGroup input:focus,
 .formGroup select:focus {
   outline: none;
   border-color: var(--primary-500);
+  box-shadow: 0 0 0 2px var(--primary-200);
+}
+
+.formGroup input::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
+.formGroup select {
+  cursor: pointer;
 }
 
 .paymentMethods {
@@ -96,13 +108,15 @@
 .paymentMethod label {
   font-size: 1.6rem;
   color: var(--text-secondary);
+  cursor: pointer;
 }
 
 .cardDetails {
   padding: 1.5rem;
-  background-color: var(--neutral-gray-50);
+  background-color: var(--hover-bg);
   border-radius: 0.8rem;
   margin-bottom: 2rem;
+  border: 1px solid var(--border);
 }
 
 .saveInfo {
@@ -120,7 +134,8 @@
 
 .saveInfo label {
   font-size: 1.4rem;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
+  cursor: pointer;
 }
 
 .formActions {
@@ -131,18 +146,18 @@
 
 .backButton {
   padding: 1.2rem 2.4rem;
-  background-color: var(--neutral-white);
-  border: 0.1rem solid var(--neutral-gray-300);
+  background-color: var(--background);
+  border: 0.1rem solid var(--border);
   border-radius: 0.4rem;
   font-size: 1.6rem;
   font-weight: 600;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.3s;
 }
 
 .backButton:hover {
-  background-color: var(--neutral-gray-100);
+  background-color: var(--hover-bg);
 }
 
 .placeOrderButton {
@@ -161,13 +176,20 @@
   background-color: var(--primary-600);
 }
 
+.placeOrderButton:disabled {
+  background-color: var(--neutral-gray-100);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 /* Order Summary Styles */
 .orderSummary {
   flex: 1;
-  background-color: var(--neutral-white);
+  background-color: var(--surface);
   padding: 2rem;
   border-radius: 0.8rem;
-  box-shadow: 0 0.2rem 0.4rem rgba(0, 0, 0, 0.05);
+  box-shadow: 0 0.2rem 0.4rem var(--shadow);
+  border: 1px solid var(--border);
   height: fit-content;
   position: sticky;
   top: 2rem;
@@ -186,11 +208,33 @@
   margin-bottom: 2rem;
 }
 
+.orderItems::-webkit-scrollbar {
+  width: 0.6rem;
+}
+
+.orderItems::-webkit-scrollbar-track {
+  background: var(--hover-bg);
+  border-radius: 0.3rem;
+}
+
+.orderItems::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 0.3rem;
+}
+
+.orderItems::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
 .orderItem {
   display: flex;
   gap: 1.5rem;
   padding: 1.5rem 0;
-  border-bottom: 0.1rem solid var(--neutral-gray-200);
+  border-bottom: 0.1rem solid var(--border);
+}
+
+.orderItem:last-child {
+  border-bottom: none;
 }
 
 .itemImage {
@@ -202,6 +246,7 @@
   height: 8rem;
   object-fit: cover;
   border-radius: 0.4rem;
+  border: 1px solid var(--border);
 }
 
 .itemQuantity {
@@ -218,6 +263,7 @@
   border-radius: 50%;
   font-size: 1.2rem;
   font-weight: 600;
+  border: 2px solid var(--background);
 }
 
 .itemDetails {
@@ -244,8 +290,13 @@
   display: flex;
   justify-content: space-between;
   padding: 1.2rem 0;
-  border-bottom: 0.1rem solid var(--neutral-gray-200);
+  border-bottom: 0.1rem solid var(--border);
   font-size: 1.6rem;
+  color: var(--text-secondary);
+}
+
+.summaryRow:last-child {
+  border-bottom: none;
 }
 
 .totalRow {
@@ -253,6 +304,7 @@
   font-size: 1.8rem;
   font-weight: 700;
   color: var(--text-primary);
+  border-top: 2px solid var(--border);
 }
 
 .promoCode {
@@ -264,14 +316,28 @@
 .promoCode input {
   flex: 1;
   padding: 1.2rem;
-  border: 0.1rem solid var(--neutral-gray-300);
+  border: 0.1rem solid var(--border);
   border-radius: 0.4rem;
   font-size: 1.6rem;
+  background-color: var(--background);
+  color: var(--text-primary);
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.promoCode input:focus {
+  outline: none;
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 2px var(--primary-200);
+}
+
+.promoCode input::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.7;
 }
 
 .promoCode button {
   padding: 1.2rem 2.4rem;
-  background-color: var(--secondary-500);
+  background-color: var(--primary-500);
   border: none;
   border-radius: 0.4rem;
   font-size: 1.6rem;
@@ -282,7 +348,44 @@
 }
 
 .promoCode button:hover {
-  background-color: var(--secondary-600);
+  background-color: var(--primary-600);
+}
+
+.promoCode button:disabled {
+  background-color: var(--neutral-gray-100);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Loading states */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: var(--text-secondary);
+}
+
+/* Error states */
+.errorMessage {
+  padding: 1rem;
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--error);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 0.4rem;
+  margin-bottom: 1.5rem;
+  font-size: 1.4rem;
+}
+
+/* Success states */
+.successMessage {
+  padding: 1rem;
+  background-color: rgba(34, 197, 94, 0.1);
+  color: var(--success);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 0.4rem;
+  margin-bottom: 1.5rem;
+  font-size: 1.4rem;
 }
 
 /* Responsive Styles */
@@ -297,11 +400,19 @@
 }
 
 @media screen and (max-width: 768px) {
+  .checkoutContainer {
+    padding: 2rem 1rem;
+  }
+  
   .checkoutTitle {
     font-size: var(--h2-mobile);
   }
   
   .sectionTitle {
+    font-size: var(--h5-mobile);
+  }
+  
+  .summaryTitle {
     font-size: var(--h5-mobile);
   }
   
@@ -322,5 +433,29 @@
   .paymentMethods {
     flex-direction: column;
     gap: 1rem;
+  }
+  
+  .promoCode {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .promoCode button {
+    width: 100%;
+  }
+  
+  .orderItems {
+    max-height: 30rem;
+  }
+  
+  .itemImage img {
+    width: 6rem;
+    height: 6rem;
+  }
+  
+  .itemQuantity {
+    width: 2rem;
+    height: 2rem;
+    font-size: 1rem;
   }
 }

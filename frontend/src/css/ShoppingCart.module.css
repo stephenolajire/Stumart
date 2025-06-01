@@ -15,7 +15,7 @@
   justify-content: space-between;
   margin-bottom: 3rem;
   padding-bottom: 2rem;
-  border-bottom: 2px solid var(--neutral-gray-200);
+  border-bottom: 2px solid var(--border);
 }
 
 .backButtonContainer {
@@ -25,13 +25,13 @@
   cursor: pointer;
   padding: 1rem 1.5rem;
   border-radius: 0.8rem;
-  background-color: var(--neutral-white);
-  border: 1px solid var(--neutral-gray-300);
+  background-color: var(--surface);
+  border: 1px solid var(--border);
   transition: all 0.3s ease;
   color: var(--text-secondary);
   font-size: 1.5rem;
   font-weight: 500;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 4px var(--shadow);
 }
 
 .backButtonContainer:hover {
@@ -39,12 +39,12 @@
   border-color: var(--primary-300);
   color: var(--primary-600);
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px var(--shadow);
 }
 
 .backButtonContainer:active {
   transform: translateY(0);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 4px var(--shadow);
 }
 
 .backIcon {
@@ -72,7 +72,7 @@
 
 .cartItemCount {
   background-color: var(--primary-500);
-  color: var(--neutral-white);
+  color: var(--background);
   padding: 0.6rem 1.2rem;
   border-radius: 2rem;
   font-size: 1.4rem;
@@ -106,9 +106,9 @@
   align-items: center;
   justify-content: center;
   padding: 6rem 0;
-  background-color: var(--neutral-gray-50);
+  background-color: var(--surface);
   border-radius: 1.2rem;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 10px var(--shadow);
 }
 
 .emptyMessage {
@@ -119,7 +119,7 @@
 
 .primaryButton {
   background-color: var(--primary-500);
-  color: var(--neutral-white);
+  color: var(--background);
   padding: 1.2rem 2.4rem;
   border-radius: 0.6rem;
   font-size: 1.6rem;
@@ -142,9 +142,9 @@
   display: grid;
   grid-template-columns: 0.8fr 2fr 1fr 1fr 1fr 0.5fr;
   padding: 1.6rem 0;
-  border-bottom: 1px solid var(--neutral-gray-200);
+  border-bottom: 1px solid var(--border);
   font-weight: 600;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   font-size: 1.6rem;
 }
 
@@ -157,7 +157,7 @@
   grid-template-columns: 0.8fr 2fr 1fr 1fr 1fr 0.5fr;
   align-items: center;
   padding: 2rem 0;
-  border-bottom: 1px solid var(--neutral-gray-200);
+  border-bottom: 1px solid var(--border);
 }
 
 .itemImage {
@@ -169,7 +169,7 @@
   height: 8rem;
   object-fit: cover;
   border-radius: 0.8rem;
-  border: 1px solid var(--neutral-gray-200);
+  border: 1px solid var(--border);
 }
 
 .itemName h3 {
@@ -181,14 +181,14 @@
 
 .itemDetail {
   font-size: 1.4rem;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   margin-bottom: 0.4rem;
 }
 
 .itemPrice {
   font-size: 1.6rem;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--text-primary);
 }
 
 .itemQuantity {
@@ -199,7 +199,7 @@
 .quantityControl {
   display: flex;
   align-items: center;
-  border: 1px solid var(--neutral-gray-300);
+  border: 1px solid var(--border);
   border-radius: 0.6rem;
   width: fit-content;
 }
@@ -207,7 +207,7 @@
 .quantityButton {
   width: 3.2rem;
   height: 3.2rem;
-  background-color: var(--neutral-gray-100);
+  background-color: var(--surface);
   border: none;
   color: var(--text-primary);
   font-size: 1.8rem;
@@ -227,11 +227,11 @@
 }
 
 .quantityButton:hover {
-  background-color: var(--neutral-gray-200);
+  background-color: var(--hover-bg);
 }
 
 .quantityButton:disabled {
-  color: var(--neutral-gray-400);
+  color: var(--text-secondary);
   cursor: not-allowed;
 }
 
@@ -252,9 +252,9 @@
   width: 3.6rem;
   height: 3.6rem;
   border-radius: 50%;
-  background-color: var(--neutral-gray-100);
+  background-color: var(--surface);
   border: none;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
@@ -264,7 +264,7 @@
 
 .removeButton:hover {
   background-color: var(--error);
-  color: var(--neutral-white);
+  color: var(--background);
 }
 
 .cartActions {
@@ -275,7 +275,7 @@
 }
 
 .clearCartButton {
-  background-color: var(--neutral-white);
+  background-color: var(--background);
   color: var(--error);
   border: 1px solid var(--error);
   padding: 1rem 2rem;
@@ -288,11 +288,11 @@
 
 .clearCartButton:hover {
   background-color: var(--error);
-  color: var(--neutral-white);
+  color: var(--background);
 }
 
 .continueShoppingButton {
-  background-color: var(--neutral-white);
+  background-color: var(--background);
   color: var(--primary-500);
   border: 1px solid var(--primary-500);
   padding: 1rem 2rem;
@@ -310,10 +310,10 @@
 }
 
 .cartSummary {
-  background-color: var(--neutral-gray-50);
+  background-color: var(--surface);
   border-radius: 1.2rem;
   padding: 2.4rem;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 10px var(--shadow);
   margin-left: auto;
   width: 100%;
   max-width: 40rem;
@@ -338,7 +338,7 @@
   font-size: 2rem;
   font-weight: 700;
   color: var(--text-primary);
-  border-top: 1px solid var(--neutral-gray-200);
+  border-top: 1px solid var(--border);
   margin-top: 1.6rem;
   padding-top: 1.6rem;
 }
@@ -346,7 +346,7 @@
 .checkoutButton {
   width: 100%;
   background-color: var(--primary-500);
-  color: var(--neutral-white);
+  color: var(--background);
   padding: 1.4rem;
   border-radius: 0.6rem;
   font-size: 1.8rem;
@@ -363,7 +363,7 @@
 }
 
 .checkoutLink {
-  color: var(--neutral-white);
+  color: var(--background);
   text-decoration: none;
   width: 100%;
   display: block;
@@ -373,7 +373,7 @@
 .mobileLabel {
   display: none;
   font-weight: 500;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   margin-bottom: 0.4rem;
 }
 
@@ -415,10 +415,10 @@
     grid-template-rows: auto;
     gap: 1.2rem;
     padding: 2rem 1.6rem;
-    background-color: var(--neutral-gray-50);
+    background-color: var(--surface);
     border-radius: 1rem;
     margin-bottom: 1.6rem;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 5px var(--shadow);
     border: none;
   }
   

@@ -27,7 +27,7 @@
   max-width: 60rem;
   margin-left: auto;
   margin-right: auto;
-    line-height: 3rem;
+  line-height: 3rem;
 }
 
 .ctaButton {
@@ -46,7 +46,7 @@
 
 .ctaButton:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px var(--shadow);
 }
 
 .benefits,
@@ -55,10 +55,11 @@
 .earnings,
 .faq {
   padding: 8rem 0;
+  transition: background-color 0.3s ease;
 }
 
 .benefits {
-  background: var(--neutral-white);
+  background: var(--background);
 }
 
 .benefits h2,
@@ -81,9 +82,10 @@
 .benefitCard {
   text-align: center;
   padding: 3rem 2rem;
-  background: var(--neutral-gray-50);
+  background: var(--surface);
   border-radius: 1.2rem;
-  transition: transform 0.3s ease;
+  border: 1px solid var(--border);
+  transition: transform 0.3s ease, background-color 0.3s ease;
 }
 
 .benefitCard:hover {
@@ -109,7 +111,7 @@
 }
 
 .howItWorks {
-  background: var(--neutral-gray-50);
+  background: var(--surface);
 }
 
 .steps {
@@ -121,16 +123,18 @@
 .step {
   text-align: center;
   padding: 3rem 2rem;
-  background: var(--neutral-white);
+  background: var(--background);
   border-radius: 1.2rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px var(--shadow);
+  border: 1px solid var(--border);
+  transition: background-color 0.3s ease;
 }
 
 .step p, .requirement p {
-    font-size: 1.6rem;
-    color: var(--text-secondary);
-    line-height: 3rem;
-    margin-top: 0.5rem;
+  font-size: 1.6rem;
+  color: var(--text-secondary);
+  line-height: 3rem;
+  margin-top: 0.5rem;
 }
 
 .stepNumber {
@@ -148,7 +152,7 @@
 }
 
 .requirements {
-  background: var(--neutral-white);
+  background: var(--background);
 }
 
 .requirementsList {
@@ -162,12 +166,14 @@
   align-items: center;
   gap: 2rem;
   padding: 3rem;
-  background: var(--neutral-gray-50);
+  background: var(--surface);
   border-radius: 1.2rem;
+  border: 1px solid var(--border);
+  transition: background-color 0.3s ease;
 }
 
 .earnings {
-  background: var(--neutral-gray-50);
+  background: var(--surface);
 }
 
 .earningDetails {
@@ -179,9 +185,11 @@
 .earning {
   text-align: center;
   padding: 3rem;
-  background: var(--neutral-white);
+  background: var(--background);
   border-radius: 1.2rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px var(--shadow);
+  border: 1px solid var(--border);
+  transition: background-color 0.3s ease;
 }
 
 .earning h3 {
@@ -203,7 +211,7 @@
 }
 
 .faq {
-  background: var(--neutral-white);
+  background: var(--background);
 }
 
 .questions {
@@ -213,8 +221,10 @@
 
 .question {
   padding: 3rem;
-  background: var(--neutral-gray-50);
+  background: var(--surface);
   border-radius: 1.2rem;
+  border: 1px solid var(--border);
+  transition: background-color 0.3s ease;
 }
 
 .question h3 {

@@ -1,3 +1,4 @@
+/* Navigation Styles */
 .nav {
   width: 100%;
   height: 10rem;
@@ -6,12 +7,9 @@
   top: 0;
   left: 0;
   z-index: 100;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.cartIcon {
-  color: var(--text-primary);
-  /* display: none; */
+  box-shadow: 0 2px 4px var(--shadow);
+  border-bottom: 1px solid var(--border);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .container {
@@ -31,6 +29,7 @@
   text-decoration: none;
   display: flex;
   align-items: center;
+  transition: color 0.3s ease;
 }
 
 .imgLogo {
@@ -71,18 +70,32 @@
   padding: 0.8rem 1.6rem;
   border: 2px solid var(--primary-500);
   color: var(--primary-500);
+  background: transparent;
   border-radius: 0.4rem;
   font-size: 1.6rem;
+  cursor: pointer;
   transition: all 0.3s ease;
+}
+
+.buttonOutline:hover {
+  background: var(--primary-500);
+  color: var(--neutral-white);
 }
 
 .buttonFilled {
   padding: 0.8rem 1.6rem;
   background: var(--primary-500);
   color: var(--neutral-white);
+  border: 2px solid var(--primary-500);
   border-radius: 0.4rem;
   font-size: 1.6rem;
+  cursor: pointer;
   transition: all 0.3s ease;
+}
+
+.buttonFilled:hover {
+  background: var(--primary-600);
+  border-color: var(--primary-600);
 }
 
 .menuButton {
@@ -92,29 +105,7 @@
   border: none;
   color: var(--text-primary);
   cursor: pointer;
-}
-
-.countDiv {
-  position: absolute;
-  background-color: var(--primary-500);
-  height: 2rem;
-  width: 2rem;
-  border-radius: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  top: 2.8rem;
-  right: 6.4rem;
-}
-
-.count {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: white;
-}
-
-.cartdesktop {
-  margin-left: 3rem;
+  transition: color 0.3s ease;
 }
 
 .rightSection {
@@ -130,16 +121,18 @@
   justify-content: center;
   padding: 0.8rem;
   border-radius: 50%;
+  cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .cartWrapper:hover {
-  background-color: var(--neutral-gray-100);
+  background-color: var(--hover-bg);
 }
 
 .cartIcon {
   font-size: 2.4rem;
   color: var(--text-primary);
+  transition: color 0.3s ease;
 }
 
 .cartBadge {
@@ -159,12 +152,33 @@
   padding: 0 0.6rem;
 }
 
+/* Legacy support for old classes */
+.countDiv {
+  position: absolute;
+  background-color: var(--primary-500);
+  height: 2rem;
+  width: 2rem;
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  top: 2.8rem;
+  right: 6.4rem;
+}
+
+.count {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--neutral-white);
+}
+
+.cartdesktop {
+  margin-left: 3rem;
+}
+
+/* Mobile Styles */
 @media screen and (max-width: 768px) {
   .menuButton {
-    display: block;
-  }
-
-  .cartIcon {
     display: block;
   }
 
@@ -180,15 +194,17 @@
 
   .navLinks {
     position: fixed;
-    top: 8rem;
+    top: 10rem;
     left: 0;
     width: 100%;
     background: var(--neutral-white);
+    border-top: 1px solid var(--border);
     flex-direction: column;
     padding: 2rem;
     gap: 2rem;
     transform: translateX(-100%);
-    transition: transform 0.3s ease;
+    transition: transform 0.3s ease, background-color 0.3s ease;
+    box-shadow: 0 4px 6px var(--shadow);
   }
 
   .navLinksActive {

@@ -1,7 +1,7 @@
 .searchPage {
   padding: 4rem 2.4rem;
   min-height: calc(100vh - 8rem);
-  background-color: var(--neutral-gray-50);
+  background-color: var(--surface);
 }
 
 .container {
@@ -24,7 +24,7 @@
 
 .searchHeader p {
   font-size: 1.6rem;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
 }
 
 .productsGrid {
@@ -37,9 +37,9 @@
 .noResults {
   text-align: center;
   padding: 6rem 2rem;
-  background-color: var(--neutral-white);
+  background-color: var(--background);
   border-radius: 1.2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px var(--shadow);
 }
 
 .noResults h2 {
@@ -50,7 +50,7 @@
 
 .noResults p {
   font-size: 1.6rem;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   margin-bottom: 2.4rem;
 }
 
@@ -60,7 +60,7 @@
   gap: 0.8rem;
   padding: 1.2rem 2.4rem;
   background-color: var(--primary-500);
-  color: var(--neutral-white);
+  color: var(--background);
   border: none;
   border-radius: 0.8rem;
   font-size: 1.6rem;
@@ -97,11 +97,12 @@
 }
 
 .filterSection {
-  background-color: var(--neutral-white);
+  background-color: var(--background);
   border-radius: 1.2rem;
   padding: 2rem;
   margin-bottom: 2.4rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px var(--shadow);
+  border: 1px solid var(--border);
 }
 
 .priceFilter {
@@ -135,10 +136,13 @@
 
 .inputGroup input {
   padding: 1rem;
-  border: 1px solid var(--neutral-gray-200);
+  border: 1px solid var(--border);
   border-radius: 0.8rem;
   font-size: 1.4rem;
   width: 100%;
+  background-color: var(--background);
+  color: var(--text-primary);
+  transition: all 0.3s ease;
 }
 
 .inputGroup input:focus {
@@ -151,7 +155,7 @@
   width: 100%;
   padding: 1.2rem;
   background-color: var(--primary-500);
-  color: var(--neutral-white);
+  color: var(--background);
   border: none;
   border-radius: 0.8rem;
   font-size: 1.4rem;
@@ -191,7 +195,7 @@
   position: absolute;
   width: 100%;
   height: 0.4rem;
-  background: var(--neutral-gray-200);
+  background: var(--border);
   border-radius: 0.2rem;
   top: 50%;
   transform: translateY(-50%);
@@ -223,9 +227,9 @@
   width: 2.4rem;
   height: 2.4rem;
   border-radius: 50%;
-  background: var(--neutral-white);
+  background: var(--background);
   border: 2px solid var(--primary-500);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 6px var(--shadow);
   cursor: grab;
   transition: all 0.3s ease;
 }
@@ -256,10 +260,11 @@
 }
 
 .shopFilter {
-  background-color: var(--neutral-white);
+  background-color: var(--background);
   padding: 1.6rem;
   border-radius: 0.8rem;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 4px var(--shadow);
+  border: 1px solid var(--border);
 }
 
 .shopFilter h3 {
@@ -271,11 +276,11 @@
 .shopSelect {
   width: 100%;
   padding: 1rem;
-  border: 1px solid var(--neutral-gray-200);
+  border: 1px solid var(--border);
   border-radius: 0.6rem;
   font-size: 1.4rem;
   color: var(--text-primary);
-  background-color: var(--neutral-white);
+  background-color: var(--background);
   cursor: pointer;
   transition: all 0.3s ease;
 }
@@ -288,6 +293,8 @@
 
 .shopSelect option {
   padding: 0.8rem;
+  background-color: var(--background);
+  color: var(--text-primary);
 }
 
 @media screen and (max-width: 1024px) {
@@ -297,7 +304,7 @@
   }
 
   .searchHeader h1 {
-    font-size: var(--h2-tablet);
+    font-size: var(--h2-desktop);
   }
 }
 

@@ -35,22 +35,23 @@
 }
 
 .errorAlert {
-  background-color: #fee2e2;
+  background-color: rgba(239, 68, 68, 0.1);
   color: var(--error);
-  border: 1px solid #fecaca;
+  border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 .successAlert {
-  background-color: #d1fae5;
+  background-color: rgba(34, 197, 94, 0.1);
   color: var(--success);
-  border: 1px solid #a7f3d0;
+  border: 1px solid rgba(34, 197, 94, 0.3);
 }
 
 .profileCard {
-  background-color: var(--neutral-white);
+  background-color: var(--surface);
   border-radius: 1.2rem;
-  box-shadow: 0 0.4rem 1.2rem rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0.4rem 1.2rem var(--shadow);
   overflow: hidden;
+  border: 1px solid var(--border);
 }
 
 .profileHeader {
@@ -58,7 +59,7 @@
   align-items: center;
   padding: 2.4rem;
   background-color: var(--primary-100);
-  border-bottom: 1px solid var(--neutral-gray-200);
+  border-bottom: 1px solid var(--border);
 }
 
 .profileImageContainer {
@@ -87,13 +88,14 @@
 
 .uploadButton {
   background-color: var(--primary-500);
-  color: white;
+  color: var(--neutral-white);
   padding: 0.8rem 1.6rem;
   border-radius: 0.6rem;
   cursor: pointer;
   font-size: 1.4rem;
   text-align: center;
   transition: background-color 0.2s;
+  border: none;
 }
 
 .uploadButton:hover {
@@ -112,7 +114,7 @@
 
 .studentEmail {
   font-size: 1.6rem;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   margin-bottom: 1.6rem;
 }
 
@@ -120,7 +122,7 @@
   display: inline-flex;
   align-items: center;
   background-color: var(--primary-500);
-  color: white;
+  color: var(--neutral-white);
   border: none;
   padding: 1rem 2rem;
   border-radius: 0.6rem;
@@ -151,7 +153,7 @@
   margin-bottom: 1.6rem;
   color: var(--text-primary);
   font-size: var(--h5-desktop);
-  border-bottom: 1px solid var(--neutral-gray-200);
+  border-bottom: 1px solid var(--border);
   padding-bottom: 1rem;
 }
 
@@ -174,7 +176,7 @@
 
 .detailLabel {
   font-weight: 600;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   display: block;
   margin-bottom: 0.4rem;
   font-size: 1.4rem;
@@ -213,16 +215,23 @@
 .formGroup input {
   width: 100%;
   padding: 1.2rem;
-  border: 1px solid var(--neutral-gray-300);
+  border: 1px solid var(--border);
   border-radius: 0.6rem;
   font-size: 1.6rem;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background-color: var(--background);
+  color: var(--text-primary);
 }
 
 .formGroup input:focus {
   outline: none;
   border-color: var(--primary-500);
   box-shadow: 0 0 0 2px var(--primary-200);
+}
+
+.formGroup input::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.7;
 }
 
 .formButtons {
@@ -245,7 +254,7 @@
 
 .saveButton {
   background-color: var(--primary-500);
-  color: white;
+  color: var(--neutral-white);
   border: none;
 }
 
@@ -254,18 +263,19 @@
 }
 
 .saveButton:disabled {
-  background-color: var(--neutral-gray-300);
+  background-color: var(--neutral-gray-100);
   cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .cancelButton {
-  background-color: white;
-  color: var(--text-tertiary);
-  border: 1px solid var(--neutral-gray-300);
+  background-color: var(--background);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
 }
 
 .cancelButton:hover {
-  background-color: var(--neutral-gray-100);
+  background-color: var(--hover-bg);
 }
 
 .saveButton svg, .cancelButton svg {
@@ -274,6 +284,18 @@
 
 /* Responsive adjustments */
 @media screen and (max-width: 768px) {
+  .profileTitle {
+    font-size: var(--h3-mobile);
+  }
+  
+  .studentName {
+    font-size: var(--h4-mobile);
+  }
+  
+  .sectionTitle {
+    font-size: var(--h5-mobile);
+  }
+  
   .profileHeader {
     flex-direction: column;
     text-align: center;

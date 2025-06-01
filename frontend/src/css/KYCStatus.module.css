@@ -4,14 +4,15 @@
   align-items: center;
   justify-content: center;
   padding: 2rem;
-  background-color: var(--neutral-50);
+  background-color: var(--background);
 }
 
 .statusBox {
-  background-color: white;
+  background-color: var(--surface);
   padding: 4rem;
   border-radius: 1.2rem;
-  box-shadow: 0 0.4rem 1.6rem rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0.4rem 1.6rem var(--shadow);
+  border: 1px solid var(--border);
   width: 100%;
   max-width: 56rem;
   text-align: center;
@@ -21,10 +22,17 @@
   width: 12rem;
   height: 12rem;
   margin-bottom: 2.4rem;
+  filter: brightness(1);
+  transition: filter 0.3s ease;
+}
+
+/* Dark theme icon adjustments */
+:root[data-theme="dark"] .statusIcon {
+  filter: brightness(0.9) contrast(1.1);
 }
 
 .statusBox h2 {
-  font-size: 2.8rem;
+  font-size: var(--h3-desktop);
   color: var(--primary-500);
   margin-bottom: 1.6rem;
 }
@@ -33,25 +41,29 @@
   font-size: 1.8rem;
   color: var(--text-secondary);
   margin-bottom: 3.2rem;
+  line-height: 1.5;
 }
 
 .infoBox {
-  background-color: var(--primary-50);
+  background-color: var(--primary-100);
   padding: 2.4rem;
   border-radius: 0.8rem;
   margin-bottom: 3.2rem;
   text-align: left;
+  border: 1px solid rgba(218, 165, 32, 0.2);
 }
 
 .infoBox h3 {
   font-size: 1.8rem;
   color: var(--primary-600);
   margin-bottom: 1.6rem;
+  font-weight: 600;
 }
 
 .infoBox ul {
   list-style: none;
   padding: 0;
+  margin: 0;
 }
 
 .infoBox li {
@@ -60,6 +72,11 @@
   margin-bottom: 1.2rem;
   padding-left: 2.4rem;
   position: relative;
+  line-height: 1.4;
+}
+
+.infoBox li:last-child {
+  margin-bottom: 0;
 }
 
 .infoBox li::before {
@@ -67,11 +84,19 @@
   position: absolute;
   left: 0;
   color: var(--primary-500);
+  font-weight: bold;
+  font-size: 1.8rem;
+}
+
+.buttonGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
 }
 
 .refreshButton {
   background-color: var(--primary-500);
-  color: white;
+  color: var(--neutral-white);
   border: none;
   border-radius: 0.8rem;
   padding: 1.6rem 3.2rem;
@@ -79,13 +104,23 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  margin-bottom: 1.6rem;
   width: 100%;
 }
 
 .refreshButton:hover {
   background-color: var(--primary-600);
   transform: translateY(-0.1rem);
+}
+
+.refreshButton:active {
+  transform: translateY(0);
+}
+
+.refreshButton:disabled {
+  background-color: var(--neutral-gray-100);
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
 }
 
 .homeButton {
@@ -102,24 +137,161 @@
 }
 
 .homeButton:hover {
-  background-color: var(--primary-50);
+  background-color: var(--primary-100);
+  transform: translateY(-0.1rem);
 }
 
+.homeButton:active {
+  transform: translateY(0);
+}
+
+/* Success status specific styles */
+.statusBox.success .statusIcon {
+  color: var(--success);
+}
+
+.statusBox.success h2 {
+  color: var(--success);
+}
+
+/* Error status specific styles */
+.statusBox.error .statusIcon {
+  color: var(--error);
+}
+
+.statusBox.error h2 {
+  color: var(--error);
+}
+
+.statusBox.error .infoBox {
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.statusBox.error .infoBox h3 {
+  color: var(--error);
+}
+
+.statusBox.error .infoBox li::before {
+  color: var(--error);
+}
+
+/* Warning status specific styles */
+.statusBox.warning .statusIcon {
+  color: var(--warning);
+}
+
+.statusBox.warning h2 {
+  color: var(--warning);
+}
+
+.statusBox.warning .infoBox {
+  background-color: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.statusBox.warning .infoBox h3 {
+  color: var(--warning);
+}
+
+.statusBox.warning .infoBox li::before {
+  color: var(--warning);
+}
+
+/* Info status specific styles */
+.statusBox.info .statusIcon {
+  color: var(--info);
+}
+
+.statusBox.info h2 {
+  color: var(--info);
+}
+
+.statusBox.info .infoBox {
+  background-color: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.statusBox.info .infoBox h3 {
+  color: var(--info);
+}
+
+.statusBox.info .infoBox li::before {
+  color: var(--info);
+}
+
+/* Loading animation */
+.statusIcon.loading {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Responsive Styles */
 @media (max-width: 768px) {
+  .statusContainer {
+    padding: 1rem;
+  }
+  
   .statusBox {
     padding: 2.4rem;
   }
-
+  
   .statusIcon {
     width: 10rem;
     height: 10rem;
   }
-
+  
   .statusBox h2 {
-    font-size: 2.4rem;
+    font-size: var(--h3-mobile);
   }
-
+  
   .mainText {
     font-size: 1.6rem;
+  }
+  
+  .infoBox {
+    padding: 2rem;
+  }
+  
+  .infoBox h3 {
+    font-size: 1.6rem;
+  }
+  
+  .infoBox li {
+    font-size: 1.4rem;
+  }
+  
+  .refreshButton,
+  .homeButton {
+    padding: 1.4rem 2.4rem;
+    font-size: 1.4rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .statusBox {
+    padding: 2rem;
+  }
+  
+  .statusIcon {
+    width: 8rem;
+    height: 8rem;
+  }
+  
+  .infoBox {
+    padding: 1.6rem;
+  }
+  
+  .refreshButton,
+  .homeButton {
+    padding: 1.2rem 2rem;
   }
 }

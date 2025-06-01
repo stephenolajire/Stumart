@@ -6,6 +6,7 @@ import api from "../constant/api";
 import styles from "../css/OtherService.module.css";
 import Swal from "sweetalert2";
 import { nigeriaInstitutions } from "../constant/data";
+import Header from "../components/Header"
 
 // Other service specific categories
 const otherServiceCategories = [
@@ -154,10 +155,7 @@ const OtherService = () => {
   return (
     <div className={styles.otherServiceContainer}>
       <div className={styles.header}>
-        <button onClick={handleBackToMain} className={styles.backButton}>
-          ← Back to Main
-        </button>
-        <h1>Other Services {schoolParam ? `in ${schoolParam}` : ""}</h1>
+        <Header title={`Other Services ${schoolParam ? `in ${schoolParam}` : ""}`}/>
       </div>
 
       <div className={styles.searchSection}>

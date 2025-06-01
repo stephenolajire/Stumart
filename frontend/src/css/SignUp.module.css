@@ -1,16 +1,370 @@
+.loginContainer {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: linear-gradient(135deg, var(--primary-100), var(--primary-200));
+}
+
+.loginCard {
+  background: var(--surface);
+  border-radius: 1.2rem;
+  padding: 3rem;
+  width: 100%;
+  max-width: 40rem;
+  box-shadow: 0 4px 6px var(--shadow);
+  border: 0.1rem solid var(--border);
+}
+
+.logoSection {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.logo {
+  width: 8rem;
+  height: 8rem;
+  border-radius: 50%;
+  margin-bottom: 2rem;
+}
+
+.logoSection h1 {
+  font-size: var(--h2-desktop);
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+
+.logoSection p {
+  color: var(--text-secondary);
+  font-size: 1.6rem;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.inputGroup label {
+  font-size: 1.4rem;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.inputGroup input {
+  padding: 1.2rem;
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  font-size: 1.6rem;
+  background-color: var(--surface);
+  color: var(--text-primary);
+  transition: border-color 0.3s ease;
+}
+
+.inputGroup input:focus {
+  outline: none;
+  border-color: var(--primary-500);
+}
+
+.forgotPassword {
+  text-align: right;
+}
+
+.forgotPassword a {
+  color: var(--primary-500);
+  text-decoration: none;
+  font-size: 1.4rem;
+}
+
+.loginButton {
+  background: var(--primary-500);
+  color: var(--neutral-white);
+  padding: 1.2rem;
+  border: none;
+  border-radius: 0.4rem;
+  font-size: 1.6rem;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.loginButton:hover {
+  background: var(--primary-600);
+}
+
+.loginButton:disabled {
+  background-color: var(--text-secondary);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.registerLink {
+  text-align: center;
+  font-size: 1.4rem;
+  color: var(--text-secondary);
+}
+
+.registerLink a {
+  color: var(--primary-500);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.throttleError {
+  background-color: var(--primary-100);
+  border: 1px solid var(--warning);
+  border-radius: 0.8rem;
+  padding: 1.6rem;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.throttleError p {
+  color: var(--warning);
+  font-size: 1.4rem;
+  margin: 0;
+}
+
+.throttleError p:last-child {
+  margin-top: 0.8rem;
+  font-weight: 500;
+}
+
+.passwordInput {
+  position: relative;
+  width: 100%;
+}
+
+.passwordInput input {
+  width: 100%;
+  padding-right: 40px; /* Make space for the icon */
+}
+
+.passwordToggle {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  color: var(--text-secondary);
+}
+
+.passwordToggle:hover {
+  color: var(--text-primary);
+}
+
+.passwordToggle:focus {
+  outline: none;
+  color: var(--primary-500);
+}
+
+@media (max-width: 468px) {
+  .loginCard {
+    padding: 2rem;
+  }
+
+  .logo {
+    width: 6rem;
+    height: 6rem;
+  }
+
+  .logoSection h1 {
+    font-size: var(--h2-mobile);
+  }
+}
+
+.kycContainer {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background-color: var(--background);
+}
+
+.kycBox {
+  background-color: var(--surface);
+  padding: 4rem;
+  border-radius: 1.2rem;
+  box-shadow: 0 0.4rem 1.6rem var(--shadow);
+  width: 100%;
+  max-width: 60rem;
+  border: 0.1rem solid var(--border);
+}
+
+.captureButton, .closeCameraButton {
+  height: 4rem;
+  width: 40%;
+  text-align: center;
+  background-color: var(--primary-600);
+  color: var(--neutral-white);
+  border: none;
+  border-radius: 0.8rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.captureButton:hover, .closeCameraButton:hover {
+  background-color: var(--primary-700);
+}
+
+.kycBox h2 {
+  font-size: 2.8rem;
+  color: var(--primary-500);
+  margin-bottom: 1.6rem;
+  text-align: center;
+}
+
+.cameraContainer, .videoPreview {
+  width: 100%;
+}
+
+.kycBox p {
+  font-size: 1.6rem;
+  color: var(--text-secondary);
+  margin-bottom: 3.2rem;
+  text-align: center;
+}
+
+.kycForm {
+  display: flex;
+  flex-direction: column;
+  gap: 2.4rem;
+}
+
+.imageSection label {
+  display: block;
+  font-size: 1.6rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 0.8rem;
+}
+
+.uploadBox, .cameraButton {
+  width: 100%;
+  height: 20rem;
+  border: 0.2rem dashed var(--primary-300);
+  border-radius: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  background-size: cover;
+  background-position: center;
+  background-color: var(--surface);
+  transition: all 0.3s ease;
+}
+
+.uploadBox:hover {
+  border-color: var(--primary-500);
+  background-color: var(--hover-bg);
+}
+
+.uploadBox span {
+  color: var(--text-secondary);
+  font-size: 1.4rem;
+}
+
+.uploadBox input {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.hasImage {
+  border: none;
+}
+
+.formGroup {
+  margin-bottom: 2rem;
+}
+
+.formGroup label {
+  display: block;
+  font-size: 1.6rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 0.8rem;
+}
+
+.formGroup select {
+  width: 100%;
+  padding: 1.2rem;
+  border: 0.1rem solid var(--border);
+  border-radius: 0.8rem;
+  font-size: 1.6rem;
+  color: var(--text-primary);
+  background-color: var(--surface);
+}
+
+.formGroup select:focus {
+  border-color: var(--primary-500);
+  outline: none;
+  box-shadow: 0 0 0 0.2rem var(--primary-100);
+}
+
+.submitButton {
+  background-color: var(--primary-500);
+  color: var(--neutral-white);
+  border: none;
+  border-radius: 0.8rem;
+  padding: 1.6rem;
+  font-size: 1.6rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 1.6rem;
+}
+
+.submitButton:hover:not(:disabled) {
+  background-color: var(--primary-600);
+  transform: translateY(-0.1rem);
+}
+
+.submitButton:disabled {
+  background-color: var(--text-secondary);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+@media (max-width: 768px) {
+  .kycBox {
+    padding: 2.4rem;
+  }
+
+  .uploadBox {
+    height: 20rem;
+  }
+}
+
 .signupContainer {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background-color: var(--neutral-gray-50);
+  background-color: var(--background);
   padding: 2rem;
 }
 
 .signupForm {
-  background-color: var(--neutral-white);
+  background-color: var(--surface);
   border-radius: 1rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px var(--shadow);
+  border: 0.1rem solid var(--border);
   padding: 3rem;
   width: 100%;
   max-width: 600px;
@@ -26,13 +380,13 @@
 }
 
 .logoSection p {
-  color: var(--secondary-600);
+  color: var(--text-secondary);
   font-size: 1.6rem;
 }
 
 .signupForm h3 {
   text-align: center;
-  color: var(--secondary-500);
+  color: var(--text-primary);
   margin-bottom: 2rem;
 }
 
@@ -43,7 +397,7 @@
 .formGroup label {
   display: block;
   margin-bottom: 0.5rem;
-  color: var(--secondary-600);
+  color: var(--text-primary);
   font-weight: 500;
   display: flex;
   align-items: center;
@@ -54,9 +408,11 @@
 .formControl {
   width: 100%;
   padding: 1rem;
-  border: 1px solid var(--neutral-gray-300);
+  border: 1px solid var(--border);
   border-radius: 0.5rem;
   font-size: 1.4rem;
+  background-color: var(--surface);
+  color: var(--text-primary);
   transition: all 0.3s ease;
 }
 
@@ -104,9 +460,9 @@
 }
 
 .submitButton:disabled {
-  background-color: var(--neutral-gray-300);
+  background-color: var(--text-secondary);
   cursor: not-allowed;
-  opacity: 0.7;
+  opacity: 0.6;
 }
 
 .throttleError {
@@ -156,7 +512,6 @@
   font-weight: 500;
 }
 
-
 .passwordWrapper {
   position: relative;
   display: flex;
@@ -177,7 +532,7 @@
   padding: 0.5rem;
   display: flex;
   align-items: center;
-  color: var(--secondary-600);
+  color: var(--text-secondary);
 }
 
 .passwordToggle:hover {

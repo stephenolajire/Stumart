@@ -1,16 +1,20 @@
+/* Product Card Styling - Enhanced for Light/Dark Mode */
+
 .productCard {
-  background: var(--neutral-white);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 1.2rem;
   overflow: hidden;
   transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px var(--shadow);
 }
 
 .productCard:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8px 24px var(--shadow);
+  border-color: var(--primary-300);
 }
 
 .imageWrapper {
@@ -18,6 +22,7 @@
   width: 100%;
   padding-top: 100%; /* 1:1 Aspect Ratio */
   overflow: hidden;
+  background: var(--neutral-gray-100);
 }
 
 .productImage {
@@ -45,6 +50,7 @@
   font-size: 1.2rem;
   font-weight: 500;
   z-index: 2;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .colorBadge {
@@ -57,6 +63,7 @@
   border-radius: 2rem;
   font-size: 1.2rem;
   z-index: 2;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .inStock {
@@ -70,9 +77,11 @@
   font-size: 1.2rem;
   font-weight: 500;
   z-index: 2;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .productInfo {
+  background: var(--background);
   padding: 1.6rem;
   display: flex;
   flex-direction: column;
@@ -89,6 +98,7 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
   margin: 0;
+  line-height: 1.4;
 }
 
 .description {
@@ -99,6 +109,7 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
   margin: 0;
+  line-height: 1.5;
 }
 
 .priceRow {
@@ -106,12 +117,13 @@
   justify-content: space-between;
   align-items: center;
   margin-top: auto;
+  padding-top: 0.8rem;
 }
 
 .price {
   font-size: 1.8rem;
   font-weight: 700;
-  color: var(--primary-500);
+  color: var(--primary-600);
 }
 
 .rating {
@@ -120,6 +132,10 @@
   gap: 0.4rem;
   font-size: 1.4rem;
   color: var(--text-secondary);
+  background: var(--hover-bg);
+  padding: 0.4rem 0.8rem;
+  border-radius: 0.8rem;
+  transition: background-color 0.2s ease;
 }
 
 .starIcon {
@@ -127,9 +143,10 @@
 }
 
 .vendorInfo {
-  border-top: 1px solid var(--neutral-gray-200);
+  border-top: 1px solid var(--border);
   padding-top: 1.2rem;
   margin-top: 1.2rem;
+  background: var(--surface);
 }
 
 .vendorName {
@@ -137,20 +154,41 @@
   font-weight: 500;
   color: var(--text-primary);
   margin: 0;
+  transition: color 0.2s ease;
+}
+
+.vendorName:hover {
+  color: var(--primary-600);
 }
 
 .category {
   font-size: 1.3rem;
   color: var(--text-secondary);
   margin: 0.4rem 0;
+  padding: 0.2rem 0.6rem;
+  background: var(--hover-bg);
+  border-radius: 0.4rem;
+  display: inline-block;
+  transition: all 0.2s ease;
+}
+
+.category:hover {
+  background: var(--primary-100);
+  color: var(--primary-700);
 }
 
 .stock {
   font-size: 1.2rem;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
+  opacity: 0.8;
 }
 
+/* Enhanced mobile responsiveness */
 @media screen and (max-width: 768px) {
+  .productCard {
+    border-radius: 1rem;
+  }
+  
   .productInfo {
     padding: 1.2rem;
     gap: 1rem;
@@ -168,13 +206,68 @@
     font-size: 1.6rem;
   }
 
-  .rating,
+  .rating {
+    font-size: 1.3rem;
+    padding: 0.3rem 0.6rem;
+  }
+
   .vendorName {
     font-size: 1.3rem;
   }
 
-  .category,
-  .stock {
+  .category {
     font-size: 1.2rem;
+    padding: 0.2rem 0.5rem;
+  }
+
+  .stock {
+    font-size: 1.1rem;
+  }
+
+  .outOfStock,
+  .colorBadge,
+  .inStock {
+    font-size: 1.1rem;
+    padding: 0.3rem 1rem;
+    top: 1rem;
+  }
+
+  .outOfStock,
+  .inStock {
+    right: 1rem;
+  }
+
+  .colorBadge {
+    left: 1rem;
+  }
+}
+
+/* Additional hover effects for better UX */
+.productCard:hover .vendorInfo {
+  background: var(--hover-bg);
+}
+
+.productCard:hover .rating {
+  background: var(--primary-100);
+}
+
+/* Focus states for accessibility */
+.productCard:focus-within {
+  outline: 2px solid var(--primary-500);
+  outline-offset: 2px;
+}
+
+/* Loading state placeholder */
+.productCard.loading {
+  background: var(--neutral-gray-100);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
   }
 }

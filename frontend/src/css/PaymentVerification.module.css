@@ -1,114 +1,179 @@
 .verificationContainer {
-  max-width: 800px;
-  margin: 40px auto;
-  padding: 30px;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  max-width: 80rem;
+  margin: 4rem auto;
+  padding: 3rem;
+  background-color: var(--background);
+  border-radius: 0.8rem;
+  box-shadow: 0 0.2rem 1rem var(--shadow);
+  border: 1px solid var(--border);
   text-align: center;
 }
 
-.loadingState,
-.successState,
+.loadingState, 
+.successState, 
 .failedState {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 30px;
+  padding: 3rem;
 }
 
 .spinner {
-  width: 60px;
-  height: 60px;
-  border: 5px solid #f3f3f3;
-  border-top: 5px solid #3498db;
+  width: 6rem;
+  height: 6rem;
+  border: 0.5rem solid var(--border);
+  border-top: 0.5rem solid var(--primary-500);
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin-bottom: 20px;
+  margin-bottom: 2rem;
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% { 
+    transform: rotate(0deg); 
+  }
+  100% { 
+    transform: rotate(360deg); 
+  }
 }
 
-.checkmark,
+.checkmark, 
 .errorMark {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 80px;
-  height: 80px;
+  width: 8rem;
+  height: 8rem;
   border-radius: 50%;
-  font-size: 40px;
-  margin-bottom: 20px;
+  font-size: 4rem;
+  margin-bottom: 2rem;
 }
 
 .checkmark {
-  background-color: #4caf50;
-  color: white;
+  background-color: var(--success);
+  color: var(--background);
 }
 
 .errorMark {
-  background-color: #f44336;
-  color: white;
+  background-color: var(--error);
+  color: var(--background);
 }
 
 .verificationContainer h2 {
-  font-size: 28px;
-  margin-bottom: 15px;
-  color: #333;
+  font-size: var(--h3-desktop);
+  margin-bottom: 1.5rem;
+  color: var(--text-primary);
 }
 
 .verificationContainer p {
-  font-size: 16px;
-  color: #666;
-  margin-bottom: 30px;
-  max-width: 500px;
+  font-size: 1.6rem;
+  color: var(--text-secondary);
+  margin-bottom: 3rem;
+  max-width: 50rem;
 }
 
 .actionButtons {
   display: flex;
-  gap: 15px;
-  margin-top: 20px;
+  gap: 1.5rem;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
-.viewOrderButton,
-.continueShoppingButton,
+.viewOrderButton, 
+.continueShoppingButton, 
 .tryAgainButton {
-  padding: 12px 24px;
+  padding: 1.2rem 2.4rem;
   border: none;
-  border-radius: 4px;
-  font-size: 16px;
+  border-radius: 0.8rem;
+  font-size: 1.6rem;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .viewOrderButton {
-  background-color: #3498db;
-  color: white;
+  background-color: var(--primary-500);
+  color: var(--background);
 }
 
 .viewOrderButton:hover {
-  background-color: #2980b9;
+  background-color: var(--primary-600);
+  transform: translateY(-0.2rem);
 }
 
 .continueShoppingButton {
-  background-color: #f8f9fa;
-  color: #333;
-  border: 1px solid #ddd;
+  background-color: var(--surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
 }
 
 .continueShoppingButton:hover {
-  background-color: #e9ecef;
+  background-color: var(--hover-bg);
 }
 
 .tryAgainButton {
-  background-color: #f44336;
-  color: white;
+  background-color: var(--error);
+  color: var(--background);
 }
 
 .tryAgainButton:hover {
   background-color: #d32f2f;
+  transform: translateY(-0.2rem);
+}
+
+/* Responsive Styles */
+@media screen and (max-width: 768px) {
+  .verificationContainer {
+    margin: 2rem auto;
+    padding: 2rem;
+  }
+  
+  .verificationContainer h2 {
+    font-size: var(--h3-mobile);
+  }
+  
+  .checkmark, 
+  .errorMark {
+    width: 6rem;
+    height: 6rem;
+    font-size: 3rem;
+  }
+  
+  .spinner {
+    width: 4rem;
+    height: 4rem;
+    border-width: 0.4rem;
+  }
+  
+  .actionButtons {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .viewOrderButton, 
+  .continueShoppingButton, 
+  .tryAgainButton {
+    width: 100%;
+    padding: 1.4rem 2rem;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .verificationContainer {
+    margin: 1.5rem;
+    padding: 1.5rem;
+  }
+  
+  .loadingState, 
+  .successState, 
+  .failedState {
+    padding: 2rem;
+  }
+  
+  .verificationContainer p {
+    font-size: 1.4rem;
+    margin-bottom: 2rem;
+  }
 }

@@ -7,16 +7,17 @@
 }
 
 .card {
-  background-color: var(--neutral-white);
+  background-color: var(--background);
   border-radius: 1rem;
-  box-shadow: 0 0.4rem 1.2rem rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0.4rem 1.2rem var(--shadow);
   padding: 3rem;
   margin-bottom: 2rem;
+  border: 1px solid var(--border);
 }
 
 /* Header Styles */
 .header {
-  border-bottom: 0.1rem solid var(--neutral-gray-200);
+  border-bottom: 0.1rem solid var(--border);
   padding-bottom: 2rem;
   margin-bottom: 2.5rem;
 }
@@ -43,33 +44,33 @@
 }
 
 .statusPending {
-  background-color: var(--neutral-gray-200);
+  background-color: var(--hover-bg);
   color: var(--text-secondary);
 }
 
 .statusProcessing {
   background-color: var(--info);
-  color: var(--neutral-white);
+  color: var(--background);
 }
 
 .statusShipped {
   background-color: var(--warning);
-  color: var(--neutral-white);
+  color: var(--background);
 }
 
 .statusDelivered {
   background-color: var(--success);
-  color: var(--neutral-white);
+  color: var(--background);
 }
 
 .statusCancelled {
   background-color: var(--error);
-  color: var(--neutral-white);
+  color: var(--background);
 }
 
 .statusCompleted {
   background-color: var(--primary-500);
-  color: var(--neutral-white);
+  color: var(--background);
 }
 
 .infoGrid {
@@ -80,7 +81,7 @@
 
 .infoLabel {
   font-size: 1.4rem;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   margin-bottom: 0.5rem;
 }
 
@@ -93,7 +94,7 @@
 /* Section Styles */
 .section {
   margin-bottom: 2.5rem;
-  border: 0.1rem solid var(--neutral-gray-200);
+  border: 0.1rem solid var(--border);
   border-radius: 0.8rem;
   overflow: hidden;
 }
@@ -103,13 +104,13 @@
   justify-content: space-between;
   align-items: center;
   padding: 1.6rem 2rem;
-  background-color: var(--neutral-gray-50);
+  background-color: var(--surface);
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
 
 .sectionHeader:hover {
-  background-color: var(--neutral-gray-100);
+  background-color: var(--hover-bg);
 }
 
 .sectionTitleWrapper {
@@ -129,12 +130,12 @@
 }
 
 .sectionChevron {
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
 }
 
 .sectionContent {
   padding: 2rem;
-  background-color: var(--neutral-white);
+  background-color: var(--background);
 }
 
 /* Item Styles */
@@ -143,7 +144,7 @@
   grid-template-columns: 8rem 1fr auto;
   gap: 2rem;
   padding: 1.5rem 0;
-  border-bottom: 0.1rem solid var(--neutral-gray-200);
+  border-bottom: 0.1rem solid var(--border);
 }
 
 .itemRow:last-child {
@@ -155,7 +156,7 @@
   height: 8rem;
   object-fit: cover;
   border-radius: 0.6rem;
-  border: 0.1rem solid var(--neutral-gray-200);
+  border: 0.1rem solid var(--border);
 }
 
 .itemDetails {
@@ -175,7 +176,7 @@
 .itemAttribute,
 .itemVendor {
   font-size: 1.4rem;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   margin-bottom: 0.4rem;
 }
 
@@ -200,7 +201,7 @@
 
 .priceSubtotal {
   font-size: 1.4rem;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
 }
 
 /* Shipping Styles */
@@ -228,7 +229,7 @@
 }
 
 .orderSummary {
-  border-top: 0.1rem solid var(--neutral-gray-200);
+  border-top: 0.1rem solid var(--border);
   padding-top: 1.6rem;
 }
 
@@ -242,11 +243,11 @@
 .summaryLabel,
 .summaryValue {
   font-size: 1.6rem;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
 }
 
 .totalRow {
-  border-top: 0.2rem solid var(--neutral-gray-300);
+  border-top: 0.2rem solid var(--border);
   margin-top: 1rem;
   padding-top: 1.6rem;
 }
@@ -283,7 +284,7 @@
 
 .primaryButton {
   background-color: var(--primary-500);
-  color: var(--neutral-white);
+  color: var(--background);
   border: none;
 }
 
@@ -292,13 +293,13 @@
 }
 
 .secondaryButton {
-  background-color: var(--neutral-white);
+  background-color: var(--background);
   color: var(--text-primary);
-  border: 0.1rem solid var(--neutral-gray-300);
+  border: 0.1rem solid var(--border);
 }
 
 .secondaryButton:hover {
-  background-color: var(--neutral-gray-100);
+  background-color: var(--hover-bg);
 }
 
 /* Loading & Error States */
@@ -310,15 +311,16 @@
   justify-content: center;
   padding: 5rem 2rem;
   text-align: center;
-  background-color: var(--neutral-white);
+  background-color: var(--background);
   border-radius: 1rem;
-  box-shadow: 0 0.4rem 1.2rem rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0.4rem 1.2rem var(--shadow);
+  border: 1px solid var(--border);
 }
 
 .spinner {
   width: 4rem;
   height: 4rem;
-  border: 0.4rem solid var(--neutral-gray-200);
+  border: 0.4rem solid var(--border);
   border-top: 0.4rem solid var(--primary-500);
   border-radius: 50%;
   margin-bottom: 2rem;
@@ -337,7 +339,7 @@
 .loadingState p,
 .errorState p {
   font-size: 1.8rem;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   margin-bottom: 2rem;
 }
 
@@ -376,7 +378,7 @@
     align-items: flex-start;
     margin-top: 1rem;
     padding-top: 1rem;
-    border-top: 0.1rem dashed var(--neutral-gray-200);
+    border-top: 0.1rem dashed var(--border);
   }
   
   .actions {
@@ -418,7 +420,7 @@
   .sectionHeader {
     background-color: transparent;
     padding: 0 0 1rem 0;
-    border-bottom: 0.1rem solid var(--neutral-gray-300);
+    border-bottom: 0.1rem solid var(--border);
   }
   
   .sectionContent {

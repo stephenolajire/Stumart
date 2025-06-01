@@ -1,7 +1,9 @@
 .footer {
-  background-color: var(--secondary-500);
-  color: var(--neutral-white);
+  background-color: var(--surface);
+  color: var(--text-primary);
   padding: 6rem 0 2rem;
+  border-top: 1px solid var(--border);
+  transition: background-color 0.3s ease, color 0.3s ease;
   /* margin-top: 8rem; */
 }
 
@@ -33,7 +35,7 @@
 .description {
   font-size: 1.4rem;
   line-height: 1.6;
-  color: var(--neutral-gray-300);
+  color: var(--text-secondary);
 }
 
 .linkList,
@@ -45,7 +47,7 @@
 }
 
 .linkList a {
-  color: var(--neutral-gray-300);
+  color: var(--text-secondary);
   font-size: 1.4rem;
   text-decoration: none;
   transition: color 0.3s ease;
@@ -56,16 +58,16 @@
 }
 
 .contactList {
-  color: var(--neutral-gray-300);
+  color: var(--text-secondary);
   font-size: 1.4rem;
 }
 
 .bottomBar {
   padding-top: 2rem;
-  border-top: 1px solid var(--secondary-400);
+  border-top: 1px solid var(--border);
   text-align: center;
   font-size: 1.4rem;
-  color: var(--neutral-gray-300);
+  color: var(--text-secondary);
 }
 
 /* Responsive Design */

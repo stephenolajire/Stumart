@@ -3,12 +3,13 @@
 /* Main Container */
 .homeContainer {
   width: 100%;
-  /* max-width: 1400px; */
   margin: 0 auto;
   padding: 0 6rem;
   font-size: 1.6rem;
   color: var(--text-primary);
   margin-top: 11rem;
+  background-color: var(--background);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Hero Banner Section */
@@ -20,8 +21,9 @@
   margin: 2rem 0 4rem;
   padding: 5rem 2rem;
   color: var(--neutral-white);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px var(--shadow);
   overflow: hidden;
+  transition: box-shadow 0.3s ease;
 }
 
 .heroBanner::before {
@@ -55,6 +57,7 @@
   font-size: 1.8rem;
   margin-bottom: 3rem;
   opacity: 0.95;
+  color: var(--neutral-white);
 }
 
 .heroGrid {
@@ -72,7 +75,6 @@
 }
 
 .resetFiltersButtonTop {
-  /* padding: 1rem 2rem; */
   height: 5rem;
   background-color: var(--primary-500);
   color: var(--neutral-white);
@@ -85,7 +87,9 @@
   width: 100%;
 }
 
-
+.resetFiltersButtonTop:hover {
+  background-color: var(--primary-600);
+}
 
 .heroForm {
   width: 85%;
@@ -97,31 +101,39 @@
   margin-bottom: -2rem;
   display: flex;
   flex-direction: row;
-  gap: 1rem;
+  /* gap: 1rem; */
+  justify-content: space-between;
   align-items: baseline;
 }
 
 .searchBar {
   display: flex;
-  width: 90%;
+  width: 97%;
   margin: 0 auto;
-  background: var(--neutral-white);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 0.8rem;
   overflow: hidden;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  /* margin-top: 4rem; */
+  box-shadow: 0 4px 8px var(--shadow);
   height: 4rem;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .searchInput {
   flex-grow: 1;
-  /* padding: 1.6rem 2rem; */
   border: none;
   font-size: 1.6rem;
   outline: none;
   color: var(--text-primary);
+  background: transparent;
   height: 5rem;
   padding-left: 1rem;
+  transition: color 0.3s ease;
+}
+
+.searchInput::placeholder {
+  color: var(--text-secondary);
+  transition: color 0.3s ease;
 }
 
 .searchButton {
@@ -142,7 +154,7 @@
 }
 
 .searchButton:disabled {
-  background-color: var(--neutral-gray-400);
+  background-color: var(--text-secondary);
   cursor: not-allowed;
 }
 
@@ -154,6 +166,7 @@
   padding: 0.8rem 1.6rem;
   margin-top: 2rem;
   font-size: 1.4rem;
+  color: var(--neutral-white);
 }
 
 .institutionIcon {
@@ -175,13 +188,13 @@
   align-items: center;
   justify-content: space-between;
   margin-bottom: 1rem;
-  /* height: 8rem; */
 }
 
 .sectionHeader h2 {
   font-size: 2.4rem;
   font-weight: 700;
   color: var(--text-primary);
+  transition: color 0.3s ease;
 }
 
 .viewAll {
@@ -205,26 +218,25 @@
 .dealsCarousel {
   position: relative;
   margin-bottom: 2rem;
-  /* height: 50rem; */
 }
 
 .dealCard {
   position: relative;
-  /* background-color: var(--primary-500); */
   padding: 3rem;
   border-radius: 1.2rem;
   color: var(--neutral-white);
   text-align: left;
   overflow: hidden;
   min-height: 220px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  transition: transform 0.3s;
+  box-shadow: 0 4px 12px var(--shadow);
+  transition: transform 0.3s, box-shadow 0.3s ease;
   height: 40rem;
   object-fit: cover;
 }
 
 .dealCard:hover {
   transform: translateY(-5px);
+  box-shadow: 0 8px 20px var(--shadow);
 }
 
 .dealCard::before {
@@ -249,9 +261,6 @@
   margin-bottom: 2rem;
   max-width: 70%;
   color: white;
-  /* opacity: 0.9; */
-  /* -webkit-text-stroke-width: 1px;
-  -webkit-text-stroke-color: white; */
   line-height: 2.2rem;
 }
 
@@ -294,16 +303,18 @@
   width: 1rem;
   height: 1rem;
   border-radius: 50%;
-  background-color: var(--neutral-gray-300);
+  background-color: var(--text-secondary);
   border: none;
   padding: 0;
   cursor: pointer;
   transition: all 0.2s;
+  opacity: 0.5;
 }
 
 .activeDot {
   background-color: var(--primary-500);
   transform: scale(1.3);
+  opacity: 1;
 }
 
 /* Categories Section */
@@ -323,8 +334,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-color: var(--neutral-gray-50);
-  border: 1px solid var(--neutral-gray-200);
+  background-color: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 1rem;
   padding: 1.6rem 1rem;
   transition: all 0.2s;
@@ -332,9 +343,9 @@
 }
 
 .categoryCard:hover {
-  background-color: var(--neutral-white);
+  background-color: var(--hover-bg);
   transform: translateY(-5px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 16px var(--shadow);
   border-color: var(--primary-300);
 }
 
@@ -354,6 +365,8 @@
   font-size: 1.4rem;
   font-weight: 500;
   text-align: center;
+  color: var(--text-primary);
+  transition: color 0.3s ease;
 }
 
 /* Filter Section */
@@ -362,11 +375,12 @@
 }
 
 .filterBar {
-  background-color: var(--neutral-white);
+  background-color: var(--surface);
   border-radius: 1rem;
   padding: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  border: 1px solid var(--neutral-gray-200);
+  box-shadow: 0 2px 8px var(--shadow);
+  border: 1px solid var(--border);
+  transition: all 0.3s ease;
 }
 
 .filterHeader {
@@ -379,6 +393,8 @@
 .filterHeader h2 {
   font-size: 2.2rem;
   font-weight: 700;
+  color: var(--text-primary);
+  transition: color 0.3s ease;
 }
 
 .highlightCategory {
@@ -389,18 +405,19 @@
   display: flex;
   align-items: center;
   gap: 0.8rem;
-  background-color: var(--neutral-gray-100);
-  border: 1px solid var(--neutral-gray-200);
+  background-color: var(--hover-bg);
+  border: 1px solid var(--border);
   border-radius: 0.6rem;
   padding: 0.8rem 1.6rem;
   font-size: 1.4rem;
   font-weight: 500;
+  color: var(--text-primary);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .filterToggle:hover {
-  background-color: var(--neutral-gray-200);
+  background-color: var(--border);
 }
 
 .filterToggle svg {
@@ -410,7 +427,7 @@
 .advancedFilters {
   margin-top: 2rem;
   padding-top: 2rem;
-  border-top: 1px solid var(--neutral-gray-200);
+  border-top: 1px solid var(--border);
 }
 
 .filterForm {
@@ -434,19 +451,20 @@
 .filterGroup label {
   font-size: 1.4rem;
   font-weight: 500;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
+  transition: color 0.3s ease;
 }
 
 .formSelect {
   width: 100%;
   padding: 1.2rem;
-  border: 1px solid var(--neutral-gray-300);
+  border: 1px solid var(--border);
   border-radius: 0.6rem;
-  background-color: var(--neutral-white);
+  background-color: var(--surface);
   font-size: 1.5rem;
   color: var(--text-primary);
   outline: none;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, background-color 0.3s ease, color 0.3s ease;
 }
 
 .formSelect:focus {
@@ -454,8 +472,9 @@
 }
 
 .formSelect:disabled {
-  background-color: var(--neutral-gray-100);
+  background-color: var(--hover-bg);
   cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .filterButtons {
@@ -483,13 +502,14 @@
 }
 
 .resetButton {
-  background-color: var(--neutral-white);
+  background-color: var(--surface);
   color: var(--text-primary);
-  border: 1px solid var(--neutral-gray-300);
+  border: 1px solid var(--border);
+  transition: all 0.3s ease;
 }
 
 .resetButton:hover {
-  background-color: var(--neutral-gray-100);
+  background-color: var(--hover-bg);
 }
 
 /* Shops Section */
@@ -505,22 +525,23 @@
 }
 
 .shopCard {
-  background-color: var(--neutral-white);
+  background-color: var(--surface);
   border-radius: 1rem;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  transition: transform 0.3s, box-shadow 0.3s;
-  border: 1px solid var(--neutral-gray-200);
+  box-shadow: 0 4px 12px var(--shadow);
+  transition: transform 0.3s, box-shadow 0.3s, background-color 0.3s ease;
+  border: 1px solid var(--border);
 }
 
 .shopCard:hover {
   transform: translateY(-8px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 12px 24px var(--shadow);
 }
 
 .shopLink {
   color: var(--text-primary);
   display: block;
+  transition: color 0.3s ease;
 }
 
 .shopImage {
@@ -548,11 +569,13 @@
 .shopName {
   font-size: 1.8rem;
   font-weight: 700;
+  color: var(--text-primary);
   margin-bottom: 0.8rem;
   display: -webkit-box;
   -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  transition: color 0.3s ease;
 }
 
 .shopMeta {
@@ -577,6 +600,8 @@
   gap: 0.4rem;
   font-size: 1.4rem;
   font-weight: 600;
+  color: var(--text-primary);
+  transition: color 0.3s ease;
 }
 
 .starIcon {
@@ -590,7 +615,8 @@
   gap: 0.8rem;
   margin-bottom: 1rem;
   font-size: 1.3rem;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
+  transition: color 0.3s ease;
 }
 
 .locationIcon, .clockIcon {
@@ -636,21 +662,24 @@
   min-height: 300px;
   text-align: center;
   padding: 4rem 2rem;
-  background-color: var(--neutral-gray-50);
+  background-color: var(--surface);
   border-radius: 1rem;
-  border: 1px dashed var(--neutral-gray-300);
+  border: 1px dashed var(--border);
+  transition: all 0.3s ease;
 }
 
 .noResultsIcon {
   font-size: 5rem;
-  color: var(--neutral-gray-400);
+  color: var(--text-secondary);
   margin-bottom: 2rem;
+  opacity: 0.6;
 }
 
 .noResults p {
   font-size: 1.8rem;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   margin-bottom: 2rem;
+  transition: color 0.3s ease;
 }
 
 .resetFiltersButton {
@@ -680,23 +709,25 @@
 
 .pageButton {
   padding: 0.8rem 1.6rem;
-  background-color: var(--neutral-white);
-  border: 1px solid var(--neutral-gray-300);
+  background-color: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 0.4rem;
   font-size: 1.4rem;
   font-weight: 500;
+  color: var(--text-primary);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .pageButton:hover:not(:disabled) {
-  background-color: var(--neutral-gray-100);
+  background-color: var(--hover-bg);
 }
 
 .pageButton:disabled {
-  background-color: var(--neutral-gray-100);
-  color: var(--neutral-gray-400);
+  background-color: var(--hover-bg);
+  color: var(--text-secondary);
   cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .pageNumbers {
@@ -711,17 +742,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--neutral-white);
-  border: 1px solid var(--neutral-gray-300);
+  background-color: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 0.4rem;
   font-size: 1.4rem;
   font-weight: 500;
+  color: var(--text-primary);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .pageNumber:hover {
-  background-color: var(--neutral-gray-100);
+  background-color: var(--hover-bg);
 }
 
 .activePage {
@@ -736,14 +768,12 @@
 
 .pageDots {
   font-size: 1.6rem;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
+  transition: color 0.3s ease;
 }
 
 /* Responsive Adjustments */
-/* Update the media queries for shop cards to be more space-efficient */
-
 @media screen and (max-width: 768px) {
-  /* Keep existing styles */
   .homeContainer {
     padding: 0 1.6rem;
   }
@@ -757,7 +787,7 @@
     font-size: 3.2rem;
   }
 
-  .dealCard{
+  .dealCard {
     height: 25rem;
   }
   
@@ -786,7 +816,6 @@
     font-size: 1.2rem;
   }
   
-  /* UPDATED: Show 2 cards per row instead of 1 on smaller screens */
   .shopsGrid {
     grid-template-columns: repeat(2, 1fr);
     gap: 1.6rem;
@@ -796,7 +825,6 @@
     height: 140px;
   }
   
-  /* Make shop details more compact */
   .shopDetails {
     padding: 1.2rem;
   }
@@ -845,13 +873,11 @@
     grid-template-columns: repeat(3, 1fr);
   }
   
-  /* UPDATED: Still show 2 cards per row on smaller screens */
   .shopsGrid {
     grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
   }
   
-  /* Make shop cards even more compact */
   .shopImage {
     height: 120px;
   }
@@ -885,24 +911,21 @@
     gap: 1.6rem;
   }
 
-  .dealCard{
+  .dealCard {
     height: 20rem;
   }
 }
 
-/* Add an extra small screen breakpoint */
 @media screen and (max-width: 360px) {
   .sectionHeader h2 {
     font-size: 1.8rem;
   }
   
-  /* UPDATED: On very small screens, still keep 2 cards but more minimal */
   .shopsGrid {
     grid-template-columns: repeat(2, 1fr);
     gap: 0.8rem;
   }
   
-  /* Further simplify shop cards for very small screens */
   .shopImage {
     height: 100px;
   }
@@ -931,7 +954,7 @@
     font-size: 1.2rem;
   }
 
-  .dealCard{
+  .dealCard {
     height: 20rem;
   }
 }

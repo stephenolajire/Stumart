@@ -17,7 +17,7 @@
 }
 
 .hero h1 {
-  font-size: 4.8rem;
+  font-size: var(--h1-desktop);
   margin-bottom: 2rem;
   font-weight: 700;
 }
@@ -31,27 +31,28 @@
 
 .contactSection {
   padding: 8rem 0;
-  background: var(--neutral-white);
+  background: var(--background);
 }
 
 .contactGrid {
   display: grid;
   grid-template-columns: 1fr 1.5fr;
   gap: 6rem;
-  background: var(--neutral-white);
+  background: var(--surface);
   border-radius: 2rem;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 20px var(--shadow);
   padding: 4rem;
+  border: 1px solid var(--border);
 }
 
 .contactInfo {
   padding: 3rem;
-  background: var(--neutral-gray-50);
+  background: var(--neutral-gray-100);
   border-radius: 1.5rem;
 }
 
 .contactInfo h2 {
-  font-size: 3.2rem;
+  font-size: var(--h3-desktop);
   margin-bottom: 2rem;
   color: var(--text-primary);
   font-weight: 600;
@@ -76,14 +77,15 @@
   align-items: center;
   gap: 2rem;
   padding: 2rem;
-  background: var(--neutral-white);
+  background: var(--background);
   border-radius: 1rem;
-  transition: transform 0.3s ease;
+  border: 1px solid var(--border);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .infoItem:hover {
   transform: translateY(-5px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 5px 15px var(--shadow);
 }
 
 .infoItem .icon {
@@ -125,7 +127,8 @@
   justify-content: center;
   width: 4.5rem;
   height: 4.5rem;
-  background: var(--neutral-white);
+  background: var(--background);
+  border: 1px solid var(--border);
   border-radius: 50%;
   color: var(--primary-500);
   font-size: 2.4rem;
@@ -136,6 +139,7 @@
   background: var(--primary-500);
   color: var(--neutral-white);
   transform: translateY(-3px);
+  border-color: var(--primary-500);
 }
 
 .contactForm {
@@ -143,7 +147,7 @@
 }
 
 .contactForm h2 {
-  font-size: 3.2rem;
+  font-size: var(--h3-desktop);
   margin-bottom: 3rem;
   color: var(--text-primary);
   font-weight: 600;
@@ -164,32 +168,31 @@
 .formGroup input,
 .formGroup textarea {
   width: 100%;
-  /* padding: 1.5rem;
-   */
   height: 4rem;
   padding-left: 1rem;
-  border: 2px solid var(--neutral-gray-200);
+  border: 2px solid var(--border);
   border-radius: 0.8rem;
   font-size: 1.6rem;
   transition: all 0.3s ease;
   color: var(--text-primary);
+  background: var(--background);
 }
 
 .formGroup input:focus,
 .formGroup textarea:focus {
   outline: none;
   border-color: var(--primary-500);
-  box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.1);
+  box-shadow: 0 0 0 2px rgba(218, 165, 32, 0.1);
 }
 
 .formGroup textarea {
   resize: vertical;
   min-height: 15rem;
+  padding: 1rem;
 }
 
 .submitButton {
   width: 100%;
-  /* padding: 1.5rem; */
   height: 4rem;
   background: var(--primary-500);
   color: var(--neutral-white);
@@ -207,9 +210,10 @@
 }
 
 .submitButton:disabled {
-  background: var(--neutral-gray-300);
+  background: var(--border);
   cursor: not-allowed;
   transform: none;
+  color: var(--text-secondary);
 }
 
 .message {
@@ -221,15 +225,15 @@
 }
 
 .success {
-  background: var(--success-50);
-  color: var(--success-700);
-  border: 1px solid var(--success-200);
+  background: rgba(34, 197, 94, 0.1);
+  color: var(--success);
+  border: 1px solid rgba(34, 197, 94, 0.2);
 }
 
 .error {
-  background: var(--error-50);
-  color: var(--error-700);
-  border: 1px solid var(--error-200);
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--error);
+  border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
 .backHeader {
@@ -255,6 +259,15 @@
 @media screen and (max-width: 768px) {
   .backHeader {
     display: block;
+  }
+
+  .hero h1 {
+    font-size: var(--h1-mobile);
+  }
+
+  .contactInfo h2,
+  .contactForm h2 {
+    font-size: var(--h3-mobile);
   }
 }
 
@@ -283,13 +296,13 @@
   }
 
   .contactForm h2 {
-    font-size: 2.4rem;
+    font-size: var(--h4-mobile);
   }
 }
 
 @media screen and (max-width: 360px) {
   .hero h1 {
-    font-size: 3rem;
+    font-size: var(--h1-mobile);
   }
 
   .hero p {
@@ -298,7 +311,7 @@
 
   .contactInfo h2,
   .contactForm h2 {
-    font-size: 2rem;
+    font-size: var(--h2-mobile);
   }
 
   .infoItem h3 {

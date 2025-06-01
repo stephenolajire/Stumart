@@ -2,7 +2,7 @@
   margin-top: 8rem;
 }
 
-.backHeader{
+.backHeader {
   display: none;
 }
 
@@ -32,8 +32,9 @@
 
 .mission {
   padding: 8rem 0;
-  background: var(--neutral-white);
+  background: var(--background);
   text-align: center;
+  transition: background-color 0.3s ease;
 }
 
 .mission h2 {
@@ -52,7 +53,8 @@
 
 .features {
   padding: 8rem 0;
-  background: var(--neutral-gray-50);
+  background: var(--surface);
+  transition: background-color 0.3s ease;
 }
 
 .features .container {
@@ -62,10 +64,12 @@
 }
 
 .featureCard {
-  background: var(--neutral-white);
+  background: var(--background);
   border-radius: 1.2rem;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px var(--shadow);
+  border: 1px solid var(--border);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .featureCard img {
@@ -89,8 +93,9 @@
 
 .howItWorks {
   padding: 8rem 0;
-  background: var(--neutral-white);
-    text-align: center;
+  background: var(--background);
+  text-align: center;
+  transition: background-color 0.3s ease;
 }
 
 .steps {
@@ -119,10 +124,10 @@
 }
 
 .step p {
-    font-size: 1.6rem;
-    margin-top: 0.5rem;
-    color: var(--text-secondary);
-    line-height: 3rem;
+  font-size: 1.6rem;
+  margin-top: 0.5rem;
+  color: var(--text-secondary);
+  line-height: 3rem;
 }
 
 .stats {
@@ -150,13 +155,13 @@
 
 .cta {
   padding: 8rem 0;
-  background: var(--neutral-gray-50);
+  background: var(--surface);
   text-align: center;
+  transition: background-color 0.3s ease;
 }
 
 .ctaButton {
   margin-top: 3rem;
-  /* padding: 1.5rem 4rem; */
   text-align: center;
   font-size: 1.8rem;
   height: 4rem;
@@ -174,19 +179,17 @@
   transform: translateY(-2px);
 }
 
-.containers p{
-    font-size: 1.8rem;
-    color: var(--text-secondary);
-    /* max-width: 80rem; */
-    margin: 0 auto;
-    line-height: 3rem;
+.containers p {
+  font-size: 1.8rem;
+  color: var(--text-secondary);
+  margin: 0 auto;
+  line-height: 3rem;
 }
 
 @media screen and (max-width: 768px) {
-  .backHeader{
+  .backHeader {
     display: block;
   }
-  
 }
 
 @media (max-width: 968px) {
@@ -212,13 +215,12 @@
     height: 20rem;
   }
 
-  .containers p{
+  .containers p {
     font-size: 1.6rem;
-    /* max-width: 80rem; */
     margin: 0 auto;
     line-height: 3rem;
   }
-  
+
   .containers h2 {
     font-size: 2.4rem;
     margin-bottom: 0.5rem;

@@ -5,7 +5,7 @@
   padding: 2rem;
   font-size: 1.4rem;
   min-height: 100vh;
-  background: var(--neutral-gray-50);
+  background: var(--background);
   margin-top: 10rem;
 }
 
@@ -16,7 +16,7 @@
   gap: 2rem;
   margin-bottom: 3rem;
   padding: 2rem 0;
-  border-bottom: 2px solid var(--neutral-gray-200);
+  border-bottom: 2px solid var(--border);
 }
 
 .header > div:first-child {
@@ -28,7 +28,7 @@
 }
 
 .header > div:first-child:hover {
-  background: var(--primary-100);
+  background: var(--hover-bg);
   color: var(--primary-600);
 }
 
@@ -43,7 +43,7 @@
 .errorMessage {
   text-align: center;
   padding: 4rem 2rem;
-  background: var(--neutral-white);
+  background: var(--surface);
   border-radius: 1.2rem;
   color: var(--error);
   font-size: 1.6rem;
@@ -54,9 +54,10 @@
 .emptyOrders {
   text-align: center;
   padding: 6rem 2rem;
-  background: var(--neutral-white);
+  background: var(--surface);
   border-radius: 1.6rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 12px var(--shadow);
+  border: 1px solid var(--border);
 }
 
 .emptyOrders h2 {
@@ -99,16 +100,16 @@
 
 /* Order Card */
 .orderCard {
-  background: var(--neutral-white);
+  background: var(--surface);
   border-radius: 1.2rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 12px var(--shadow);
   overflow: hidden;
   transition: all 0.3s ease;
-  border: 1px solid var(--neutral-gray-200);
+  border: 1px solid var(--border);
 }
 
 .orderCard:hover {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 24px var(--shadow);
   transform: translateY(-2px);
 }
 
@@ -119,12 +120,12 @@
   align-items: center;
   padding: 2.4rem;
   cursor: pointer;
-  background: var(--neutral-white);
+  background: var(--surface);
   transition: background-color 0.2s ease;
 }
 
 .orderHeader:hover {
-  background: var(--neutral-gray-50);
+  background: var(--hover-bg);
 }
 
 .orderSummary {
@@ -189,46 +190,46 @@
 
 /* Status Colors */
 .statusPending {
-  background: rgba(251, 191, 36, 0.1);
-  color: #d97706;
+  background: rgba(251, 191, 36, 0.15);
+  color: var(--warning);
   border: 1px solid rgba(251, 191, 36, 0.3);
 }
 
 .statusProcessing {
-  background: rgba(59, 130, 246, 0.1);
-  color: #2563eb;
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--info);
   border: 1px solid rgba(59, 130, 246, 0.3);
 }
 
 .statusShipped {
-  background: rgba(168, 85, 247, 0.1);
+  background: rgba(168, 85, 247, 0.15);
   color: #7c3aed;
   border: 1px solid rgba(168, 85, 247, 0.3);
 }
 
 .statusDelivered {
-  background: rgba(34, 197, 94, 0.1);
-  color: #16a34a;
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--success);
   border: 1px solid rgba(34, 197, 94, 0.3);
 }
 
 .statusCompleted {
-  background: rgba(34, 197, 94, 0.1);
-  color: #16a34a;
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--success);
   border: 1px solid rgba(34, 197, 94, 0.3);
 }
 
 .statusCancelled {
-  background: rgba(239, 68, 68, 0.1);
-  color: #dc2626;
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--error);
   border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 /* Order Details */
 .orderDetails {
   padding: 2.4rem;
-  border-top: 1px solid var(--neutral-gray-200);
-  background: var(--neutral-gray-50);
+  border-top: 1px solid var(--border);
+  background: var(--background);
   animation: slideDown 0.3s ease-out;
 }
 
@@ -245,11 +246,11 @@
 
 /* Shipping Details */
 .shippingDetails {
-  background: var(--neutral-white);
+  background: var(--surface);
   padding: 2rem;
   border-radius: 1rem;
   margin-bottom: 2.4rem;
-  border: 1px solid var(--neutral-gray-200);
+  border: 1px solid var(--border);
 }
 
 .shippingDetails h3 {
@@ -272,11 +273,11 @@
 
 /* Order Items Container */
 .orderItemsContainer {
-  background: var(--neutral-white);
+  background: var(--surface);
   padding: 2rem;
   border-radius: 1rem;
   margin-bottom: 2.4rem;
-  border: 1px solid var(--neutral-gray-200);
+  border: 1px solid var(--border);
 }
 
 .orderItemsContainer h3 {
@@ -291,7 +292,7 @@
   display: flex;
   gap: 1.6rem;
   padding: 1.6rem 0;
-  border-bottom: 1px solid var(--neutral-gray-200);
+  border-bottom: 1px solid var(--border);
 }
 
 .orderItem:last-child {
@@ -304,7 +305,7 @@
   border-radius: 0.8rem;
   overflow: hidden;
   flex-shrink: 0;
-  border: 1px solid var(--neutral-gray-200);
+  border: 1px solid var(--border);
 }
 
 .itemImage img {
@@ -319,8 +320,8 @@
   justify-content: center;
   width: 100%;
   height: 100%;
-  background: var(--neutral-gray-100);
-  color: var(--neutral-gray-400);
+  background: var(--hover-bg);
+  color: var(--text-secondary);
   font-size: 1.2rem;
   text-align: center;
 }
@@ -368,11 +369,11 @@
 
 /* Order Summary Totals */
 .orderSummaryTotals {
-  background: var(--neutral-white);
+  background: var(--surface);
   padding: 2rem;
   border-radius: 1rem;
   margin-bottom: 2.4rem;
-  border: 1px solid var(--neutral-gray-200);
+  border: 1px solid var(--border);
 }
 
 .summaryLine {
@@ -385,7 +386,7 @@
 }
 
 .summaryLine.total {
-  border-top: 2px solid var(--neutral-gray-200);
+  border-top: 2px solid var(--border);
   margin-top: 1rem;
   padding-top: 1.6rem;
   font-size: 1.8rem;
@@ -436,13 +437,13 @@
 }
 
 .cancelOrderBtn {
-  background: var(--neutral-gray-200);
+  background: var(--hover-bg);
   color: var(--text-primary);
-  border: 1px solid var(--neutral-gray-300);
+  border: 1px solid var(--border);
 }
 
 .cancelOrderBtn:hover {
-  background: var(--neutral-gray-300);
+  background: var(--border);
   color: var(--text-primary);
 }
 
@@ -468,7 +469,7 @@
 .paginationButton {
   padding: 1rem 1.6rem;
   border: 2px solid var(--primary-500);
-  background: var(--neutral-white);
+  background: var(--surface);
   color: var(--primary-500);
   border-radius: 0.8rem;
   font-size: 1.4rem;
@@ -484,8 +485,8 @@
 }
 
 .paginationButton:disabled {
-  border-color: var(--neutral-gray-300);
-  color: var(--neutral-gray-400);
+  border-color: var(--border);
+  color: var(--text-secondary);
   cursor: not-allowed;
 }
 
@@ -497,8 +498,8 @@
 .pageNumber {
   width: 4rem;
   height: 4rem;
-  border: 2px solid var(--neutral-gray-300);
-  background: var(--neutral-white);
+  border: 2px solid var(--border);
+  background: var(--surface);
   color: var(--text-primary);
   border-radius: 0.8rem;
   font-size: 1.4rem;
@@ -537,7 +538,7 @@
 .receiptHeader {
   text-align: center;
   margin-bottom: 20px;
-  border-bottom: 1px dashed var(--neutral-gray-300);
+  border-bottom: 1px dashed #ccc;
   padding-bottom: 10px;
 }
 
@@ -578,6 +579,10 @@
     font-size: var(--h1-mobile);
   }
 
+  .emptyOrders h2 {
+    font-size: var(--h2-mobile);
+  }
+
   .orderHeader {
     flex-direction: column;
     align-items: flex-start;
@@ -598,6 +603,11 @@
   .orderItemsContainer,
   .orderSummaryTotals {
     padding: 1.6rem;
+  }
+
+  .shippingDetails h3,
+  .orderItemsContainer h3 {
+    font-size: var(--h4-mobile);
   }
 
   .orderItem {
