@@ -557,8 +557,8 @@ class CartItemsView(APIView):
             # Calculate shipping fee (300 per vendor) - convert to Decimal
             shipping_fee = Decimal(300) * num_vendors
             
-            # Calculate tax (5% of subtotal) - convert to Decimal
-            tax = sub_total * Decimal('0.05')
+            # Calculate tax (3% of subtotal) - convert to Decimal
+            tax = sub_total * Decimal('0.030')  # 3% tax
 
             print(unique_vendors)
             print(shipping_fee)
@@ -586,7 +586,6 @@ class CartItemsView(APIView):
             return Response( 
                 {"error": f"An error occurred: {str(e)}"}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
 
 class CreateOrderView(APIView):
     permission_classes = [AllowAny]  # Or IsAuthenticated if you require login
@@ -1408,26 +1407,39 @@ class SearchProductsView(APIView):
             products_query = Product.objects.all()
             print(f"\nSearch parameters - Product: {product_name}, State: {state}, School: {school}")
 
-            # Filter by product name if provided (case-insensitive)
             if product_name:
+                # First try to find products matching the name/description/keyword
                 products_query = products_query.filter(
                     Q(name__icontains=product_name) |
-                    Q(description__icontains=product_name)|
+                    Q(description__icontains=product_name) |
                     Q(keyword__icontains=product_name)
                 )
-                print(f"After product name filter: Found {products_query.count()} products matching '{product_name}'")
+                
+                # If no products found, check vendor business names
+                if not products_query.exists():
+                    print(f"No products found, checking vendor business names for: {product_name}")
+                    matching_vendors = Vendor.objects.filter(
+                        business_name__icontains=product_name
+                    )
+                    
+                    if matching_vendors.exists():
+                        print(f"Found matching vendors: {[v.business_name for v in matching_vendors]}")
+                        # Get all products from matching vendors
+                        vendor_users = [vendor.user for vendor in matching_vendors]
+                        products_query = Product.objects.filter(vendor__in=vendor_users)
+                        print(f"Found {products_query.count()} products from matching vendors")
+
+                print(f"Total products found: {products_query.count()}")
                 print("Products found:", [p.name for p in products_query])
 
             # Filter by state and institution if provided
             if state:
                 products_query = products_query.filter(vendor__state__iexact=state)
                 print(f"After state filter: {products_query.count()} products")
-                print("Products after state filter:", [p.name for p in products_query])
 
             if school:
                 products_query = products_query.filter(vendor__institution__iexact=school)
                 print(f"After school filter: {products_query.count()} products")
-                print("Products after school filter:", [p.name for p in products_query])
 
             # Print the actual SQL query for debugging
             print("\nSQL Query:", products_query.query)
@@ -1439,18 +1451,27 @@ class SearchProductsView(APIView):
                 print("No products found matching the criteria")
                 return Response({
                     "status": "not_found",
-                    "message": "No products found matching your criteria"
+                    "message": "No products found matching your criteria",
+                    "search_type": "vendor" if product_name and not products_query.filter(
+                        Q(name__icontains=product_name) |
+                        Q(description__icontains=product_name) |
+                        Q(keyword__icontains=product_name)
+                    ).exists() else "product"
                 }, status=status.HTTP_404_NOT_FOUND)
 
             # Serialize the products
             serializer = ProductSerializer(products, many=True, context={'request': request})
-            print(f"\nTotal products found: {products.count()}")
 
             # Return successful response with products
             return Response({
                 "status": "success",
                 "count": products.count(),
-                "products": serializer.data
+                "products": serializer.data,
+                "search_type": "vendor" if product_name and not products_query.filter(
+                    Q(name__icontains=product_name) |
+                    Q(description__icontains=product_name) |
+                    Q(keyword__icontains=product_name)
+                ).exists() else "product"
             }, status=status.HTTP_200_OK)
 
         except Exception as e:
