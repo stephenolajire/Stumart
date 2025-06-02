@@ -154,10 +154,7 @@ const Reviews = () => {
   return (
     <div className={styles.reviewsSection}>
       <div className={styles.sectionHeader}>
-        <h2 style={{ marginBottom: "2rem" }}>Reviews & Ratings</h2>
-        {vendorInfo.business_name && (
-          <p className={styles.businessName}>{vendorInfo.business_name}</p>
-        )}
+        <h2 className={styles.pageTitle}>Reviews and Ratings</h2>
       </div>
 
       <div className={styles.reviewsSummary}>
