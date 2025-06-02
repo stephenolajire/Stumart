@@ -154,48 +154,88 @@ class VendorsByOtherView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
         
-
 class VendorsByOtherandSchoolView(APIView):
     def get(self, request):
-        category = request.query_params.get("business_category", None)
-        specific_category = request.query_params.get("specific_category", None)
-        school_name = request.query_params.get("school", None)
-
-        if not school_name:
-            return Response(
-                {"error": "The school name is required"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
         try:
-            # First, filter users by school
-            users_in_school = User.objects.filter(institution__iexact=school_name)
-
-            if not users_in_school.exists():
-                return Response(
-                    {"error": "No users found for this school"},
-                    status=status.HTTP_404_NOT_FOUND
-                )
-
-            # Get vendors belonging to these users
-            vendors = Vendor.objects.filter(owner__in=users_in_school)
-
-            # Apply category filters
-            if category:
-                vendors = vendors.filter(business_category__iexact=category)
-            if specific_category:
-                vendors = vendors.filter(specific_category__iexact=specific_category)
-
-            if not vendors.exists():
-                return Response(
-                    {"error": "No vendor found matching the criteria"},
-                    status=status.HTTP_404_NOT_FOUND
-                )
-
-            # Serialize and return vendor data
-            serializer = VendorSerializer(vendors, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-
+            category = request.query_params.get("business_category", None)
+            specific_category = request.query_params.get("specific_category", None)
+            school_name = request.query_params.get("school", None)
+            
+            # Check if user is authenticated
+            if request.user.is_authenticated:
+                # For authenticated users, use their institution
+                user_institution = getattr(request.user, 'institution', None)
+                
+                if not user_institution:
+                    return Response(
+                        {"error": "Authenticated user must have an institution"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                # Get all users from the same institution as the authenticated user
+                users_in_school = User.objects.filter(institution__iexact=user_institution)
+                
+                if not users_in_school.exists():
+                    return Response(
+                        {"error": "No users found for your institution"},
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+                
+                # Get vendors belonging to these users
+                vendors = Vendor.objects.filter(user__in=users_in_school)
+                
+                # Apply category filters if provided
+                if category:
+                    vendors = vendors.filter(business_category__iexact=category)
+                if specific_category:
+                    vendors = vendors.filter(specific_category__iexact=specific_category)
+                
+                if not vendors.exists():
+                    return Response(
+                        {"error": "No vendors found matching the criteria in your institution"},
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+                
+                # Serialize and return vendor data
+                serializer = VendorSerializer(vendors, many=True)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+                
+            else:
+                # For non-authenticated users, school parameter is required
+                if not school_name:
+                    return Response(
+                        {"error": "The school name is required"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                # First, filter users by school
+                users_in_school = User.objects.filter(institution__iexact=school_name)
+                
+                if not users_in_school.exists():
+                    return Response(
+                        {"error": "No users found for this school"},
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+                
+                # Get vendors belonging to these users
+                vendors = Vendor.objects.filter(user__in=users_in_school)
+                
+                # Apply category filters
+                if category:
+                    vendors = vendors.filter(business_category__iexact=category)
+                if specific_category:
+                    vendors = vendors.filter(specific_category__iexact=specific_category)
+                
+                if not vendors.exists():
+                    return Response(
+                        {"error": "No vendor found matching the criteria"},
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+                
+                # Serialize and return vendor data
+                serializer = VendorSerializer(vendors, many=True)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+                
         except Exception as e:
             return Response(
                 {"error": "An unexpected error occurred. Please try again."},

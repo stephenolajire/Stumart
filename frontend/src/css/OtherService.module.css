@@ -151,7 +151,7 @@
 
 .serviceCardGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 2.4rem;
   padding: 1rem 0;
 }
@@ -346,6 +346,10 @@
     font-size: 1.4rem;
   }
 
+  .serviceImageContainer, .serviceImage {
+    height: 10rem;
+  }
+
   .serviceCardGrid {
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     gap: 1.6rem;
@@ -359,6 +363,10 @@
     padding: 1.2rem 2.4rem;
     font-size: 1.4rem;
   }
+
+  .applyButton {
+    height: 3.2rem;
+  }
 }
 
 @media screen and (max-width: 480px) {
@@ -371,7 +379,7 @@
   }
 
   .serviceImageContainer {
-    height: 160px;
+    height: auto;
   }
 
   .serviceDetails {
@@ -447,3 +455,4 @@
     transform: none;
   }
 }
+

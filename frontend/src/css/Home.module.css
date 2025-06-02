@@ -515,6 +515,98 @@
   background-color: var(--hover-bg);
 }
 
+/* ===== FEATURED DEALS CAROUSEL ===== */
+.dealsCarousel {
+  position: relative;
+  border-radius: 2rem;
+  overflow: hidden;
+  box-shadow: 0 10px 40px var(--shadow);
+  height: 30rem;
+}
+
+.dealCard {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  padding: 4rem;
+  color: white;
+}
+
+.dealCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(0,0,0,0.4), rgba(0,0,0,0.6));
+  z-index: 1;
+}
+
+.dealCard > * {
+  position: relative;
+  z-index: 2;
+}
+
+.dealCard h3 {
+  font-size: 3.2rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+}
+
+.dealCard p {
+  font-size: 1.8rem;
+  margin-bottom: 2rem;
+  max-width: 50rem;
+  line-height: 1.5;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+}
+
+.dealButton {
+  background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+  color: white;
+  padding: 1.4rem 3rem;
+  border-radius: 5rem;
+  font-weight: 600;
+  font-size: 1.6rem;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  box-shadow: 0 4px 15px rgba(218, 165, 32, 0.3);
+}
+
+.dealButton:hover {
+  background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(218, 165, 32, 0.4);
+}
+
+.carouselDots {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.dot {
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 50%;
+  border: none;
+  background: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.activeDot {
+  background: var(--primary-500);
+  transform: scale(1.3);
+}
+
 /* Shops Section */
 .shopsSection {
   margin: 3rem 0 6rem;
@@ -780,6 +872,14 @@
   .homeContainer {
     padding: 0 1.6rem;
   }
+
+  .dealCard h3 {
+    font-size: 2.4rem;
+  }
+
+  .dealCard p {
+    font-size: 1.6rem;
+  }
   
   .heroBanner {
     padding: 4rem 1.6rem;
@@ -791,7 +891,7 @@
   }
 
   .dealCard {
-    height: 25rem;
+    height: 30rem;
   }
   
   .heroBanner p {
@@ -873,7 +973,7 @@
   }
   
   .categoryGrid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
   }
   
   .shopsGrid {
@@ -914,9 +1014,12 @@
     gap: 1.6rem;
   }
 
-  .dealCard {
-    height: 20rem;
+  /* .dealCard {
+    height: 15rem;
   }
+  .dealsCarousel {
+    height: 15rem;
+  } */
 }
 
 @media screen and (max-width: 360px) {
@@ -925,7 +1028,7 @@
   }
   
   .shopsGrid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 0.8rem;
   }
   
@@ -957,101 +1060,13 @@
     font-size: 1.2rem;
   }
 
-  .dealCard {
-    height: 20rem;
+  /* .dealCard {
+    height: 15rem;
   }
-}
 
-/* ===== FEATURED DEALS CAROUSEL ===== */
-.dealsCarousel {
-  position: relative;
-  border-radius: 2rem;
-  overflow: hidden;
-  box-shadow: 0 10px 40px var(--shadow);
-  height: 30rem;
-}
-
-.dealCard {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  position: relative;
-  padding: 4rem;
-  color: white;
-}
-
-.dealCard::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(0,0,0,0.4), rgba(0,0,0,0.6));
-  z-index: 1;
-}
-
-.dealCard > * {
-  position: relative;
-  z-index: 2;
-}
-
-.dealCard h3 {
-  font-size: 3.2rem;
-  font-weight: 800;
-  margin-bottom: 1rem;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
-}
-
-.dealCard p {
-  font-size: 1.8rem;
-  margin-bottom: 2rem;
-  max-width: 50rem;
-  line-height: 1.5;
-  text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
-}
-
-.dealButton {
-  background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
-  color: white;
-  padding: 1.4rem 3rem;
-  border-radius: 5rem;
-  font-weight: 600;
-  font-size: 1.6rem;
-  transition: all 0.3s ease;
-  text-decoration: none;
-  box-shadow: 0 4px 15px rgba(218, 165, 32, 0.3);
-}
-
-.dealButton:hover {
-  background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(218, 165, 32, 0.4);
-}
-
-.carouselDots {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  margin-top: 2rem;
-}
-
-.dot {
-  width: 1.2rem;
-  height: 1.2rem;
-  border-radius: 50%;
-  border: none;
-  background: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.activeDot {
-  background: var(--primary-500);
-  transform: scale(1.3);
+  .dealsCarousel {
+    height: 15rem;
+  } */
 }
 
 @media screen  and (max-width:480px){
