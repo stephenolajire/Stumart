@@ -2,7 +2,7 @@
 
 .availableOrders {
   padding: 2.4rem;
-  max-width: 120rem;
+  width: 100%;
   margin: 0 auto;
   background-color: var(--background);
   min-height: 100vh;

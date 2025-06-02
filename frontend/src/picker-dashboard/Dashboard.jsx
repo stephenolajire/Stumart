@@ -49,7 +49,7 @@ const Dashboard = ({ onOrderSelect }) => {
 
   return (
     <div className={styles.dashboard}>
-      <div style={{ position: "fixed", top: "2rem", right: "2rem" }}>
+      <div style={{ position: "fixed", top: "2rem", right: "2rem", zIndex:"1000" }}>
         <ThemeToggle />
       </div>
       <h1 className={styles.pageTitle}>Dashboard</h1>

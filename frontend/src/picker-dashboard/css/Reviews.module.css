@@ -16,15 +16,16 @@
   margin-bottom: 4rem;
 }
 
-.sectionHeader h2 {
-  font-size: var(--h1-desktop);
+.pageTitle {
+  font-size: var(--h2-desktop);
   font-weight: 700;
+  margin-bottom: 3.2rem;
   color: var(--text-primary);
+  text-align: center;
   position: relative;
-  display: inline-block;
 }
 
-.sectionHeader h2::after {
+.pageTitle::after {
   content: '';
   position: absolute;
   bottom: -1rem;
@@ -420,8 +421,9 @@
     padding: 1.5rem;
   }
 
-  .header {
+  .pageTitle {
     font-size: var(--h2-mobile);
+    margin-bottom: 2.4rem;
   }
 
   .reviewsSummary {
