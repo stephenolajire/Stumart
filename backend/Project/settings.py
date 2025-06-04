@@ -106,7 +106,7 @@ WSGI_APPLICATION = 'Project.wsgi.application'
 
 DATABASES = {
     'default': dj_database_url.config(
-        default=config('DATABASE_URL'),
+        default="postgresql://postgres.cgpcbrlbmpabqwliskhg:sLAq8vXOFtroFvBA@aws-0-eu-west-1.pooler.supabase.com:6543/postgres",
         conn_max_age=600,
         conn_health_checks=True,
         ssl_require=True
@@ -164,6 +164,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "https://stumart-fxnz.onrender.com",
     "https://stumart-fe1z.onrender.com",
+    "https://stumart.com.ng"
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -198,8 +199,8 @@ REST_FRAMEWORK = {
         'rest_framework.throttling.UserRateThrottle',
     ],
     'DEFAULT_THROTTLE_RATES': {
-        'anon': '1000/day',
-        'user': '1000/day',
+        # 'anon': '1000/day',
+        # 'user': '1000/day',
         'login': '5/minute',
         'email_verification': '3/minute',
         'password_reset': '3/minute',
