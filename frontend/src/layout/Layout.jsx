@@ -26,13 +26,11 @@ const Layout = () => {
         onClick={toggleModal}
         aria-label="Learn how to use platform"
       >
-        <FaPlayCircle  size={24}/>
+        <FaPlayCircle size={24} />
       </button>
 
       <div
-        className={`${styles.chatContainer} ${
-          isChatOpen ? styles.open : ""
-        }`}
+        className={`${styles.chatContainer} ${isChatOpen ? styles.open : ""}`}
       >
         <Chatbot />
       </div>
@@ -53,7 +51,7 @@ const Layout = () => {
             </button>
             <div className={styles.videoWrapper}>
               <iframe
-                src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=0&rel=0&modestbranding=1"
+                src="https://youtube.com/shorts/nDAgmkIaEz4?si=3nh29jfrt5qLPKzB"
                 title="Platform Tutorial"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
