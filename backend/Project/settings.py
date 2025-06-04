@@ -164,7 +164,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "https://stumart-fxnz.onrender.com",
     "https://stumart-fe1z.onrender.com",
-    "https://stumart.com.ng/"
+    "https://stumart.com.ng"
 ]
 
 CORS_ALLOW_CREDENTIALS = True
