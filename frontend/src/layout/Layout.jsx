@@ -5,21 +5,45 @@ import { Outlet } from "react-router-dom";
 import { FaPlayCircle, FaTimes, FaComments } from "react-icons/fa";
 import Chatbot from "../chatbot/Chatbot";
 import styles from "../css/Layout.module.css";
-// import ThemeToggle from "../components/ThemeToggle";
+import vendorReg from "../assets/registration.mp4"
+import pickerReg from "../assets/registration.mp4";
+import customerReg from "../assets/registration.mp4";
+import addProduct from "../assets/addproduct.mp4";
 
 const Layout = () => {
   const [showModal, setShowModal] = useState(false);
+  const [showVideoModal, setShowVideoModal] = useState(false);
+  const [selectedVideo, setSelectedVideo] = useState(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
 
-  const toggleModal = () => setShowModal(!showModal);
+  const toggleModal = () => {
+    setShowModal(!showModal);
+    if (showVideoModal) setShowVideoModal(false);
+  };
+
   const toggleChat = () => setIsChatOpen(!isChatOpen);
+
+  const handleVideoSelect = (video) => {
+    setSelectedVideo(video);
+    setShowModal(false);
+    setShowVideoModal(true);
+  };
+
+  const videoOptions = [
+    { title: "Register as Vendor", video: vendorReg },
+    { title: "Register as Picker", video: pickerReg },
+    { title: "Register as Customer", video: customerReg },
+    { title: "Add Product Tutorial", video: addProduct },
+  ];
 
   return (
     <div className={styles.layoutWrapper}>
       <Navigation />
       <Outlet />
       <Footer />
-      {/* <ThemeToggle/> */}
+
+      <Chatbot/>
+
       {/* Learn More Button */}
       <button
         className={styles.learnMoreBtn}
@@ -29,13 +53,11 @@ const Layout = () => {
         <FaPlayCircle size={24} />
       </button>
 
-      <div
-        className={`${styles.chatContainer} ${isChatOpen ? styles.open : ""}`}
-      >
+      {/* <div className={`${styles.chatContainer} ${isChatOpen ? styles.open : ""}`}>
         <Chatbot />
-      </div>
+      </div> */}
 
-      {/* Video Modal */}
+      {/* Selection Modal */}
       {showModal && (
         <div className={styles.modalOverlay} onClick={toggleModal}>
           <div
@@ -45,17 +67,45 @@ const Layout = () => {
             <button
               className={styles.closeBtn}
               onClick={toggleModal}
-              aria-label="Close tutorial"
+              aria-label="Close selection"
+            >
+              <FaTimes />
+            </button>
+            <div className={styles.optionsGrid}>
+              {videoOptions.map((option, index) => (
+                <button
+                  key={index}
+                  className={styles.optionButton}
+                  onClick={() => handleVideoSelect(option.video)}
+                >
+                  <FaPlayCircle className={styles.optionIcon} />
+                  <span>{option.title}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Video Modal */}
+      {showVideoModal && selectedVideo && (
+        <div className={styles.modalOverlay} onClick={() => setShowVideoModal(false)}>
+          <div
+            className={styles.modalContent}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className={styles.closeBtn}
+              onClick={() => setShowVideoModal(false)}
+              aria-label="Close video"
             >
               <FaTimes />
             </button>
             <div className={styles.videoWrapper}>
-              <iframe
-                src="https://youtube.com/shorts/nDAgmkIaEz4?si=3nh29jfrt5qLPKzB"
-                title="Platform Tutorial"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              ></iframe>
+              <video controls autoPlay>
+                <source src={selectedVideo} type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
             </div>
           </div>
         </div>

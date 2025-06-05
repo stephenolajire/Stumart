@@ -89,7 +89,7 @@ const Login = () => {
       }
 
       // If user is a student and verified, navigate to home
-      if (user_type == "admin" && is_admin == true) {
+      if (user_type === "admin" && is_admin == true ) {
         navigate("/admin-dashboard");
         auth();
         return;
