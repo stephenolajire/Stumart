@@ -94,6 +94,8 @@ const KYCVerification = () => {
     }
   };
 
+  // ...existing code...
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -109,14 +111,31 @@ const KYCVerification = () => {
 
     setIsLoading(true);
     const submitData = new FormData();
-    submitData.append("selfie_image", formData.selfie_image);
+
+    // Ensure files are properly appended with correct names
+    if (formData.selfie_image instanceof File) {
+      submitData.append("selfie_image", formData.selfie_image, "selfie.jpg");
+    }
+    if (formData.id_image instanceof File) {
+      submitData.append("id_image", formData.id_image, "id.jpg");
+    }
     submitData.append("id_type", formData.id_type);
-    submitData.append("id_image", formData.id_image);
 
     try {
-      await api.post("/kyc/", submitData, {
-        headers: { "Content-Type": "multipart/form-data" },
+      const response = await api.post("/kyc/", submitData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Accept: "application/json",
+        },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          console.log(`Upload Progress: ${percentCompleted}%`);
+        },
       });
+
+      console.log("KYC Response:", response.data);
 
       await Swal.fire({
         icon: "success",
@@ -127,10 +146,11 @@ const KYCVerification = () => {
 
       navigate("/login");
     } catch (error) {
+      console.error("KYC Submission Error:", error);
       Swal.fire({
         icon: "error",
         title: "Submission Failed",
-        text: error.response?.data?.error || "Please try again",
+        text: error.response?.data?.message || "Please try again later",
         confirmButtonColor: "var(--primary-500)",
       });
     } finally {
