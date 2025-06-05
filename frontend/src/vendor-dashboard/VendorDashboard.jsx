@@ -39,7 +39,7 @@ const VendorDashboard = () => {
     localStorage.removeItem("access");
     localStorage.removeItem("refresh");
     navigate("/login");
-    auth()
+    window.location.reload();
   };
 
   useEffect(() => {
