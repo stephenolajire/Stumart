@@ -1,125 +1,429 @@
 /* Payments.module.css */
+
 .container {
+  /* padding: 2rem; */
   width: 100%;
+  margin: 0 auto;
+  background-color: var(--background);
+  color: var(--text-primary);
+  transition: all 0.3s ease;
 }
 
 .filterSection {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
-  gap: 1rem;
+  margin-bottom: 3rem;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1.2rem;
+  padding: 2.4rem;
+  box-shadow: 0 2px 8px var(--shadow);
+  transition: all 0.3s ease;
 }
 
 .filterSection h3 {
-  font-size: var(--h4-desktop);
+  font-size: var(--h3-desktop);
   color: var(--text-primary);
+  margin-bottom: 2rem;
+  font-weight: 600;
 }
 
 .filters {
   display: flex;
-  gap: 1rem;
+  gap: 2rem;
+  align-items: center;
   flex-wrap: wrap;
 }
 
+.searchInput {
+  flex: 2;
+  min-width: 30rem;
+}
+
 .searchInput input {
-  padding: 1rem;
-  border: 1px solid var(--neutral-gray-200);
-  border-radius: 0.5rem;
+  width: 100%;
+  padding: 1.2rem 1.6rem;
+  border: 2px solid var(--border);
+  border-radius: 0.8rem;
+  background-color: var(--background);
+  color: var(--text-primary);
   font-size: 1.4rem;
-  min-width: 25rem;
+  transition: all 0.3s ease;
+}
+
+.searchInput input:focus {
+  outline: none;
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 3px rgba(218, 165, 32, 0.1);
+}
+
+.searchInput input::placeholder {
+  color: var(--text-secondary);
+}
+
+.statusFilter {
+  flex: 1;
+  min-width: 18rem;
 }
 
 .statusFilter select {
-  padding: 1rem;
-  border: 1px solid var(--neutral-gray-200);
-  border-radius: 0.5rem;
+  width: 100%;
+  padding: 1.2rem 1.6rem;
+  border: 2px solid var(--border);
+  border-radius: 0.8rem;
+  background-color: var(--background);
+  color: var(--text-primary);
   font-size: 1.4rem;
-  background-color: var(--neutral-white);
-  min-width: 15rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
+.statusFilter select:focus {
+  outline: none;
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 3px rgba(218, 165, 32, 0.1);
+}
+
+/* Loading and Error States */
+.loading, .error {
+  text-align: center;
+  padding: 4rem 2rem;
+  font-size: 1.6rem;
+  border-radius: 1.2rem;
+  margin: 2rem 0;
+}
+
+.loading {
+  background-color: var(--surface);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.error {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--error);
+  border: 1px solid var(--error);
+}
+
+/* Table Container with Responsive Overflow */
 .transactionsTable {
-  width: 100%;
-  overflow-x: auto;
+  background-color: var(--surface);
+  border-radius: 1.2rem;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 12px var(--shadow);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+/* Table Responsive Wrapper */
+@media screen and (max-width: 768px) {
+  .transactionsTable {
+    overflow-x: auto;
+  }
 }
 
 .transactionsTable table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 90rem; /* Wider than orders table due to more columns */
 }
 
-.transactionsTable th {
-  background-color: var(--neutral-gray-100);
-  padding: 1.2rem 1rem;
+.transactionsTable thead {
+  background-color: var(--primary-500);
+  color: var(--neutral-white);
+}
+
+.transactionsTable thead th {
+  padding: 1.6rem 1.2rem;
   text-align: left;
-  font-size: 1.4rem;
   font-weight: 600;
-  color: var(--text-tertiary);
-}
-
-.transactionsTable td {
-  padding: 1.2rem 1rem;
-  border-bottom: 1px solid var(--neutral-gray-200);
   font-size: 1.4rem;
-  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05rem;
+  white-space: nowrap;
 }
 
-.statusBadge {
-  display: inline-block;
-  padding: 0.5rem 1rem;
-  border-radius: 2rem;
-  font-size: 1.2rem;
+.transactionsTable tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background-color 0.2s ease;
+}
+
+.transactionsTable tbody tr:hover {
+  background-color: var(--hover-bg);
+}
+
+.transactionsTable tbody tr:last-child {
+  border-bottom: none;
+}
+
+.transactionsTable tbody td {
+  padding: 1.4rem 1.2rem;
+  font-size: 1.4rem;
+  color: var(--text-primary);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+/* Transaction ID and Order Number styling */
+.transactionsTable tbody td:first-child,
+.transactionsTable tbody td:nth-child(2) {
+  font-family: 'Courier New', monospace;
+  font-size: 1.3rem;
+  color: var(--text-secondary);
+  background-color: rgba(218, 165, 32, 0.05);
+}
+
+/* Amount styling */
+.transactionsTable tbody td:nth-child(4) {
+  font-weight: 600;
+  color: var(--primary-600);
+  font-size: 1.5rem;
+}
+
+/* Payment Method styling */
+.transactionsTable tbody td:nth-child(5) {
+  text-transform: capitalize;
   font-weight: 500;
 }
 
+/* Status Badge Styles */
+.statusBadge {
+  padding: 0.6rem 1.2rem;
+  border-radius: 2rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05rem;
+  display: inline-block;
+  transition: all 0.3s ease;
+  min-width: 8rem;
+  text-align: center;
+}
+
 .statusSuccess {
-  background-color: #d1fae5;
-  color: #065f46;
+  background-color: rgba(34, 197, 94, 0.15);
+  color: var(--success);
+  border: 1px solid var(--success);
 }
 
 .statusPending {
-  background-color: #fef3c7;
-  color: #92400e;
+  background-color: rgba(245, 158, 11, 0.15);
+  color: var(--warning);
+  border: 1px solid var(--warning);
 }
 
 .statusFailed {
-  background-color: #fee2e2;
-  color: #b91c1c;
-}
-
-.loading, .error, .noTransactions {
-  padding: 2rem;
-  text-align: center;
-  font-size: 1.6rem;
-  color: var(--text-secondary);
-}
-
-.error {
+  background-color: rgba(239, 68, 68, 0.15);
   color: var(--error);
+  border: 1px solid var(--error);
 }
 
-/* Responsive styles */
+/* No Transactions State */
+.noTransactions {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 1.6rem;
+  padding: 4rem 2rem;
+  font-style: italic;
+}
+
+/* Mobile Responsiveness */
 @media screen and (max-width: 768px) {
-  .filterSection {
-    flex-direction: column;
-    align-items: flex-start;
+  .container {
+    padding: 1.5rem;
   }
-  
+
+  .filterSection {
+    padding: 1.8rem;
+  }
+
+  .filterSection h3 {
+    font-size: var(--h3-mobile);
+    margin-bottom: 1.5rem;
+  }
+
+  .filters {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .searchInput,
+  .statusFilter {
+    flex: 1;
+    min-width: 100%;
+  }
+
+  .searchInput {
+    min-width: 100%;
+  }
+
   .searchInput input,
   .statusFilter select {
-    width: 100%;
-    min-width: auto;
+    padding: 1rem 1.4rem;
+    font-size: 1.6rem;
   }
-  
-  .transactionsTable th,
-  .transactionsTable td {
+
+  .transactionsTable table {
+    min-width: 80rem;
+  }
+
+  .transactionsTable thead th,
+  .transactionsTable tbody td {
     padding: 1rem 0.8rem;
     font-size: 1.2rem;
   }
-  
-  .filterSection h3 {
-    font-size: var(--h4-mobile);
+
+  .transactionsTable tbody td:first-child,
+  .transactionsTable tbody td:nth-child(2) {
+    font-size: 1.1rem;
   }
+
+  .transactionsTable tbody td:nth-child(4) {
+    font-size: 1.3rem;
+  }
+
+  .statusBadge {
+    padding: 0.4rem 0.8rem;
+    font-size: 1rem;
+    min-width: 6rem;
+  }
+
+  .loading, .error {
+    padding: 3rem 1rem;
+    font-size: 1.4rem;
+  }
+}
+
+/* Tablet Responsiveness */
+@media screen and (max-width: 1024px) and (min-width: 769px) {
+  .container {
+    padding: 1.8rem;
+  }
+
+  .transactionsTable table {
+    min-width: 85rem;
+  }
+
+  .transactionsTable thead th,
+  .transactionsTable tbody td {
+    padding: 1.2rem 1rem;
+    font-size: 1.3rem;
+  }
+
+  .transactionsTable tbody td:first-child,
+  .transactionsTable tbody td:nth-child(2) {
+    font-size: 1.2rem;
+  }
+
+  .transactionsTable tbody td:nth-child(4) {
+    font-size: 1.4rem;
+  }
+}
+
+/* Large Screen Enhancements */
+@media screen and (min-width: 1200px) {
+  .container {
+    padding: 3rem;
+  }
+
+  .filterSection {
+    padding: 3rem;
+  }
+
+  .transactionsTable thead th,
+  .transactionsTable tbody td {
+    padding: 1.8rem 1.5rem;
+    font-size: 1.5rem;
+  }
+
+  .transactionsTable tbody td:first-child,
+  .transactionsTable tbody td:nth-child(2) {
+    font-size: 1.4rem;
+  }
+
+  .transactionsTable tbody td:nth-child(4) {
+    font-size: 1.6rem;
+  }
+
+  .statusBadge {
+    padding: 0.8rem 1.6rem;
+    font-size: 1.3rem;
+    min-width: 9rem;
+  }
+}
+
+/* Extra Wide Screens */
+@media screen and (min-width: 1440px) {
+  .transactionsTable table {
+    min-width: 100rem;
+  }
+
+  .transactionsTable thead th,
+  .transactionsTable tbody td {
+    padding: 2rem 1.8rem;
+  }
+}
+
+/* Dark mode specific adjustments */
+:root[data-theme="dark"] .transactionsTable thead {
+  background-color: var(--primary-600);
+}
+
+:root[data-theme="dark"] .transactionsTable tbody td:first-child,
+:root[data-theme="dark"] .transactionsTable tbody td:nth-child(2) {
+  background-color: rgba(218, 165, 32, 0.1);
+}
+
+/* Focus styles for accessibility */
+.searchInput input:focus,
+.statusFilter select:focus {
+  box-shadow: 0 0 0 3px rgba(218, 165, 32, 0.1);
+}
+
+/* Loading animation */
+.loading {
+  position: relative;
+}
+
+.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2rem;
+  height: 2rem;
+  margin: -1rem 0 0 -1rem;
+  border: 2px solid var(--primary-200);
+  border-top: 2px solid var(--primary-500);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Hover effects for better UX */
+.transactionsTable tbody tr:hover .statusBadge {
+  transform: scale(1.05);
+}
+
+/* Print styles */
+@media print {
+  .filterSection {
+    display: none;
+  }
+  
+  .container {
+    padding: 0;
+  }
+  
+  .transactionsTable {
+    box-shadow: none;
+    border: 1px solid #000;
+  }
+}
+
+/* Smooth transitions for theme switching */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }

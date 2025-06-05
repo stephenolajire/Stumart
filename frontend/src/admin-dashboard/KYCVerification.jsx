@@ -278,7 +278,7 @@ const KYCVerification = () => {
                     <h6>Selfie Image</h6>
                     {selectedVerification.selfie_image ? (
                       <img
-                        src={`${MEDIA_BASE_URL}${selectedVerification.selfie_image}`}
+                        src={selectedVerification.selfie_image}
                         alt="Selfie"
                         className={styles.documentImage}
                       />
@@ -292,7 +292,7 @@ const KYCVerification = () => {
                     <h6>ID Document</h6>
                     {selectedVerification.id_image ? (
                       <img
-                        src={`${MEDIA_BASE_URL}${selectedVerification.id_image}`}
+                        src={selectedVerification.id_image}
                         alt="ID Document"
                         className={styles.documentImage}
                       />

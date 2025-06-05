@@ -601,6 +601,16 @@ class KYCVerificationAPIView(APIView):
             
         verification_data = []
         for verification in verifications:
+            # Build absolute URIs for images
+            selfie_image_url = None
+            id_image_url = None
+            
+            if verification.selfie_image:
+                selfie_image_url = request.build_absolute_uri(verification.selfie_image.url)
+            
+            if verification.id_image:
+                id_image_url = request.build_absolute_uri(verification.id_image.url)
+            
             verification_dict = {
                 'id': verification.id,
                 'user_id': verification.user.id,
@@ -608,8 +618,8 @@ class KYCVerificationAPIView(APIView):
                 'user_name': f"{verification.user.first_name} {verification.user.last_name}",
                 'user_type': verification.user.user_type,
                 'id_type': verification.id_type,
-                'selfie_image': str(verification.selfie_image) if verification.selfie_image else None,
-                'id_image': str(verification.id_image) if verification.id_image else None,
+                'selfie_image': selfie_image_url,
+                'id_image': id_image_url,
                 'verification_status': verification.verification_status,
                 'submission_date': verification.submission_date,
                 'verification_date': verification.verification_date,

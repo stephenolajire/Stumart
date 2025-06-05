@@ -1,79 +1,143 @@
+/* ManageUsers.module.css */
+
 .usersContainer {
-  display: flex;
-  flex-direction: column;
+  padding: 2.4rem;
+  background-color: var(--background);
+  min-height: 100vh;
+  transition: background-color 0.3s ease;
 }
 
+/* Header Section */
 .headerSection {
-  margin-bottom: 2rem;
+  margin-bottom: 3.2rem;
 }
 
 .sectionTitle {
-  font-size: var(--h4-desktop);
-  margin-bottom: 1.5rem;
+  font-size: var(--h2-desktop);
+  font-weight: 700;
   color: var(--text-primary);
+  margin-bottom: 2.4rem;
+  text-align: center;
+  background: linear-gradient(135deg, var(--primary-500), var(--primary-700));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  transition: all 0.3s ease;
 }
 
+/* Filter Section */
 .filterSection {
-  background-color: var(--neutral-white);
-  padding: 1.5rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  margin-bottom: 2rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1.2rem;
+  padding: 2.4rem;
+  box-shadow: 0 4px 12px var(--shadow);
+  transition: all 0.3s ease;
+}
+
+.filterSection:hover {
+  box-shadow: 0 8px 24px var(--shadow);
 }
 
 .searchForm {
   display: flex;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  gap: 1.2rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
 }
 
 .searchInput {
   flex: 1;
-  padding: 1rem;
-  border: 1px solid var(--neutral-gray-200);
-  border-radius: 4px;
-  font-size: 1.4rem;
+  min-width: 250px;
+  padding: 1.2rem 1.6rem;
+  border: 2px solid var(--border);
+  border-radius: 0.8rem;
+  background: var(--background);
+  color: var(--text-primary);
+  font-size: 1.6rem;
+  transition: all 0.3s ease;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 3px rgba(218, 165, 32, 0.1);
+}
+
+.searchInput::placeholder {
+  color: var(--text-secondary);
 }
 
 .searchButton {
-  background-color: var(--primary-500);
+  padding: 1.2rem 2.4rem;
+  background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
   color: white;
   border: none;
-  border-radius: 4px;
-  padding: 0 2rem;
+  border-radius: 0.8rem;
+  font-size: 1.6rem;
+  font-weight: 600;
   cursor: pointer;
-  font-weight: 500;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.searchButton:hover {
+  background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(218, 165, 32, 0.3);
 }
 
 .filterControls {
   display: flex;
-  gap: 1rem;
+  gap: 1.2rem;
+  align-items: center;
   flex-wrap: wrap;
 }
 
 .filterSelect {
-  padding: 0.8rem 1rem;
-  border: 1px solid var(--neutral-gray-200);
-  border-radius: 4px;
+  padding: 1rem 1.6rem;
+  border: 2px solid var(--border);
+  border-radius: 0.8rem;
+  background: var(--background);
+  color: var(--text-primary);
   font-size: 1.4rem;
-  flex: 1;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 160px;
+}
+
+.filterSelect:focus {
+  outline: none;
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 3px rgba(218, 165, 32, 0.1);
 }
 
 .clearButton {
-  background-color: var(--neutral-gray-100);
+  padding: 1rem 2rem;
+  background: transparent;
   color: var(--text-secondary);
-  border: 1px solid var(--neutral-gray-200);
-  border-radius: 4px;
-  padding: 0 1.5rem;
+  border: 2px solid var(--border);
+  border-radius: 0.8rem;
+  font-size: 1.4rem;
   cursor: pointer;
-  font-weight: 500;
+  transition: all 0.3s ease;
+  white-space: nowrap;
 }
 
+.clearButton:hover {
+  background: var(--hover-bg);
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+}
+
+/* Table Styles */
 .tableContainer {
-  background-color: var(--neutral-white);
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  overflow: auto;
+  background: var(--surface);
+  border-radius: 1.2rem;
+  overflow: hidden;
+  box-shadow: 0 4px 12px var(--shadow);
+  border: 1px solid var(--border);
+  transition: all 0.3s ease;
 }
 
 .usersTable {
@@ -82,136 +146,390 @@
   font-size: 1.4rem;
 }
 
-.usersTable th,
-.usersTable td {
-  padding: 1.2rem 1.5rem;
-  text-align: left;
-  border-bottom: 1px solid var(--neutral-gray-100);
+.usersTable thead {
+  background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+  color: white;
 }
 
 .usersTable th {
-  background-color: var(--neutral-gray-50);
-  color: var(--text-secondary);
+  padding: 1.6rem 1.2rem;
+  text-align: left;
   font-weight: 600;
+  font-size: 1.4rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.badge {
-  display: inline-block;
-  padding: 0.4rem 0.8rem;
-  border-radius: 16px;
-  font-size: 1.2rem;
-  font-weight: 500;
+.usersTable tbody tr {
+  background: var(--background);
+  border-bottom: 1px solid var(--border);
+  transition: all 0.3s ease;
 }
 
-.student {
-  background-color: rgba(59, 130, 246, 0.1);
-  color: var(--info);
+.usersTable tbody tr:hover {
+  background: var(--hover-bg);
+  transform: scale(1.001);
 }
 
-.vendor {
-  background-color: rgba(245, 158, 11, 0.1);
-  color: var(--warning);
+.usersTable tbody tr:last-child {
+  border-bottom: none;
 }
 
-.picker, .student_picker {
-  background-color: rgba(34, 197, 94, 0.1);
-  color: var(--success);
-}
-
-.admin {
-  background-color: var(--primary-100);
-  color: var(--primary-700);
-}
-
-.statusBadge, .verifiedBadge {
-  display: inline-block;
-  padding: 0.4rem 0.8rem;
-  border-radius: 16px;
-  font-size: 1.2rem;
-  font-weight: 500;
-}
-
-.active {
-  background-color: rgba(34, 197, 94, 0.1);
-  color: var(--success);
-}
-
-.inactive {
-  background-color: rgba(239, 68, 68, 0.1);
-  color: var(--error);
-}
-
-.verified {
-  background-color: rgba(34, 197, 94, 0.1);
-  color: var(--success);
-}
-
-.unverified {
-  background-color: rgba(245, 158, 11, 0.1);
-  color: var(--warning);
-}
-
-.actionButtons {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.actionButton {
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  font-size: 1.2rem;
-  border: none;
-  cursor: pointer;
-  font-weight: 500;
-}
-
-.activate {
-  background-color: rgba(34, 197, 94, 0.1);
-  color: var(--success);
-}
-
-.deactivate {
-  background-color: rgba(239, 68, 68, 0.1);
-  color: var(--error);
-}
-
-.verify {
-  background-color: rgba(59, 130, 246, 0.1);
-  color: var(--info);
+.usersTable td {
+  padding: 1.6rem 1.2rem;
+  color: var(--text-primary);
+  vertical-align: middle;
 }
 
 .noData {
   text-align: center;
-  padding: 3rem;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   font-style: italic;
+  padding: 4rem !important;
 }
 
-.error {
-  background-color: var(--error);
+/* User Type Badge Styles */
+.badge {
+  display: inline-block;
+  padding: 0.6rem 1.2rem;
+  border-radius: 2rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badge.student {
+  background: linear-gradient(135deg, var(--info), #2563eb);
   color: white;
-  padding: 1.5rem;
-  border-radius: 8px;
-  margin-bottom: 2rem;
-  font-size: 1.6rem;
 }
 
-@media (max-width: 1024px) {
+.badge.vendor {
+  background: linear-gradient(135deg, var(--primary-400), var(--primary-500));
+  color: white;
+}
+
+.badge.picker {
+  background: linear-gradient(135deg, var(--success), #16a34a);
+  color: white;
+}
+
+.badge.student_picker {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  color: white;
+}
+
+.badge.admin {
+  background: linear-gradient(135deg, var(--error), #dc2626);
+  color: white;
+}
+
+/* Status Badge Styles */
+.statusBadge {
+  display: inline-block;
+  padding: 0.6rem 1.2rem;
+  border-radius: 2rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.statusBadge.active {
+  background: linear-gradient(135deg, var(--success), #16a34a);
+  color: white;
+}
+
+.statusBadge.inactive {
+  background: linear-gradient(135deg, #6b7280, #4b5563);
+  color: white;
+}
+
+/* Verification Badge Styles */
+.verifiedBadge {
+  display: inline-block;
+  padding: 0.6rem 1.2rem;
+  border-radius: 2rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.verifiedBadge.verified {
+  background: linear-gradient(135deg, var(--success), #16a34a);
+  color: white;
+}
+
+.verifiedBadge.unverified {
+  background: linear-gradient(135deg, var(--warning), #d97706);
+  color: white;
+}
+
+/* Action Buttons */
+.actionButtons {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.actionButton {
+  padding: 0.8rem 1.6rem;
+  border: none;
+  border-radius: 0.6rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.actionButton.activate {
+  background: linear-gradient(135deg, var(--success), #16a34a);
+  color: white;
+}
+
+.actionButton.activate:hover {
+  background: linear-gradient(135deg, #16a34a, #15803d);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+
+.actionButton.deactivate {
+  background: linear-gradient(135deg, #6b7280, #4b5563);
+  color: white;
+}
+
+.actionButton.deactivate:hover {
+  background: linear-gradient(135deg, #4b5563, #374151);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3);
+}
+
+.actionButton.verify {
+  background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+  color: white;
+}
+
+.actionButton.verify:hover {
+  background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(218, 165, 32, 0.3);
+}
+
+/* Error State */
+.error {
+  background: linear-gradient(135deg, var(--error), #dc2626);
+  color: white;
+  padding: 2rem;
+  border-radius: 0.8rem;
+  text-align: center;
+  font-size: 1.6rem;
+  font-weight: 600;
+  margin: 2rem 0;
+}
+
+/* Responsive Design */
+@media screen and (max-width: 1200px) {
   .usersTable {
-    font-size: 1.2rem;
+    font-size: 1.3rem;
   }
   
-  .filterControls {
+  .usersTable th,
+  .usersTable td {
+    padding: 1.2rem 0.8rem;
+  }
+  
+  .actionButtons {
     flex-direction: column;
+  }
+  
+  .actionButton {
+    font-size: 1.1rem;
+    padding: 0.6rem 1.2rem;
   }
 }
 
-@media (max-width: 768px) {
+@media screen and (max-width: 768px) {
+  .usersContainer {
+    padding: 1.6rem;
+  }
+  
+  .sectionTitle {
+    font-size: var(--h2-mobile);
+    margin-bottom: 2rem;
+  }
+  
+  .filterSection {
+    padding: 1.6rem;
+  }
+  
   .searchForm {
     flex-direction: column;
   }
   
+  .searchInput {
+    min-width: 100%;
+  }
+  
+  .filterControls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .filterSelect {
+    min-width: 100%;
+  }
+  
+  /* Mobile Table - Horizontal Scroll */
   .tableContainer {
     overflow-x: auto;
+    border-radius: 0.8rem;
   }
+  
+  .usersTable {
+    min-width: 900px;
+    font-size: 1.2rem;
+  }
+  
+  .usersTable th,
+  .usersTable td {
+    padding: 1rem 0.8rem;
+    white-space: nowrap;
+  }
+  
+  .badge,
+  .statusBadge,
+  .verifiedBadge {
+    font-size: 1rem;
+    padding: 0.4rem 0.8rem;
+  }
+  
+  .actionButton {
+    font-size: 1rem;
+    padding: 0.6rem 1rem;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .usersContainer {
+    padding: 1.2rem;
+  }
+  
+  .filterSection {
+    padding: 1.2rem;
+  }
+  
+  .searchInput,
+  .searchButton {
+    font-size: 1.4rem;
+    padding: 1rem 1.2rem;
+  }
+  
+  .filterSelect {
+    font-size: 1.3rem;
+    padding: 0.8rem 1.2rem;
+  }
+  
+  .usersTable {
+    min-width: 800px;
+    font-size: 1.1rem;
+  }
+  
+  .usersTable th,
+  .usersTable td {
+    padding: 0.8rem 0.6rem;
+  }
+}
+
+/* Loading and Animation States */
+.usersContainer * {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Focus States for Accessibility */
+.searchInput:focus,
+.filterSelect:focus,
+.searchButton:focus,
+.clearButton:focus,
+.actionButton:focus {
+  outline: 2px solid var(--primary-500);
+  outline-offset: 2px;
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  .badge,
+  .statusBadge,
+  .verifiedBadge,
+  .actionButton {
+    border: 2px solid currentColor;
+  }
+  
+  .filterSection,
+  .tableContainer {
+    border-width: 2px;
+  }
+}
+
+/* Special styling for email column to handle long emails */
+.usersTable td:nth-child(3) {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Tooltip for truncated content */
+.usersTable td:nth-child(3):hover {
+  overflow: visible;
+  white-space: normal;
+  word-break: break-all;
+}
+
+/* Date formatting */
+.usersTable td:nth-child(7) {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Enhanced hover effects for table rows */
+.usersTable tbody tr:hover {
+  background: var(--hover-bg);
+  box-shadow: 0 2px 8px var(--shadow);
+  transform: translateY(-1px);
+}
+
+/* Improved action button spacing */
+.actionButtons {
+  justify-content: center;
+  min-width: 120px;
+}
+
+/* Badge animations */
+.badge,
+.statusBadge,
+.verifiedBadge {
+  position: relative;
+  overflow: hidden;
+}
+
+.badge::before,
+.statusBadge::before,
+.verifiedBadge::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.badge:hover::before,
+.statusBadge:hover::before,
+.verifiedBadge:hover::before {
+  left: 100%;
 }

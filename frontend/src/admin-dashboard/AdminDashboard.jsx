@@ -10,6 +10,8 @@ import OrderDetail from "./OrderDetail";
 import Payments from "./Payments";
 import VendorWallets from "./VendorWallets";
 import KYCVerification from "./KYCVerification";
+// import ThemeToggle from "../components/ThemeToggle"
+import ThemeToggle from "../components/ThemeToggle";
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -79,6 +81,9 @@ const AdminDashboard = () => {
           </div>
         </div>
         <div className={styles.content}>{renderContent()}</div>
+        <div style={{position:"fixed", right:"2rem", bottom:"2rem", zIndex:"10000"}}>
+          <ThemeToggle />
+        </div>
       </div>
     </div>
   );

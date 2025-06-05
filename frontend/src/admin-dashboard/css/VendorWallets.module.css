@@ -1,152 +1,450 @@
-/* VendorWallets.module.css */
-.container {
-  width: 100%;
-}
+/* StatCard.module.css */
 
-.header {
+.statCard {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1.6rem;
+  padding: 2.4rem;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
-  gap: 1.5rem;
-}
-
-.header h3 {
-  font-size: var(--h4-desktop);
-  color: var(--text-primary);
-}
-
-.searchContainer {
-  flex-grow: 1;
-  max-width: 50rem;
-}
-
-.searchInput {
-  width: 100%;
-  padding: 1rem;
-  border: 1px solid var(--neutral-gray-200);
-  border-radius: 0.5rem;
-  font-size: 1.4rem;
-}
-
-.payoutSection {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: var(--neutral-gray-50);
-  padding: 1.5rem;
-  border-radius: 0.8rem;
-  margin-bottom: 2rem;
-}
-
-.payoutInfo {
-  display: flex;
   gap: 2rem;
-  font-size: 1.4rem;
+  box-shadow: 0 4px 12px var(--shadow);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  min-height: 12rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.payoutButton {
+.statCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px var(--shadow);
+  background-color: var(--hover-bg);
+}
+
+.statCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
   background-color: var(--primary-500);
-  color: var(--neutral-white);
-  border: none;
-  border-radius: 0.5rem;
-  padding: 1rem 2rem;
+  transition: all 0.3s ease;
+}
+
+.cardIcon {
+  flex-shrink: 0;
+  width: 6rem;
+  height: 6rem;
+  border-radius: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.4rem;
+  background-color: var(--primary-100);
+  color: var(--primary-600);
+  transition: all 0.3s ease;
+}
+
+.cardContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.cardTitle {
   font-size: 1.4rem;
   font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.payoutButton:hover:not(:disabled) {
-  background-color: var(--primary-600);
-}
-
-.payoutButton:disabled {
-  background-color: var(--neutral-gray-300);
-  cursor: not-allowed;
-}
-
-.walletsTable {
-  width: 100%;
-  overflow-x: auto;
-}
-
-.walletsTable table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.walletsTable th {
-  background-color: var(--neutral-gray-100);
-  padding: 1.2rem 1rem;
-  text-align: left;
-  font-size: 1.4rem;
-  font-weight: 600;
-  color: var(--text-tertiary);
-}
-
-.walletsTable td {
-  padding: 1.2rem 1rem;
-  border-bottom: 1px solid var(--neutral-gray-200);
-  font-size: 1.4rem;
   color: var(--text-secondary);
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05rem;
+  line-height: 1.2;
 }
 
-.vendorName {
-  font-weight: 500;
+.cardValue {
+  font-size: 2.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.1;
+  font-family: 'Montserrat', 'Poppins', sans-serif;
+  animation: fadeIn 0.5s ease-in-out;
 }
 
-.balance {
-  font-weight: 600;
+/* Color Variants */
+.primary {
+  background: linear-gradient(135deg, var(--surface) 0%, var(--primary-100) 100%);
+}
+
+.primary::before {
+  background-color: var(--primary-500);
+}
+
+.primary .cardIcon {
+  background-color: var(--primary-100);
   color: var(--primary-600);
 }
 
-.bankDetails p {
-  margin-bottom: 0.3rem;
+.primary:hover .cardIcon {
+  background-color: var(--primary-500);
+  color: var(--neutral-white);
+  transform: scale(1.1);
 }
 
-.loading, .error, .noWallets {
-  padding: 2rem;
-  text-align: center;
-  font-size: 1.6rem;
-  color: var(--text-secondary);
+.success {
+  background: linear-gradient(135deg, var(--surface) 0%, rgba(34, 197, 94, 0.05) 100%);
+}
+
+.success::before {
+  background-color: var(--success);
+}
+
+.success .cardIcon {
+  background-color: rgba(34, 197, 94, 0.1);
+  color: var(--success);
+}
+
+.success:hover .cardIcon {
+  background-color: var(--success);
+  color: var(--neutral-white);
+  transform: scale(1.1);
+}
+
+.warning {
+  background: linear-gradient(135deg, var(--surface) 0%, rgba(245, 158, 11, 0.05) 100%);
+}
+
+.warning::before {
+  background-color: var(--warning);
+}
+
+.warning .cardIcon {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: var(--warning);
+}
+
+.warning:hover .cardIcon {
+  background-color: var(--warning);
+  color: var(--neutral-white);
+  transform: scale(1.1);
 }
 
 .error {
+  background: linear-gradient(135deg, var(--surface) 0%, rgba(239, 68, 68, 0.05) 100%);
+}
+
+.error::before {
+  background-color: var(--error);
+}
+
+.error .cardIcon {
+  background-color: rgba(239, 68, 68, 0.1);
   color: var(--error);
 }
 
-/* Responsive styles */
+.error:hover .cardIcon {
+  background-color: var(--error);
+  color: var(--neutral-white);
+  transform: scale(1.1);
+}
+
+.info {
+  background: linear-gradient(135deg, var(--surface) 0%, rgba(59, 130, 246, 0.05) 100%);
+}
+
+.info::before {
+  background-color: var(--info);
+}
+
+.info .cardIcon {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: var(--info);
+}
+
+.info:hover .cardIcon {
+  background-color: var(--info);
+  color: var(--neutral-white);
+  transform: scale(1.1);
+}
+
+.secondary {
+  background: linear-gradient(135deg, var(--surface) 0%, var(--neutral-gray-100) 100%);
+}
+
+.secondary::before {
+  background-color: var(--text-secondary);
+}
+
+.secondary .cardIcon {
+  background-color: var(--neutral-gray-100);
+  color: var(--text-secondary);
+}
+
+.secondary:hover .cardIcon {
+  background-color: var(--text-secondary);
+  color: var(--neutral-white);
+  transform: scale(1.1);
+}
+
+/* Dark mode specific adjustments */
+:root[data-theme="dark"] .statCard {
+  background: linear-gradient(135deg, var(--surface) 0%, rgba(64, 64, 64, 0.3) 100%);
+}
+
+:root[data-theme="dark"] .primary {
+  background: linear-gradient(135deg, var(--surface) 0%, rgba(218, 165, 32, 0.08) 100%);
+}
+
+:root[data-theme="dark"] .primary .cardIcon {
+  background-color: rgba(218, 165, 32, 0.15);
+  color: var(--primary-400);
+}
+
+:root[data-theme="dark"] .success {
+  background: linear-gradient(135deg, var(--surface) 0%, rgba(34, 197, 94, 0.08) 100%);
+}
+
+:root[data-theme="dark"] .warning {
+  background: linear-gradient(135deg, var(--surface) 0%, rgba(245, 158, 11, 0.08) 100%);
+}
+
+:root[data-theme="dark"] .error {
+  background: linear-gradient(135deg, var(--surface) 0%, rgba(239, 68, 68, 0.08) 100%);
+}
+
+:root[data-theme="dark"] .info {
+  background: linear-gradient(135deg, var(--surface) 0%, rgba(59, 130, 246, 0.08) 100%);
+}
+
+:root[data-theme="dark"] .secondary {
+  background: linear-gradient(135deg, var(--surface) 0%, var(--neutral-gray-100) 100%);
+}
+
+/* Mobile Responsiveness */
 @media screen and (max-width: 768px) {
-  .header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .searchContainer {
-    width: 100%;
-    max-width: none;
-  }
-
-  .payoutSection {
-    flex-direction: column;
+  .statCard {
+    padding: 2rem;
     gap: 1.5rem;
-    align-items: flex-start;
-  }
-
-  .payoutInfo {
+    min-height: 10rem;
     flex-direction: column;
-    gap: 0.5rem;
+    text-align: center;
   }
 
-  .walletsTable th,
-  .walletsTable td {
-    padding: 1rem 0.8rem;
+  .cardIcon {
+    width: 5rem;
+    height: 5rem;
+    font-size: 2rem;
+  }
+
+  .cardTitle {
     font-size: 1.2rem;
   }
+
+  .cardValue {
+    font-size: 2.4rem;
+  }
+
+  .statCard:hover {
+    transform: translateY(-2px);
+  }
+}
+
+/* Small Mobile */
+@media screen and (max-width: 480px) {
+  .statCard {
+    padding: 1.6rem;
+    gap: 1rem;
+    min-height: 9rem;
+  }
+
+  .cardIcon {
+    width: 4rem;
+    height: 4rem;
+    font-size: 1.8rem;
+  }
+
+  .cardTitle {
+    font-size: 1.1rem;
+  }
+
+  .cardValue {
+    font-size: 2rem;
+  }
+}
+
+/* Tablet Responsiveness */
+@media screen and (max-width: 1024px) and (min-width: 769px) {
+  .statCard {
+    padding: 2.2rem;
+    gap: 1.8rem;
+    min-height: 11rem;
+  }
+
+  .cardIcon {
+    width: 5.5rem;
+    height: 5.5rem;
+    font-size: 2.2rem;
+  }
+
+  .cardTitle {
+    font-size: 1.3rem;
+  }
+
+  .cardValue {
+    font-size: 2.6rem;
+  }
+}
+
+/* Large Screen Enhancements */
+@media screen and (min-width: 1200px) {
+  .statCard {
+    padding: 3rem;
+    gap: 2.4rem;
+    min-height: 14rem;
+  }
+
+  .cardIcon {
+    width: 7rem;
+    height: 7rem;
+    font-size: 2.8rem;
+  }
+
+  .cardTitle {
+    font-size: 1.5rem;
+  }
+
+  .cardValue {
+    font-size: 3.2rem;
+  }
+}
+
+/* Ultra Wide Screens */
+@media screen and (min-width: 1440px) {
+  .statCard {
+    padding: 3.5rem;
+    gap: 2.8rem;
+    min-height: 16rem;
+  }
+
+  .cardIcon {
+    width: 8rem;
+    height: 8rem;
+    font-size: 3.2rem;
+  }
+
+  .cardTitle {
+    font-size: 1.6rem;
+  }
+
+  .cardValue {
+    font-size: 3.6rem;
+  }
+}
+
+/* Focus and Accessibility */
+.statCard:focus-within {
+  outline: 2px solid var(--primary-500);
+  outline-offset: 2px;
+}
+
+/* Animation for value changes */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Loading state placeholder */
+.statCard.loading {
+  pointer-events: none;
+}
+
+.statCard.loading .cardValue {
+  background: linear-gradient(90deg, var(--border) 25%, var(--hover-bg) 50%, var(--border) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 0.4rem;
+  height: 3rem;
+  color: transparent;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Table responsive wrapper (for when StatCards contain tables) */
+.tableWrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media screen and (max-width: 768px) {
+  .tableWrapper {
+    margin: 0 -1rem;
+    padding: 0 1rem;
+  }
+}
+
+/* Print styles */
+@media print {
+  .statCard {
+    break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid #ccc;
+    background: white !important;
+  }
   
-  .header h3 {
-    font-size: var(--h4-mobile);
+  .statCard:hover {
+    transform: none;
+  }
+  
+  .cardIcon {
+    background-color: #f0f0f0 !important;
+    color: #333 !important;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .statCard,
+  .cardIcon,
+  .cardValue {
+    transition: none;
+    animation: none;
+  }
+  
+  .statCard:hover {
+    transform: none;
+  }
+  
+  .statCard:hover .cardIcon {
+    transform: none;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .statCard {
+    border: 2px solid var(--text-primary);
+  }
+  
+  .cardTitle,
+  .cardValue {
+    color: var(--text-primary);
   }
 }

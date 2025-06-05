@@ -1,146 +1,349 @@
 /* Orders.module.css */
+
 .container {
+  padding: 2rem;
   width: 100%;
+  margin: 0 auto;
+  background-color: var(--background);
+  color: var(--text-primary);
+  transition: all 0.3s ease;
 }
 
 .filterSection {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
-  gap: 1rem;
+  margin-bottom: 3rem;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1.2rem;
+  padding: 2.4rem;
+  box-shadow: 0 2px 8px var(--shadow);
+  transition: all 0.3s ease;
 }
 
 .filterSection h3 {
-  font-size: var(--h4-desktop);
+  font-size: var(--h3-desktop);
   color: var(--text-primary);
+  margin-bottom: 2rem;
+  font-weight: 600;
 }
 
 .filters {
   display: flex;
-  gap: 1rem;
+  gap: 2rem;
+  align-items: center;
   flex-wrap: wrap;
 }
 
-.searchInput input {
-  padding: 1rem;
-  border: 1px solid var(--neutral-gray-200);
-  border-radius: 0.5rem;
-  font-size: 1.4rem;
+.searchInput {
+  flex: 2;
   min-width: 25rem;
 }
 
-.statusFilter select {
-  padding: 1rem;
-  border: 1px solid var(--neutral-gray-200);
-  border-radius: 0.5rem;
+.searchInput input {
+  width: 100%;
+  padding: 1.2rem 1.6rem;
+  border: 2px solid var(--border);
+  border-radius: 0.8rem;
+  background-color: var(--background);
+  color: var(--text-primary);
   font-size: 1.4rem;
-  background-color: var(--neutral-white);
-  min-width: 15rem;
+  transition: all 0.3s ease;
 }
 
-.ordersTable {
+.searchInput input:focus {
+  outline: none;
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 3px rgba(218, 165, 32, 0.1);
+}
+
+.searchInput input::placeholder {
+  color: var(--text-secondary);
+}
+
+.statusFilter {
+  flex: 1;
+  min-width: 18rem;
+}
+
+.statusFilter select {
   width: 100%;
-  overflow-x: auto;
+  padding: 1.2rem 1.6rem;
+  border: 2px solid var(--border);
+  border-radius: 0.8rem;
+  background-color: var(--background);
+  color: var(--text-primary);
+  font-size: 1.4rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.statusFilter select:focus {
+  outline: none;
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 3px rgba(218, 165, 32, 0.1);
+}
+
+/* Loading and Error States */
+.loading, .error {
+  text-align: center;
+  padding: 4rem 2rem;
+  font-size: 1.6rem;
+  border-radius: 1.2rem;
+  margin: 2rem 0;
+}
+
+.loading {
+  background-color: var(--surface);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.error {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--error);
+  border: 1px solid var(--error);
+}
+
+/* Table Container with Responsive Overflow */
+.ordersTable {
+  background-color: var(--surface);
+  border-radius: 1.2rem;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 12px var(--shadow);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+/* Table Responsive Wrapper */
+@media screen and (max-width: 768px) {
+  .ordersTable {
+    overflow-x: auto;
+  }
 }
 
 .ordersTable table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 80rem; /* Ensures table doesn't get too cramped */
 }
 
-.ordersTable th {
-  background-color: var(--neutral-gray-100);
-  padding: 1.2rem 1rem;
+.ordersTable thead {
+  background-color: var(--primary-500);
+  color: var(--neutral-white);
+}
+
+.ordersTable thead th {
+  padding: 1.6rem 1.2rem;
   text-align: left;
-  font-size: 1.4rem;
   font-weight: 600;
-  color: var(--text-tertiary);
-}
-
-.ordersTable td {
-  padding: 1.2rem 1rem;
-  border-bottom: 1px solid var(--neutral-gray-200);
   font-size: 1.4rem;
-  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05rem;
 }
 
+.ordersTable tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background-color 0.2s ease;
+}
+
+.ordersTable tbody tr:hover {
+  background-color: var(--hover-bg);
+}
+
+.ordersTable tbody tr:last-child {
+  border-bottom: none;
+}
+
+.ordersTable tbody td {
+  padding: 1.4rem 1.2rem;
+  font-size: 1.4rem;
+  color: var(--text-primary);
+  vertical-align: middle;
+}
+
+/* Status Badge Styles */
 .statusBadge {
-  display: inline-block;
-  padding: 0.5rem 1rem;
+  padding: 0.6rem 1.2rem;
   border-radius: 2rem;
   font-size: 1.2rem;
-  font-weight: 500;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05rem;
+  display: inline-block;
+  transition: all 0.3s ease;
 }
 
 .statusCompleted {
-  background-color: #d1fae5;
-  color: #065f46;
+  background-color: rgba(34, 197, 94, 0.15);
+  color: var(--success);
+  border: 1px solid var(--success);
 }
 
 .statusPending {
-  background-color: #fef3c7;
-  color: #92400e;
+  background-color: rgba(245, 158, 11, 0.15);
+  color: var(--warning);
+  border: 1px solid var(--warning);
 }
 
 .statusProcessing {
-  background-color: #dbeafe;
-  color: #1e40af;
+  background-color: rgba(59, 130, 246, 0.15);
+  color: var(--info);
+  border: 1px solid var(--info);
 }
 
 .statusShipped {
-  background-color: #e0e7ff;
-  color: #3730a3;
+  background-color: rgba(218, 165, 32, 0.15);
+  color: var(--primary-600);
+  border: 1px solid var(--primary-600);
 }
 
 .statusCancelled {
-  background-color: #fee2e2;
-  color: #b91c1c;
+  background-color: rgba(239, 68, 68, 0.15);
+  color: var(--error);
+  border: 1px solid var(--error);
 }
 
+/* Action Button */
 .viewButton {
   background-color: var(--primary-500);
   color: var(--neutral-white);
   border: none;
-  border-radius: 0.4rem;
-  padding: 0.6rem 1rem;
-  font-size: 1.2rem;
+  padding: 0.8rem 1.6rem;
+  border-radius: 0.6rem;
+  font-size: 1.3rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: all 0.3s ease;
+  text-transform: capitalize;
 }
 
 .viewButton:hover {
   background-color: var(--primary-600);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(218, 165, 32, 0.3);
 }
 
-.loading, .error, .noOrders {
-  padding: 2rem;
+.viewButton:active {
+  transform: translateY(0);
+}
+
+/* No Orders State */
+.noOrders {
   text-align: center;
-  font-size: 1.6rem;
   color: var(--text-secondary);
+  font-size: 1.6rem;
+  padding: 4rem 2rem;
+  font-style: italic;
 }
 
-.error {
-  color: var(--error);
-}
-
-/* Responsive styles */
+/* Mobile Responsiveness */
 @media screen and (max-width: 768px) {
-  .filterSection {
-    flex-direction: column;
-    align-items: flex-start;
+  .container {
+    padding: 1.5rem;
   }
-  
+
+  .filterSection {
+    padding: 1.8rem;
+  }
+
+  .filterSection h3 {
+    font-size: var(--h3-mobile);
+    margin-bottom: 1.5rem;
+  }
+
+  .filters {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .searchInput,
+  .statusFilter {
+    flex: 1;
+    min-width: 100%;
+  }
+
   .searchInput input,
   .statusFilter select {
-    width: 100%;
-    min-width: auto;
+    padding: 1rem 1.4rem;
+    font-size: 1.6rem;
   }
-  
-  .ordersTable th,
-  .ordersTable td {
+
+  .ordersTable table {
+    min-width: 70rem;
+  }
+
+  .ordersTable thead th,
+  .ordersTable tbody td {
     padding: 1rem 0.8rem;
     font-size: 1.2rem;
   }
+
+  .statusBadge {
+    padding: 0.4rem 0.8rem;
+    font-size: 1rem;
+  }
+
+  .viewButton {
+    padding: 0.6rem 1.2rem;
+    font-size: 1.2rem;
+  }
+
+  .loading, .error {
+    padding: 3rem 1rem;
+    font-size: 1.4rem;
+  }
+}
+
+/* Tablet Responsiveness */
+@media screen and (max-width: 1024px) and (min-width: 769px) {
+  .container {
+    padding: 1.8rem;
+  }
+
+  .ordersTable thead th,
+  .ordersTable tbody td {
+    padding: 1.2rem 1rem;
+    font-size: 1.3rem;
+  }
+}
+
+/* Large Screen Enhancements */
+@media screen and (min-width: 1200px) {
+  .container {
+    padding: 3rem;
+  }
+
+  .filterSection {
+    padding: 3rem;
+  }
+
+  .ordersTable thead th,
+  .ordersTable tbody td {
+    padding: 1.8rem 1.5rem;
+    font-size: 1.5rem;
+  }
+}
+
+/* Dark mode specific adjustments */
+:root[data-theme="dark"] .ordersTable thead {
+  background-color: var(--primary-600);
+}
+
+:root[data-theme="dark"] .viewButton:hover {
+  box-shadow: 0 4px 12px rgba(218, 165, 32, 0.2);
+}
+
+/* Focus styles for accessibility */
+.viewButton:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(218, 165, 32, 0.3);
+}
+
+.searchInput input:focus,
+.statusFilter select:focus {
+  box-shadow: 0 0 0 3px rgba(218, 165, 32, 0.1);
+}
+
+/* Smooth transitions for theme switching */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
