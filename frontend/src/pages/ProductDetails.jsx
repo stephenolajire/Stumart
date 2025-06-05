@@ -170,7 +170,7 @@ const ProductDetails = () => {
     setReviewSubmitting(true);
 
     try {
-      const token = localStorage.getItem("access_token");
+      const token = localStorage.getItem("access");
 
       // Updated endpoint URLs
       const endpoint = userReviewStatus.hasReviewed
