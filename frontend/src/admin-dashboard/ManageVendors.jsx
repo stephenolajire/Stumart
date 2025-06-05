@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import styles from "./css/ManageVendors.module.css";
 import axios from "axios";
 import LoadingSpinner from "./LoadingSpinner";
-import api from "../constant/api";
+import api, { MEDIA_BASE_URL } from "../constant/api";
 
 const ManageVendors = () => {
   const [vendors, setVendors] = useState([]);
@@ -11,6 +11,8 @@ const ManageVendors = () => {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("");
   const [verified, setVerified] = useState("");
+  const [selectedVendor, setSelectedVendor] = useState(null);
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     fetchVendors();
@@ -69,6 +71,16 @@ const ManageVendors = () => {
     setQuery("");
     setCategory("");
     setVerified("");
+  };
+
+  const handleShowDetails = (vendor) => {
+    setSelectedVendor(vendor);
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedVendor(null);
   };
 
   const businessCategories = [
@@ -145,10 +157,10 @@ const ManageVendors = () => {
                 <tr>
                   <th>ID</th>
                   <th>Business Name</th>
-                  <th>Owner</th>
+                  {/* <th>Owner</th> */}
                   <th>Category</th>
-                  <th>Products</th>
-                  <th>Sales</th>
+                  {/* <th>Products</th> */}
+                  {/* <th>Sales</th> */}
                   <th>Rating</th>
                   <th>Joined</th>
                   <th>Verified</th>
@@ -169,14 +181,14 @@ const ManageVendors = () => {
                       <td className={styles.businessName}>
                         {vendor.business_name}
                       </td>
-                      <td>{vendor.user_name}</td>
+                      {/* <td>{vendor.user_name}</td> */}
                       <td>
                         <span className={styles.categoryBadge}>
                           {vendor.business_category}
                         </span>
                       </td>
-                      <td>{vendor.total_products}</td>
-                      <td>₦{vendor?.total_sales?.toLocaleString()}</td>
+                      {/* <td>{vendor.total_products}</td> */}
+                      {/* <td>₦{vendor?.total_sales?.toLocaleString()}</td> */}
                       <td>
                         <div className={styles.ratingContainer}>
                           <span className={styles.ratingValue}>
@@ -204,17 +216,7 @@ const ManageVendors = () => {
                       <td>
                         <div className={styles.actionButtons}>
                           <button
-                            onClick={() =>
-                              toggleVerificationStatus(
-                                vendor.id,
-                                vendor.is_verified
-                              )
-                            }
-                            className={`${styles.actionButton} ${styles.verify}`}
-                          >
-                            {vendor.is_verified ? "Unverify" : "Verify"}
-                          </button>
-                          <button
+                            onClick={() => handleShowDetails(vendor)}
                             className={`${styles.actionButton} ${styles.view}`}
                           >
                             Details
@@ -228,6 +230,165 @@ const ManageVendors = () => {
             </table>
           </div>
         </>
+      )}
+
+      {/* Vendor Details Modal */}
+      {showModal && selectedVendor && (
+        <div className={styles.modalOverlay} onClick={handleCloseModal}>
+          <div
+            className={styles.modalContent}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.modalHeader}>
+              <h3 className={styles.modalTitle}>Vendor Details</h3>
+              <button
+                className={styles.closeButton}
+                onClick={handleCloseModal}
+                aria-label="Close modal"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className={styles.modalBody}>
+              <div className={styles.vendorProfile}>
+                <div className={styles.profileImageSection}>
+                  {selectedVendor.shop_image && (
+                    <img
+                      src={`${MEDIA_BASE_URL}${selectedVendor.shop_image}`}
+                      alt={selectedVendor.business_name}
+                      className={styles.shopImage}
+                    />
+                  )}
+                  {/* {selectedVendor.user?.image_url && (
+                    <img
+                      src={selectedVendor.user.image_url}
+                      alt={`${selectedVendor.user.first_name} ${selectedVendor.user.last_name}`}
+                      className={styles.userImage}
+                    />
+                  )} */}
+                </div>
+
+                <div className={styles.businessInfo}>
+                  <h4 className={styles.businessTitle}>
+                    {selectedVendor.business_name}
+                  </h4>
+                  <p className={styles.ownerName}>
+                    {selectedVendor.user?.first_name}{" "}
+                    {selectedVendor.user?.last_name}
+                  </p>
+                  <span
+                    className={`${styles.verificationStatus} ${
+                      selectedVendor.is_verified
+                        ? styles.verified
+                        : styles.unverified
+                    }`}
+                  >
+                    {selectedVendor.is_verified ? "✓ Verified" : "⚠ Unverified"}
+                  </span>
+                </div>
+              </div>
+
+              <div className={styles.detailsGrid}>
+                <div className={styles.detailSection}>
+                  <h5 className={styles.sectionTitle}>Business Information</h5>
+                  <div className={styles.detailItem}>
+                    <span className={styles.label}>Business ID:</span>
+                    <span className={styles.value}>{selectedVendor.id}</span>
+                  </div>
+                  <div className={styles.detailItem}>
+                    <span className={styles.label}>Category:</span>
+                    <span className={styles.value}>
+                      {selectedVendor.business_category}
+                    </span>
+                  </div>
+                  {selectedVendor.specific_category && (
+                    <div className={styles.detailItem}>
+                      <span className={styles.label}>Specific Category:</span>
+                      <span className={styles.value}>
+                        {selectedVendor.specific_category}
+                      </span>
+                    </div>
+                  )}
+                  <div className={styles.detailItem}>
+                    <span className={styles.label}>Rating:</span>
+                    <span className={styles.value}>
+                      {selectedVendor.rating} ({selectedVendor.total_ratings}{" "}
+                      reviews)
+                    </span>
+                  </div>
+                </div>
+
+                <div className={styles.detailSection}>
+                  <h5 className={styles.sectionTitle}>Contact Information</h5>
+                  <div className={styles.detailItem}>
+                    <span className={styles.label}>Email:</span>
+                    <span className={styles.value}>
+                      {selectedVendor.user?.email}
+                    </span>
+                  </div>
+                  <div className={styles.detailItem}>
+                    <span className={styles.label}>Phone:</span>
+                    <span className={styles.value}>
+                      {selectedVendor.user?.phone_number}
+                    </span>
+                  </div>
+                  <div className={styles.detailItem}>
+                    <span className={styles.label}>State:</span>
+                    <span className={styles.value}>
+                      {selectedVendor.user?.state}
+                    </span>
+                  </div>
+                  <div className={styles.detailItem}>
+                    <span className={styles.label}>Institution:</span>
+                    <span className={styles.value}>
+                      {selectedVendor.user?.institution}
+                    </span>
+                  </div>
+                </div>
+
+                <div className={styles.detailSection}>
+                  <h5 className={styles.sectionTitle}>Banking Information</h5>
+                  <div className={styles.detailItem}>
+                    <span className={styles.label}>Account Name:</span>
+                    <span className={styles.value}>
+                      {selectedVendor.account_name}
+                    </span>
+                  </div>
+                  <div className={styles.detailItem}>
+                    <span className={styles.label}>Account Number:</span>
+                    <span className={styles.value}>
+                      {selectedVendor.account_number}
+                    </span>
+                  </div>
+                  <div className={styles.detailItem}>
+                    <span className={styles.label}>Bank:</span>
+                    <span className={styles.value}>
+                      {selectedVendor.bank_name}
+                    </span>
+                  </div>
+                  {selectedVendor.paystack_recipient_code && (
+                    <div className={styles.detailItem}>
+                      <span className={styles.label}>Paystack Code:</span>
+                      <span className={styles.value}>
+                        {selectedVendor.paystack_recipient_code}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.modalFooter}>
+              <button
+                className={styles.closeModalButton}
+                onClick={handleCloseModal}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

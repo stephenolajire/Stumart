@@ -187,7 +187,6 @@ class UsersAPIView(APIView):
         except User.DoesNotExist:
             return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 
-
 class VendorsAPIView(APIView):
     """API endpoint for vendor management"""
     permission_classes = [IsAdminUser]
@@ -197,7 +196,8 @@ class VendorsAPIView(APIView):
         category = request.query_params.get('category', '')
         verified = request.query_params.get('verified', '')
         
-        vendors = Vendor.objects.all()
+        # Use select_related to fetch user data efficiently
+        vendors = Vendor.objects.select_related('user').all()
         
         if query:
             vendors = vendors.filter(
@@ -212,7 +212,8 @@ class VendorsAPIView(APIView):
             
         if verified:
             is_verified = verified.lower() == 'true'
-            vendors = vendors.filter(is_verified=is_verified)
+            # Filter by user's verification status
+            vendors = vendors.filter(user__is_verified=is_verified)
             
         vendor_data = []
         for vendor in vendors:
@@ -226,7 +227,7 @@ class VendorsAPIView(APIView):
                 'shop_image': str(vendor.shop_image) if vendor.shop_image else None,
                 'rating': vendor.rating,
                 'total_ratings': vendor.total_ratings,
-                'is_verified': vendor.is_verified,
+                'is_verified': vendor.user.is_verified,
                 'bank_name': vendor.bank_name,
                 'account_number': vendor.account_number,
                 'account_name': vendor.account_name,
@@ -248,16 +249,14 @@ class VendorsAPIView(APIView):
     
     def put(self, request, vendor_id):
         try:
-            vendor = Vendor.objects.get(id=vendor_id)
+            vendor = Vendor.objects.select_related('user').get(id=vendor_id)
             
             # Update fields from request
             if 'is_verified' in request.data:
-                vendor.is_verified = request.data['is_verified']
-                
-                # If we're verifying the vendor, also update the user
-                if vendor.is_verified:
-                    vendor.user.is_verified = True
-                    vendor.user.save()
+                # Update both vendor and user verification status
+                is_verified = request.data['is_verified']
+                vendor.user.is_verified = is_verified
+                vendor.user.save()
             
             vendor.save()
             return Response({'status': 'success'})
