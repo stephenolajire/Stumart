@@ -160,20 +160,36 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
+# ...existing code...
+
+# Update ALLOWED_HOSTS configuration
+if DEBUG:
+    ALLOWED_HOSTS = [
+        'localhost',
+        '127.0.0.1',
+    ]
+else:
+    ALLOWED_HOSTS = [
+        'stumart-server.onrender.com',
+        'server-stumart.onrender.com',
+        'stumart.com.ng',
+        'localhost',
+        '127.0.0.1',
+    ]
+
+# Update CORS settings to match ALLOWED_HOSTS
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "https://stumart.com.ng",
-    "https://stumart-server.onrender.com"
+    "https://stumart-server.onrender.com",
+    "https://server-stumart.onrender.com"
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     "https://stumart.com.ng",
-    "https://stumart-server.onrender.com"
+    "https://stumart-server.onrender.com",
+    "https://server-stumart.onrender.com"
 ]
-
-# Additional CORS settings
-CORS_ALLOW_CREDENTIALS = True
-CORS_ORIGIN_ALLOW_ALL = False
 
 # Update CORS headers
 CORS_ALLOW_HEADERS = [
