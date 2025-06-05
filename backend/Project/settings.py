@@ -32,7 +32,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost').split(',')
 
 
 
@@ -160,32 +160,15 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-# Update ALLOWED_HOSTS to include all domains
-ALLOWED_HOSTS = [
-    'localhost',
-    '127.0.0.1',
-    'server-stumart.onrender.com',
-    'stumart.com.ng',
-    'stumart-fxnz.onrender.com',
-    'stumart-fe1z.onrender.com',
-]
-
-# Update CORS settings
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
-    "https://stumart-fxnz.onrender.com",
-    "https://stumart-fe1z.onrender.com",
     "https://stumart.com.ng",
-    "https://server-stumart.onrender.com",
+    "https://stumart-server.onrender.com"
 ]
 
-# Add CORS_ORIGIN_WHITELIST
-CORS_ORIGIN_WHITELIST = [
-    "http://localhost:5173",
-    "https://stumart-fxnz.onrender.com",
-    "https://stumart-fe1z.onrender.com",
+CSRF_TRUSTED_ORIGINS = [
     "https://stumart.com.ng",
-    "https://server-stumart.onrender.com",
+    "https://stumart-server.onrender.com"
 ]
 
 # Additional CORS settings
