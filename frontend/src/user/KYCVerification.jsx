@@ -18,7 +18,8 @@ const KYCVerification = () => {
   const canvasRef = useRef(null);
 
   const ID_TYPES = [
-    // { value: "student_id", label: "Student ID Card" },
+    { value: "student_id", label: "Student ID Card" },
+    { value: "course_form", label: "Student Course Form" },
     { value: "national_id", label: "National ID Card" },
     { value: "drivers_license", label: "Driver's License" },
     { value: "voters_card", label: "Voter's Card" },

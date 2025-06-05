@@ -204,6 +204,7 @@ class OTP(models.Model):
 class KYCVerification(models.Model):
     ID_TYPE_CHOICES = (
         ('student_id', 'Student ID Card'),
+        ('course_form', 'Student Course Form'),
         ('national_id', 'National ID Card'),
         ('drivers_license', "Driver's License"),
         ('voters_card', "Voter's Card"),
