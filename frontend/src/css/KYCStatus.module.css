@@ -1,297 +1,365 @@
+/* KYC Status Component Styles */
 .statusContainer {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 2rem;
-  background-color: var(--background);
+  background: linear-gradient(135deg, var(--background) 0%, var(--surface) 100%);
+  transition: all 0.3s ease;
 }
 
 .statusBox {
-  background-color: var(--surface);
-  padding: 4rem;
-  border-radius: 1.2rem;
-  box-shadow: 0 0.4rem 1.6rem var(--shadow);
+  background: var(--surface);
   border: 1px solid var(--border);
+  border-radius: 2rem;
+  padding: 4rem 3rem;
+  max-width: 60rem;
   width: 100%;
-  max-width: 56rem;
   text-align: center;
+  box-shadow: 
+    0 2rem 6rem var(--shadow),
+    0 0.5rem 1rem rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.statusBox::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 0.4rem;
+  background: linear-gradient(90deg, var(--primary-500), var(--primary-300));
+  border-radius: 2rem 2rem 0 0;
+}
+
+.statusBox:hover {
+  transform: translateY(-0.5rem);
+  box-shadow: 
+    0 3rem 8rem var(--shadow),
+    0 1rem 2rem rgba(0, 0, 0, 0.1);
 }
 
 .statusIcon {
-  width: 12rem;
-  height: 12rem;
-  margin-bottom: 2.4rem;
-  filter: brightness(1);
-  transition: filter 0.3s ease;
+  width: 8rem;
+  height: 8rem;
+  border-radius: 50%;
+  margin: 0 auto 2rem;
+  display: block;
+  border: 0.4rem solid var(--primary-500);
+  padding: 0.5rem;
+  background: var(--background);
+  box-shadow: 0 0.8rem 2rem rgba(218, 165, 32, 0.2);
+  transition: all 0.3s ease;
 }
 
-/* Dark theme icon adjustments */
-:root[data-theme="dark"] .statusIcon {
-  filter: brightness(0.9) contrast(1.1);
+.statusIcon:hover {
+  transform: scale(1.05);
+  box-shadow: 0 1rem 3rem rgba(218, 165, 32, 0.3);
 }
 
 .statusBox h2 {
-  font-size: var(--h3-desktop);
-  color: var(--primary-500);
-  margin-bottom: 1.6rem;
+  color: var(--text-primary);
+  margin-bottom: 1.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.2;
 }
 
 .mainText {
-  font-size: 1.8rem;
   color: var(--text-secondary);
-  margin-bottom: 3.2rem;
-  line-height: 1.5;
+  font-size: 1.6rem;
+  line-height: 1.6;
+  margin-bottom: 3rem;
+  font-weight: 400;
 }
 
 .infoBox {
-  background-color: var(--primary-100);
-  padding: 2.4rem;
-  border-radius: 0.8rem;
-  margin-bottom: 3.2rem;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 1.5rem;
+  padding: 2.5rem;
+  margin: 3rem 0;
   text-align: left;
-  border: 1px solid rgba(218, 165, 32, 0.2);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.infoBox::before {
+  content: '💡';
+  position: absolute;
+  top: -1rem;
+  left: 2rem;
+  background: var(--primary-500);
+  padding: 0.5rem 1rem;
+  border-radius: 50%;
+  font-size: 1.4rem;
+  box-shadow: 0 0.4rem 1rem rgba(218, 165, 32, 0.3);
 }
 
 .infoBox h3 {
-  font-size: 1.8rem;
-  color: var(--primary-600);
-  margin-bottom: 1.6rem;
+  color: var(--text-primary);
+  margin-bottom: 1.5rem;
   font-weight: 600;
+  font-size: var(--h5-desktop);
 }
 
 .infoBox ul {
   list-style: none;
   padding: 0;
-  margin: 0;
 }
 
 .infoBox li {
-  font-size: 1.6rem;
-  color: var(--text-primary);
-  margin-bottom: 1.2rem;
-  padding-left: 2.4rem;
+  color: var(--text-secondary);
+  font-size: 1.4rem;
+  line-height: 1.8;
+  margin-bottom: 1rem;
+  padding-left: 2.5rem;
   position: relative;
-  line-height: 1.4;
-}
-
-.infoBox li:last-child {
-  margin-bottom: 0;
+  transition: color 0.3s ease;
 }
 
 .infoBox li::before {
-  content: "•";
+  content: '✓';
   position: absolute;
   left: 0;
-  color: var(--primary-500);
+  color: var(--success);
   font-weight: bold;
-  font-size: 1.8rem;
+  font-size: 1.6rem;
 }
 
-.buttonGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 1.6rem;
+.infoBox li:hover {
+  color: var(--text-primary);
+  transform: translateX(0.5rem);
 }
 
 .refreshButton {
-  background-color: var(--primary-500);
-  color: var(--neutral-white);
+  background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+  color: white;
   border: none;
-  border-radius: 0.8rem;
-  padding: 1.6rem 3.2rem;
+  padding: 1.5rem 3rem;
+  border-radius: 1.2rem;
   font-size: 1.6rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
+  box-shadow: 0 0.8rem 2rem rgba(218, 165, 32, 0.3);
+  position: relative;
+  overflow: hidden;
+  min-width: 18rem;
+}
+
+.refreshButton::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
   width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.refreshButton:hover::before {
+  left: 100%;
 }
 
 .refreshButton:hover {
-  background-color: var(--primary-600);
-  transform: translateY(-0.1rem);
+  transform: translateY(-0.2rem);
+  box-shadow: 0 1.2rem 3rem rgba(218, 165, 32, 0.4);
+  background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
 }
 
 .refreshButton:active {
   transform: translateY(0);
+  box-shadow: 0 0.4rem 1rem rgba(218, 165, 32, 0.3);
 }
 
 .refreshButton:disabled {
-  background-color: var(--neutral-gray-100);
+  opacity: 0.7;
   cursor: not-allowed;
-  opacity: 0.6;
   transform: none;
+  box-shadow: 0 0.4rem 1rem rgba(218, 165, 32, 0.2);
 }
 
-.homeButton {
-  background-color: transparent;
-  color: var(--primary-500);
-  border: 0.2rem solid var(--primary-500);
-  border-radius: 0.8rem;
-  padding: 1.4rem 3.2rem;
-  font-size: 1.6rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  width: 100%;
+.refreshButton:disabled:hover {
+  transform: none;
+  background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
 }
 
-.homeButton:hover {
-  background-color: var(--primary-100);
-  transform: translateY(-0.1rem);
+.refreshButton span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
 }
 
-.homeButton:active {
-  transform: translateY(0);
+.refreshButton i {
+  font-size: 1.4rem;
 }
 
-/* Success status specific styles */
-.statusBox.success .statusIcon {
-  color: var(--success);
+/* Success State Styles */
+.statusBox[data-status="approved"] {
+  border-color: var(--success);
 }
 
-.statusBox.success h2 {
-  color: var(--success);
+.statusBox[data-status="approved"]::before {
+  background: linear-gradient(90deg, var(--success), #16a34a);
 }
 
-/* Error status specific styles */
-.statusBox.error .statusIcon {
-  color: var(--error);
+.statusBox[data-status="approved"] .statusIcon {
+  border-color: var(--success);
+  box-shadow: 0 0.8rem 2rem rgba(34, 197, 94, 0.2);
 }
 
-.statusBox.error h2 {
-  color: var(--error);
+.statusBox[data-status="approved"] h2 {
+  background: linear-gradient(135deg, var(--success), #16a34a);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-.statusBox.error .infoBox {
-  background-color: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.2);
-}
-
-.statusBox.error .infoBox h3 {
-  color: var(--error);
-}
-
-.statusBox.error .infoBox li::before {
-  color: var(--error);
-}
-
-/* Warning status specific styles */
-.statusBox.warning .statusIcon {
-  color: var(--warning);
-}
-
-.statusBox.warning h2 {
-  color: var(--warning);
-}
-
-.statusBox.warning .infoBox {
-  background-color: rgba(245, 158, 11, 0.1);
-  border: 1px solid rgba(245, 158, 11, 0.2);
-}
-
-.statusBox.warning .infoBox h3 {
-  color: var(--warning);
-}
-
-.statusBox.warning .infoBox li::before {
-  color: var(--warning);
-}
-
-/* Info status specific styles */
-.statusBox.info .statusIcon {
-  color: var(--info);
-}
-
-.statusBox.info h2 {
-  color: var(--info);
-}
-
-.statusBox.info .infoBox {
-  background-color: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.2);
-}
-
-.statusBox.info .infoBox h3 {
-  color: var(--info);
-}
-
-.statusBox.info .infoBox li::before {
-  color: var(--info);
-}
-
-/* Loading animation */
-.statusIcon.loading {
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
+/* Responsive Design */
+@media screen and (max-width: 768px) {
+  .statusContainer {
+    padding: 1.5rem;
+    min-height: 100vh;
   }
-  50% {
-    opacity: 0.5;
+
+  .statusBox {
+    padding: 3rem 2rem;
+    border-radius: 1.5rem;
+    margin: 1rem 0;
+  }
+
+  .statusIcon {
+    width: 6rem;
+    height: 6rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .statusBox h2 {
+    font-size: var(--h3-mobile);
+    margin-bottom: 1rem;
+  }
+
+  .mainText {
+    font-size: 1.4rem;
+    margin-bottom: 2rem;
+  }
+
+  .infoBox {
+    padding: 2rem;
+    margin: 2rem 0;
+  }
+
+  .infoBox h3 {
+    font-size: var(--h5-mobile);
+    margin-bottom: 1rem;
+  }
+
+  .infoBox li {
+    font-size: 1.3rem;
+    margin-bottom: 0.8rem;
+  }
+
+  .refreshButton {
+    padding: 1.2rem 2.5rem;
+    font-size: 1.4rem;
+    min-width: 16rem;
   }
 }
 
-/* Responsive Styles */
-@media (max-width: 768px) {
+@media screen and (max-width: 480px) {
   .statusContainer {
     padding: 1rem;
   }
-  
+
   .statusBox {
-    padding: 2.4rem;
+    padding: 2.5rem 1.5rem;
   }
-  
+
   .statusIcon {
-    width: 10rem;
-    height: 10rem;
+    width: 5rem;
+    height: 5rem;
   }
-  
-  .statusBox h2 {
-    font-size: var(--h3-mobile);
-  }
-  
-  .mainText {
-    font-size: 1.6rem;
-  }
-  
+
   .infoBox {
-    padding: 2rem;
+    padding: 1.5rem;
   }
-  
-  .infoBox h3 {
-    font-size: 1.6rem;
-  }
-  
+
   .infoBox li {
-    font-size: 1.4rem;
+    padding-left: 2rem;
   }
-  
-  .refreshButton,
-  .homeButton {
-    padding: 1.4rem 2.4rem;
-    font-size: 1.4rem;
+
+  .refreshButton {
+    width: 100%;
+    padding: 1.5rem;
   }
 }
 
-@media (max-width: 480px) {
+/* Loading Animation */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.fa-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Enhanced Hover Effects for Touch Devices */
+@media (hover: none) and (pointer: coarse) {
+  .statusBox:hover {
+    transform: none;
+  }
+
+  .statusIcon:hover {
+    transform: none;
+  }
+
+  .refreshButton:hover {
+    transform: none;
+  }
+
+  .infoBox li:hover {
+    transform: none;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
   .statusBox {
-    padding: 2rem;
+    border-width: 0.2rem;
   }
-  
-  .statusIcon {
-    width: 8rem;
-    height: 8rem;
+
+  .refreshButton {
+    border: 0.2rem solid var(--primary-500);
   }
-  
-  .infoBox {
-    padding: 1.6rem;
-  }
-  
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .statusBox,
+  .statusIcon,
   .refreshButton,
-  .homeButton {
-    padding: 1.2rem 2rem;
+  .infoBox li,
+  .refreshButton::before {
+    transition: none;
+  }
+
+  .refreshButton:hover::before {
+    left: -100%;
+  }
+
+  .fa-spin {
+    animation: none;
   }
 }

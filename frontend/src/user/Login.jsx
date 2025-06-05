@@ -115,7 +115,7 @@ const Login = () => {
           return;
         }
 
-        if (kyc_status === "pending") {
+        if (kyc_status === "PENDING") {
           navigate("/kyc-status");
           return;
         }
