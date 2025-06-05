@@ -160,28 +160,45 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
+# Update ALLOWED_HOSTS to include all domains
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    'server-stumart.onrender.com',
+    'stumart.com.ng',
+    'stumart-fxnz.onrender.com',
+    'stumart-fe1z.onrender.com',
+]
+
+# Update CORS settings
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "https://stumart-fxnz.onrender.com",
     "https://stumart-fe1z.onrender.com",
-    "https://stumart.com.ng"
+    "https://stumart.com.ng",
+    "https://server-stumart.onrender.com",
 ]
 
+# Add CORS_ORIGIN_WHITELIST
+CORS_ORIGIN_WHITELIST = [
+    "http://localhost:5173",
+    "https://stumart-fxnz.onrender.com",
+    "https://stumart-fe1z.onrender.com",
+    "https://stumart.com.ng",
+    "https://server-stumart.onrender.com",
+]
+
+# Additional CORS settings
 CORS_ALLOW_CREDENTIALS = True
+CORS_ORIGIN_ALLOW_ALL = False
 
-CORS_ALLOW_METHODS = [
-    "GET",
-    "POST",
-    "PUT",
-    "PATCH",
-    "DELETE",
-    "OPTIONS",
-]
-
+# Update CORS headers
 CORS_ALLOW_HEADERS = [
-    "content-type",
-    "authorization",
     "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
     "origin",
     "user-agent",
     "x-csrftoken",
