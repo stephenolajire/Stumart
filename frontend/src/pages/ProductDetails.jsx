@@ -114,12 +114,11 @@ const ProductDetails = () => {
     try {
       setUserReviewStatus((prev) => ({ ...prev, loading: true }));
 
-      // Match the exact backend URL pattern
       const response = await api.get(
         `products/${productId}/user-review-status/`
       );
 
-      console.log("Review status response:", response.data); // Debug log
+      // console.log("Review status response:", response.data); // Debug log
 
       setUserReviewStatus({
         hasBought: response.data.has_bought,
@@ -170,7 +169,6 @@ const ProductDetails = () => {
     setReviewSubmitting(true);
 
     try {
-      const token = localStorage.getItem("access");
 
       // Updated endpoint URLs
       const endpoint = userReviewStatus.hasReviewed
@@ -186,11 +184,6 @@ const ProductDetails = () => {
           rating: reviewForm.rating,
           comment: reviewForm.comment,
         },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
       );
 
       if (response.status === 200 || response.status === 201) {
@@ -336,7 +329,7 @@ const ProductDetails = () => {
   // Combine the loading states
   if (loading || reviewsLoading) {
     return (
-      <div style={{marginTop: "10rem"}}>
+      <div style={{ marginTop: "10rem" }}>
         <Spinner />
       </div>
     );
@@ -383,7 +376,7 @@ const ProductDetails = () => {
 
   return (
     <div className={styles.productDetails}>
-      <Header title="Product Details"/>
+      <Header title="Product Details" />
       <div className={styles.container}>
         <div className={styles.productGrid}>
           <div className={styles.imageSection}>

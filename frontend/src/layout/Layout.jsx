@@ -53,9 +53,6 @@ const Layout = () => {
         <FaPlayCircle size={24} />
       </button>
 
-      {/* <div className={`${styles.chatContainer} ${isChatOpen ? styles.open : ""}`}>
-        <Chatbot />
-      </div> */}
 
       {/* Selection Modal */}
       {showModal && (

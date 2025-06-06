@@ -350,11 +350,14 @@ export const GlobalProvider = ({ children }) => {
   );
 
   // Initialize shops data only once
+  const [hasInitialized, setHasInitialized] = useState(false);
+
   useEffect(() => {
-    if (!hasFetchedShops.current) {
+    if (!hasInitialized) {
       fetchShopData();
+      setHasInitialized(true);
     }
-  }, []); // Empty dependency array - only run once
+  }, [hasInitialized, fetchShopData]);
 
   // Fetch shops by school with proper caching
   const fetchShopsBySchool = useCallback(
@@ -787,8 +790,7 @@ export const GlobalProvider = ({ children }) => {
     if ((isAuthenticated || getCartCode()) && !hasFetchedCart.current) {
       fetchCartData();
     }
-  }, [isAuthenticated]); 
-
+  }, [isAuthenticated]);
 
   const [orders, setOrders] = useState([]);
   const fetchOrders = useCallback(async () => {
