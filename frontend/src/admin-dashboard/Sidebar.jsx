@@ -1,5 +1,6 @@
 import React from "react";
 import styles from "./css/Sidebar.module.css";
+import { useNavigate } from "react-router-dom";
 
 const Sidebar = ({
   activeTab,
@@ -18,12 +19,42 @@ const Sidebar = ({
     { id: "kyc", label: "KYC Verification", icon: "🔍" },
   ];
 
+  const navigate = useNavigate();
+
   const handleNavigate = (tabId) => {
     setActiveTab(tabId);
     resetSelection();
     // Close sidebar on mobile after navigation
     if (window.innerWidth <= 768 && isOpen) {
       toggleSidebar();
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      // Clear all authentication-related items
+      localStorage.removeItem("access");
+      localStorage.removeItem("refresh");
+
+      // Show success message
+      await Swal.fire({
+        title: "Logged Out",
+        text: "You have been successfully logged out",
+        icon: "success",
+        confirmButtonColor: "var(--primary-500)",
+        timer: 2000,
+      });
+
+      // Navigate to login
+      navigate("/login", { replace: true });
+    } catch (error) {
+      console.error("Logout error:", error);
+      Swal.fire({
+        title: "Logout Failed",
+        text: "Please try again",
+        icon: "error",
+        confirmButtonColor: "var(--primary-500)",
+      });
     }
   };
 
@@ -79,16 +110,11 @@ const Sidebar = ({
         </ul>
       </nav>
 
-      <div className={styles.sidebarFooter}>
+      <div className={styles.sidebarFooter} onClick={handleLogout}>
         <button
           className={styles.logoutButton}
           data-tooltip="Logout"
           aria-label="Logout"
-          type="button"
-          onClick={() => {
-            // Add your logout logic here
-            console.log("Logout clicked");
-          }}
         >
           <span className={styles.icon} aria-hidden="true">
             🚪

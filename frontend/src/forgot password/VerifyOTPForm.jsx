@@ -101,14 +101,16 @@ const VerifyOTPForm = () => {
         code: otpString,
       });
 
-      localStorage.removeItem("otpExpiration"); // Clear timer on success
-
+      
       await Swal.fire({
         icon: "success",
         title: "Email Verified!",
         text: "Your email has been verified successfully.",
         confirmButtonColor: "var(--primary-500)",
       });
+      
+      localStorage.removeItem("otpExpiration"); 
+      localStorage.removeItem("resetEmail")
 
       navigate("/reset-password");
     } catch (error) {

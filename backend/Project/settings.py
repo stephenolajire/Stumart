@@ -257,7 +257,7 @@ FRONTEND_URL = config('FRONTEND_URL')
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(hours=2),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=4),
+    "REFRESH_TOKEN_LIFETIME": timedelta(hours=3),
 }
 
 # Add these security settings
