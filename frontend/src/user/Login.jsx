@@ -115,7 +115,7 @@ const Login = () => {
           return;
         }
 
-        if (kyc_status === "PENDING") {
+        if (kyc_status === "pending") {
           navigate("/kyc-status");
           return;
         }
@@ -187,11 +187,11 @@ const Login = () => {
           timer: waitSeconds * 1000,
           timerProgressBar: true,
         });
-      } else {
+      } else if (error.message === "Network Error") {
         Swal.fire({
           icon: "error",
-          title: "Login Failed",
-          text: error.response?.data?.detail || "Invalid credentials",
+          title: "Network Error",
+          text: "Connection Error pls try again",
           confirmButtonColor: "var(--primary-500)",
         });
       }

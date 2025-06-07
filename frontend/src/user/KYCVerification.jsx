@@ -136,7 +136,7 @@ const KYCVerification = () => {
         },
       });
 
-      console.log("KYC Response:", response.data);
+      // console.log("KYC Response:", response.data);
 
       await Swal.fire({
         icon: "success",

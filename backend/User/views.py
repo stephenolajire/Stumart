@@ -305,30 +305,46 @@ class KYCVerificationView(APIView):
 
     def post(self, request):
         try:
-            # Check if KYC already exists
-            if hasattr(request.user, 'kyc'):
-                return Response({
-                    'error': 'KYC verification already submitted'
-                }, status=status.HTTP_400_BAD_REQUEST)
+            # Check if KYC exists and get its status
+            kyc_instance = None
+            try:
+                kyc_instance = KYCVerification.objects.get(user=request.user)
+                
+                # If KYC exists and status is not 'rejected' or 'none', prevent resubmission
+                # Fixed: Use lowercase status values to match model choices
+                if kyc_instance.verification_status not in ['rejected', 'none']:
+                    return Response({
+                        'error': 'KYC verification already submitted and pending or approved'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                
+            except KYCVerification.DoesNotExist:
+                # No existing KYC record - will create new one
+                pass
 
             serializer = self.serializer_class(
+                instance=kyc_instance,  # Will be None for new submissions
                 data=request.data,
                 context={'request': request}
             )
             
             if serializer.is_valid():
-                # Save the KYC object first
-                kyc_instance = serializer.save(user=request.user)
+                if kyc_instance:
+                    # Update existing rejected/none KYC
+                    kyc_instance = serializer.save()
+                else:
+                    # Create new KYC
+                    kyc_instance = serializer.save(user=request.user)
                 
-                # Set verification status to PENDING
-                kyc_instance.verification_status = 'PENDING'
-                
-                # Save the updated instance
+                # Set verification status to PENDING (use lowercase to match model)
+                kyc_instance.verification_status = 'pending'
+                kyc_instance.submission_date = timezone.now()
+                kyc_instance.rejection_reason = None  # Clear any previous rejection reason
                 kyc_instance.save()
 
                 return Response({
                     'message': 'KYC verification submitted successfully',
-                    'data': serializer.data
+                    'data': serializer.data,
+                    'status': kyc_instance.verification_status
                 }, status=status.HTTP_201_CREATED)
             
             return Response(
@@ -337,10 +353,10 @@ class KYCVerificationView(APIView):
             )
 
         except Exception as e:
+            logger.error(f"KYC submission error: {str(e)}")
             return Response({
-                'error': str(e)
+                'error': f'Error processing KYC submission: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
     def get(self, request):
         try:

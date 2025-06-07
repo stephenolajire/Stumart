@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+echo frontend/dist/ >> .gitignore
+echo frontend/dist.zip >> .gitignore
+echo node_modules/ >> .gitignore
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

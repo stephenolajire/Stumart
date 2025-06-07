@@ -658,7 +658,7 @@ class KYCVerificationAPIView(APIView):
                 
                 # Render and send email
                 html_message = render_to_string(
-                    'emails/verification.html',
+                    'email/verification.html',
                     context
                 )
                 plain_message = strip_tags(html_message)

@@ -33,7 +33,7 @@ const KYCVerification = () => {
         params,
       });
       setVerifications(response.data);
-      console.log("Fetched verifications:", response.data);
+      // console.log("Fetched verifications:", response.data);
       setError(null);
     } catch (err) {
       setError("Failed to fetch KYC verifications. Please try again later.");

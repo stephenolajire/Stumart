@@ -1,6 +1,7 @@
 import React from "react";
 import styles from "./css/Sidebar.module.css";
 import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 
 const Sidebar = ({
   activeTab,

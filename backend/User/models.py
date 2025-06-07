@@ -282,7 +282,6 @@ class KYCVerification(models.Model):
         super().save(*args, **kwargs)
 
 
-# Add to your models.py file
 
 class SubscriptionPlan(models.Model):
     DURATION_CHOICES = [
