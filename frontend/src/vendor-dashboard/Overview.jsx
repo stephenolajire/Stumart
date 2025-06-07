@@ -9,7 +9,7 @@ import {
   FaBoxes,
   FaStar,
 } from "react-icons/fa";
-import styles from "./css/VendorDashboard.module.css";
+import styles from "./css/Overview.module.css";
 
 const Overview = ({ stats }) => {
   return (

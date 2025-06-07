@@ -1,0 +1,484 @@
+/* RevenueChart.module.css */
+
+.chartCard {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 1.6rem;
+    padding: 2.8rem;
+    box-shadow: 0 4px 6px var(--shadow);
+    transition: all 0.3s ease;
+    width: 100%;
+    max-width: 85rem;
+    margin: 0 auto;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .chartCard::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-400), var(--primary-600));
+    border-radius: 1.6rem 1.6rem 0 0;
+  }
+  
+  .chartCard:hover {
+    box-shadow: 0 12px 30px var(--shadow);
+    transform: translateY(-3px);
+  }
+  
+  .chartCard h3 {
+    font-size: var(--h3-desktop);
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 3.6rem;
+    text-align: center;
+    position: relative;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .chartCard h3::after {
+    content: '';
+    position: absolute;
+    bottom: -1.2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 8rem;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary-400), var(--primary-600));
+    border-radius: 2px;
+  }
+  
+  .chartPlaceholder {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    height: 32rem;
+    margin-bottom: 2.8rem;
+    padding: 0 2rem;
+    position: relative;
+    background: linear-gradient(
+      180deg,
+      rgba(218, 165, 32, 0.02) 0%,
+      rgba(218, 165, 32, 0.05) 100%
+    );
+    border-radius: 1.2rem;
+    border: 1px solid rgba(218, 165, 32, 0.1);
+  }
+  
+  .chartPlaceholder::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--primary-400), var(--primary-600));
+    opacity: 0.3;
+  }
+  
+  .chartBar {
+    flex: 1;
+    margin: 0 0.6rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    min-height: 5rem;
+    background: linear-gradient(
+      135deg,
+      var(--primary-400) 0%,
+      var(--primary-500) 50%,
+      var(--primary-600) 100%
+    );
+    border-radius: 1rem 1rem 0 0;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(218, 165, 32, 0.2);
+  }
+  
+  .chartBar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      45deg,
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(255, 255, 255, 0.3) 50%,
+      rgba(255, 255, 255, 0.1) 100%
+    );
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  
+  .chartBar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.2) 0%,
+      transparent 50%
+    );
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  
+  .chartBar:hover {
+    transform: translateY(-6px) scale(1.08);
+    box-shadow: 
+      0 12px 25px rgba(218, 165, 32, 0.4),
+      0 6px 12px var(--shadow);
+    filter: brightness(1.1);
+  }
+  
+  .chartBar:hover::before {
+    opacity: 1;
+  }
+  
+  .chartBar:hover::after {
+    opacity: 1;
+  }
+  
+  .chartBar:active {
+    transform: translateY(-3px) scale(1.05);
+  }
+  
+  .barValue {
+    position: absolute;
+    top: -4rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--text-primary);
+    color: var(--background);
+    padding: 0.8rem 1.4rem;
+    border-radius: 0.8rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 6px 16px var(--shadow);
+    z-index: 15;
+    border: 2px solid var(--primary-500);
+  }
+  
+  .barValue::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 8px solid transparent;
+    border-top-color: var(--text-primary);
+  }
+  
+  .chartBar:hover .barValue {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(-0.6rem);
+  }
+  
+  .chartLabels {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 2rem;
+    gap: 0.8rem;
+  }
+  
+  .chartLabel {
+    flex: 1;
+    text-align: center;
+    margin: 0 0.6rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: capitalize;
+    transition: all 0.3s ease;
+    padding: 1rem 0.6rem;
+    border-radius: 0.8rem;
+    cursor: pointer;
+    position: relative;
+    background: linear-gradient(
+      135deg,
+      transparent 0%,
+      var(--hover-bg) 100%
+    );
+    background-size: 0% 100%;
+    background-repeat: no-repeat;
+    transition: all 0.3s ease;
+  }
+  
+  .chartLabel:hover {
+    color: var(--primary-600);
+    background-size: 100% 100%;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(218, 165, 32, 0.2);
+  }
+  
+  .chartLabel::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 2px;
+    background: var(--primary-500);
+    transition: width 0.3s ease;
+  }
+  
+  .chartLabel:hover::before {
+    width: 80%;
+  }
+  
+  /* Enhanced golden shine effect for revenue bars */
+  .chartBar {
+    position: relative;
+  }
+  
+  .chartBar::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(
+      45deg,
+      var(--primary-300),
+      var(--primary-400),
+      var(--primary-500),
+      var(--primary-600)
+    );
+    background-size: 400% 400%;
+    border-radius: 1rem 1rem 0 0;
+    z-index: -1;
+    opacity: 0;
+    animation: shimmer 3s ease-in-out infinite;
+  }
+  
+  .chartBar:hover::after {
+    opacity: 0.3;
+  }
+  
+  @keyframes shimmer {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  
+  /* Currency symbol styling */
+  .barValue {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    letter-spacing: 0.5px;
+  }
+  
+  /* Responsive Design */
+  @media screen and (max-width: 768px) {
+    .chartCard {
+      padding: 2rem;
+      border-radius: 1.2rem;
+    }
+  
+    .chartCard h3 {
+      font-size: var(--h3-mobile);
+      margin-bottom: 2.8rem;
+    }
+  
+    .chartPlaceholder {
+      height: 28rem;
+      margin-bottom: 2rem;
+      padding: 0 1.2rem;
+      border-radius: 0.8rem;
+    }
+  
+    .chartBar {
+      margin: 0 0.3rem;
+      border-radius: 0.8rem 0.8rem 0 0;
+    }
+  
+    .barValue {
+      font-size: 1.3rem;
+      padding: 0.6rem 1rem;
+      top: -3.5rem;
+    }
+  
+    .chartLabels {
+      padding: 0 1.2rem;
+      gap: 0.4rem;
+    }
+  
+    .chartLabel {
+      font-size: 1.3rem;
+      margin: 0 0.3rem;
+      padding: 0.8rem 0.4rem;
+    }
+  }
+  
+  @media screen and (max-width: 480px) {
+    .chartCard {
+      padding: 1.6rem;
+      border-radius: 1rem;
+    }
+  
+    .chartCard h3 {
+      font-size: 2.2rem;
+      margin-bottom: 2.4rem;
+    }
+  
+    .chartPlaceholder {
+      height: 24rem;
+      padding: 0 0.8rem;
+    }
+  
+    .chartBar {
+      margin: 0 0.2rem;
+      border-radius: 0.6rem 0.6rem 0 0;
+    }
+  
+    .barValue {
+      font-size: 1.2rem;
+      padding: 0.5rem 0.8rem;
+      top: -3.2rem;
+    }
+  
+    .chartLabels {
+      padding: 0 0.8rem;
+      gap: 0.2rem;
+    }
+  
+    .chartLabel {
+      font-size: 1.2rem;
+      margin: 0 0.2rem;
+      padding: 0.6rem 0.2rem;
+    }
+  }
+  
+  /* Animation for bars on load */
+  @keyframes barGrowUp {
+    from {
+      height: 0;
+      opacity: 0;
+      transform: translateY(20px) scale(0.8);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+  
+  .chartBar {
+    animation: barGrowUp 0.8s ease-out forwards;
+  }
+  
+  /* Stagger animation for multiple bars */
+  .chartBar:nth-child(1) { animation-delay: 0.1s; }
+  .chartBar:nth-child(2) { animation-delay: 0.2s; }
+  .chartBar:nth-child(3) { animation-delay: 0.3s; }
+  .chartBar:nth-child(4) { animation-delay: 0.4s; }
+  .chartBar:nth-child(5) { animation-delay: 0.5s; }
+  .chartBar:nth-child(6) { animation-delay: 0.6s; }
+  .chartBar:nth-child(7) { animation-delay: 0.7s; }
+  .chartBar:nth-child(8) { animation-delay: 0.8s; }
+  .chartBar:nth-child(9) { animation-delay: 0.9s; }
+  .chartBar:nth-child(10) { animation-delay: 1s; }
+  .chartBar:nth-child(11) { animation-delay: 1.1s; }
+  .chartBar:nth-child(12) { animation-delay: 1.2s; }
+  
+  /* Card entrance animation */
+  @keyframes cardSlideIn {
+    from {
+      opacity: 0;
+      transform: translateX(-30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+  
+  .chartCard {
+    animation: cardSlideIn 0.6s ease-out forwards;
+  }
+  
+  /* Dark theme specific adjustments */
+  :root[data-theme="dark"] .barValue {
+    background: var(--surface);
+    color: var(--text-primary);
+    border: 2px solid var(--primary-500);
+  }
+  
+  :root[data-theme="dark"] .barValue::after {
+    border-top-color: var(--surface);
+  }
+  
+  :root[data-theme="dark"] .chartPlaceholder {
+    background: linear-gradient(
+      180deg,
+      rgba(218, 165, 32, 0.05) 0%,
+      rgba(218, 165, 32, 0.1) 100%
+    );
+    border-color: rgba(218, 165, 32, 0.2);
+  }
+  
+  /* Loading state */
+  .chartCard.loading .chartBar {
+    background: linear-gradient(
+      90deg,
+      var(--neutral-gray-100) 0%,
+      var(--hover-bg) 50%,
+      var(--neutral-gray-100) 100%
+    );
+    animation: loadingPulse 1.5s ease-in-out infinite;
+  }
+  
+  @keyframes loadingPulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+  }
+  
+  /* Accessibility improvements */
+  .chartBar:focus {
+    outline: 3px solid var(--primary-500);
+    outline-offset: 2px;
+  }
+  
+  .chartLabel:focus {
+    outline: 2px solid var(--primary-500);
+    outline-offset: 1px;
+  }
+  
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    .chartBar {
+      border: 2px solid var(--text-primary);
+    }
+    
+    .barValue {
+      border-width: 3px;
+    }
+  }
+  
+  /* Premium golden glow effect */
+  .chartCard:hover .chartBar {
+    box-shadow: 
+      0 0 20px rgba(218, 165, 32, 0.3),
+      0 12px 25px rgba(218, 165, 32, 0.4),
+      0 6px 12px var(--shadow);
+  }

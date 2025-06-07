@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { FaEye, FaEdit, FaTrash } from "react-icons/fa";
-import styles from "./css/VendorDashboard.module.css";
+import styles from "./css/Product.module.css";
 
 const Products = ({ products, onDeleteProduct }) => {
   const [searchTerm, setSearchTerm] = useState("");

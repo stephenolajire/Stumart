@@ -30,8 +30,9 @@ const ManageUsers = () => {
         url += `?${params.toString()}`;
       }
 
-      const response = await api.get('users/');
+      const response = await api.get('admin/users/');
       setUsers(response.data);
+      // console.log(response.data)
       setLoading(false);
     } catch (err) {
       console.error("Error fetching users:", err);
@@ -167,7 +168,7 @@ const ManageUsers = () => {
                   <th>Joined</th>
                   <th>Status</th>
                   <th>Verified</th>
-                  <th>Actions</th>
+                  {/* <th>Actions</th> */}
                 </tr>
               </thead>
               <tbody>
@@ -215,7 +216,7 @@ const ManageUsers = () => {
                           {user.is_verified ? "Verified" : "Unverified"}
                         </span>
                       </td>
-                      <td>
+                      {/* <td>
                         <div className={styles.actionButtons}>
                           <button
                             onClick={() =>
@@ -241,7 +242,7 @@ const ManageUsers = () => {
                             {user.is_verified ? "Unverify" : "Verify"}
                           </button>
                         </div>
-                      </td>
+                      </td> */}
                     </tr>
                   ))
                 )}

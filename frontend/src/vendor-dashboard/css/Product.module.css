@@ -1,0 +1,513 @@
+/* Product.module.css */
+
+.productsSection {
+    background-color: var(--background);
+    border-radius: 1.6rem;
+    padding: 2.4rem;
+    box-shadow: 0 0.4rem 1.2rem var(--shadow);
+    border: 0.1rem solid var(--border);
+    animation: fadeInUp 0.6s ease-out;
+  }
+  
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(2rem);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Header and Controls */
+  .flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2rem;
+    margin-bottom: 2.4rem;
+    flex-wrap: wrap;
+  }
+  
+  .sectionHeader {
+    display: flex;
+    align-items: center;
+    gap: 1.6rem;
+  }
+  
+  .addButton {
+    background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+    color: white;
+    border: none;
+    padding: 1.2rem 2.4rem;
+    border-radius: 0.8rem;
+    font-size: 1.4rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.05rem;
+    box-shadow: 0 0.2rem 0.8rem rgba(218, 165, 32, 0.3);
+  }
+  
+  .addButton:hover {
+    background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
+    transform: translateY(-0.2rem);
+    box-shadow: 0 0.4rem 1.2rem rgba(218, 165, 32, 0.4);
+  }
+  
+  .addButton:active {
+    transform: translateY(0);
+  }
+  
+  /* Filters and Search */
+  .filters {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+  }
+  
+  .filterSelect {
+    padding: 1rem 1.6rem;
+    border: 0.1rem solid var(--border);
+    border-radius: 0.8rem;
+    background-color: var(--neutral-white);
+    color: var(--text-primary);
+    font-size: 1.4rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 16rem;
+  }
+  
+  .filterSelect:hover {
+    border-color: var(--primary-500);
+    box-shadow: 0 0 0 0.2rem rgba(218, 165, 32, 0.1);
+  }
+  
+  .filterSelect:focus {
+    outline: none;
+    border-color: var(--primary-500);
+    box-shadow: 0 0 0 0.3rem rgba(218, 165, 32, 0.2);
+  }
+  
+  .searchContainer {
+    flex: 1;
+    min-width: 25rem;
+    position: relative;
+  }
+  
+  .searchInput {
+    width: 100%;
+    padding: 1.2rem 1.6rem;
+    border: 0.1rem solid var(--border);
+    border-radius: 0.8rem;
+    background-color: var(--neutral-white);
+    color: var(--text-primary);
+    font-size: 1.4rem;
+    transition: all 0.3s ease;
+  }
+  
+  .searchInput:hover {
+    border-color: var(--primary-400);
+  }
+  
+  .searchInput:focus {
+    outline: none;
+    border-color: var(--primary-500);
+    box-shadow: 0 0 0 0.3rem rgba(218, 165, 32, 0.1);
+  }
+  
+  .searchInput::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.7;
+  }
+  
+  /* Table Container */
+  .tableContainer {
+    background-color: var(--neutral-white);
+    border-radius: 1.2rem;
+    overflow: hidden;
+    box-shadow: 0 0.2rem 0.8rem var(--shadow);
+    border: 0.1rem solid var(--border);
+  }
+  
+  /* Data Table */
+  .dataTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 1.4rem;
+  }
+  
+  .dataTable thead {
+    background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+    color: white;
+  }
+  
+  .dataTable th {
+    padding: 1.8rem 1.6rem;
+    text-align: left;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05rem;
+    font-size: 1.3rem;
+    border-bottom: 0.2rem solid var(--primary-700);
+  }
+  
+  .dataTable tbody tr {
+    border-bottom: 0.1rem solid var(--border);
+    transition: all 0.3s ease;
+  }
+  
+  .dataTable tbody tr:hover {
+    background-color: var(--hover-bg);
+    transform: scale(1.01);
+    box-shadow: 0 0.2rem 0.8rem var(--shadow);
+  }
+  
+  .dataTable tbody tr:last-child {
+    border-bottom: none;
+  }
+  
+  .dataTable td {
+    padding: 1.6rem;
+    vertical-align: middle;
+    color: var(--text-primary);
+  }
+  
+  /* Product Name Styling */
+  .productName {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 1.5rem;
+  }
+  
+  /* Status Badges */
+  .status {
+    padding: 0.6rem 1.2rem;
+    border-radius: 2rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05rem;
+    display: inline-block;
+    min-width: 8rem;
+    text-align: center;
+    box-shadow: 0 0.2rem 0.4rem rgba(0, 0, 0, 0.1);
+  }
+  
+  .statusInStock {
+    background: linear-gradient(135deg, var(--success), #16a34a);
+    color: white;
+  }
+  
+  .statusLowStock {
+    background: linear-gradient(135deg, var(--warning), #d97706);
+    color: white;
+    animation: pulse 2s infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.8;
+    }
+  }
+  
+  /* Action Buttons */
+  .actions {
+    display: flex;
+    gap: 0.8rem;
+    align-items: center;
+  }
+  
+  .actions button {
+    padding: 0.8rem;
+    border: none;
+    border-radius: 0.6rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.6rem;
+    height: 3.6rem;
+    font-size: 1.4rem;
+  }
+  
+  .viewButton {
+    background-color: var(--info);
+    color: white;
+    box-shadow: 0 0.2rem 0.4rem rgba(59, 130, 246, 0.3);
+  }
+  
+  .viewButton:hover {
+    background-color: #2563eb;
+    transform: translateY(-0.2rem);
+    box-shadow: 0 0.4rem 0.8rem rgba(59, 130, 246, 0.4);
+  }
+  
+  .editButton {
+    background-color: var(--primary-500);
+    color: white;
+    box-shadow: 0 0.2rem 0.4rem rgba(218, 165, 32, 0.3);
+  }
+  
+  .editButton:hover {
+    background-color: var(--primary-600);
+    transform: translateY(-0.2rem);
+    box-shadow: 0 0.4rem 0.8rem rgba(218, 165, 32, 0.4);
+  }
+  
+  .deleteButton {
+    background-color: var(--error);
+    color: white;
+    box-shadow: 0 0.2rem 0.4rem rgba(239, 68, 68, 0.3);
+  }
+  
+  .deleteButton:hover {
+    background-color: #dc2626;
+    transform: translateY(-0.2rem);
+    box-shadow: 0 0.4rem 0.8rem rgba(239, 68, 68, 0.4);
+  }
+  
+  .actions button:active {
+    transform: translateY(0);
+  }
+  
+  /* Loading and Empty States */
+  .emptyState {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-secondary);
+  }
+  
+  .emptyStateIcon {
+    font-size: 4rem;
+    margin-bottom: 1.6rem;
+    opacity: 0.5;
+  }
+  
+  .emptyStateText {
+    font-size: 1.6rem;
+    margin-bottom: 0.8rem;
+  }
+  
+  .emptyStateSubtext {
+    font-size: 1.4rem;
+    opacity: 0.7;
+  }
+  
+  /* Responsive Design */
+  @media screen and (max-width: 992px) {
+    .flex {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 1.6rem;
+    }
+    
+    .sectionHeader {
+      justify-content: center;
+    }
+    
+    .filters {
+      justify-content: center;
+    }
+    
+    .searchContainer {
+      min-width: auto;
+    }
+    
+    .dataTable {
+      font-size: 1.3rem;
+    }
+    
+    .dataTable th,
+    .dataTable td {
+      padding: 1.2rem 1rem;
+    }
+    
+    .actions {
+      gap: 0.6rem;
+    }
+    
+    .actions button {
+      width: 3.2rem;
+      height: 3.2rem;
+      font-size: 1.2rem;
+    }
+  }
+  
+  @media screen and (max-width: 768px) {
+    .productsSection {
+      padding: 1.6rem;
+    }
+    
+    .flex {
+      gap: 1.2rem;
+    }
+    
+    .addButton {
+      padding: 1rem 2rem;
+      font-size: 1.3rem;
+    }
+    
+    .filterSelect {
+      min-width: 14rem;
+      font-size: 1.3rem;
+    }
+    
+    .searchInput {
+      font-size: 1.3rem;
+    }
+    
+    /* Make table horizontally scrollable on mobile */
+    .tableContainer {
+      overflow-x: auto;
+    }
+    
+    .dataTable {
+      min-width: 70rem;
+      font-size: 1.2rem;
+    }
+    
+    .dataTable th {
+      font-size: 1.2rem;
+      padding: 1.4rem 1rem;
+    }
+    
+    .dataTable td {
+      padding: 1.2rem 1rem;
+    }
+    
+    .productName {
+      font-size: 1.4rem;
+    }
+    
+    .status {
+      font-size: 1rem;
+      padding: 0.5rem 1rem;
+      min-width: 7rem;
+    }
+    
+    .actions button {
+      width: 3rem;
+      height: 3rem;
+      font-size: 1.1rem;
+    }
+  }
+  
+  @media screen and (max-width: 480px) {
+    .productsSection {
+      padding: 1.2rem;
+    }
+    
+    .addButton {
+      width: 100%;
+      padding: 1.2rem;
+    }
+    
+    .filterSelect {
+      width: 100%;
+      min-width: auto;
+    }
+    
+    .dataTable {
+      min-width: 60rem;
+    }
+    
+    .dataTable th,
+    .dataTable td {
+      padding: 1rem 0.8rem;
+    }
+  }
+  
+  /* Dark theme adjustments */
+  :root[data-theme="dark"] .productsSection {
+    background-color: var(--surface);
+  }
+  
+  :root[data-theme="dark"] .tableContainer {
+    background-color: var(--surface);
+  }
+  
+  :root[data-theme="dark"] .filterSelect,
+  :root[data-theme="dark"] .searchInput {
+    background-color: var(--surface);
+    border-color: var(--border);
+  }
+  
+  /* Print styles */
+  @media print {
+    .productsSection {
+      box-shadow: none;
+      border: 0.1rem solid #000;
+    }
+    
+    .addButton,
+    .actions {
+      display: none;
+    }
+    
+    .flex {
+      flex-direction: row;
+      justify-content: space-between;
+    }
+    
+    .searchContainer {
+      display: none;
+    }
+    
+    .dataTable {
+      font-size: 1.2rem;
+    }
+    
+    .dataTable th {
+      background: #f0f0f0 !important;
+      color: #000 !important;
+    }
+  }
+  
+  /* Accessibility improvements */
+  .addButton:focus,
+  .filterSelect:focus,
+  .searchInput:focus,
+  .actions button:focus {
+    outline: 0.2rem solid var(--primary-500);
+    outline-offset: 0.2rem;
+  }
+  
+  /* High contrast mode */
+  @media (prefers-contrast: high) {
+    .dataTable th {
+      border-bottom: 0.3rem solid #000;
+    }
+    
+    .status {
+      border: 0.2rem solid #000;
+    }
+    
+    .actions button {
+      border: 0.1rem solid #000;
+    }
+  }
+  
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .productsSection,
+    .dataTable tbody tr,
+    .addButton,
+    .actions button,
+    .statusLowStock {
+      animation: none;
+      transition: none;
+    }
+    
+    .dataTable tbody tr:hover,
+    .addButton:hover,
+    .actions button:hover {
+      transform: none;
+    }
+  }

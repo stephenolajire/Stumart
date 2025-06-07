@@ -14,6 +14,8 @@ from django.core.mail import send_mail
 import logging
 
 logger = logging.getLogger(__name__)
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
 
 class DashboardStatsAPIView(APIView):
     """API endpoint for dashboard overview statistics"""
@@ -87,22 +89,22 @@ class DashboardStatsAPIView(APIView):
     
     def _get_order_stats(self, last_week):
         """Get order statistics"""
-        order_counts = Order.objects.aggregate(
-            total=Count('id'),
-            recent=Count('id', filter=Q(created_at__gte=last_week)),
-            pending=Count('id', filter=Q(order_status='PENDING'))
-        )
+        # First get all orders for different statuses
+        total_paid = Order.objects.filter(order_status='PAID').count()
+        recent_paid = Order.objects.filter(
+            order_status='PAID',
+            created_at__gte=last_week
+        ).count()
+        pending_orders = Order.objects.filter(order_status='PENDING').count()
         
         return {
-            'total': order_counts['total'],
-            'recent': order_counts['recent'],
-            'pending': order_counts['pending']
+            'total': total_paid,
+            'recent': recent_paid,
+            'pending': pending_orders
         }
     
     def _get_financial_stats(self, last_week):
-        """Get financial statistics"""
-        # Note: Using 'tax' field for profit seems incorrect - consider reviewing
-        financial_data = Order.objects.aggregate(
+        financial_data = Order.objects.filter(order_status='PAID').aggregate(
             total_sales=Sum('total'),
             total_profit=Sum('tax'),  # This should probably be a proper profit calculation
             recent_sales=Sum('total', filter=Q(created_at__gte=last_week))
@@ -169,6 +171,7 @@ class UsersAPIView(APIView):
                 'is_active': user.is_active
             }
             user_data.append(user_dict)
+            # print("API Response:", user_data)
             
         return Response(user_data)
     
@@ -632,27 +635,65 @@ class KYCVerificationAPIView(APIView):
         try:
             verification = KYCVerification.objects.get(id=verification_id)
             
-            # Update fields from request
             if 'verification_status' in request.data:
                 verification.verification_status = request.data['verification_status']
                 
+                # Prepare email context
+                context = {
+                    'user': verification.user,
+                    'verification_status': verification.verification_status,
+                }
+                
                 if verification.verification_status == 'approved':
-                    # Update user verification status
-                    verification.user.is_verified = True
-                    verification.user.save()
-                    
-                    # Set verification date
                     verification.verification_date = timezone.now()
+                    # verification.user.is_verified = True
+                    # verification.user.save()
                     
                 elif verification.verification_status == 'rejected':
-                    # Set rejection reason if provided
                     if 'rejection_reason' in request.data:
                         verification.rejection_reason = request.data['rejection_reason']
-            
-            verification.save()
-            return Response({'status': 'success'})
+                        context['rejection_reason'] = verification.rejection_reason
+                        # verification.user.is_verified = False
+                        # verification.user.save()
+                
+                # Render and send email
+                html_message = render_to_string(
+                    'emails/verification.html',
+                    context
+                )
+                plain_message = strip_tags(html_message)
+                
+                subject = 'KYC Verification {}'.format(
+                    'Approved' if verification.verification_status == 'approved' 
+                    else 'Rejected'
+                )
+                
+                try:
+                    send_mail(
+                        subject=subject,
+                        message=plain_message,
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        recipient_list=[verification.user.email],
+                        html_message=html_message,
+                        fail_silently=False,
+                    )
+                except Exception as e:
+                    logger.error(f"Failed to send verification email: {str(e)}")
+                
+                verification.save()
+                return Response({'status': 'success'})
+                
         except KYCVerification.DoesNotExist:
-            return Response({'error': 'Verification not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {'error': 'Verification not found'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            logger.error(f"KYC verification update error: {str(e)}")
+            return Response(
+                {'error': 'An error occurred while updating verification'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
         
 
 class ContactView(APIView):

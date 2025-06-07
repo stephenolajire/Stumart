@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FaSearch, FaStar, FaFilter, FaSpinner } from "react-icons/fa";
-import styles from "./css/VendorDashboard.module.css";
+import styles from "./css/Review.module.css";
 import api from "../constant/api";
 
 const Reviews = () => {

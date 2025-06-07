@@ -257,23 +257,39 @@ class PaymentViewSet(viewsets.ReadOnlyModelViewSet):
         try:
             vendor = request.user.vendor_profile
         except Vendor.DoesNotExist:
-            return Response({"error": "Vendor profile not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Vendor profile not found"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
         
-        # Find orders containing items from this vendor
+        # Find orders containing items from this vendor with PAID status
         vendor_order_items = OrderItem.objects.filter(vendor=vendor)
-        vendor_orders = Order.objects.filter(order_items__in=vendor_order_items).distinct()
+        vendor_orders = Order.objects.filter(
+            order_items__in=vendor_order_items,
+            order_status='PAID'
+        ).distinct()
         
-        # Get transaction amounts for these orders
+        # Get transaction amounts for these paid orders
         transactions = Transaction.objects.filter(order__in=vendor_orders)
-        wallet_balance = Wallet.objects.get(vendor=vendor).balance
         
-        # Calculate stats
+        # Get wallet balance with fallback to 0
+        try:
+            wallet_balance = Wallet.objects.get(vendor=vendor).balance
+        except Wallet.DoesNotExist:
+            wallet = Wallet.objects.create(
+                vendor=vendor,
+                balance=0
+            )
+            wallet_balance = wallet.balance
+        
+        # Calculate stats from paid orders only
         total_amount = vendor_orders.aggregate(Sum('subtotal'))['subtotal__sum'] or 0
-        paid_amount = transactions.filter(status='PAID').aggregate(Sum('amount'))['amount__sum'] or 0
-        pending_amount = transactions.filter(status__in=['PENDING', 'PROCESSING']).aggregate(Sum('amount'))['amount__sum'] or 0
+        pending_amount = Order.objects.filter(
+            order_status__in=['PENDING', 'PROCESSING']
+        ).aggregate(Sum('total'))['total__sum'] or 0
         
         return Response({
-            'total_amount': float(total_amount),  # Convert Decimal to float for JSON
+            'total_amount': float(total_amount),
             'paid_amount': float(wallet_balance),
             'pending_amount': float(pending_amount),
             'total_transactions': transactions.count()

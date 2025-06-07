@@ -7,7 +7,7 @@ from django.utils import timezone
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'email', 'first_name', 'last_name', 'phone_number', 'profile_pic', 'state']
+        fields = ['id', 'email', 'first_name', 'last_name', 'phone_number', 'profile_pic', 'state', 'is_verified']
 
 class PickerSerializer(serializers.ModelSerializer):
     user = UserSerializer()

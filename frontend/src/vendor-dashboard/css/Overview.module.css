@@ -1,0 +1,262 @@
+/* Overview.module.css */
+
+.overviewGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(28rem, 1fr));
+    gap: 2.4rem;
+    padding: 2.4rem 0;
+    animation: fadeInUp 0.6s ease-out;
+  }
+  
+  /* Animation for smooth entry */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(3rem);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Chart containers take full width on larger screens */
+  .overviewGrid > div:nth-child(n+5) {
+    grid-column: span 2;
+    min-height: 35rem;
+  }
+  
+  /* Ensure stat cards have consistent height */
+  .overviewGrid > div:nth-child(-n+4) {
+    min-height: 14rem;
+  }
+  
+  /* Override for revenue and sales charts to span full width on medium screens */
+  @media screen and (min-width: 992px) {
+    .overviewGrid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+    
+    .overviewGrid > div:nth-child(n+5) {
+      grid-column: span 2;
+    }
+  }
+  
+  /* Tablet view adjustments */
+  @media screen and (max-width: 991px) and (min-width: 769px) {
+    .overviewGrid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 2rem;
+    }
+    
+    .overviewGrid > div:nth-child(n+5) {
+      grid-column: span 2;
+      min-height: 32rem;
+    }
+    
+    .overviewGrid > div:nth-child(-n+4) {
+      min-height: 12rem;
+    }
+  }
+  
+  /* Mobile view */
+  @media screen and (max-width: 768px) {
+    .overviewGrid {
+      grid-template-columns: 1fr;
+      gap: 1.6rem;
+      padding: 1.6rem 0;
+    }
+    
+    .overviewGrid > div:nth-child(n+5) {
+      grid-column: span 1;
+      min-height: 28rem;
+    }
+    
+    .overviewGrid > div:nth-child(-n+4) {
+      min-height: 11rem;
+    }
+  }
+  
+  /* Small mobile adjustments */
+  @media screen and (max-width: 480px) {
+    .overviewGrid {
+      gap: 1.2rem;
+      padding: 1.2rem 0;
+    }
+    
+    .overviewGrid > div:nth-child(n+5) {
+      min-height: 25rem;
+    }
+    
+    .overviewGrid > div:nth-child(-n+4) {
+      min-height: 10rem;
+    }
+  }
+  
+  /* Enhanced hover effects for the entire grid */
+  .overviewGrid > div {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .overviewGrid > div:hover {
+    transform: translateY(-0.4rem);
+    box-shadow: 0 1.2rem 2.4rem var(--shadow);
+  }
+  
+  /* Loading state */
+  .overviewGrid.loading {
+    opacity: 0.6;
+    pointer-events: none;
+  }
+  
+  .overviewGrid.loading > div {
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+  
+  /* Error state */
+  .overviewGrid.error {
+    opacity: 0.8;
+  }
+  
+  .overviewGrid.error > div {
+    border: 0.1rem solid var(--error);
+    background-color: rgba(239, 68, 68, 0.05);
+  }
+  
+  /* Success state for fresh data updates */
+  .overviewGrid.updated > div {
+    animation: successPulse 0.6s ease-out;
+  }
+  
+  @keyframes successPulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
+    }
+    70% {
+      box-shadow: 0 0 0 1rem rgba(34, 197, 94, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+    }
+  }
+  
+  /* Staggered animation for child elements */
+  .overviewGrid > div:nth-child(1) {
+    animation-delay: 0.1s;
+  }
+  
+  .overviewGrid > div:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+  
+  .overviewGrid > div:nth-child(3) {
+    animation-delay: 0.3s;
+  }
+  
+  .overviewGrid > div:nth-child(4) {
+    animation-delay: 0.4s;
+  }
+  
+  .overviewGrid > div:nth-child(5) {
+    animation-delay: 0.5s;
+  }
+  
+  .overviewGrid > div:nth-child(6) {
+    animation-delay: 0.6s;
+  }
+  
+  /* Chart specific styling */
+  .overviewGrid > div:nth-child(n+5) {
+    background: linear-gradient(135deg, var(--neutral-white) 0%, var(--surface) 100%);
+    border: 0.1rem solid var(--border);
+    border-radius: 1.6rem;
+    padding: 2.4rem;
+    box-shadow: 0 0.4rem 1.2rem var(--shadow);
+    overflow: hidden;
+    position: relative;
+  }
+  
+  .overviewGrid > div:nth-child(n+5)::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 0.4rem;
+    background: linear-gradient(90deg, var(--primary-500), var(--primary-600), var(--primary-700));
+    z-index: 1;
+  }
+  
+  /* Dark theme adjustments */
+  :root[data-theme="dark"] .overviewGrid > div:nth-child(n+5) {
+    background: linear-gradient(135deg, var(--surface) 0%, var(--background) 100%);
+  }
+  
+  /* Accessibility improvements */
+  @media (prefers-reduced-motion: reduce) {
+    .overviewGrid,
+    .overviewGrid > div {
+      animation: none;
+      transition: none;
+    }
+    
+    .overviewGrid > div:hover {
+      transform: none;
+    }
+  }
+  
+  /* Focus states for keyboard navigation */
+  .overviewGrid > div:focus {
+    outline: 0.2rem solid var(--primary-500);
+    outline-offset: 0.2rem;
+  }
+  
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    .overviewGrid > div {
+      border: 0.2rem solid var(--text-primary);
+    }
+    
+    .overviewGrid > div:nth-child(n+5)::before {
+      height: 0.6rem;
+      background: var(--primary-500);
+    }
+  }
+  
+  /* RTL language support */
+  [dir="rtl"] .overviewGrid {
+    direction: rtl;
+  }
+  
+  [dir="rtl"] .overviewGrid > div:nth-child(n+5)::before {
+    background: linear-gradient(-90deg, var(--primary-500), var(--primary-600), var(--primary-700));
+  }
+  
+  /* Print styles */
+  @media print {
+    .overviewGrid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      break-inside: avoid;
+    }
+    
+    .overviewGrid > div {
+      break-inside: avoid;
+      box-shadow: none;
+      border: 0.1rem solid #000;
+    }
+    
+    .overviewGrid > div:nth-child(n+5) {
+      grid-column: span 2;
+      min-height: 20rem;
+    }
+  }

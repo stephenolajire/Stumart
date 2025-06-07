@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StuMart KYC Verification Status</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f9f9f9;
+            color: #1f2937;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .email-wrapper {
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #DAA520;
+            padding-bottom: 20px;
+        }
+        .logo {
+            color: #DAA520;
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin: 20px 0;
+        }
+        .status-approved {
+            background-color: #22c55e;
+            color: white;
+        }
+        .status-rejected {
+            background-color: #ef4444;
+            color: white;
+        }
+        .message {
+            color: #4b5563;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+        .reason-box {
+            background-color: #f8f4ea;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .button {
+            display: inline-block;
+            background-color: #DAA520;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            margin-top: 20px;
+            font-weight: 600;
+        }
+        .button:hover {
+            background-color: #b38517;
+        }
+        .footer {
+            text-align: center;
+            color: #6b7280;
+            font-size: 14px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+        }
+        @media screen and (max-width: 480px) {
+            .container {
+                padding: 10px;
+            }
+            .email-wrapper {
+                padding: 20px;
+            }
+            .logo {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="email-wrapper">
+            <div class="header">
+                <div class="logo">STUMART</div>
+            </div>
+            
+            <div class="message">
+                Dear {{ user.first_name }} {{ user.last_name }},
+            </div>
+
+            {% if verification_status == 'approved' %}
+            <div class="status-badge status-approved">Verification Approved</div>
+            <div class="message">
+                We are happy to inform you that your KYC verification has been approved. You can now access all features of your account.
+            </div>
+            <a href="https://stumart.com.ng/login" class="button">Login to Dashboard</a>
+
+            {% else %}
+            <div class="status-badge status-rejected">Verification Rejected</div>
+            <div class="message">
+                We regret to inform you that your KYC verification has been rejected.
+            </div>
+            
+            <div class="reason-box">
+                <strong>Reason for rejection:</strong><br>
+                {{ rejection_reason }}
+            </div>
+
+            <div class="message">
+                Please address the issue mentioned above and submit your verification again.
+            </div>
+            <a href="https://stumart.com.ng/verify-account" class="button">Try Again</a>
+            {% endif %}
+
+            <div class="footer">
+                <p>Best regards,<br>StuMart Team</p>
+                <p>&copy; {% now "Y" %} StuMart. All rights reserved.</p>
+                <small>This is an automated message, please do not reply.</small>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

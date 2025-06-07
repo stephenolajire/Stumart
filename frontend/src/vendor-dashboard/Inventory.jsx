@@ -6,7 +6,7 @@ import {
   FaEdit,
 } from "react-icons/fa";
 import Swal from "sweetalert2";
-import styles from "./css/VendorDashboard.module.css";
+import styles from "./css/Inventory.module.css";
 
 const Inventory = ({ products, onUpdateStock }) => {
   const [searchTerm, setSearchTerm] = useState("");

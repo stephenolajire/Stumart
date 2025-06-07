@@ -8,7 +8,7 @@ import {
 } from "react-icons/fa";
 import Swal from "sweetalert2";
 import vendorApi from "../services/vendorApi";
-import styles from "./css/VendorDashboard.module.css";
+import styles from "./css/Payment.module.css";
 
 const Payments = () => {
   const [searchTerm, setSearchTerm] = useState("");

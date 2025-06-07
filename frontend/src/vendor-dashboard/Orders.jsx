@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { FaEye } from "react-icons/fa";
-import styles from "./css/VendorDashboard.module.css";
+import styles from "./css/Order.module.css";
 import api from "../constant/api";
 import Swal from "sweetalert2";
 import PickerDetailsModal from "./PickerDetailsModal";

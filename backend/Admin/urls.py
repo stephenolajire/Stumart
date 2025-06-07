@@ -18,7 +18,7 @@ urlpatterns = [
     path('admin/stats/', DashboardStatsAPIView.as_view(), name='dashboard_stats'),
     
     # Users management
-    path('users/', UsersAPIView.as_view(), name='users_list'),
+    path('admin/users/', UsersAPIView.as_view(), name='users_list'),
     path('users/<int:user_id>/', UsersAPIView.as_view(), name='user_detail'),
     
     # Vendors management

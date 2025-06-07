@@ -17,6 +17,9 @@ from .throttles import LoginRateThrottle
 from .throttles import RegisterThrottle, EmailVerificationThrottle
 import logging
 logger = logging.getLogger(__name__)
+from django.template.loader import render_to_string
+# from django.core.mail import send_mail
+from django.utils.html import strip_tags
 
 class BaseAPIView(APIView):
     model = None
@@ -47,28 +50,25 @@ class BaseAPIView(APIView):
                 # Create OTP and send email
                 otp = OTP.objects.create(user=user)
                 
-                # Prepare email content
-                subject = 'Verify your Stumart account'
-                message = f'''
-                Welcome to Stumart!
+                # Prepare email content using template
+                html_message = render_to_string('email/otp.html', {
+                    'user': user,
+                    'otp_code': otp.code,
+                })
                 
-                Your verification code is: {otp.code}
+                plain_message = strip_tags(html_message)
                 
-                This code will expire in 10 minutes.
-                
-                If you didn't request this code, please ignore this email.
-                '''
-            
                 # Send email
                 send_mail(
-                    subject,
-                    message,
-                    settings.DEFAULT_FROM_EMAIL,
-                    [user.email],
+                    subject='Verify your Stumart account',
+                    message=plain_message,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[user.email],
+                    html_message=html_message,
                     fail_silently=False,
                 )
                 
-                # Return success response with user_id
+                # Return success response
                 return Response({
                     'message': 'Registration successful. Please check your email for verification code.',
                     'user_id': user.id,
@@ -76,14 +76,11 @@ class BaseAPIView(APIView):
                 }, status=status.HTTP_201_CREATED)
                 
             except Exception as e:
-                # Log the error for debugging
-                print(f"Registration error: {str(e)}")
+                logger.error(f"Registration error: {str(e)}")
                 return Response({
                     'error': 'Registration failed. Please try again.',
                     'detail': str(e)
                 }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, pk):
         instance = get_object_or_404(self.model, pk=pk)
@@ -269,24 +266,21 @@ class ResendOTPView(APIView):
             # Create new OTP
             otp = OTP.objects.create(user=user)
 
-            # Prepare email content
-            subject = 'New Verification Code - Stumart'
-            message = f'''
-            Hello {user.first_name}!
+            # Prepare email content using template
+            html_message = render_to_string('email/otp.html', {
+                'user': user,
+                'otp_code': otp.code,
+            })
             
-            Your new verification code is: {otp.code}
-            
-            This code will expire in 10 minutes.
-            
-            If you didn't request this code, please ignore this email.
-            '''
+            plain_message = strip_tags(html_message)
 
             # Send email
             send_mail(
-                subject,
-                message,
-                settings.DEFAULT_FROM_EMAIL,
-                [user.email],
+                subject='New Verification Code - Stumart',
+                message=plain_message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                html_message=html_message,
                 fail_silently=False,
             )
 
@@ -299,6 +293,7 @@ class ResendOTPView(APIView):
                 'error': 'User not found'
             }, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
+            logger.error(f"Failed to send OTP: {str(e)}")
             return Response({
                 'error': f'Failed to send new code: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
