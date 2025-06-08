@@ -727,7 +727,7 @@ const Home = memo(() => {
               onChange={(e) =>
                 setUiState((prev) => ({ ...prev, productName: e.target.value }))
               }
-              placeholder="Search for product / shop?"
+              placeholder="Search for product / shop"
               className={styles.searchInput}
             />
             <button

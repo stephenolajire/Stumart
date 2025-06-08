@@ -92,14 +92,6 @@ const Products = ({ products, onDeleteProduct }) => {
                 </td>
                 <td>
                   <div className={styles.actions}>
-                    <button className={styles.viewButton}>
-                      <FaEye />
-                    </button>
-                    <Link to={`/edit-product/${product.id}`}>
-                      <button className={styles.editButton}>
-                        <FaEdit />
-                      </button>
-                    </Link>
                     <button
                       className={styles.deleteButton}
                       onClick={() => onDeleteProduct(product.id)}
