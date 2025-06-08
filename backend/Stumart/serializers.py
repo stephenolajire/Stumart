@@ -63,7 +63,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'id', 'name', 'description', 'price', 'in_stock',
             'gender', 'created_at', 'updated_at',
             'additional_images', 'sizes', 'colors', 'image_url',
-            'vendor_name', 'vendor_rating','vendor_category', 'keyword'
+            'vendor_name', 'vendor_rating','vendor_category', 'keyword', 'promotion_price'
         ]
     
     def get_vendor_name(self, obj):
@@ -259,6 +259,7 @@ class ProductCreateSerializer(serializers.ModelSerializer):
 class CartItemSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source='product.name', read_only=True)
     product_price = serializers.DecimalField(source='product.price', max_digits=10, decimal_places=2, read_only=True)
+    promotion_price = serializers.DecimalField(source='product.promotion_price', max_digits=10, decimal_places=2, read_only=True)
     product_image = serializers.SerializerMethodField()
     total_price = serializers.SerializerMethodField()
     
@@ -266,7 +267,7 @@ class CartItemSerializer(serializers.ModelSerializer):
         model = CartItem
         fields = [
             'id', 'product', 'product_name', 'product_price', 'product_image',
-            'quantity', 'size', 'color', 'total_price', 'created_at'
+            'quantity', 'size', 'color', 'total_price', 'created_at', 'promotion_price'
         ]
         
     def get_product_image(self, obj):

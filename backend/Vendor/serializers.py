@@ -10,7 +10,7 @@ class ProductSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Product
-        fields = ['id', 'name', 'description', 'price', 'in_stock', 'image', 'created_at', 'status']
+        fields = ['id', 'name', 'description', 'price', 'in_stock', 'image', 'created_at', 'status', 'promotion_price']
     
     def get_status(self, obj):
         if obj.in_stock == 0:

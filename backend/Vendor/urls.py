@@ -2,7 +2,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
-from .views import UpdateStockAPIView, ProductStockHistoryAPIView
+from .views import UpdateStockAPIView, ProductStockHistoryAPIView, ProductPromtionAPIView
 
 router = DefaultRouter()
 router.register(r'vendor-items', views.ProductViewSet, basename='vendor-products')
@@ -29,4 +29,10 @@ urlpatterns = [
     path('products/<int:product_id>/stock-history/', 
          ProductStockHistoryAPIView.as_view(), 
          name='product_stock_history'),
+
+     path('products/<int:product_id>/update-promotion/', 
+         ProductPromtionAPIView.as_view(), 
+         name='product_stock_history'),
+
+     path('products/bulk-discount/', views.BulkDiscountAPIView.as_view())
 ]

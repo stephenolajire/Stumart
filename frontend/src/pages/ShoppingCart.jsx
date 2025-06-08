@@ -40,10 +40,13 @@ const ShoppingCart = () => {
   } = useContext(GlobalContext);
 
   // Calculate cart totals
-  const subtotal = cartItems.reduce(
-    (total, item) => total + parseFloat(item.product_price) * item.quantity,
-    0
-  );
+  const subtotal = cartItems.reduce((total, item) => {
+    const price =
+      item.promotion_price && parseFloat(item.promotion_price) > 0
+        ? parseFloat(item.promotion_price)
+        : parseFloat(item.product_price);
+    return total + price * item.quantity;
+  }, 0);
 
   // console.log (cartSummary)
 
@@ -216,10 +219,22 @@ const ShoppingCart = () => {
                 </div>
 
                 {/* Item Price */}
-                <div className={styles.itemPrice}>
-                  <span className={styles.mobileLabel}>Price:</span>
-                  <span>₦{formatPrice(item.product_price)}</span>
-                </div>
+                {item.promotion_price &&
+                parseFloat(item.promotion_price) > 0 ? (
+                  <div className={styles.itemPrice}>
+                    <span className={styles.mobileLabel}>Promotion Price:</span>
+                    <div className={styles.priceContainer}>
+                      <span className={styles.promotionalPrice}>
+                        ₦{formatPrice(item.promotion_price)}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className={styles.itemPrice}>
+                    <span className={styles.mobileLabel}>Price:</span>
+                    <span>₦{formatPrice(item.product_price)}</span>
+                  </div>
+                )}
 
                 {/* Item Quantity */}
                 <div className={styles.itemQuantity}>

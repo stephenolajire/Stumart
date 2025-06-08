@@ -15,6 +15,7 @@ import {
 import { nigeriaInstitutions, nigeriaStates } from "../constant/data";
 import { GlobalContext } from "../constant/GlobalContext";
 import Header from "../components/Header";
+// import ProductCard from "../components/ProductCard";
 
 const AllProducts = () => {
   const [searchParams, setSearchParams] = useSearchParams();

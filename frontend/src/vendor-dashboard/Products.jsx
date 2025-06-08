@@ -51,9 +51,9 @@ const Products = ({ products, onDeleteProduct }) => {
             <option value="low-stock">Low Stock</option>
           </select>
         </div>
-        <div className={styles.searchContainer}> 
+        <div className={styles.searchContainer}>
           <input
-            style={{width:"100%"}}
+            style={{ width: "100%" }}
             type="search"
             placeholder="Search products..."
             value={searchTerm}
@@ -68,6 +68,7 @@ const Products = ({ products, onDeleteProduct }) => {
             <tr>
               <th>Product Name</th>
               <th>Price</th>
+              <th>Discount Price</th>
               <th>Category</th>
               <th>Stock</th>
               <th>Status</th>
@@ -79,6 +80,7 @@ const Products = ({ products, onDeleteProduct }) => {
               <tr key={product.id}>
                 <td className={styles.productName}>{product.name}</td>
                 <td>₦{product.price}</td>
+                <td>₦{product.promotion_price}</td>
                 <td>{product.category}</td>
                 <td>{product.in_stock}</td>
                 <td>

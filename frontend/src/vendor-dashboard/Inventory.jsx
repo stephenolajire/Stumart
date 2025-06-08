@@ -4,11 +4,14 @@ import {
   FaExclamationTriangle,
   FaCheck,
   FaEdit,
+  FaTrash,
 } from "react-icons/fa";
 import Swal from "sweetalert2";
 import UpdateStockModal from "./UpdateStockModal";
 import styles from "./css/Inventory.module.css";
 import api from "../constant/api";
+import PromotionModal from "./PromotionalModal";
+import BulkDiscountModal from "./BulkDiscountModal";
 
 const Inventory = ({
   products,
@@ -21,7 +24,113 @@ const Inventory = ({
   const [sortDirection, setSortDirection] = useState("asc");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [details, setDetails] = useState({})
+  const [details, setDetails] = useState({});
+  const [isPromotionModalOpen, setIsPromotionModalOpen] = useState(false);
+  const [selectedProductForPromotion, setSelectedProductForPromotion] =
+    useState(null);
+  const [isBulkDiscountModalOpen, setIsBulkDiscountModalOpen] = useState(false);
+  const handlePromotionClick = (product) => {
+    setSelectedProductForPromotion(product);
+    setIsPromotionModalOpen(true);
+  };
+
+  const handleUpdatePromotion = async (productId, promotionPrice) => {
+    try {
+      const response = await api.post(
+        `products/${productId}/update-promotion/`,
+        {
+          promotional_price: promotionPrice,
+        }
+      );
+
+      Swal.fire({
+        icon: "success",
+        title: "Success!",
+        text: "Promotion price updated successfully",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+
+      // Update local state or trigger refresh
+      if (onUpdateStock) {
+        onUpdateStock(response.data.product);
+      }
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Failed to update promotion price"
+      );
+    }
+  };
+
+  const handleBulkDiscount = async (discountData) => {
+    try {
+      const response = await api.post("products/bulk-discount/", {
+        discount_type: discountData.type,
+        discount_value: discountData.value,
+      });
+
+      Swal.fire({
+        icon: "success",
+        title: "Success!",
+        text: "Bulk discount applied successfully",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+
+      // Update local state or trigger refresh
+      if (onUpdateStock) {
+        onUpdateStock(response.data.products);
+      }
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Failed to apply bulk discount"
+      );
+    }
+  };
+
+  // Add this new function after your other handler functions
+  const handleClearAllDiscounts = async () => {
+    try {
+      const result = await Swal.fire({
+        title: "Clear All Discounts?",
+        text: "This will remove promotional prices from all products. This action cannot be undone.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "var(--primary-500)",
+        cancelButtonColor: "var(--error)",
+        confirmButtonText: "Yes, clear all",
+        cancelButtonText: "No, keep discounts",
+      });
+
+      if (result.isConfirmed) {
+        // Send delete request
+        await api.delete("products/bulk-discount/");
+
+        // Show success message
+        await Swal.fire({
+          icon: "success",
+          title: "Discounts Cleared!",
+          text: "All promotional prices have been removed",
+          timer: 2000,
+          showConfirmButton: false,
+        });
+
+        // Update local state or trigger refresh
+        if (onUpdateStock) {
+          // Fetch fresh data or update local state
+          const response = await api.get("products/");
+          onUpdateStock(response.data);
+        }
+      }
+    } catch (error) {
+      console.error("Error clearing discounts:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error.response?.data?.message || "Failed to clear discounts",
+      });
+    }
+  };
 
   // Calculate inventory metrics
   const totalItems = products ? products.length : 0;
@@ -97,7 +206,7 @@ const Inventory = ({
 
       // Map the correct field name - your backend expects 'in_stock'
       formData.append("in_stock", stockData.in_stock || stockData.stock || 0);
-      formData.append("price", stockData.price)
+      formData.append("price", stockData.price);
 
       // Add sizes as JSON string if they exist
       if (
@@ -220,11 +329,11 @@ const Inventory = ({
     const response = await api.get(`products/${productId}/update-stock`);
     try {
       if (response.data) {
-        setDetails(response.data)
+        setDetails(response.data);
         // console.log(response.data)
       }
-    }catch(error){
-      console.log(error)
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -317,7 +426,30 @@ const Inventory = ({
             className={styles.searchInput}
           />
         </div>
+        <div className={styles.actions}>
+          <button
+            className={styles.updateStockButton}
+            onClick={() => setIsBulkDiscountModalOpen(true)}
+          >
+            <FaEdit /> All Products Discount
+          </button>
+        </div>
+        <div className={styles.actions} style={{ background: "red" }}>
+          <button
+            className={styles.updateStockButton}
+            style={{ background: "red" }}
+            onClick={handleClearAllDiscounts}
+          >
+            <FaTrash /> Clear All discounts
+          </button>
+        </div>
       </div>
+
+      <BulkDiscountModal
+        isOpen={isBulkDiscountModalOpen}
+        onClose={() => setIsBulkDiscountModalOpen(false)}
+        onApplyDiscount={handleBulkDiscount}
+      />
 
       <div className={styles.tableContainer}>
         <table className={styles.dataTable}>
@@ -337,6 +469,7 @@ const Inventory = ({
                 Price{" "}
                 {sortBy === "price" && (sortDirection === "asc" ? "▲" : "▼")}
               </th>
+              <th>Discount Price</th>
               <th
                 onClick={() => handleSort("stock")}
                 className={styles.sortableHeader}
@@ -346,6 +479,7 @@ const Inventory = ({
               </th>
               <th>Status</th>
               <th>Actions</th>
+              <th>Discount</th>
             </tr>
           </thead>
           <tbody>
@@ -355,6 +489,7 @@ const Inventory = ({
                 <tr key={product.id}>
                   <td className={styles.productName}>{product.name}</td>
                   <td>₦{product.price}</td>
+                  <td>₦{product.promotion_price}</td>
                   <td>
                     {product.stock === 0 ? (
                       <span className={styles.outOfStock}>
@@ -381,11 +516,22 @@ const Inventory = ({
                     <div className={styles.actions}>
                       <button
                         className={styles.updateStockButton}
-                        onClick={() => [handleUpdateStock(product), fetchDetails(product.id)]}
+                        onClick={() => [
+                          handleUpdateStock(product),
+                          fetchDetails(product.id),
+                        ]}
                       >
                         <FaEdit /> Update Stock
                       </button>
                     </div>
+                  </td>
+                  <td>
+                    <button
+                      className={styles.editButton}
+                      onClick={() => handlePromotionClick(product)}
+                    >
+                      <FaEdit />
+                    </button>
                   </td>
                 </tr>
               );
@@ -393,6 +539,13 @@ const Inventory = ({
           </tbody>
         </table>
       </div>
+
+      <PromotionModal
+        isOpen={isPromotionModalOpen}
+        onClose={() => setIsPromotionModalOpen(false)}
+        product={selectedProductForPromotion}
+        onUpdatePromotion={handleUpdatePromotion}
+      />
 
       {/* Update Stock Modal */}
       <UpdateStockModal

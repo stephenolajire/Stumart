@@ -1092,5 +1092,179 @@ class ProductStockHistoryAPIView(APIView):
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+class ProductPromtionAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, product_id):
+        try:
+            # Correct way to use get() method
+            new_price = request.data.get('promotional_price')
+            
+            if new_price is None:
+                return Response({
+                    'error': 'Promotional price is required'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            try:
+                new_price = float(new_price)
+                if new_price < 0:
+                    raise ValueError("Price cannot be negative")
+            except (TypeError, ValueError):
+                return Response({
+                    'error': 'Invalid price format'
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+            user = request.user
+            if user.user_type.lower() != "vendor":
+                return Response({
+                    'error': 'You are not permitted to carry out this action'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            try:
+                product = Product.objects.get(id=product_id, vendor=user)
+            except Product.DoesNotExist:
+                return Response({
+                    'error': 'Product not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            if new_price >= product.price:
+                return Response({
+                    'error': 'Promotional price must be less than original price'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            product.promotion_price = new_price
+            product.save()
+            
+            return Response({
+                'success': True,
+                'message': 'Promotional price has been saved successfully',
+                'data': {
+                    'product_id': product.id,
+                    'original_price': product.price,
+                    'promotional_price': product.promotion_price
+                }
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
 
-
+class BulkDiscountAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        try:
+            # Verify user is a vendor
+            user = request.user
+            if user.user_type.lower() != "vendor":
+                return Response({
+                    'error': 'Only vendors can apply bulk discounts'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            # Get all products for this vendor
+            products = Product.objects.filter(vendor=user)
+            if not products.exists():
+                return Response({
+                    'error': 'No products found for this vendor'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Get discount parameters
+            discount_type = request.data.get('discount_type')
+            discount_value = request.data.get('discount_value')
+            
+            if not discount_type or not discount_value:
+                return Response({
+                    'error': 'Both discount_type and discount_value are required'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            try:
+                discount_value = float(discount_value)
+                if discount_value <= 0:
+                    raise ValueError("Discount must be greater than 0")
+            except (TypeError, ValueError):
+                return Response({
+                    'error': 'Invalid discount value'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Process discount based on type
+            updated_products = []
+            
+            with transaction.atomic():
+                for product in products:
+                    original_price = float(product.price)
+                    
+                    if discount_type:
+                        if discount_value > 100:
+                            return Response({
+                                'error': 'Percentage discount cannot exceed 100%'
+                            }, status=status.HTTP_400_BAD_REQUEST)
+                        
+                        # Calculate discount amount
+                        discount_amount = (discount_value / 100) * original_price
+                        new_price = original_price - discount_amount
+                    
+                    elif discount_type:
+                        if discount_value >= original_price:
+                            continue  # Skip products where discount is greater than price
+                        new_price = original_price - discount_value
+                    
+                    else:
+                        return Response({
+                            'error': 'Invalid discount type. Must be "percentage" or "fixed"'
+                        }, status=status.HTTP_400_BAD_REQUEST)
+                    
+                    # Update product with new promotional price
+                    product.promotion_price = round(new_price, 2)
+                    product.save()
+                    
+                    updated_products.append({
+                        'product_id': product.id,
+                        'name': product.name,
+                        'original_price': original_price,
+                        'promotional_price': product.promotion_price
+                    })
+            
+            return Response({
+                'success': True,
+                'message': f'Bulk discount applied successfully to {len(updated_products)} products',
+                'discount_type': discount_type,
+                'discount_value': discount_value,
+                'updated_products': updated_products
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({
+                'error': f'Failed to apply bulk discount: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def delete(self, request):
+        """Remove all promotional prices for vendor's products"""
+        try:
+            user = request.user
+            if user.user_type.lower() != "vendor":
+                return Response({
+                    'error': 'Only vendors can remove bulk discounts'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            # Get all products and set promotional prices to original price instead of null
+            products = Product.objects.filter(vendor=user)
+            updated_count = 0
+            
+            with transaction.atomic():
+                for product in products:
+                    if product.promotion_price is not None:
+                        product.promotion_price = 0.00  # Set to original price instead of null
+                        product.save()
+                        updated_count += 1
+            
+            return Response({
+                'success': True,
+                'message': f'Removed promotional prices from {updated_count} products'
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({
+                'error': f'Failed to remove bulk discount: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

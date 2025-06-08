@@ -155,7 +155,7 @@
 /* Filters Section */
 .filters {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(24rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
   gap: 2rem;
   margin-bottom: 3.2rem;
   padding: 2.4rem;

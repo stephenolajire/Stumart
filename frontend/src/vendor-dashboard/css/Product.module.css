@@ -249,18 +249,6 @@
     box-shadow: 0 0.4rem 0.8rem rgba(59, 130, 246, 0.4);
   }
   
-  .editButton {
-    background-color: var(--primary-500);
-    color: white;
-    box-shadow: 0 0.2rem 0.4rem rgba(218, 165, 32, 0.3);
-  }
-  
-  .editButton:hover {
-    background-color: var(--primary-600);
-    transform: translateY(-0.2rem);
-    box-shadow: 0 0.4rem 0.8rem rgba(218, 165, 32, 0.4);
-  }
-  
   .deleteButton {
     background-color: var(--error);
     color: white;

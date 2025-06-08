@@ -587,26 +587,30 @@ class CartItemsView(APIView):
             # Serialize the cart items 
             cart_item_serializer = CartItemSerializer(cart_items, many=True) 
             
-            # Calculate subtotal
-            sub_total = sum(item.product.price * item.quantity for item in cart_items if hasattr(item.product, 'price'))
+            # Calculate subtotal considering promotion prices
+            sub_total = Decimal('0.00')
+            for item in cart_items:
+                if hasattr(item.product, 'promotion_price') and item.product.promotion_price and item.product.promotion_price > Decimal('0.00'):
+                    # Use promotion price if it exists and is greater than 0
+                    sub_total += item.product.promotion_price * item.quantity
+                else:
+                    # Use regular price if no valid promotion price
+                    sub_total += item.product.price * item.quantity
             
             # Get unique vendors from cart items
             unique_vendors = set(item.product.vendor for item in cart_items if hasattr(item.product, 'vendor'))
             num_vendors = len(unique_vendors)
             
-            # Calculate shipping fee (300 per vendor) - convert to Decimal
-            shipping_fee = Decimal(300) * num_vendors
+            # Calculate shipping fee (300 per vendor)
+            shipping_fee = Decimal('300') * num_vendors
             
-            # Calculate tax (3% of subtotal) - convert to Decimal
+            # Calculate tax (3% of subtotal)
             tax = sub_total * Decimal('0.030')  # 3% tax
-
-            print(unique_vendors)
-            print(shipping_fee)
             
             # Calculate total
             total = sub_total + shipping_fee + tax
             
-            # Format response in the exact structure expected by frontend 
+            # Format response data
             response_data = { 
                 "items": cart_item_serializer.data, 
                 "sub_total": sub_total,

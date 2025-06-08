@@ -4,7 +4,7 @@
 .homeContainer {
   width: 100%;
   margin: 0 auto;
-  padding: 0 6rem;
+  padding: 0 2rem;
   font-size: 1.6rem;
   color: var(--text-primary);
   margin-top: 11rem;
@@ -19,7 +19,7 @@
   background: linear-gradient(to right, var(--primary-600), var(--primary-500));
   border-radius: 1rem;
   margin: 2rem 0 4rem;
-  padding: 5rem 2rem;
+  padding: 2rem 2rem;
   color: var(--neutral-white);
   box-shadow: 0 4px 12px var(--shadow);
   overflow: hidden;
@@ -441,7 +441,7 @@
 
 .filterGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
   gap: 2rem;
 }
 
@@ -522,7 +522,7 @@
 
 .shopsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr));
   gap: 2.4rem;
   margin-bottom: 4rem;
 }
