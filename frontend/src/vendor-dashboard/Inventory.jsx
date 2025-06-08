@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   FaSearch,
   FaExclamationTriangle,
@@ -6,13 +6,22 @@ import {
   FaEdit,
 } from "react-icons/fa";
 import Swal from "sweetalert2";
+import UpdateStockModal from "./UpdateStockModal";
 import styles from "./css/Inventory.module.css";
+import api from "../constant/api";
 
-const Inventory = ({ products, onUpdateStock }) => {
+const Inventory = ({
+  products,
+  onUpdateStock,
+  businessCategory = "fashion",
+}) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [sortBy, setSortBy] = useState("name");
   const [sortDirection, setSortDirection] = useState("asc");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [details, setDetails] = useState({})
 
   // Calculate inventory metrics
   const totalItems = products ? products.length : 0;
@@ -32,23 +41,191 @@ const Inventory = ({ products, onUpdateStock }) => {
     }
   };
 
-  const handleUpdateStock = (productId, currentStock) => {
-    Swal.fire({
-      title: "Update Stock",
-      input: "number",
-      inputLabel: "Enter new stock quantity",
-      inputValue: currentStock,
-      showCancelButton: true,
-      inputValidator: (value) => {
-        if (!value || parseInt(value) < 0) {
-          return "Please enter a valid stock quantity";
+  const handleUpdateStock = (product) => {
+    // Debug: Log the product to ensure it has the correct structure
+    console.log("Selected product for update:", product);
+    console.log("Product ID:", product?.id, typeof product?.id);
+
+    // Validate product data
+    if (!product) {
+      console.error("No product provided");
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No product selected for update",
+      });
+      return;
+    }
+
+    if (!product.id) {
+      console.error("Product ID is missing:", product);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Product ID is missing",
+      });
+      return;
+    }
+
+    // Ensure ID is a number
+    const productId = parseInt(product.id);
+    if (isNaN(productId)) {
+      console.error("Invalid product ID:", product.id);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Invalid product ID",
+      });
+      return;
+    }
+
+    setSelectedProduct(product);
+    setIsModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    setSelectedProduct(null);
+  };
+
+  // Fixed stock update handler with proper error handling and field mapping
+  const handleStockUpdate = async (stockData) => {
+    try {
+      // console.log("Raw stock data received:", stockData);
+
+      const formData = new FormData();
+
+      // Map the correct field name - your backend expects 'in_stock'
+      formData.append("in_stock", stockData.in_stock || stockData.stock || 0);
+      formData.append("price", stockData.price)
+
+      // Add sizes as JSON string if they exist
+      if (
+        stockData.sizes &&
+        Array.isArray(stockData.sizes) &&
+        stockData.sizes.length > 0
+      ) {
+        // Filter out invalid sizes
+        const validSizes = stockData.sizes.filter(
+          (size) =>
+            size &&
+            size.size &&
+            typeof size.quantity === "number" &&
+            size.quantity >= 0
+        );
+
+        if (validSizes.length > 0) {
+          formData.append("sizes", JSON.stringify(validSizes));
+          // console.log("Sending sizes:", validSizes);
         }
-      },
-    }).then((result) => {
-      if (result.isConfirmed) {
-        onUpdateStock(productId, parseInt(result.value));
       }
-    });
+
+      // Add colors as JSON string if they exist
+      if (
+        stockData.colors &&
+        Array.isArray(stockData.colors) &&
+        stockData.colors.length > 0
+      ) {
+        // Filter out invalid colors
+        const validColors = stockData.colors.filter(
+          (color) =>
+            color &&
+            color.color &&
+            typeof color.quantity === "number" &&
+            color.quantity >= 0
+        );
+
+        if (validColors.length > 0) {
+          formData.append("colors", JSON.stringify(validColors));
+          // console.log("Sending colors:", validColors);
+        }
+      }
+
+      // Add new images if they exist
+      if (stockData.newImages && Array.isArray(stockData.newImages)) {
+        const validImages = stockData.newImages.filter(
+          (imageObj) => imageObj && imageObj.image
+        );
+
+        validImages.forEach((imageObj, index) => {
+          formData.append("new_images", imageObj.image);
+        });
+
+        if (validImages.length > 0) {
+          console.log(`Sending ${validImages.length} new images`);
+        }
+      }
+
+      // Debug: Log all FormData entries
+      console.log("FormData entries:");
+      for (let [key, value] of formData.entries()) {
+        // console.log(`${key}:`, value);
+      }
+
+      const response = await api.post(
+        `products/${stockData.productId}/update-stock/`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      console.log("Stock update response:", response.data);
+
+      // Show success message
+      await Swal.fire({
+        icon: "success",
+        title: "Success!",
+        text: "Stock updated successfully",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+
+      // Close modal
+      handleModalClose();
+
+      // Call the parent update function if provided
+      if (onUpdateStock && typeof onUpdateStock === "function") {
+        onUpdateStock(response.data.product);
+      }
+
+      return response.data;
+    } catch (error) {
+      console.error("Error updating stock:", error);
+
+      // Extract error message
+      let errorMessage = "Failed to update stock. Please try again.";
+      if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      // Show error message
+      await Swal.fire({
+        icon: "error",
+        title: "Update Failed",
+        text: errorMessage,
+      });
+
+      throw error;
+    }
+  };
+
+  const fetchDetails = async (productId) => {
+    const response = await api.get(`products/${productId}/update-stock`);
+    try {
+      if (response.data) {
+        setDetails(response.data)
+        // console.log(response.data)
+      }
+    }catch(error){
+      console.log(error)
+    }
   };
 
   const getSortedProducts = () => {
@@ -104,11 +281,6 @@ const Inventory = ({ products, onUpdateStock }) => {
 
   return (
     <div className={styles.inventorySection}>
-      {/* <div className={styles.sectionHeader}>
-        <h2 style={{marginBottom:"2rem"}}>Inventory Management</h2>
-        
-      </div> */}
-
       <div className={styles.inventorySummary}>
         <div className={styles.summaryCard}>
           <h3>Total Products</h3>
@@ -209,9 +381,7 @@ const Inventory = ({ products, onUpdateStock }) => {
                     <div className={styles.actions}>
                       <button
                         className={styles.updateStockButton}
-                        onClick={() =>
-                          handleUpdateStock(product.id, product.stock)
-                        }
+                        onClick={() => [handleUpdateStock(product), fetchDetails(product.id)]}
                       >
                         <FaEdit /> Update Stock
                       </button>
@@ -223,6 +393,16 @@ const Inventory = ({ products, onUpdateStock }) => {
           </tbody>
         </table>
       </div>
+
+      {/* Update Stock Modal */}
+      <UpdateStockModal
+        isOpen={isModalOpen}
+        onClose={handleModalClose}
+        product={selectedProduct}
+        onUpdateStock={handleStockUpdate}
+        businessCategory={businessCategory}
+        details={details}
+      />
     </div>
   );
 };

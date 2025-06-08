@@ -21,7 +21,7 @@ const ManageVendors = () => {
   const fetchVendors = async () => {
     try {
       setLoading(true);
-      let url = "vendors/";
+      let url = "admin/vendors/";
       const params = new URLSearchParams();
 
       if (query) params.append("query", query);

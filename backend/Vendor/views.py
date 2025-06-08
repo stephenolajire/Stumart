@@ -14,6 +14,8 @@ from .models import VendorStats, VendorRevenueData, VendorSalesData, Withdrawal
 from .serializers import (
     ProductSerializer, OrderSerializer, TransactionSerializer,  DashboardStatsSerializer, WithdrawalSerializer
 )
+from Stumart.models import *
+from django.db import transaction
 import requests
 from django.conf import settings
 import uuid
@@ -709,3 +711,386 @@ class PickerDetailsView(APIView):
                 {'error': str(e)}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+class UpdateStockAPIView(APIView):
+    """API View to handle stock update operations"""
+    
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, product_id):
+        """Fetch product data for the update stock modal"""
+        try:
+            # Get the product and ensure it belongs to the current user
+            product = get_object_or_404(
+                Product.objects.select_related('vendor').prefetch_related(
+                    'sizes', 'colors', 'additional_images'
+                ),
+                id=product_id,
+                vendor=request.user
+            )
+            
+            # Prepare response data
+            product_data = {
+                'id': product.id,
+                'name': product.name,
+                'stock': product.in_stock,
+                'price':product.price,
+                'sizes': [
+                    {
+                        'size': size.size,
+                        'quantity': size.quantity
+                    }
+                    for size in product.sizes.all()
+                ],
+                'colors': [
+                    {
+                        'color': color.color,
+                        'quantity': color.quantity
+                    }
+                    for color in product.colors.all()
+                ],
+                'additional_images': [
+                    {
+                        'id': img.id,
+                        'url': img.image.url if img.image else None
+                    }
+                    for img in product.additional_images.all()
+                ],
+                'business_category': self.get_business_category(request.user)
+            }
+            
+            return Response({
+                'success': True,
+                'product': product_data
+            }, status=status.HTTP_200_OK)
+            
+        except Product.DoesNotExist:
+            return Response({
+                'success': False,
+                'error': 'Product not found or you do not have permission to access it.'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def post(self, request, product_id):
+        try:
+            # Get the product and ensure it belongs to the current user
+            product = get_object_or_404(
+                Product,
+                id=product_id,
+                vendor=request.user
+            )
+            
+            # Get request data
+            data = request.data
+            print("request.data:", data)
+            business_category = self.get_business_category(request.user)
+            
+            # Start database transaction
+            with transaction.atomic():
+                
+                # Handle price update if provided
+                if 'price' in data and data['price'] is not None:
+                    try:
+                        new_price = float(data['price'])
+                        if new_price >= 0:  # Validate price is not negative
+                            product.price = new_price
+                    except (ValueError, TypeError):
+                        return Response({
+                            'success': False,
+                            'error': 'Invalid price format'
+                        }, status=status.HTTP_400_BAD_REQUEST)
+                
+                # Handle stock update for ALL business categories
+                if 'in_stock' in data and data['in_stock'] is not None:
+                    try:
+                        additional_stock = int(data['in_stock'])
+                        if additional_stock >= 0:  # Only allow positive additions
+                            product.in_stock += additional_stock
+                    except (ValueError, TypeError):
+                        return Response({
+                            'success': False,
+                            'error': 'Invalid stock quantity format'
+                        }, status=status.HTTP_400_BAD_REQUEST)
+                
+                # Handle fashion-specific sizes and colors (in addition to stock update)
+                if business_category == 'fashion':
+                    sizes_data = []
+                    colors_data = []
+                    
+                    # Parse sizes data if provided
+                    if 'sizes' in data and data['sizes']:
+                        if isinstance(data['sizes'], str):
+                            try:
+                                sizes_data = json.loads(data['sizes'])
+                            except json.JSONDecodeError:
+                                return Response({
+                                    'success': False,
+                                    'error': 'Invalid sizes data format'
+                                }, status=status.HTTP_400_BAD_REQUEST)
+                        else:
+                            sizes_data = data['sizes']
+                    
+                    # Parse colors data if provided
+                    if 'colors' in data and data['colors']:
+                        if isinstance(data['colors'], str):
+                            try:
+                                colors_data = json.loads(data['colors'])
+                            except json.JSONDecodeError:
+                                return Response({
+                                    'success': False,
+                                    'error': 'Invalid colors data format'
+                                }, status=status.HTTP_400_BAD_REQUEST)
+                        else:
+                            colors_data = data['colors']
+                    
+                    # Update sizes - increment existing or create new
+                    if sizes_data:
+                        for size_data in sizes_data:
+                            size_name = size_data.get('size', '').strip()
+                            quantity = size_data.get('quantity', 0)
+                            
+                            if size_name and quantity > 0:
+                                try:
+                                    quantity = int(quantity)
+                                    # Try to get existing size
+                                    existing_size = ProductSize.objects.filter(
+                                        product=product,
+                                        size__iexact=size_name  # Case insensitive comparison
+                                    ).first()
+                                    
+                                    if existing_size:
+                                        # Increment existing quantity
+                                        existing_size.quantity += quantity
+                                        existing_size.save()
+                                    else:
+                                        # Create new size
+                                        ProductSize.objects.create(
+                                            product=product,
+                                            size=size_name,
+                                            quantity=quantity
+                                        )
+                                except (ValueError, TypeError):
+                                    return Response({
+                                        'success': False,
+                                        'error': f'Invalid quantity for size {size_name}'
+                                    }, status=status.HTTP_400_BAD_REQUEST)
+                    
+                    # Update colors - increment existing or create new
+                    if colors_data:
+                        for color_data in colors_data:
+                            color_name = color_data.get('color', '').strip()
+                            quantity = color_data.get('quantity', 0)
+                            
+                            if color_name and quantity > 0:
+                                try:
+                                    quantity = int(quantity)
+                                    # Try to get existing color
+                                    existing_color = ProductColor.objects.filter(
+                                        product=product,
+                                        color__iexact=color_name  # Case insensitive comparison
+                                    ).first()
+                                    
+                                    if existing_color:
+                                        # Increment existing quantity
+                                        existing_color.quantity += quantity
+                                        existing_color.save()
+                                    else:
+                                        # Create new color
+                                        ProductColor.objects.create(
+                                            product=product,
+                                            color=color_name,
+                                            quantity=quantity
+                                        )
+                                except (ValueError, TypeError):
+                                    return Response({
+                                        'success': False,
+                                        'error': f'Invalid quantity for color {color_name}'
+                                    }, status=status.HTTP_400_BAD_REQUEST)
+                    
+                    # Optional: Recalculate total stock for fashion products based on sizes/colors
+                    # This section can be kept if you want fashion products to sync their main stock 
+                    # with their size/color quantities, or removed if you want them independent
+                    if sizes_data or colors_data:
+                        total_size_stock = sum(
+                            size.quantity for size in ProductSize.objects.filter(product=product)
+                        )
+                        total_color_stock = sum(
+                            color.quantity for color in ProductColor.objects.filter(product=product)
+                        )
+                        
+                        # Update main stock based on sizes/colors if they were modified
+                        if total_size_stock > 0 and total_color_stock > 0:
+                            # If both sizes and colors exist, you might want to use a different logic
+                            # This assumes they're independent tracking
+                            product.in_stock = max(total_size_stock, total_color_stock)
+                        elif total_size_stock > 0:
+                            product.in_stock = total_size_stock
+                        elif total_color_stock > 0:
+                            product.in_stock = total_color_stock
+                
+                # Handle additional images if provided
+                new_images = request.FILES.getlist('new_images')
+                added_images = []
+                
+                if new_images:
+                    for image_file in new_images:
+                        if image_file and self.is_valid_image(image_file):
+                            new_image = ProductImage.objects.create(
+                                product=product,
+                                image=image_file
+                            )
+                            added_images.append({
+                                'id': new_image.id,
+                                'url': new_image.image.url
+                            })
+                        else:
+                            return Response({
+                                'success': False,
+                                'error': f'Invalid image file: {image_file.name if hasattr(image_file, "name") else "Unknown"}'
+                            }, status=status.HTTP_400_BAD_REQUEST)
+                
+                # Save the product with updated information
+                product.save()
+                
+                # Prepare response data with updated information
+                updated_product = {
+                    'id': product.id,
+                    'name': product.name,
+                    'stock': product.in_stock,
+                    'price': float(product.price),
+                    'sizes': [
+                        {
+                            'size': size.size,
+                            'quantity': size.quantity
+                        }
+                        for size in ProductSize.objects.filter(product=product)
+                    ],
+                    'colors': [
+                        {
+                            'color': color.color,
+                            'quantity': color.quantity
+                        }
+                        for color in ProductColor.objects.filter(product=product)
+                    ],
+                    'additional_images': [
+                        {
+                            'id': img.id,
+                            'url': img.image.url if img.image else None
+                        }
+                        for img in ProductImage.objects.filter(product=product)
+                    ],
+                    'new_images_added': added_images
+                }
+                
+                # Create response message based on what was updated
+                updates = []
+                if 'price' in data and data['price'] is not None:
+                    updates.append("price")
+                if 'in_stock' in data and data['in_stock'] is not None:
+                    updates.append("stock")
+                if business_category == 'fashion':
+                    if sizes_data:
+                        updates.append("sizes")
+                    if colors_data:
+                        updates.append("colors")
+                if new_images:
+                    updates.append("images")
+                
+                update_message = f"Successfully updated: {', '.join(updates)}" if updates else "No changes made"
+                
+                return Response({
+                    'success': True,
+                    'message': update_message,
+                    'product': updated_product
+                }, status=status.HTTP_200_OK)
+                
+        except ValueError as e:
+            return Response({
+                'success': False,
+                'error': f'Invalid data format: {str(e)}'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print(f"Error in UpdateStockAPIView: {str(e)}")  # For debugging
+            return Response({
+                'success': False,
+                'error': f'An error occurred while updating product: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def get_business_category(self, user):
+        """Get the business category for the vendor"""
+        try:
+            vendor = Vendor.objects.get(user=user)
+            return getattr(vendor, 'business_category', 'fashion')
+        except Vendor.DoesNotExist:
+            return 'fashion'  # Default to fashion
+    
+    def is_valid_image(self, image_file):
+        """Validate uploaded image file"""
+        # Check file size (max 5MB)
+        if image_file.size > 5 * 1024 * 1024:
+            return False
+        
+        # Check file type
+        allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+        if image_file.content_type not in allowed_types:
+            return False
+        
+        return True
+
+
+class ProductStockHistoryAPIView(APIView):
+    """API View to get stock update history for a product"""
+    
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, product_id):
+        """Get stock update history for a product"""
+        try:
+            # Get the product and ensure it belongs to the current user
+            product = get_object_or_404(
+                Product,
+                id=product_id,
+                vendor=request.user
+            )
+            
+            # Note: You would need to implement a StockHistory model to track changes
+            # For now, returning current stock information
+            stock_info = {
+                'product_id': product.id,
+                'product_name': product.name,
+                'current_stock': product.in_stock,
+                'last_updated': product.updated_at,
+                'sizes': [
+                    {
+                        'size': size.size,
+                        'quantity': size.quantity
+                    }
+                    for size in product.sizes.all()
+                ],
+                'colors': [
+                    {
+                        'color': color.color,
+                        'quantity': color.quantity
+                    }
+                    for color in product.colors.all()
+                ]
+            }
+            
+            return Response({
+                'success': True,
+                'stock_info': stock_info
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+

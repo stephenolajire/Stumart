@@ -22,7 +22,7 @@ urlpatterns = [
     path('users/<int:user_id>/', UsersAPIView.as_view(), name='user_detail'),
     
     # Vendors management
-    path('vendors/', VendorsAPIView.as_view(), name='vendors_list'),
+    path('admin/vendors/', VendorsAPIView.as_view(), name='vendors_list'),
     path('vendors/<int:vendor_id>/', VendorsAPIView.as_view(), name='vendor_detail'),
     
     # Pickers management

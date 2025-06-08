@@ -57,9 +57,9 @@ const VendorDashboard = () => {
         vendorApi.getOrders(),
       ]);
 
-      console.log("Stats Data:", statsData); // Debug log
-      console.log("Products Data:", productsData); // Debug log
-      console.log("Orders Data:", ordersData); // Debug log
+      // console.log("Stats Data:", statsData); // Debug log
+      // console.log("Products Data:", productsData); // Debug log
+      // console.log("Orders Data:", ordersData); // Debug log
 
       setStats(statsData);
       setProducts(productsData);

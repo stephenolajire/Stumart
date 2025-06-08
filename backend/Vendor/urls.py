@@ -2,6 +2,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
+from .views import UpdateStockAPIView, ProductStockHistoryAPIView
 
 router = DefaultRouter()
 router.register(r'vendor-items', views.ProductViewSet, basename='vendor-products')
@@ -19,4 +20,13 @@ urlpatterns = [
     # picker reviews
     path('vendor/reviews/', views.VendorReviewsAPIView.as_view(), name='vendor_reviews'),
     path('assigned/picker/', views.PickerDetailsView.as_view(), name='picker-details'),
+
+    # Stock update endpoints
+    path('products/<int:product_id>/update-stock/', 
+         UpdateStockAPIView.as_view(), 
+         name='update_stock'),
+    
+    path('products/<int:product_id>/stock-history/', 
+         ProductStockHistoryAPIView.as_view(), 
+         name='product_stock_history'),
 ]
