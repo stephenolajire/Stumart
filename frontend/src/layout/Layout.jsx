@@ -1,20 +1,40 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Navigation from "../components/Navigation";
 import Footer from "../components/Footer";
 import { Outlet } from "react-router-dom";
 import { FaPlayCircle, FaTimes, FaComments } from "react-icons/fa";
 import Chatbot from "../chatbot/Chatbot";
 import styles from "../css/Layout.module.css";
-import vendorReg from "../assets/registration.mp4"
-import pickerReg from "../assets/registration.mp4";
-import customerReg from "../assets/registration.mp4";
-import addProduct from "../assets/addproduct.mp4";
+// import vendorReg from "../assets/registration.mp4"
+// import pickerReg from "../assets/registration.mp4";
+// import customerReg from "../assets/registration.mp4";
+// import addProduct from "../assets/addproduct.mp4";
+import api from "../constant/api";
 
 const Layout = () => {
   const [showModal, setShowModal] = useState(false);
+
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [videos, setVideos] = useState({})
+
+  const vendorReg = videos.register_video.video_secure_url
+  const pickerReg = videos.register_video.video_secure_url;
+  const customerReg = videos.register_video.video_secure_url;
+  const addProduct = videos.product_video.video_secure_url;
+
+ const fetchVideos = async() => {
+  const response = await api.get('videos/both/')
+  if (response.data) {
+    setVideos(response.data)
+    console.log(response.data)
+  }
+ }
+
+ useEffect(()=> {
+  fetchVideos()
+ }, [])
 
   const toggleModal = () => {
     setShowModal(!showModal);

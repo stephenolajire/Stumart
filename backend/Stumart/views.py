@@ -2528,3 +2528,34 @@ class UserReviewListView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+
+class GetBothVideosView(APIView):
+    """Get both register and product videos"""
+    
+    def get(self, request):
+        try:
+            register_video = RegisterVideo.objects.first()
+            product_video = AddProductVideo.objects.first()
+            
+            register_data = None
+            product_data = None
+            
+            if register_video:
+                register_serializer = RegisterVideoSerializer(register_video)
+                register_data = register_serializer.data
+                
+            if product_video:
+                product_serializer = AddProductVideoSerializer(product_video)
+                product_data = product_serializer.data
+                
+            return Response({
+                'success': True,
+                'register_video': register_data,
+                'product_video': product_data
+            })
+            
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

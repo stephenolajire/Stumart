@@ -383,3 +383,65 @@ class ProductReview(models.Model):
                 raise ValueError("Cannot review a product that wasn't purchased in this order")
         
         super().save(*args, **kwargs)
+
+
+from django.core.exceptions import ValidationError
+
+def validate_video_file(value):
+    """Validate that the uploaded file is a video"""
+    valid_extensions = ['.mp4', '.avi', '.mov', '.wmv', '.flv', '.webm']
+    if not any(value.name.lower().endswith(ext) for ext in valid_extensions):
+        raise ValidationError('Only video files are allowed.')
+
+class RegisterVideo(models.Model):
+    file = CloudinaryField(
+        'video',
+        resource_type='video',
+        help_text='Upload video files only (mp4, avi, mov, wmv, flv, webm)'
+    )
+    name = models.CharField(max_length=200)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return self.name
+    
+    @property
+    def video_url(self):
+        """Get the video URL from Cloudinary"""
+        if self.file:
+            return self.file.url
+        return None
+    
+    @property
+    def video_secure_url(self):
+        """Get the secure video URL from Cloudinary"""
+        if self.file:
+            return self.file.url.replace('http://', 'https://')
+        return None
+
+class AddProductVideo(models.Model):
+    file = CloudinaryField(
+        'video',
+        resource_type='video',
+        help_text='Upload video files only (mp4, avi, mov, wmv, flv, webm)'
+    )
+    name = models.CharField(max_length=200)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return self.name
+    
+    @property
+    def video_url(self):
+        """Get the video URL from Cloudinary"""
+        if self.file:
+            return self.file.url
+        return None
+    
+    @property
+    def video_secure_url(self):
+        """Get the secure video URL from Cloudinary"""
+        if self.file:
+            return self.file.url.replace('http://', 'https://')
+        return None
+

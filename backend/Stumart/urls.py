@@ -56,4 +56,6 @@ urlpatterns = [
     
     # Get all reviews by the current user
     path('user/reviews/', UserReviewListView.as_view(), name='get_user_reviews'),
+
+    path('videos/both/', GetBothVideosView.as_view(), name='get-both-videos'),
 ]

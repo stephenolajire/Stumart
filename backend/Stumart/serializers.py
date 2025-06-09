@@ -547,3 +547,34 @@ class ProductReviewListSerializer(serializers.Serializer):
     """Serializer for the complete review list response"""
     reviews = ProductReviewSerializer(many=True)
     stats = ProductReviewStatsSerializer()
+
+
+class RegisterVideoSerializer(serializers.ModelSerializer):
+    video_url = serializers.SerializerMethodField()
+    video_secure_url = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = RegisterVideo
+        fields = ['id', 'name', 'video_url', 'video_secure_url', 'uploaded_at']
+    
+    def get_video_url(self, obj):
+        return obj.video_url
+    
+    def get_video_secure_url(self, obj):
+        return obj.video_secure_url
+
+class AddProductVideoSerializer(serializers.ModelSerializer):
+    video_url = serializers.SerializerMethodField()
+    video_secure_url = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = AddProductVideo
+        fields = ['id', 'name', 'video_url', 'video_secure_url', 'uploaded_at']
+    
+    def get_video_url(self, obj):
+        return obj.video_url
+    
+    def get_video_secure_url(self, obj):
+        return obj.video_secure_url
+    
+    

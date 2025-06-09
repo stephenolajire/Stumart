@@ -123,3 +123,6 @@ class VendorReviewAdmin(admin.ModelAdmin):
     list_display = ('vendor', 'rating', 'comment', 'created_at')
     search_fields = ('vendor__business_name', 'comment')
     list_filter = ('rating', 'created_at')
+
+admin.site.register(AddProductVideo)
+admin.site.register(RegisterVideo)
