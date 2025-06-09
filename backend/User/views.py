@@ -81,6 +81,12 @@ class BaseAPIView(APIView):
                     'error': 'Registration failed. Please try again.',
                     'detail': str(e)
                 }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            # This was missing - always return a Response!
+            return Response({
+                'error': 'Validation failed',
+                'details': serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, pk):
         instance = get_object_or_404(self.model, pk=pk)
@@ -120,21 +126,69 @@ class UserAPIView(BaseAPIView):
 class StudentAPIView(BaseAPIView):
     model = Student
     serializer_class = StudentSerializer
+    
+    def post(self, request):
+        """Override the base post method with proper error handling"""
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            try:
+                # Save the instance
+                instance = serializer.save()
+                
+                # Get the user object
+                user = instance.user if hasattr(instance, 'user') else instance
+                
+                # Create OTP and send email
+                otp = OTP.objects.create(user=user)
+                
+                # Prepare email content using template
+                html_message = render_to_string('email/otp.html', {
+                    'user': user,
+                    'otp_code': otp.code,
+                })
+                
+                plain_message = strip_tags(html_message)
+                
+                # Send email
+                send_mail(
+                    subject='Verify your Stumart account',
+                    message=plain_message,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[user.email],
+                    html_message=html_message,
+                    fail_silently=False,
+                )
+                
+                # Return success response
+                return Response({
+                    'message': 'Student registration successful. Please check your email for verification code.',
+                    'user_id': user.id,
+                    'data': serializer.data
+                }, status=status.HTTP_201_CREATED)
+                
+            except Exception as e:
+                logger.error(f"Student registration error: {str(e)}")
+                return Response({
+                    'error': 'Student registration failed. Please try again.',
+                    'detail': str(e)
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            return Response({
+                'error': 'Validation failed',
+                'details': serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request, pk=None):
+        """Override get method for students"""
         if pk:
             student = get_object_or_404(Student, pk=pk)
             serializer = StudentSerializer(student)
             return Response(serializer.data)
-
-        department = request.query_params.get('department')
-        if department:
-            students = Student.objects.filter(department=department)
-        else:
-            students = Student.objects.all()
-            
+        
+        students = Student.objects.all()
         serializer = StudentSerializer(students, many=True)
         return Response(serializer.data)
+
 
 class VendorAPIView(BaseAPIView):
     model = Vendor

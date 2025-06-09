@@ -69,27 +69,117 @@ const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // Error message mapping for backend errors
+  const errorMessages = {
+    phone_exists: "A user with this phone number already exists.",
+    email_exists: "A user with this email already exists.",
+    username_exists: "A user with this username already exists.",
+    invalid_phone_format:
+      "Phone number must be a valid Nigerian mobile number (07xxxxxxxxx, 08xxxxxxxxx, or 09xxxxxxxxx).",
+    invalid_account_number: "Account number must be exactly 10 digits.",
+    invalid_email_format: "Please enter a valid email address.",
+    password_too_weak:
+      "Password must be at least 8 characters and contain uppercase, lowercase, and special characters.",
+    image_too_large: "Image file size must be less than 5MB.",
+    invalid_image_format: "Only JPEG, PNG, and GIF images are allowed.",
+    missing_required_field: "This field is required.",
+    invalid_matric_number: "Matric number already exists or is invalid format.",
+  };
+
+  // Handle backend validation errors
+  const handleBackendErrors = (errorResponse, options = { showSwal: true }) => {
+    const backendErrors = {};
+
+    if (!errorResponse?.data) return backendErrors;
+
+    // Handle validation details containing error messages
+    if (errorResponse.data.details) {
+      // Map through all validation errors
+      Object.entries(errorResponse.data.details).forEach(([field, errors]) => {
+        if (Array.isArray(errors)) {
+          backendErrors[field] = errors[0];
+        }
+      });
+
+      // Show validation errors in Swal if there are any
+      if (options.showSwal && Object.keys(backendErrors).length > 0) {
+        const errorMessages = Object.entries(errorResponse.data.details)
+          .map(([field, errors]) => `• ${errors[0]}`)
+          .join("<br>");
+
+        Swal.fire({
+          icon: "error",
+          title: "Registration Failed",
+          html: `The following errors occurred:<br><br>${errorMessages}`,
+          confirmButtonColor: "var(--primary-500)",
+        });
+      }
+    }
+
+    return backendErrors;
+  };
+
+  // Map frontend field names to backend field names
+  const mapFieldNames = (frontendErrors) => {
+    const fieldMapping = {
+      firstName: "first_name",
+      lastName: "last_name",
+      phoneNumber: "phone_number",
+      profilePic: "profile_pic",
+      fleetType: "fleet_type",
+      businessName: "business_name",
+      businessCategory: "business_category",
+      specificCategory: "specific_category",
+      shopImage: "shop_image",
+      hostelName: "hostel_name",
+      roomNumber: "room_number",
+      matricNumber: "matric_number",
+      accountNumber: "account_number",
+      accountName: "account_name",
+      bankName: "bank_name",
+    };
+
+    const mappedErrors = {};
+    Object.keys(frontendErrors).forEach((backendField) => {
+      // Find the frontend field name
+      const frontendField =
+        Object.keys(fieldMapping).find(
+          (key) => fieldMapping[key] === backendField
+        ) || backendField;
+
+      mappedErrors[frontendField] = frontendErrors[backendField];
+    });
+
+    return mappedErrors;
+  };
+
   // Validate form inputs
   const validateForm = () => {
     const newErrors = {};
 
     // Common validations
-    if (!formData.firstName.trim())
+    if (!formData.firstName?.trim()) {
       newErrors.firstName = "First name is required";
-    if (!formData.lastName.trim()) newErrors.lastName = "Last name is required";
+    }
+    if (!formData.lastName?.trim()) {
+      newErrors.lastName = "Last name is required";
+    }
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!formData.email.trim()) newErrors.email = "Email is required";
-    else if (!emailRegex.test(formData.email))
+    if (!formData.email?.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!emailRegex.test(formData.email)) {
       newErrors.email = "Invalid email format";
+    }
 
     // Phone number validation
     const phoneRegex = /^0[7-9]\d{9}$/;
-    if (!formData.phoneNumber.trim())
+    if (!formData.phoneNumber?.trim()) {
       newErrors.phoneNumber = "Phone number is required";
-    else if (!phoneRegex.test(formData.phoneNumber))
+    } else if (!phoneRegex.test(formData.phoneNumber)) {
       newErrors.phoneNumber = "Invalid phone number";
+    }
 
     // State and institution validation
     if (!formData.state) newErrors.state = "State is required";
@@ -124,54 +214,57 @@ const Signup = () => {
       newErrors.profilePic = "Profile picture is required";
     }
 
-    // Picker-specific validations
-    if (formData.userType === "Picker") {
-      if (!formData.fleetType) newErrors.fleetType = "Fleet type is required";
+    // User type specific validations
+    switch (formData.userType) {
+      case "Picker":
+        if (!formData.fleetType) {
+          newErrors.fleetType = "Fleet type is required";
+        }
+        break;
+
+      case "Vendor":
+        if (!formData.businessName?.trim()) {
+          newErrors.businessName = "Business name is required";
+        }
+        if (!formData.businessCategory) {
+          newErrors.businessCategory = "Business category is required";
+        }
+        if (
+          formData.businessCategory === "Others" &&
+          !formData.specificCategory
+        ) {
+          newErrors.specificCategory = "Please select a specific category";
+        }
+        if (!formData.shopImage) {
+          newErrors.shopImage = "Shop image is required";
+        }
+        break;
+
+      case "Student Picker":
+        if (!formData.hostelName?.trim()) {
+          newErrors.hostelName = "Hostel name is required";
+        }
+        if (!formData.roomNumber?.trim()) {
+          newErrors.roomNumber = "Room number is required";
+        }
+        break;
+
+      case "Student":
+        if (!formData.matricNumber?.trim()) {
+          newErrors.matricNumber = "Matric number is required";
+        }
+        if (!formData.department?.trim()) {
+          newErrors.department = "Department is required";
+        }
+        break;
     }
 
-    // Vendor-specific validations
-    if (formData.userType === "Vendor") {
-      if (!formData.businessName.trim()) {
-        newErrors.businessName = "Business name is required";
-      }
-      if (!formData.businessCategory) {
-        newErrors.businessCategory = "Business category is required";
-      }
-      if (
-        formData.businessCategory === "Others" &&
-        !formData.specificCategory
-      ) {
-        newErrors.specificCategory = "Please select a specific category";
-      }
-      if (!formData.shopImage) {
-        newErrors.shopImage = "Shop image is required";
-      }
-    }
-
-    // Student Picker-specific validations
-    if (formData.userType === "Student Picker") {
-      if (!formData.hostelName.trim())
-        newErrors.hostelName = "Hostel name is required";
-      if (!formData.roomNumber.trim())
-        newErrors.roomNumber = "Room number is required";
-    }
-
-    // Student-specific validations
-    if (formData.userType === "Student") {
-      if (!formData.matricNumber.trim()) {
-        newErrors.matricNumber = "Matric number is required";
-      }
-      if (!formData.department.trim()) {
-        newErrors.department = "Department is required";
-      }
-    }
-
-    // Bank account validations for Vendor, Picker, and Student Picker
+    // Bank account validations for specific user types
     if (["Vendor", "Picker", "Student Picker"].includes(formData.userType)) {
       if (!formData.bankName) {
         newErrors.bankName = "Please select a bank";
       }
-      if (!formData.accountName.trim()) {
+      if (!formData.accountName?.trim()) {
         newErrors.accountName = "Account name is required";
       }
       if (!/^[0-9]{10}$/.test(formData.accountNumber)) {
@@ -213,20 +306,162 @@ const Signup = () => {
         [name]: value,
       }));
     }
+
+    // Clear specific field error when user starts typing
+    if (errors[name]) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: "",
+      }));
+    }
   };
+
+  // Scroll to first error field
+  const scrollToFirstError = (errors) => {
+    const firstErrorField = Object.keys(errors)[0];
+    if (firstErrorField) {
+      const errorElement = document.querySelector(
+        `[name="${firstErrorField}"]`
+      );
+      if (errorElement) {
+        errorElement.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+        errorElement.focus();
+      }
+    }
+  };
+
+  // Show error notification
+  const showErrorNotification = (title, message) => {
+    Swal.fire({
+      icon: "error",
+      title,
+      text: message,
+      confirmButtonColor: "var(--primary-500)",
+    });
+  };
+
+  // Handle different HTTP status codes
+  const handleHttpError = (error) => {
+    const status = error.response?.status;
+    const data = error.response?.data;
+  
+    // First handle validation errors if they exist
+    if (data?.details) {
+      const errorMessages = Object.entries(data.details)
+        .map(([field, errors]) => `• ${Array.isArray(errors) ? errors[0] : errors}`)
+        .join('<br>');
+  
+      Swal.fire({
+        icon: 'error',
+        title: 'Validation Failed',
+        html: `The following errors occurred:<br><br>${errorMessages}`,
+        confirmButtonColor: 'var(--primary-500)',
+      });
+  
+      // Also update form errors
+      const backendErrors = handleBackendErrors(error.response, { showSwal: false });
+      const mappedErrors = mapFieldNames(backendErrors);
+      setErrors(prevErrors => ({
+        ...prevErrors,
+        ...mappedErrors
+      }));
+  
+      return true;
+    }
+  
+    // Then handle HTTP status codes with specific messages
+    let title = 'Error';
+    let message = 'An unexpected error occurred';
+  
+    switch (status) {
+      case 400:
+        title = 'Invalid Request';
+        message = data?.error || 'Please check your input and try again';
+        break;
+  
+      case 401:
+        title = 'Authentication Error';
+        message = 'Please check your credentials and try again';
+        break;
+  
+      case 403:
+        title = 'Access Denied';
+        message = data?.detail || "You don't have permission to perform this action";
+        break;
+  
+      case 404:
+        title = 'Not Found';
+        message = 'The requested resource was not found';
+        break;
+  
+      case 409:
+        title = 'Conflict';
+        message = data?.detail || 'A conflict occurred. The resource may already exist';
+        break;
+  
+      case 429:
+        title = 'Too Many Requests';
+        const waitTime = data?.wait_seconds || 60;
+        message = `Too many attempts. Please wait ${waitTime} seconds before trying again`;
+        setThrottleError(message);
+        setThrottleWaitTime(waitTime);
+  
+        const interval = setInterval(() => {
+          setThrottleWaitTime((prev) => {
+            if (prev <= 1) {
+              clearInterval(interval);
+              setThrottleError(null);
+              return null;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+        break;
+  
+      case 500:
+        title = 'Server Error';
+        message = 'An internal server error occurred. Please try again later';
+        break;
+  
+      case 503:
+        title = 'Service Unavailable';
+        message = 'The service is temporarily unavailable. Please try again later';
+        break;
+  
+      default:
+        title = 'Registration Failed';
+        message = data?.detail || error.message || 'An unexpected error occurred';
+    }
+  
+    // Show error notification
+    Swal.fire({
+      icon: 'error',
+      title: title,
+      text: message,
+      confirmButtonColor: 'var(--primary-500)',
+    });
+  
+    return false;
+  };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!validateForm() || throttleWaitTime > 0) return;
 
     setIsLoading(true);
     setThrottleError(null);
+    setErrors({});
 
     try {
       // Create form data
       const formDataToSend = new FormData();
 
-      // Add common user fields directly (not nested)
+      // Add common user fields
       formDataToSend.append("email", formData.email);
       formDataToSend.append("username", formData.email);
       formDataToSend.append("password", formData.password);
@@ -240,7 +475,7 @@ const Signup = () => {
         formData.userType.toLowerCase().replace(" ", "_")
       );
 
-      // Handle profile picture - THIS IS THE KEY FIX
+      // Handle profile picture
       if (formData.profilePic) {
         formDataToSend.append("profile_pic", formData.profilePic);
       }
@@ -300,11 +535,6 @@ const Signup = () => {
           throw new Error("Invalid user type");
       }
 
-      // Log form data for debugging
-      for (let pair of formDataToSend.entries()) {
-        console.log(pair[0], pair[1]);
-      }
-
       const response = await api.post(endpoint, formDataToSend, {
         headers: {
           "Content-Type": "multipart/form-data",
@@ -319,65 +549,21 @@ const Signup = () => {
           confirmButtonColor: "var(--primary-500)",
         });
 
-        const user_id = response.data?.user?.id || response.data?.user_id;
-        // Store user ID in local storage
-        localStorage.setItem("user_id", user_id);
+        const userId = response.data?.user?.id || response.data?.user_id;
+
+        // Store user data in localStorage
+        localStorage.setItem("user_id", userId);
         localStorage.setItem("user_type", formData.userType.toLowerCase());
 
-        // Navigate to verify email with user ID
+        // Navigate to verify email
         navigate("/verify-email", {
-          state: { userId: response.data?.user?.id || response.data?.user_id },
+          state: { userId },
         });
       }
     } catch (error) {
       console.error("Error during signup:", error);
-      if (error.response) {
-        // Handle specific error responses
-        if (error.response.status === 429) {
-          const wait_time = error.response.data.wait_seconds;
-          setThrottleError("Too many requests. Please try again later.");
-          setThrottleWaitTime(wait_time);
-          const interval = setInterval(() => {
-            setThrottleWaitTime((prev) => {
-              if (prev <= 1) {
-                clearInterval(interval);
-                return null; // Reset throttle error after countdown
-              }
-              return prev - 1;
-            });
-          }, 1000);
-        } else if (error.response.status === 403) {
-          Swal.fire({
-            icon: "error",
-            title: "Email Exists",
-            text: "A user with that email already exists.",
-            confirmButtonColor: "var(--primary-500)",
-          });
-        } else if (error.response.status === 400) {
-          Swal.fire({
-            icon: "error",
-            title: "Phone Number Already Exists",
-            text: "A user with that phone number already exists.",
-            confirmButtonColor: "var(--primary-500)",
-          });
-        } else {
-          Swal.fire({
-            icon: "error",
-            title: "Registration Failed",
-            text: error.response.data.detail || "An unexpected error occurred.",
-            confirmButtonColor: "var(--primary-500)",
-          });
-        }
-      } else {
-        Swal.fire({
-          icon: "error",
-          title: "Registration Failed",
-          text: "An unexpected error occurred. Please try again.",
-          confirmButtonColor: "var(--primary-500)",
-        });
-      }
-    } finally {
       setIsLoading(false);
+      handleHttpError(error);
     }
   };
 
