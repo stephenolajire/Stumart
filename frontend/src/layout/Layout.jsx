@@ -5,36 +5,30 @@ import { Outlet } from "react-router-dom";
 import { FaPlayCircle, FaTimes, FaComments } from "react-icons/fa";
 import Chatbot from "../chatbot/Chatbot";
 import styles from "../css/Layout.module.css";
-// import vendorReg from "../assets/registration.mp4"
-// import pickerReg from "../assets/registration.mp4";
-// import customerReg from "../assets/registration.mp4";
-// import addProduct from "../assets/addproduct.mp4";
 import api from "../constant/api";
 
 const Layout = () => {
   const [showModal, setShowModal] = useState(false);
-
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [videos, setVideos] = useState({})
+  const [videos, setVideos] = useState({});
 
-  const vendorReg = videos.register_video.video_secure_url
-  const pickerReg = videos.register_video.video_secure_url;
-  const customerReg = videos.register_video.video_secure_url;
-  const addProduct = videos.product_video.video_secure_url;
+  const fetchVideos = async () => {
+    try {
+      const response = await api.get("videos/both/");
+      if (response.data) {
+        setVideos(response.data);
+        // console.log(response.data);
+      }
+    } catch (error) {
+      console.error("Error fetching videos:", error);
+    }
+  };
 
- const fetchVideos = async() => {
-  const response = await api.get('videos/both/')
-  if (response.data) {
-    setVideos(response.data)
-    console.log(response.data)
-  }
- }
-
- useEffect(()=> {
-  fetchVideos()
- }, [])
+  useEffect(() => {
+    fetchVideos();
+  }, []);
 
   const toggleModal = () => {
     setShowModal(!showModal);
@@ -49,12 +43,28 @@ const Layout = () => {
     setShowVideoModal(true);
   };
 
-  const videoOptions = [
-    { title: "Register as Vendor", video: vendorReg },
-    { title: "Register as Picker", video: pickerReg },
-    { title: "Register as Customer", video: customerReg },
-    { title: "Add Product Tutorial", video: addProduct },
-  ];
+  // Only create video options if videos data is available
+  const videoOptions =
+    videos.register_video && videos.product_video
+      ? [
+          {
+            title: "Register as Vendor",
+            video: videos.register_video.video_secure_url,
+          },
+          {
+            title: "Register as Picker",
+            video: videos.register_video.video_secure_url,
+          },
+          {
+            title: "Register as Customer",
+            video: videos.register_video.video_secure_url,
+          },
+          {
+            title: "Add Product Tutorial",
+            video: videos.product_video.video_secure_url,
+          },
+        ]
+      : [];
 
   return (
     <div className={styles.layoutWrapper}>
@@ -62,7 +72,7 @@ const Layout = () => {
       <Outlet />
       <Footer />
 
-      <Chatbot/>
+      <Chatbot />
 
       {/* Learn More Button */}
       <button
@@ -72,7 +82,6 @@ const Layout = () => {
       >
         <FaPlayCircle size={24} />
       </button>
-
 
       {/* Selection Modal */}
       {showModal && (
@@ -89,16 +98,20 @@ const Layout = () => {
               <FaTimes />
             </button>
             <div className={styles.optionsGrid}>
-              {videoOptions.map((option, index) => (
-                <button
-                  key={index}
-                  className={styles.optionButton}
-                  onClick={() => handleVideoSelect(option.video)}
-                >
-                  <FaPlayCircle className={styles.optionIcon} />
-                  <span>{option.title}</span>
-                </button>
-              ))}
+              {videoOptions.length > 0 ? (
+                videoOptions.map((option, index) => (
+                  <button
+                    key={index}
+                    className={styles.optionButton}
+                    onClick={() => handleVideoSelect(option.video)}
+                  >
+                    <FaPlayCircle className={styles.optionIcon} />
+                    <span>{option.title}</span>
+                  </button>
+                ))
+              ) : (
+                <div>Loading videos...</div>
+              )}
             </div>
           </div>
         </div>
@@ -106,7 +119,10 @@ const Layout = () => {
 
       {/* Video Modal */}
       {showVideoModal && selectedVideo && (
-        <div className={styles.modalOverlay} onClick={() => setShowVideoModal(false)}>
+        <div
+          className={styles.modalOverlay}
+          onClick={() => setShowVideoModal(false)}
+        >
           <div
             className={styles.modalContent}
             onClick={(e) => e.stopPropagation()}

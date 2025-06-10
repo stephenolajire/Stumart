@@ -374,6 +374,10 @@ const ProductDetails = () => {
   // Display limited reviews
   const displayedReviews = showAllReviews ? reviews : reviews.slice(0, 3);
 
+  const formatPrice = (price) => {
+    return Number(price).toLocaleString("en-NG");
+  };
+
   return (
     <div className={styles.productDetails}>
       <Header title="Product Details" />
@@ -448,7 +452,7 @@ const ProductDetails = () => {
 
           <div className={styles.infoSection}>
             <h1>{product.name}</h1>
-            <p className={styles.price}>₦{product.price}</p>
+            <p className={styles.price}>₦{formatPrice(product.price)}</p>
             <p className={styles.description}>{product.description}</p>
 
             <div className={styles.shopInfo}>

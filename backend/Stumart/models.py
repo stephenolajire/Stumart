@@ -52,7 +52,9 @@ class Product(models.Model):
             MaxValueValidator(99999.99)
         ],
 
-        default=0.00
+        default=0.00,
+        null=True,
+        blank=True
     )
 
     class Meta:

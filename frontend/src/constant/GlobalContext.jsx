@@ -43,6 +43,8 @@ export const GlobalProvider = ({ children }) => {
   const lastFetchTimestamp = useRef({});
   const lastAllProductsFetchParams = useRef("");
   const lastAllProductsFetchTimestamp = useRef(0);
+  const isRequestInProgress = useRef(false);
+  const hasInitialized = useRef(false);
 
   // Enhanced cache with TTL (Time To Live)
   const [cache, setCache] = useState({
@@ -292,38 +294,47 @@ export const GlobalProvider = ({ children }) => {
     setAllProductsLoading(false);
   }, []);
 
-  // Fetch all shops data with proper caching and duplicate request prevention
+
   const fetchShopData = useCallback(
     async (forceRefresh = false) => {
       const now = Date.now();
       const cacheKey = "vendors";
+
+      // Prevent concurrent requests
+      if (isRequestInProgress.current) {
+        return cache.shops?.data || [];
+      }
 
       // Prevent duplicate requests within 1 second
       if (
         lastFetchTimestamp.current[cacheKey] &&
         now - lastFetchTimestamp.current[cacheKey] < 1000
       ) {
-        return shopsData;
+        return cache.shops?.data || [];
       }
 
-      // Check cache first
+      // Check cache first (only if not forcing refresh)
       if (!forceRefresh && isCacheValid(cache.shops) && cache.shops.data) {
+        // Update local state if it's empty but cache has data
         if (shopsData.length === 0) {
           setShopsData(cache.shops.data);
         }
         return cache.shops.data;
       }
 
-      // If already fetched and not forcing refresh, return existing data
-      if (!forceRefresh && hasFetchedShops.current && shopsData.length > 0) {
+      // If we have data and not forcing refresh, return existing data
+      if (!forceRefresh && shopsData.length > 0) {
         return shopsData;
       }
 
+      // Proceed with API call
       lastFetchTimestamp.current[cacheKey] = now;
+      isRequestInProgress.current = true;
       setLoading(true);
 
       try {
-        const response = await api.get("/vendors");
+        const response = await api.get("/home/vendors");
+
         if (response.data) {
           setShopsData(response.data);
           setCache((prev) => ({
@@ -331,33 +342,38 @@ export const GlobalProvider = ({ children }) => {
             shops: {
               data: response.data,
               timestamp: now,
-              ttl: 5 * 60 * 1000,
+              ttl: 5 * 60 * 1000, // 5 minutes
             },
           }));
-          hasFetchedShops.current = true;
           setError(null);
           return response.data;
         }
+
+        return [];
       } catch (error) {
         setError("Failed to fetch shops data");
         console.error("Error fetching shops:", error);
+
+        // Return cached data if available, even if stale
+        if (cache.shops?.data) {
+          return cache.shops.data;
+        }
+
         return [];
       } finally {
         setLoading(false);
+        isRequestInProgress.current = false;
       }
     },
-    [cache.shops, isCacheValid, shopsData]
+    [cache.shops, isCacheValid] 
   );
 
-  // Initialize shops data only once
-  const [hasInitialized, setHasInitialized] = useState(false);
-
   useEffect(() => {
-    if (!hasInitialized) {
+    if (!hasInitialized.current) {
       fetchShopData();
-      setHasInitialized(true);
+      hasInitialized.current = true;
     }
-  }, [hasInitialized, fetchShopData]);
+  }, []);
 
   // Fetch shops by school with proper caching
   const fetchShopsBySchool = useCallback(
@@ -615,21 +631,22 @@ export const GlobalProvider = ({ children }) => {
     const now = Date.now();
     const cacheKey = "cart";
 
-    // Prevent duplicate requests within 500ms
+    if (isRequestInProgress.current) {
+      return null;
+    }
+
+    // Only prevent duplicate requests if not forcing refresh
+    // and within 500ms window
     if (
       !forceRefresh &&
       lastFetchTimestamp.current[cacheKey] &&
       now - lastFetchTimestamp.current[cacheKey] < 500
     ) {
-      return;
-    }
-
-    // If already fetched cart and not forcing refresh, skip
-    if (!forceRefresh && hasFetchedCart.current) {
-      return;
+      return null;
     }
 
     lastFetchTimestamp.current[cacheKey] = now;
+    isRequestInProgress.current = true;
 
     try {
       setLoading(true);
@@ -640,7 +657,7 @@ export const GlobalProvider = ({ children }) => {
       const response = await api.get("cart/", { params });
 
       setCartItems(response.data.items || []);
-      console.log(response.data)
+      // console.log(response.data);
       setCartSummary({
         subTotal: response.data.sub_total || 0,
         shippingFee: response.data.shipping_fee || 0,
@@ -649,7 +666,6 @@ export const GlobalProvider = ({ children }) => {
       });
       setCount(response.data.count || 0);
       setError(null);
-      hasFetchedCart.current = true;
 
       return response.data;
     } catch (err) {
@@ -658,6 +674,7 @@ export const GlobalProvider = ({ children }) => {
       return null;
     } finally {
       setLoading(false);
+      isRequestInProgress.current = false;
     }
   }, []);
 
