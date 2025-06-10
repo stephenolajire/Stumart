@@ -1106,3 +1106,87 @@
     font-size: 1.3rem;
   }
 }
+
+/* Add these new styles to your ProductDetails.module.css file */
+
+.priceSection {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.originalPrice {
+  font-size: 2.4rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-decoration: line-through;
+  margin: 0;
+}
+
+.promotionPrice {
+  font-size: 3.2rem;
+  font-weight: 600;
+  color: var(--primary-500);
+  margin: 0;
+}
+
+.discountBadge {
+  background-color: var(--error);
+  color: var(--neutral-white);
+  padding: 0.4rem 0.8rem;
+  border-radius: 0.4rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Keep the existing .price style for when there's no promotion */
+.price {
+  font-size: 3.2rem;
+  font-weight: 600;
+  color: var(--primary-500);
+  margin: 0;
+}
+
+/* Mobile responsive styles */
+@media screen and (max-width: 768px) {
+  /* .priceSection {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.8rem;
+  } */
+  
+  .originalPrice {
+    font-size: 2rem;
+  }
+  
+  .promotionPrice {
+    font-size: 2.8rem;
+  }
+  
+  .price {
+    font-size: 2.8rem;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .originalPrice {
+    font-size: 1.8rem;
+  }
+  
+  .promotionPrice {
+    font-size: 2.4rem;
+  }
+  
+  .price {
+    font-size: 2.4rem;
+  }
+  
+  .discountBadge {
+    font-size: 1.1rem;
+    padding: 0.3rem 0.6rem;
+  }
+}

@@ -452,7 +452,28 @@ const ProductDetails = () => {
 
           <div className={styles.infoSection}>
             <h1>{product.name}</h1>
-            <p className={styles.price}>₦{formatPrice(product.price)}</p>
+            <div className={styles.priceSection}>
+              {product.promotion_price ? (
+                <>
+                  <p className={styles.promotionPrice}>
+                    ₦{formatPrice(product.promotion_price)}
+                  </p>
+                  <p className={styles.originalPrice}>
+                    ₦{formatPrice(product.price)}
+                  </p>
+                  <span className={styles.discountBadge}>
+                    {Math.round(
+                      ((product.price - product.promotion_price) /
+                        product.price) *
+                        100
+                    )}
+                    % OFF
+                  </span>
+                </>
+              ) : (
+                <p className={styles.price}>₦{formatPrice(product.price)}</p>
+              )}
+            </div>
             <p className={styles.description}>{product.description}</p>
 
             <div className={styles.shopInfo}>
