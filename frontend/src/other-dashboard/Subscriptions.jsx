@@ -1,24 +1,24 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import styles from "../css/SubscriptionPlans.module.css";
+import styles from "./css/SubscriptionPlans.module.css";
 import CustomPaystackButton from "../components/CustomPaystackButon";
 import api from "../constant/api";
 
-const SubscriptionPlans = () => {
+const Subscriptions = () => {
   const [plans, setPlans] = useState([]);
   const [currentSubscription, setCurrentSubscription] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const navigate = useNavigate();
-  const [user, setUser] = useState({})
-  const [allPlans, setAllPlans] = useState([])
+  const [user, setUser] = useState({});
+  const [allPlans, setAllPlans] = useState([]);
 
-   const fetchAllplans = async () => {
-      const response = await api.get('allplans')
-      setAllPlans(response.data)
-      console.log(response.data)
-    }
+  const fetchAllplans = async () => {
+    const response = await api.get("allplans");
+    setAllPlans(response.data);
+    console.log(response.data);
+  };
 
   // Replace with your actual Paystack public key
   const paystackPublicKey = "pk_test_your_paystack_public_key";
@@ -28,8 +28,8 @@ const SubscriptionPlans = () => {
     const checkVendorCategory = async () => {
       try {
         const res = await api.get("vendor/profile/", {});
-        console.log(res)
-        setUser(res.data.user)
+        console.log(res);
+        setUser(res.data.user);
 
         if (res.data.business_category !== "others") {
           // Redirect if not an 'others' category vendor
@@ -39,7 +39,6 @@ const SubscriptionPlans = () => {
         setError("Error fetching vendor profile");
       }
     };
-
 
     const fetchSubscriptionData = async () => {
       try {
@@ -67,9 +66,9 @@ const SubscriptionPlans = () => {
     fetchSubscriptionData();
   }, [navigate]);
 
-  useEffect(()=>{
-    fetchAllplans()
-  }, [])
+  useEffect(() => {
+    fetchAllplans();
+  }, []);
 
   const handlePaymentSuccess = async (response) => {
     try {
@@ -95,7 +94,7 @@ const SubscriptionPlans = () => {
   if (error) return <div className={styles.error}>{error}</div>;
 
   return (
-    <div className={styles.containers}>
+    <div className={styles.container}>
       <div className={styles.header}>
         <h2 className={styles.title}>Subscription Plans</h2>
         <p className={styles.subtitle}>
@@ -126,13 +125,9 @@ const SubscriptionPlans = () => {
         {allPlans.map((plan) => (
           <div key={plan.id} className={styles.planCard}>
             <h3 className={styles.planName}>{plan.name}</h3>
-            <p className={styles.planDuration}>
-              {plan.duration}
-            </p>
+            <p className={styles.planDuration}>{plan.duration}</p>
             <div className={styles.priceContainer}>
-              <span className={styles.price}>
-                ₦{plan.price}
-              </span>
+              <span className={styles.price}>₦{plan.price}</span>
             </div>
             <ul className={styles.featuresList}>
               {plan.features_list.map((feature, idx) => (
@@ -178,4 +173,4 @@ const SubscriptionPlans = () => {
   );
 };
 
-export default SubscriptionPlans;
+export default Subscriptions;

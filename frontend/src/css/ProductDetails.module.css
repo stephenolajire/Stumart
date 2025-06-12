@@ -1190,3 +1190,58 @@
     padding: 0.3rem 0.6rem;
   }
 }
+
+.promotionPrice {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--primary-500);
+}
+
+.originalPrice {
+  font-size: 1.4rem;
+  color: var(--text-secondary);
+  text-decoration: line-through;
+  font-weight: 400;
+}
+
+@media screen and (max-width: 768px) {
+  .imageWrapper {
+    height: 16rem;
+  }
+  
+  .productInfo {
+    padding: 1.2rem;
+  }
+  
+  .productName {
+    font-size: 1.4rem;
+  }
+  
+  .description {
+    font-size: 1.2rem;
+  }
+  
+  .price,
+  .promotionPrice {
+    font-size: 1.6rem;
+  }
+  
+  .originalPrice {
+    font-size: 1.3rem;
+  }
+  
+  .discountBadge {
+    width: 4rem;
+    height: 4rem;
+    font-size: 0.9rem;
+  }
+  
+  .bookmarkIcon {
+    width: 3.6rem;
+    height: 3.6rem;
+  }
+  
+  .bookmarkIcon svg {
+    font-size: 1.6rem;
+  }
+}

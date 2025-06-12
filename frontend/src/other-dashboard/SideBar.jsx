@@ -2,6 +2,7 @@
 import React from "react";
 import styles from "./css/Sidebar.module.css";
 import { MEDIA_BASE_URL } from "../constant/api";
+import { useNavigate } from "react-router-dom";
 
 const Sidebar = ({ activeTab, setActiveTab, vendor }) => {
   const navigation = [
@@ -11,7 +12,15 @@ const Sidebar = ({ activeTab, setActiveTab, vendor }) => {
     { id: "reviews", label: "Reviews", icon: "⭐" },
     { id: "chat", label: "Messages", icon: "💬" },
     { id: "settings", label: "Settings", icon: "⚙️" },
+
   ];
+
+  const navigate =  useNavigate()
+  const handleLogout = () => {
+    localStorage.removeItem('access')
+    localStorage.removeItem('refresh')
+    navigate('/login')
+  }
 
   return (
     <div className={styles.sidebar}>
@@ -48,7 +57,7 @@ const Sidebar = ({ activeTab, setActiveTab, vendor }) => {
       </nav>
 
       <div className={styles.sidebarFooter}>
-        <button className={styles.logoutButton}>
+        <button className={styles.logoutButton} onClick={handleLogout}>
           <span className={styles.logoutIcon}>🚪</span>
           <span>Log Out</span>
         </button>

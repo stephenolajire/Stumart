@@ -333,7 +333,7 @@ export const GlobalProvider = ({ children }) => {
       setLoading(true);
 
       try {
-        const response = await api.get("/home/vendors");
+        const response = await api.get("vendors/");
 
         if (response.data) {
           setShopsData(response.data);

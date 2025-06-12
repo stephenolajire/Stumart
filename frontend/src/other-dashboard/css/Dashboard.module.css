@@ -1,182 +1,107 @@
+/* Dashboard.module.css */
+
 .dashboardContainer {
-  display: grid;
-  grid-template-columns: auto 1fr;
+  display: flex;
   min-height: 100vh;
-  background-color: var(--neutral-gray-50);
+  background-color: var(--background);
+  color: var(--text-primary);
+  font-family: 'Montserrat', 'Poppins', sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .content {
-  padding: 2.4rem;
-  overflow-y: auto;
-}
-
-/* Sidebar styles */
-.sidebar {
-  background-color: var(--neutral-white);
-  border-right: 1px solid var(--neutral-gray-200);
-  padding: 2.4rem;
-  width: 26rem;
-  height: 100vh;
-  position: sticky;
-  top: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 3.2rem;
-}
-
-.logo {
-  padding: 1.6rem;
-  text-align: center;
-}
-
-.logoImage {
-  max-width: 12rem;
-  height: auto;
-}
-
-.navigation {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-}
-
-.navItem {
-  display: flex;
-  align-items: center;
-  gap: 1.2rem;
-  padding: 1.2rem 1.6rem;
-  border-radius: 0.8rem;
-  color: var(--text-secondary);
-  font-size: 1.6rem;
-  transition: all 0.3s ease;
-  cursor: pointer;
-}
-
-.navItem:hover {
-  background-color: var(--primary-100);
-  color: var(--primary-500);
-}
-
-.navItem.active {
-  background-color: var(--primary-500);
-  color: var(--neutral-white);
-}
-
-.navIcon {
-  width: 2rem;
-  height: 2rem;
-}
-
-.profileSection {
-  margin-top: auto;
-  padding-top: 2.4rem;
-  border-top: 1px solid var(--neutral-gray-200);
-}
-
-.profileInfo {
-  display: flex;
-  align-items: center;
-  gap: 1.2rem;
-  padding: 1.2rem;
-}
-
-.profileImage {
-  width: 4rem;
-  height: 4rem;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.profileText {
   flex: 1;
+  background-color: var(--surface);
+  border-radius: 1.2rem 0 0 1.2rem;
+  margin: 1.6rem 1.6rem 1.6rem 0;
+  padding: 2.4rem;
+  box-shadow: 0 4px 6px -1px var(--shadow);
+  transition: all 0.3s ease;
+  overflow-y: auto;
+  max-height: calc(100vh - 3.2rem);
 }
 
-.profileName {
-  font-size: 1.4rem;
-  font-weight: 600;
-  color: var(--text-primary);
+/* Content area animations */
+.content:hover {
+  box-shadow: 0 10px 25px -3px var(--shadow);
 }
 
-.profileRole {
-  font-size: 1.2rem;
-  color: var(--text-tertiary);
-}
-
-/* Mobile Responsive Styles */
-@media screen and (max-width: 768px) {
+/* Responsive adjustments */
+@media screen and (max-width: 1024px) {
   .dashboardContainer {
-    grid-template-columns: 1fr;
-  }
-
-  .sidebar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    width: 100%;
-    height: auto;
-    padding: 1.2rem;
-    z-index: 1000;
-    border-right: none;
-    border-top: 1px solid var(--neutral-gray-200);
-  }
-
-  .logo, .profileSection {
-    display: none;
-  }
-
-  .navigation {
-    flex-direction: row;
-    justify-content: space-around;
-  }
-
-  .navItem {
     flex-direction: column;
-    padding: 0.8rem;
-    gap: 0.4rem;
-    font-size: 1.2rem;
   }
-
-  .navIcon {
-    width: 1.8rem;
-    height: 1.8rem;
+  
+  .content {
+    margin: 0;
+    border-radius: 0;
+    padding: 2rem;
+    max-height: none;
   }
+}
 
+@media screen and (max-width: 768px) {
   .content {
     padding: 1.6rem;
-    padding-bottom: 8rem;
+    margin: 0;
+    padding-bottom: 5rem;
+  }
+  
+  .dashboardContainer {
+    min-height: 100vh;
   }
 }
 
-/* Dark mode support (optional) */
-@media (prefers-color-scheme: dark) {
+@media screen and (max-width: 480px) {
+  .content {
+    padding: 1.2rem;
+  }
+}
+
+/* Content area scroll styling */
+.content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.content::-webkit-scrollbar-track {
+  background: var(--neutral-gray-100);
+  border-radius: 3px;
+}
+
+.content::-webkit-scrollbar-thumb {
+  background: var(--primary-400);
+  border-radius: 3px;
+  transition: background-color 0.3s ease;
+}
+
+.content::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-500);
+}
+
+/* Loading state for content transitions */
+.content.loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* Focus states for accessibility */
+.content:focus-within {
+  outline: 2px solid var(--primary-500);
+  outline-offset: -2px;
+}
+
+/* Print styles */
+@media print {
   .dashboardContainer {
-    background-color: var(--secondary-800);
+    display: block;
   }
-
-  .sidebar {
-    background-color: var(--secondary-700);
-    border-right-color: var(--secondary-600);
-  }
-
-  .navItem {
-    color: var(--neutral-gray-300);
-  }
-
-  .navItem:hover {
-    background-color: var(--secondary-600);
-    color: var(--primary-300);
-  }
-
-  .profileSection {
-    border-top-color: var(--secondary-600);
-  }
-
-  .profileName {
-    color: var(--neutral-gray-200);
-  }
-
-  .profileRole {
-    color: var(--neutral-gray-400);
+  
+  .content {
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+    border-radius: 0;
+    background: white;
+    color: black;
   }
 }

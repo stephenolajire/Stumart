@@ -6,7 +6,9 @@ import Applications from "./Applications";
 import Reviews from "./Reviews";
 import Settings from "./Settings";
 import Chat from "./Chat";
-import SubscriptionPlans from "../pages/SubscriptionPlans"
+import Subscriptions from "./Subscriptions";
+import ThemeToggle from "../components/ThemeToggle"
+// import SubscriptionPlans from "../pages/SubscriptionPlans"
 import styles from "./css/Dashboard.module.css";
 
 const OtherDashboard = ({ vendor }) => {
@@ -20,7 +22,7 @@ const OtherDashboard = ({ vendor }) => {
       case "applications":
         return <Applications vendor={vendor} />;
       case "subscription":
-        return <SubscriptionPlans />;
+        return <Subscriptions />;
       case "reviews":
         return <Reviews vendor={vendor} />;
       case "settings":
@@ -39,6 +41,9 @@ const OtherDashboard = ({ vendor }) => {
         setActiveTab={setActiveTab}
         vendor={vendor}
       />
+      <div style={{position:"fixed", bottom:"2rem", right:"2rem"}}>
+        <ThemeToggle/>
+      </div>
       <main className={styles.content}>{renderContent()}</main>
     </div>
   );

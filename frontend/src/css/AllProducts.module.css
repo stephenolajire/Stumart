@@ -155,7 +155,7 @@
 /* Filters Section */
 .filters {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
   gap: 2rem;
   margin-bottom: 3.2rem;
   padding: 2.4rem;
@@ -244,7 +244,7 @@
 /* Products Grid */
 .productsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(28rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr));
   gap: 2.4rem;
   margin-top: 2.4rem;
 }

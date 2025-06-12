@@ -1,81 +1,399 @@
+/* Settings.module.css */
+
 .settingsContainer {
-  max-width: 72rem;
+  max-width: 80rem;
   margin: 0 auto;
   padding: 2.4rem;
+  background-color: var(--background);
+  border-radius: 1.2rem;
+  box-shadow: 0 2px 10px var(--shadow);
 }
 
 .title {
-  font-size: var(--h3-desktop);
+  font-size: var(--h2-desktop);
+  font-weight: 700;
   color: var(--text-primary);
   margin-bottom: 3.2rem;
+  text-align: center;
+  position: relative;
+}
+
+.title::after {
+  content: '';
+  position: absolute;
+  bottom: -1.2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8rem;
+  height: 0.4rem;
+  background: linear-gradient(90deg, var(--primary-500), var(--primary-600));
+  border-radius: 0.2rem;
 }
 
 .settingsForm {
-  background-color: var(--neutral-white);
-  padding: 3.2rem;
-  border-radius: 1.2rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 2.4rem;
 }
 
 .formGroup {
-  margin-bottom: 2.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  position: relative;
 }
 
 .formGroup label {
-  display: block;
   font-size: 1.4rem;
-  color: var(--text-secondary);
-  margin-bottom: 0.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.4rem;
+  transition: color 0.3s ease;
 }
 
 .formGroup input,
 .formGroup textarea {
-  width: 100%;
-  padding: 1.2rem;
-  font-size: 1.6rem;
-  border: 1px solid var(--neutral-gray-300);
+  padding: 1.4rem 1.6rem;
+  border: 2px solid var(--border);
   border-radius: 0.8rem;
+  font-size: 1.4rem;
+  font-family: inherit;
   background-color: var(--neutral-white);
-  transition: border-color 0.3s ease;
+  color: var(--text-primary);
+  transition: all 0.3s ease;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.formGroup input:focus,
+.formGroup textarea:focus {
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 3px rgba(218, 165, 32, 0.1);
+  transform: translateY(-1px);
+}
+
+.formGroup input:hover,
+.formGroup textarea:hover {
+  border-color: var(--primary-400);
 }
 
 .formGroup textarea {
   min-height: 12rem;
   resize: vertical;
+  font-family: inherit;
+  line-height: 1.6;
 }
 
-.formGroup input:focus,
-.formGroup textarea:focus {
-  outline: none;
-  border-color: var(--primary-500);
+.formGroup input::placeholder,
+.formGroup textarea::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
+/* Input validation states */
+.formGroup input:valid,
+.formGroup textarea:valid {
+  border-color: var(--success);
+}
+
+.formGroup input:invalid:not(:placeholder-shown),
+.formGroup textarea:invalid:not(:placeholder-shown) {
+  border-color: var(--error);
+}
+
+.formGroup input:invalid:not(:placeholder-shown) + .errorMessage,
+.formGroup textarea:invalid:not(:placeholder-shown) + .errorMessage {
+  display: block;
+}
+
+.errorMessage {
+  display: none;
+  color: var(--error);
+  font-size: 1.2rem;
+  margin-top: 0.4rem;
+  font-weight: 500;
+}
+
+.successMessage {
+  color: var(--success);
+  font-size: 1.2rem;
+  margin-top: 0.4rem;
+  font-weight: 500;
+}
+
+/* Floating label effect */
+.formGroup.floating {
+  position: relative;
+}
+
+.formGroup.floating label {
+  position: absolute;
+  top: 1.4rem;
+  left: 1.6rem;
+  color: var(--text-secondary);
+  font-weight: 400;
+  transition: all 0.3s ease;
+  pointer-events: none;
+  background-color: var(--neutral-white);
+  padding: 0 0.4rem;
+}
+
+.formGroup.floating input:focus + label,
+.formGroup.floating input:not(:placeholder-shown) + label,
+.formGroup.floating textarea:focus + label,
+.formGroup.floating textarea:not(:placeholder-shown) + label {
+  top: -0.8rem;
+  left: 1.2rem;
+  font-size: 1.2rem;
+  color: var(--primary-500);
+  font-weight: 600;
 }
 
 .submitButton {
-  width: 100%;
-  padding: 1.4rem;
-  font-size: 1.6rem;
+  background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
   color: var(--neutral-white);
-  background-color: var(--primary-500);
   border: none;
   border-radius: 0.8rem;
+  padding: 1.6rem 3.2rem;
+  font-size: 1.6rem;
+  font-weight: 600;
+  font-family: inherit;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 14px rgba(218, 165, 32, 0.3);
+  align-self: center;
+  min-width: 20rem;
+  position: relative;
+  overflow: hidden;
 }
 
 .submitButton:hover {
-  background-color: var(--primary-600);
+  background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(218, 165, 32, 0.4);
+}
+
+.submitButton:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(218, 165, 32, 0.3);
+}
+
+.submitButton:disabled {
+  background: var(--neutral-gray-100);
+  color: var(--text-secondary);
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+  box-shadow: none;
+}
+
+.submitButton:focus {
+  outline: none;
+  box-shadow: 
+    0 4px 14px rgba(218, 165, 32, 0.3),
+    0 0 0 3px rgba(218, 165, 32, 0.2);
+}
+
+/* Loading state */
+.submitButton.loading {
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+.submitButton.loading::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2rem;
+  height: 2rem;
+  margin: -1rem 0 0 -1rem;
+  border: 2px solid transparent;
+  border-top: 2px solid var(--neutral-white);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Success notification */
+.successNotification {
+  background: linear-gradient(135deg, var(--success) 0%, #16a34a 100%);
+  color: white;
+  padding: 1.2rem 2rem;
+  border-radius: 0.8rem;
+  margin-bottom: 2rem;
+  text-align: center;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Form sections */
+.formSection {
+  background-color: var(--surface);
+  padding: 2.4rem;
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  margin-bottom: 2rem;
+}
+
+.formSection h3 {
+  font-size: var(--h5-desktop);
+  color: var(--text-primary);
+  margin-bottom: 1.6rem;
+  padding-bottom: 0.8rem;
+  border-bottom: 2px solid var(--primary-200);
+}
+
+/* Two column layout for larger screens */
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+/* Responsive design */
+@media screen and (max-width: 1024px) {
+  .settingsContainer {
+    max-width: 90%;
+    padding: 2rem;
+  }
+  
+  .formRow {
+    grid-template-columns: 1fr;
+    gap: 1.6rem;
+  }
 }
 
 @media screen and (max-width: 768px) {
   .settingsContainer {
     padding: 1.6rem;
+    margin: 1rem;
   }
+  
+  .title {
+    font-size: var(--h2-mobile);
+    margin-bottom: 2.4rem;
+  }
+  
+  .settingsForm {
+    gap: 2rem;
+  }
+  
+  .formGroup input,
+  .formGroup textarea {
+    padding: 1.2rem 1.4rem;
+    font-size: 1.3rem;
+  }
+  
+  .submitButton {
+    padding: 1.4rem 2.8rem;
+    font-size: 1.5rem;
+    min-width: 100%;
+  }
+  
+  .formSection {
+    padding: 1.6rem;
+  }
+}
 
+@media screen and (max-width: 480px) {
+  .settingsContainer {
+    padding: 1.2rem;
+    margin: 0.5rem;
+  }
+  
   .title {
     font-size: var(--h3-mobile);
   }
+  
+  .formGroup input,
+  .formGroup textarea {
+    padding: 1rem 1.2rem;
+    font-size: 1.2rem;
+  }
+  
+  .submitButton {
+    padding: 1.2rem 2.4rem;
+    font-size: 1.4rem;
+  }
+}
 
-  .settingsForm {
-    padding: 2.4rem;
+/* Animations */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-2rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .formGroup input,
+  .formGroup textarea {
+    border-width: 3px;
+  }
+  
+  .submitButton {
+    border: 2px solid var(--text-primary);
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .formGroup input,
+  .formGroup textarea,
+  .submitButton,
+  .title::after {
+    transition: none;
+  }
+  
+  .submitButton:hover {
+    transform: none;
+  }
+  
+  .submitButton.loading::after {
+    animation: none;
+  }
+  
+  .successNotification {
+    animation: none;
+  }
+}
+
+/* Print styles */
+@media print {
+  .settingsContainer {
+    box-shadow: none;
+    background: white;
+  }
+  
+  .submitButton {
+    display: none;
+  }
+  
+  .formGroup input,
+  .formGroup textarea {
+    border-color: #000;
+    background: white;
+    color: #000;
   }
 }

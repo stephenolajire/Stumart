@@ -169,7 +169,6 @@ const ProductDetails = () => {
     setReviewSubmitting(true);
 
     try {
-
       // Updated endpoint URLs
       const endpoint = userReviewStatus.hasReviewed
         ? `products/${productId}/reviews/${userReviewStatus.existingReview.id}/`
@@ -177,14 +176,11 @@ const ProductDetails = () => {
 
       const method = userReviewStatus.hasReviewed ? "put" : "post";
 
-      const response = await api[method](
-        endpoint,
-        {
-          product_id: productId,
-          rating: reviewForm.rating,
-          comment: reviewForm.comment,
-        },
-      );
+      const response = await api[method](endpoint, {
+        product_id: productId,
+        rating: reviewForm.rating,
+        comment: reviewForm.comment,
+      });
 
       if (response.status === 200 || response.status === 201) {
         Toast.fire({
@@ -453,25 +449,21 @@ const ProductDetails = () => {
           <div className={styles.infoSection}>
             <h1>{product.name}</h1>
             <div className={styles.priceSection}>
-              {product.promotion_price ? (
+              {product.promotion_price &&
+              product.promotion_price > 0 &&
+              product.promotion_price < product.price ? (
                 <>
-                  <p className={styles.promotionPrice}>
-                    ₦{formatPrice(product.promotion_price)}
-                  </p>
-                  <p className={styles.originalPrice}>
-                    ₦{formatPrice(product.price)}
-                  </p>
-                  <span className={styles.discountBadge}>
-                    {Math.round(
-                      ((product.price - product.promotion_price) /
-                        product.price) *
-                        100
-                    )}
-                    % OFF
+                  <span className={styles.promotionPrice}>
+                    ₦{Number(product.promotion_price).toLocaleString()}
+                  </span>
+                  <span className={styles.originalPrice}>
+                    ₦{Number(product.price).toLocaleString()}
                   </span>
                 </>
               ) : (
-                <p className={styles.price}>₦{formatPrice(product.price)}</p>
+                <span className={styles.price}>
+                  ₦{Number(product.price).toLocaleString()}
+                </span>
               )}
             </div>
             <p className={styles.description}>{product.description}</p>

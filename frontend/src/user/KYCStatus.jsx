@@ -29,6 +29,7 @@ const KYCStatus = () => {
 
       if (response.data) {
         setKycStatus(response.data);
+        console.log(response.data)
 
         if (response.data.status === "approved") {
           // Handle picker types
@@ -47,12 +48,14 @@ const KYCStatus = () => {
                 title: "Verification approved",
               });
               navigate("/other-dashboard");
-            } else {
+            }
+          } else if (user_type === "vendor") {
+            if (response.data.business_category !== "other") {
               Swal.fire({
                 icon: "success",
                 title: "Verification approved",
               });
-              navigate("/vendor-dashboard");
+              navigate("/other-dashboard");
             }
           }
         } else {

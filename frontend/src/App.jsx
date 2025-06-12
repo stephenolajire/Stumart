@@ -46,6 +46,7 @@ import AllProducts from "./pages/AllProducts";
 import Chatbot from "./chatbot/Chatbot";
 import ThemeToggle from "./components/ThemeToggle";
 import { ThemeProvider } from "./constant/ThemeContext";
+import Notification from "./pages/Notification";
 
 function App() {
   return (
@@ -65,6 +66,7 @@ function App() {
               <Route path="other-services" element={<OtherService />} />
               <Route path="shopping-cart" element={<ShoppingCart />} />
               <Route path="search" element={<SearchPage />} />
+              <Route path="notification" element={<Notification/>} />
               <Route
                 path="order-history"
                 element={

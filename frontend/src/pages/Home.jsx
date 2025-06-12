@@ -709,16 +709,7 @@ const Home = memo(() => {
     <main className={styles.homeContainer}>
       {/* Hero Banner Section with Search */}
       <div className={styles.heroGrid}>
-        {/* {isAuthenticated && (
-          <div className={styles.heroSwitch}>
-            <button
-              onClick={handleResetFilter}
-              className={styles.resetFiltersButtonTop}
-            >
-              Switch Institution
-            </button>
-          </div>
-        )} */}
+
         <div className={ styles.heroForms}>
           <form onSubmit={handleProductSearch} className={styles.searchBar}>
             <input

@@ -1,5 +1,5 @@
 .homeContainer {
-  max-width: 120rem;
+  width: 100%;
   margin: 0 auto;
   padding: 2.4rem;
 }
@@ -303,6 +303,7 @@
 @media screen and (max-width: 768px) {
   .homeContainer {
     padding: 1.6rem;
+    margin-bottom: 10rem;
   }
 
   .welcomeText {
