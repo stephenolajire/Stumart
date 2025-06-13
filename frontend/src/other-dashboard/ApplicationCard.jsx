@@ -155,7 +155,7 @@ const ApplicationCard = ({ application, onStatusChange }) => {
           {isExpanded ? "Show Less" : "Show More"}
         </button>
 
-        <button className={styles.chatButton}>Chat with Customer</button>
+        {/* <button className={styles.chatButton}>Chat with Customer</button> */}
       </div>
 
       {isExpanded && (
@@ -178,7 +178,7 @@ const ApplicationCard = ({ application, onStatusChange }) => {
             </div>
           </div>
 
-          <div className={styles.responseSection}>
+          {/* <div className={styles.responseSection}>
             <h4 className={styles.responseTitle}>Your Response</h4>
             {sendError && <p className={styles.errorText}>{sendError}</p>}
             <textarea
@@ -195,7 +195,7 @@ const ApplicationCard = ({ application, onStatusChange }) => {
             >
               {isSending ? "Sending..." : "Send Response"}
             </button>
-          </div>
+          </div> */}
         </div>
       )}
     </div>

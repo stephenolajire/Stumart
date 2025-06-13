@@ -26,6 +26,7 @@ const Applications = ({ vendor }) => {
 
       const response = await api.get("applications/", { params });
       setApplications(response.data.results);
+      console.log(response.data.results)
       setFilteredApps(response.data.results);
       setTotalPages(response.data.pages);
       setCurrentPage(response.data.current_page);

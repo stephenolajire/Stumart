@@ -1,93 +1,183 @@
 /* Dashboard.module.css */
-
 .dashboardContainer {
   display: flex;
   min-height: 100vh;
   background-color: var(--background);
-  color: var(--text-primary);
-  font-family: 'Montserrat', 'Poppins', sans-serif;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.3s ease;
+  position: relative;
 }
 
 .content {
   flex: 1;
-  background-color: var(--surface);
-  border-radius: 1.2rem 0 0 1.2rem;
-  margin: 1.6rem 1.6rem 1.6rem 0;
-  padding: 2.4rem;
-  box-shadow: 0 4px 6px -1px var(--shadow);
+  margin-left: 28rem; /* Match sidebar width */
+  min-height: 100vh;
+  background-color: var(--background);
   transition: all 0.3s ease;
-  overflow-y: auto;
-  max-height: calc(100vh - 3.2rem);
+  position: relative;
+  overflow-x: hidden;
 }
 
-/* Content area animations */
-.content:hover {
-  box-shadow: 0 10px 25px -3px var(--shadow);
+/* Content area styling */
+.content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary-400), var(--primary-600), var(--primary-400));
+  z-index: 1;
 }
 
-/* Responsive adjustments */
-@media screen and (max-width: 1024px) {
+/* Add subtle pattern background */
+.content::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 1px 1px, var(--border) 1px, transparent 0);
+  background-size: 20px 20px;
+  opacity: 0.3;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Ensure content is above the pattern */
+.content > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* Content padding and spacing */
+.content {
+  padding: 0;
+}
+
+/* Responsive design for tablets */
+@media screen and (max-width: 1024px) and (min-width: 769px) {
+  .content {
+    margin-left: 24rem; /* Match tablet sidebar width */
+  }
+}
+
+/* Mobile responsive design */
+@media screen and (max-width: 768px) {
   .dashboardContainer {
     flex-direction: column;
   }
   
   .content {
-    margin: 0;
-    border-radius: 0;
-    padding: 2rem;
-    max-height: none;
-  }
-}
-
-@media screen and (max-width: 768px) {
-  .content {
-    padding: 1.6rem;
-    margin: 0;
-    padding-bottom: 5rem;
+    margin-left: 0;
+    min-height: calc(100vh - 60px); /* Account for mobile sidebar height */
+    width: 100%;
   }
   
-  .dashboardContainer {
-    min-height: 100vh;
+  .content::before {
+    height: 2px;
   }
 }
 
-@media screen and (max-width: 480px) {
-  .content {
-    padding: 1.2rem;
+/* Theme toggle positioning adjustments for mobile */
+@media screen and (max-width: 768px) {
+  .dashboardContainer .themeToggleWrapper {
+    position: fixed;
+    bottom: 1rem;
+    right: 1rem;
+    z-index: 1000;
   }
 }
 
-/* Content area scroll styling */
-.content::-webkit-scrollbar {
-  width: 6px;
+/* Smooth transitions for theme changes */
+.dashboardContainer * {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
-.content::-webkit-scrollbar-track {
-  background: var(--neutral-gray-100);
-  border-radius: 3px;
-}
-
-.content::-webkit-scrollbar-thumb {
-  background: var(--primary-400);
-  border-radius: 3px;
-  transition: background-color 0.3s ease;
-}
-
-.content::-webkit-scrollbar-thumb:hover {
-  background: var(--primary-500);
-}
-
-/* Loading state for content transitions */
+/* Loading state styles */
 .content.loading {
   opacity: 0.7;
   pointer-events: none;
 }
 
-/* Focus states for accessibility */
-.content:focus-within {
-  outline: 2px solid var(--primary-500);
-  outline-offset: -2px;
+.content.loading::before {
+  background: linear-gradient(90deg, var(--primary-200), var(--primary-400), var(--primary-200));
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Scrollbar styling for main content */
+.content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.content::-webkit-scrollbar-track {
+  background: var(--surface);
+}
+
+.content::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+.content::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* Dark theme specific adjustments */
+:root[data-theme="dark"] .content::after {
+  opacity: 0.1;
+}
+
+:root[data-theme="dark"] .content::before {
+  background: linear-gradient(90deg, var(--primary-600), var(--primary-400), var(--primary-600));
+}
+
+/* Animation for content switching */
+.content > * {
+  animation: fadeInUp 0.4s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .content::after {
+    display: none;
+  }
+  
+  .content::before {
+    height: 2px;
+    background: var(--primary-500);
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .content > *,
+  .content::before,
+  .dashboardContainer * {
+    animation: none;
+    transition: none;
+  }
 }
 
 /* Print styles */
@@ -97,11 +187,12 @@
   }
   
   .content {
-    margin: 0;
+    margin-left: 0;
     padding: 0;
-    box-shadow: none;
-    border-radius: 0;
-    background: white;
-    color: black;
+  }
+  
+  .content::before,
+  .content::after {
+    display: none;
   }
 }

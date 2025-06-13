@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application Confirmation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            font-size: 62.5%;
+            --primary-100: #fdf6e9;
+            --primary-200: #f9e5bb;
+            --primary-300: #f4d08d;
+            --primary-400: #efbb5f;
+            --primary-500: #daa520;
+            --primary-600: #b38517;
+            --primary-700: #8c660f;
+            --primary-800: #664807;
+            --primary-900: #402c04;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --info: #3b82f6;
+            --background: #ffffff;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --surface: #f9fafb;
+            --border: #e5e7eb;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --neutral-white: #ffffff;
+            --neutral-gray-100: #f3f4f6;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--surface);
+            color: var(--text-primary);
+            line-height: 1.6;
+            font-size: 1.4rem;
+        }
+
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: var(--background);
+            box-shadow: 0 4px 6px var(--shadow);
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+            color: var(--neutral-white);
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.4rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .header p {
+            font-size: 1.6rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 3rem 2rem;
+        }
+
+        .greeting {
+            font-size: 1.8rem;
+            color: var(--text-primary);
+            margin-bottom: 2rem;
+            font-weight: 500;
+        }
+
+        .application-details {
+            background-color: var(--primary-100);
+            border-left: 4px solid var(--primary-500);
+            padding: 2rem;
+            margin: 2rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .application-details h3 {
+            color: var(--primary-700);
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .detail-row {
+            display: flex;
+            margin-bottom: 1rem;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--primary-200);
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: var(--text-primary);
+            min-width: 140px;
+            font-size: 1.4rem;
+        }
+
+        .detail-value {
+            color: var(--text-secondary);
+            flex: 1;
+            font-size: 1.4rem;
+        }
+
+        .status-badge {
+            display: inline-block;
+            background-color: var(--warning);
+            color: var(--neutral-white);
+            padding: 0.5rem 1.5rem;
+            border-radius: 20px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 1.5rem 0;
+        }
+
+        .next-steps {
+            background-color: var(--info);
+            color: var(--neutral-white);
+            padding: 2rem;
+            border-radius: 8px;
+            margin: 2rem 0;
+        }
+
+        .next-steps h4 {
+            font-size: 1.6rem;
+            margin-bottom: 1rem;
+        }
+
+        .next-steps ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .next-steps li {
+            margin-bottom: 0.8rem;
+            padding-left: 2rem;
+            position: relative;
+            font-size: 1.4rem;
+        }
+
+        .next-steps li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--neutral-white);
+            font-weight: bold;
+        }
+
+        .footer {
+            background-color: var(--neutral-gray-100);
+            padding: 2rem;
+            text-align: center;
+            border-top: 1px solid var(--border);
+        }
+
+        .footer p {
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .contact-info {
+            color: var(--primary-600);
+            font-weight: 500;
+        }
+
+        @media screen and (max-width: 600px) {
+            .email-container {
+                margin: 0;
+                box-shadow: none;
+            }
+
+            .header, .content, .footer {
+                padding: 2rem 1.5rem;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .detail-row {
+                flex-direction: column;
+            }
+
+            .detail-label {
+                min-width: auto;
+                margin-bottom: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>Application Received!</h1>
+            <p>Thank you for your service application</p>
+        </div>
+
+        <div class="content">
+            <p class="greeting">Hello {{ user_name }},</p>
+            
+            <p>We have successfully received your application for <strong>{{ service_name }}</strong>. Your application is currently being reviewed by our service provider.</p>
+
+            <div class="status-badge">Pending Review</div>
+
+            <div class="application-details">
+                <h3>Application Details</h3>
+                <div class="detail-row">
+                    <span class="detail-label">Service:</span>
+                    <span class="detail-value">{{ service_name }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Applicant:</span>
+                    <span class="detail-value">{{ application.name }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Email:</span>
+                    <span class="detail-value">{{ application.email }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Phone:</span>
+                    <span class="detail-value">{{ application.phone }}</span>
+                </div>
+                {% if preferred_date %}
+                <div class="detail-row">
+                    <span class="detail-label">Preferred Date:</span>
+                    <span class="detail-value">{{ preferred_date }}</span>
+                </div>
+                {% endif %}
+                {% if description %}
+                <div class="detail-row">
+                    <span class="detail-label">Description:</span>
+                    <span class="detail-value">{{ description }}</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="next-steps">
+                <h4>What happens next?</h4>
+                <ul>
+                    <li>The service provider will review your application</li>
+                    <li>You'll receive an email notification with their response</li>
+                    <li>If approved, you'll receive contact details to proceed</li>
+                    <li>You can track your application status in your account</li>
+                </ul>
+            </div>
+
+            <p>If you have any questions or need to make changes to your application, please don't hesitate to contact us.</p>
+        </div>
+
+        <div class="footer">
+            <p>This is an automated message. Please do not reply to this email.</p>
+            <p class="contact-info">For support, contact us at support@yoursite.com</p>
+        </div>
+    </div>
+</body>
+</html>

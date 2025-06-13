@@ -1,0 +1,344 @@
+.container {
+    width: 100%;
+    margin: 0 auto;
+    padding: 2rem;
+    min-height: 100vh;
+    background-color: var(--background);
+    margin-top: 10rem;
+  }
+  
+  .header {
+    text-align: center;
+    margin-bottom: 4rem;
+  }
+  
+  .header h1 {
+    color: var(--primary-500);
+    margin-bottom: 1rem;
+  }
+  
+  .subtitle {
+    font-size: 1.8rem;
+    color: var(--text-secondary);
+  }
+  
+  /* Loading State */
+  .loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 50vh;
+    gap: 2rem;
+  }
+  
+  .spinner {
+    width: 4rem;
+    height: 4rem;
+    border: 4px solid var(--primary-200);
+    border-top: 4px solid var(--primary-500);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  .loading p {
+    font-size: 1.6rem;
+    color: var(--text-secondary);
+  }
+  
+  /* Error State */
+  .error {
+    text-align: center;
+    padding: 4rem 2rem;
+    background-color: var(--surface);
+    border-radius: 1rem;
+    border: 1px solid var(--border);
+  }
+  
+  .error h2 {
+    color: var(--error);
+    margin-bottom: 1rem;
+  }
+  
+  .error p {
+    font-size: 1.6rem;
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+  }
+  
+  .retryButton {
+    background-color: var(--primary-500);
+    color: white;
+    border: none;
+    padding: 1.2rem 2.4rem;
+    border-radius: 0.8rem;
+    font-size: 1.6rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .retryButton:hover {
+    background-color: var(--primary-600);
+  }
+  
+  /* Empty State */
+  .emptyState {
+    text-align: center;
+    padding: 6rem 2rem;
+    background-color: var(--surface);
+    border-radius: 1.2rem;
+    border: 1px solid var(--border);
+  }
+  
+  .emptyIcon {
+    font-size: 6rem;
+    margin-bottom: 2rem;
+  }
+  
+  .emptyState h3 {
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+  }
+  
+  .emptyState p {
+    font-size: 1.6rem;
+    color: var(--text-secondary);
+    margin-bottom: 3rem;
+  }
+  
+  .primaryButton {
+    background-color: var(--primary-500);
+    color: white;
+    border: none;
+    padding: 1.4rem 2.8rem;
+    border-radius: 0.8rem;
+    font-size: 1.6rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  
+  .primaryButton:hover {
+    background-color: var(--primary-600);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--shadow);
+  }
+  
+  /* Applications Grid */
+  .applicationsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(40rem, 1fr));
+    gap: 2.4rem;
+  }
+  
+  /* Application Card */
+  .applicationCard {
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 1.2rem;
+    padding: 2.4rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px var(--shadow);
+  }
+  
+  .applicationCard:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px var(--shadow);
+  }
+  
+  .cardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  
+  .serviceName {
+    color: var(--primary-500);
+    font-weight: 700;
+    flex: 1;
+    margin-right: 1rem;
+  }
+  
+  /* Status Styles */
+  .status {
+    padding: 0.6rem 1.2rem;
+    border-radius: 2rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  
+  .statusPending {
+    background-color: var(--warning);
+    color: white;
+  }
+  
+  .statusAccepted {
+    background-color: var(--success);
+    color: white;
+  }
+  
+  .statusRejected {
+    background-color: var(--error);
+    color: white;
+  }
+  
+  .statusDefault {
+    background-color: var(--neutral-gray-100);
+    color: var(--text-primary);
+  }
+  
+  /* Card Content */
+  .cardContent {
+    margin-bottom: 2rem;
+  }
+  
+  .field {
+    margin-bottom: 1.5rem;
+  }
+  
+  .label {
+    display: inline-block;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 1.4rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .value {
+    font-size: 1.4rem;
+    color: var(--text-secondary);
+    margin-left: 0.5rem;
+  }
+  
+  .description {
+    font-size: 1.4rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-top: 0.5rem;
+    background-color: var(--neutral-gray-100);
+    padding: 1rem;
+    border-radius: 0.6rem;
+  }
+  
+  .dateInfo {
+    background-color: var(--neutral-gray-100);
+    padding: 1.5rem;
+    border-radius: 0.8rem;
+    margin: 1.5rem 0;
+  }
+  
+  .vendorResponse {
+    background-color: var(--primary-100);
+    padding: 1.5rem;
+    border-radius: 0.8rem;
+    border-left: 4px solid var(--primary-500);
+  }
+  
+  /* Card Actions */
+  .cardActions {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+  
+  .chatButton {
+    background-color: var(--primary-500);
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 0.6rem;
+    font-size: 1.4rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .chatButton:hover {
+    background-color: var(--primary-600);
+    transform: translateY(-1px);
+  }
+  
+  /* Responsive Design */
+  @media screen and (max-width: 768px) {
+    .container {
+      padding: 1.5rem;
+    }
+  
+    .applicationsGrid {
+      grid-template-columns: 1fr;
+      gap: 1.6rem;
+    }
+  
+    .applicationCard {
+      padding: 2rem;
+    }
+  
+    .cardHeader {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+  
+    .serviceName {
+      margin-right: 0;
+      margin-bottom: 0.5rem;
+    }
+  
+    .emptyState {
+      padding: 4rem 1.5rem;
+    }
+  
+    .dateInfo {
+      padding: 1rem;
+    }
+  
+    .cardActions {
+      justify-content: center;
+    }
+  
+    .chatButton {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+  
+  @media screen and (max-width: 480px) {
+    .container {
+      padding: 1rem;
+    }
+  
+    .header h1 {
+      font-size: var(--h2-mobile);
+    }
+  
+    .subtitle {
+      font-size: 1.6rem;
+    }
+  
+    .applicationCard {
+      padding: 1.5rem;
+    }
+  
+    .emptyState {
+      padding: 3rem 1rem;
+    }
+  
+    .emptyIcon {
+      font-size: 4rem;
+    }
+  }

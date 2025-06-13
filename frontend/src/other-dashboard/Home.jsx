@@ -177,12 +177,6 @@ const Home = ({ vendor }) => {
       <section className={styles.recentSection}>
         <div className={styles.sectionHeader}>
           <h2 className={styles.sectionTitle}>Recent Applications</h2>
-          <button
-            className={styles.viewAllButton}
-            onClick={() => (window.location.href = "/applications")}
-          >
-            View All
-          </button>
         </div>
         <div className={styles.recentList}>
           {recentApplications.length > 0 ? (

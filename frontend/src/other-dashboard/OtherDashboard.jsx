@@ -5,11 +5,12 @@ import Home from "./Home";
 import Applications from "./Applications";
 import Reviews from "./Reviews";
 import Settings from "./Settings";
-import Chat from "./Chat";
+import Message from "./VendorMessages"
 import Subscriptions from "./Subscriptions";
 import ThemeToggle from "../components/ThemeToggle"
 // import SubscriptionPlans from "../pages/SubscriptionPlans"
 import styles from "./css/Dashboard.module.css";
+
 
 const OtherDashboard = ({ vendor }) => {
   const [activeTab, setActiveTab] = useState("home");
@@ -28,7 +29,7 @@ const OtherDashboard = ({ vendor }) => {
       case "settings":
         return <Settings vendor={vendor} />;
       case "chat":
-        return <Chat vendor={vendor} />;
+        return <Message/>;
       default:
         return <Home vendor={vendor} />;
     }
@@ -41,7 +42,7 @@ const OtherDashboard = ({ vendor }) => {
         setActiveTab={setActiveTab}
         vendor={vendor}
       />
-      <div style={{position:"fixed", bottom:"2rem", right:"2rem"}}>
+      <div style={{position:"fixed", bottom:"2rem", right:"2rem", zIndex:"1000"}}>
         <ThemeToggle/>
       </div>
       <main className={styles.content}>{renderContent()}</main>

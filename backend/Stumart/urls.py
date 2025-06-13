@@ -58,4 +58,12 @@ urlpatterns = [
     path('user/reviews/', UserReviewListView.as_view(), name='get_user_reviews'),
 
     path('videos/both/', GetBothVideosView.as_view(), name='get-both-videos'),
+    path('my-submitted-applications/', MySubmittedApplicationsAPIView.as_view(), name='my-submitted-applications'),
+
+
+    # Unified messaging endpoints
+    path('conversations/', ConversationListView.as_view(), name='conversation_list'),
+    path('conversations/create/', CreateConversationView.as_view(), name='create_conversation'),
+    path('conversations/<int:conversation_id>/messages/', MessageListView.as_view(), name='message_list'),
+    path('messages/send/', SendMessageView.as_view(), name='send_message'),
 ]

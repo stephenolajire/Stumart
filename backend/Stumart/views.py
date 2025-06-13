@@ -44,6 +44,8 @@ from django.shortcuts import get_object_or_404
 from .models import Product, VendorReview, Vendor
 from .serializers import VendorReviewSerializer
 from User.models import Vendor
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
 
 class ProductsView(APIView):
     def get(self, request, id):
@@ -1252,9 +1254,9 @@ class ServiceApplicationAPIView(APIView):
         if not service_id:
             return Response({'error': 'Service ID is required'},
                           status=status.HTTP_400_BAD_REQUEST)
-        
+                
         service = get_object_or_404(Vendor, pk=service_id, business_category='others')
-        
+                
         # Create application data
         application_data = {
             'service': service.id,
@@ -1265,16 +1267,16 @@ class ServiceApplicationAPIView(APIView):
             'preferred_date': request.data.get('preferredDate'),
             'additional_details': request.data.get('additionalDetails'),
         }
-        
+                
         # If the user is authenticated, associate with the application
         if request.user.is_authenticated:
             application_data['user'] = request.user.id
-        
+                
         serializer = ServiceApplicationSerializer(data=application_data)
-        
+                
         if serializer.is_valid():
             application = serializer.save()
-            
+                        
             # Send email to user
             user_email = application_data['email']
             send_user_notification_email(
@@ -1282,7 +1284,7 @@ class ServiceApplicationAPIView(APIView):
                 application, 
                 service
             )
-            
+                        
             # Send email to vendor
             # Access vendor's email through the user foreign key
             vendor_email = service.user.email  # Get email from the User model linked to Vendor
@@ -1291,9 +1293,9 @@ class ServiceApplicationAPIView(APIView):
                 application, 
                 service
             )
-            
+                        
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        
+                
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -1383,60 +1385,59 @@ class SearchServicesAPIView(APIView):
 def send_user_notification_email(email, application, service):
     """Send confirmation email to the user who submitted the application"""
     subject = f"Your application for {service.business_name} has been received"
-    message = f"""
-    Dear {application.name},
     
-    Thank you for submitting an application for {service.business_name}. We have received your request for the date: {application.preferred_date}.
+    # Context data for the template
+    context = {
+        'application': application,
+        'service': service,
+        'user_name': application.name,
+        'service_name': service.business_name,
+        'preferred_date': application.preferred_date,
+        'description': application.description,
+    }
     
-    The service provider will review your application and get back to you soon.
-    
-    Application Details:
-    - Service: {service.business_name}
-    - Description: {application.description}
-    - Preferred Date: {application.preferred_date}
-    
-    If you have any questions, please contact us.
-    
-    Best regards,
-    Stumart Platform Team
-    """
+    # Render HTML template
+    html_message = render_to_string('email/service_application.html', context)
+    # Create plain text version by stripping HTML tags
+    plain_message = strip_tags(html_message)
     
     send_mail(
         subject,
-        message,
-        [settings.EMAIL_HOST_USER],
+        plain_message,  # Plain text version
+        settings.EMAIL_HOST_USER,
         [email],
+        html_message=html_message,  # HTML version
         fail_silently=False,
     )
-
 
 def send_vendor_notification_email(email, application, service):
     """Send notification email to the vendor about the new application"""
     subject = f"New service application received"
-    message = f"""
-    Dear Service Provider,
     
-    You have received a new application for your service: {service.business_name}.
+    # Context data for the template
+    context = {
+        'application': application,
+        'service': service,
+        'client_name': application.name,
+        'client_email': application.email,
+        'client_phone': application.phone,
+        'description': application.description,
+        'preferred_date': application.preferred_date,
+        'additional_details': application.additional_details,
+        'service_name': service.business_name,
+    }
     
-    Application Details:
-    - Client Name: {application.name}
-    - Email: {application.email}
-    - Phone: {application.phone}
-    - Description: {application.description}
-    - Preferred Date: {application.preferred_date}
-    - Additional Details: {application.additional_details}
-    
-    Please review this application and contact the client at your earliest convenience.
-    
-    Best regards,
-    Stumart Platform Team
-    """
+    # Render HTML template
+    html_message = render_to_string('email/service_notification.html', context)
+    # Create plain text version by stripping HTML tags
+    plain_message = strip_tags(html_message)
     
     send_mail(
         subject,
-        message,
-        [settings.EMAIL_HOST_USER],
+        plain_message,  # Plain text version
+        settings.EMAIL_HOST_USER,
         [email],
+        html_message=html_message,  # HTML version
         fail_silently=False,
     )
 
@@ -2559,3 +2560,427 @@ class GetBothVideosView(APIView):
                 'success': False,
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+class MySubmittedApplicationsAPIView(APIView):
+    """
+    Get all service applications submitted by the authenticated user (client perspective)
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        user = request.user
+        
+        # Get all applications submitted by this user
+        applications = ServiceApplication.objects.filter(
+            user=user
+        ).select_related('service', 'service__user')
+        
+        # Optional filtering by status
+        status_filter = request.query_params.get('status')
+        if status_filter:
+            applications = applications.filter(status=status_filter)
+        
+        if not applications.exists():
+            return Response(
+                {'message': 'You have not submitted any applications', 'applications': []}, 
+                status=status.HTTP_200_OK
+            )
+        
+        # Serialize the applications
+        serializer = ServiceApplicationSerializer(applications, many=True)
+        
+        return Response({
+            'message': f'You have {applications.count()} submitted application(s)',
+            'applications': serializer.data
+        }, status=status.HTTP_200_OK)
+    
+
+# views.py for unified messaging system
+
+from django.shortcuts import get_object_or_404
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
+from django.views import View
+from django.db.models import Q, Count, Max, Prefetch, OuterRef, Subquery
+from django.utils import timezone
+from django.core.paginator import Paginator
+import json
+from .models import Conversation, Message, MessageReadStatus, ServiceApplication
+from User.models import Vendor
+
+
+class BaseMessagingView(View):
+    """Base class for messaging views with common functionality"""
+    
+    def get_user_type_and_profile(self, user):
+        """Determine if user is a vendor or regular user"""
+        try:
+            vendor_profile = user.vendor_profile
+            return 'vendor', vendor_profile
+        except:
+            return 'user', user
+    
+    def get_conversations_for_user(self, user, user_type):
+        """Get conversations for a user based on their type"""
+        if user_type == 'vendor':
+            conversations = Conversation.objects.filter(
+                vendor=user.vendor_profile,
+                is_active=True
+            ).select_related('user', 'vendor', 'service_application')
+        else:
+            conversations = Conversation.objects.filter(
+                user=user,
+                is_active=True
+            ).select_related('user', 'vendor', 'service_application')
+        
+        return conversations.order_by('-updated_at')
+    
+    def get_unread_count(self, conversation, user, user_type):
+        """Get unread message count for a conversation"""
+        try:
+            read_status = MessageReadStatus.objects.get(
+                conversation=conversation,
+                reader_type=user_type,
+                **{f'reader_{user_type}': user.vendor_profile if user_type == 'vendor' else user}
+            )
+            
+            if read_status.last_read_message:
+                unread_count = Message.objects.filter(
+                    conversation=conversation,
+                    created_at__gt=read_status.last_read_message.created_at
+                ).exclude(
+                    **{f'sender_{user_type}': user.vendor_profile if user_type == 'vendor' else user}
+                ).count()
+            else:
+                unread_count = Message.objects.filter(
+                    conversation=conversation
+                ).exclude(
+                    **{f'sender_{user_type}': user.vendor_profile if user_type == 'vendor' else user}
+                ).count()
+                
+        except MessageReadStatus.DoesNotExist:
+            unread_count = Message.objects.filter(
+                conversation=conversation
+            ).exclude(
+                **{f'sender_{user_type}': user.vendor_profile if user_type == 'vendor' else user}
+            ).count()
+        
+        return unread_count
+
+
+@method_decorator(login_required, name='dispatch')
+class ConversationListView(BaseMessagingView):
+    """Get list of conversations for current user"""
+    
+    def get(self, request):
+        user = request.user
+        user_type, profile = self.get_user_type_and_profile(user)
+        
+        conversations = self.get_conversations_for_user(user, user_type)
+        
+        conversations_data = []
+        for conv in conversations:
+            # Get participant info
+            if user_type == 'vendor':
+                participant = conv.user
+                participant_name = f"{participant.first_name} {participant.last_name}".strip()
+                participant_email = participant.email
+            else:
+                participant = conv.vendor
+                participant_name = participant.business_name
+                participant_email = participant.user.email if participant.user else ""
+            
+            # Get unread count
+            unread_count = self.get_unread_count(conv, user, user_type)
+            
+            conversations_data.append({
+                'id': conv.id,
+                'participant_name': participant_name,
+                'participant_email': participant_email,
+                'service_name': conv.service_name,
+                'service_application_id': conv.service_application.id if conv.service_application else None,
+                'last_message': conv.last_message,
+                'last_message_sender': conv.last_message_sender,
+                'last_message_at': conv.last_message_at.isoformat() if conv.last_message_at else None,
+                'updated_at': conv.updated_at.isoformat(),
+                'unread_count': unread_count,
+                'is_active': conv.is_active,
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'conversations': conversations_data,
+            'user_type': user_type
+        })
+
+
+@method_decorator(login_required, name='dispatch')
+class CreateConversationView(BaseMessagingView):
+    """Create a new conversation"""
+    
+    @method_decorator(csrf_exempt)
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+    
+    def post(self, request):
+        try:
+            data = json.loads(request.body)
+            user = request.user
+            user_type, profile = self.get_user_type_and_profile(user)
+            
+            # Get required parameters based on user type
+            if user_type == 'vendor':
+                # Vendor creating conversation with user
+                user_id = data.get('user_id')
+                service_application_id = data.get('service_application_id')
+                
+                if not user_id:
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'user_id is required'
+                    }, status=400)
+                
+                target_user = get_object_or_404(User, id=user_id)
+                vendor_profile = profile
+                
+            else:
+                # User creating conversation with vendor
+                vendor_id = data.get('vendor_id')
+                service_application_id = data.get('service_application_id')
+                
+                if not vendor_id:
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'vendor_id is required'
+                    }, status=400)
+                
+                vendor_profile = get_object_or_404(Vendor, id=vendor_id)
+                target_user = user
+            
+            # Check if conversation already exists
+            existing_conversation = Conversation.objects.filter(
+                user=target_user,
+                vendor=vendor_profile
+            )
+            
+            if service_application_id:
+                service_application = get_object_or_404(ServiceApplication, id=service_application_id)
+                existing_conversation = existing_conversation.filter(service_application=service_application)
+            
+            existing_conversation = existing_conversation.first()
+            
+            if existing_conversation:
+                conversation = existing_conversation
+            else:
+                # Create new conversation
+                conversation_data = {
+                    'user': target_user,
+                    'vendor': vendor_profile,
+                }
+                
+                if service_application_id:
+                    conversation_data['service_application'] = service_application
+                    conversation_data['service_name'] = vendor_profile.business_name
+                
+                # Add service info if provided
+                service_id = data.get('service_id')
+                service_name = data.get('service_name')
+                if service_id:
+                    conversation_data['service_id'] = service_id
+                if service_name:
+                    conversation_data['service_name'] = service_name
+                
+                conversation = Conversation.objects.create(**conversation_data)
+            
+            # Return conversation data
+            participant_name = (
+                f"{target_user.first_name} {target_user.last_name}".strip() 
+                if user_type == 'vendor' 
+                else vendor_profile.business_name
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'conversation': {
+                    'id': conversation.id,
+                    'participant_name': participant_name,
+                    'service_name': conversation.service_name,
+                    'created_at': conversation.created_at.isoformat(),
+                    'is_active': conversation.is_active,
+                }
+            })
+            
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'success': False,
+                'error': 'Invalid JSON data'
+            }, status=400)
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=500)
+
+
+@method_decorator(login_required, name='dispatch')
+class MessageListView(BaseMessagingView):
+    """Get messages for a specific conversation"""
+    
+    def get(self, request, conversation_id):
+        user = request.user
+        user_type, profile = self.get_user_type_and_profile(user)
+        
+        # Get conversation and verify user has access
+        if user_type == 'vendor':
+            conversation = get_object_or_404(
+                Conversation, 
+                id=conversation_id, 
+                vendor=profile
+            )
+        else:
+            conversation = get_object_or_404(
+                Conversation, 
+                id=conversation_id, 
+                user=user
+            )
+        
+        # Get messages with pagination
+        page = request.GET.get('page', 1)
+        messages = Message.objects.filter(
+            conversation=conversation
+        ).select_related('sender_user', 'sender_vendor').order_by('created_at')
+        
+        paginator = Paginator(messages, 50)  # 50 messages per page
+        messages_page = paginator.get_page(page)
+        
+        messages_data = []
+        for message in messages_page:
+            messages_data.append({
+                'id': message.id,
+                'content': message.content,
+                'sender_type': message.sender_type,
+                'sender_name': message.get_sender_name(),
+                'created_at': message.created_at.isoformat(),
+                'is_read': message.is_read,
+                'message_type': message.message_type,
+            })
+        
+        # Mark messages as read for current user
+        self._mark_messages_as_read(conversation, user, user_type, messages_page.object_list)
+        
+        return JsonResponse({
+            'success': True,
+            'messages': messages_data,
+            'has_next': messages_page.has_next(),
+            'has_previous': messages_page.has_previous(),
+            'total_pages': paginator.num_pages,
+            'current_page': messages_page.number,
+        })
+    
+    def _mark_messages_as_read(self, conversation, user, user_type, messages):
+        """Mark messages as read for the current user"""
+        if not messages:
+            return
+        
+        latest_message = messages[-1]  # Last message in the list
+        
+        # Update or create read status
+        read_status_data = {
+            'conversation': conversation,
+            'reader_type': user_type,
+            'last_read_message': latest_message,
+        }
+        
+        if user_type == 'vendor':
+            read_status_data['reader_vendor'] = user.vendor_profile
+            read_status_data['reader_user'] = None
+        else:
+            read_status_data['reader_user'] = user
+            read_status_data['reader_vendor'] = None
+        
+        MessageReadStatus.objects.update_or_create(
+            conversation=conversation,
+            reader_type=user_type,
+            **{f'reader_{user_type}': user.vendor_profile if user_type == 'vendor' else user},
+            defaults=read_status_data
+        )
+
+
+@method_decorator(login_required, name='dispatch')
+class SendMessageView(BaseMessagingView):
+    """Send a message in a conversation"""
+    
+    @method_decorator(csrf_exempt)
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+    
+    def post(self, request):
+        try:
+            data = json.loads(request.body)
+            user = request.user
+            user_type, profile = self.get_user_type_and_profile(user)
+            
+            conversation_id = data.get('conversation_id')
+            content = data.get('content', '').strip()
+            
+            if not conversation_id or not content:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'conversation_id and content are required'
+                }, status=400)
+            
+            # Get conversation and verify user has access
+            if user_type == 'vendor':
+                conversation = get_object_or_404(
+                    Conversation, 
+                    id=conversation_id, 
+                    vendor=profile
+                )
+            else:
+                conversation = get_object_or_404(
+                    Conversation, 
+                    id=conversation_id, 
+                    user=user
+                )
+            
+            # Create message
+            message_data = {
+                'conversation': conversation,
+                'content': content,
+                'sender_type': user_type,
+                'message_type': data.get('message_type', 'text'),
+            }
+            
+            if user_type == 'vendor':
+                message_data['sender_vendor'] = profile
+            else:
+                message_data['sender_user'] = user
+            
+            message = Message.objects.create(**message_data)
+            
+            return JsonResponse({
+                'success': True,
+                'message': {
+                    'id': message.id,
+                    'content': message.content,
+                    'sender_type': message.sender_type,
+                    'sender_name': message.get_sender_name(),
+                    'created_at': message.created_at.isoformat(),
+                    'message_type': message.message_type,
+                }
+            })
+            
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'success': False,
+                'error': 'Invalid JSON data'
+            }, status=400)
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=500)

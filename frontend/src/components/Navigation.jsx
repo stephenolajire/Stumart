@@ -105,7 +105,28 @@ const Navigation = () => {
               Orders
             </NavLink>
           )}
-
+          {isAuthenticated && (
+            <NavLink
+              to="/service"
+              className={({ isActive }) =>
+                isActive ? `${styles.link} ${styles.activeLink}` : styles.link
+              }
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Services
+            </NavLink>
+          )}
+          {isAuthenticated && (
+            <NavLink
+              to="/messages"
+              className={({ isActive }) =>
+                isActive ? `${styles.link} ${styles.activeLink}` : styles.link
+              }
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Message
+            </NavLink>
+          )}
           {isAuthenticated && (
             <NavLink
               to="/profile"
@@ -115,17 +136,6 @@ const Navigation = () => {
               onClick={() => setIsMenuOpen(false)}
             >
               Profile
-            </NavLink>
-          )}
-          {isAuthenticated && (
-            <NavLink
-              to="/notification"
-              className={({ isActive }) =>
-                isActive ? `${styles.link} ${styles.activeLink}` : styles.link
-              }
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Notification
             </NavLink>
           )}
 

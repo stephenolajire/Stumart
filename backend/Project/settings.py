@@ -57,7 +57,8 @@ INSTALLED_APPS = [
     'cloudinary',
     'Admin',
     'Other',
-    'Chatbot'
+    'Chatbot',
+    'Chat'
 ]
 
 MIDDLEWARE = [
@@ -256,8 +257,18 @@ PAYSTACK_SECRET_KEY = config('PAYSTACK_SECRET_KEY')
 FRONTEND_URL = config('FRONTEND_URL')
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(hours=2),
-    "REFRESH_TOKEN_LIFETIME": timedelta(hours=3),
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(hours=2),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+    'VERIFYING_KEY': None,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+    'TOKEN_TYPE_CLAIM': 'token_type',
 }
 
 # Add these security settings
