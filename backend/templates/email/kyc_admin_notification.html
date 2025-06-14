@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New KYC Submission</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        :root {
+            /* Make 1rem = 10px */
+            font-size: 62.5%;
+
+            /* Primary Colors - Brownish Gold */
+            --primary-100: #fdf6e9;
+            --primary-200: #f9e5bb;
+            --primary-300: #f4d08d;
+            --primary-400: #efbb5f;
+            --primary-500: #daa520; /* Main brand color - Golden Brown */
+            --primary-600: #b38517;
+            --primary-700: #8c660f;
+            --primary-800: #664807;
+            --primary-900: #402c04;
+
+            /* State Colors */
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --info: #3b82f6;
+
+            /* Desktop Font Sizes */
+            --h1-desktop: 4.8rem;
+            --h2-desktop: 4rem;
+            --h3-desktop: 3.2rem;
+            --h4-desktop: 2.4rem;
+            --h5-desktop: 2rem;
+            --h6-desktop: 1.8rem;
+
+            /* Mobile Font Sizes */
+            --h1-mobile: 3.2rem;
+            --h2-mobile: 2.8rem;
+            --h3-mobile: 2.4rem;
+            --h4-mobile: 2rem;
+            --h5-mobile: 1.8rem;
+            --h6-mobile: 1.6rem;
+
+            /* Light Theme (default) */
+            --background: #ffffff;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --surface: #f9fafb;
+            --border: #e5e7eb;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --neutral-white: #ffffff;
+            --neutral-gray-100: #f3f4f6;
+            --hover-bg: #f3f4f6;
+        }
+
+        body {
+            font-family: Montserrat, Poppins, sans-serif;
+            background-color: var(--background);
+            color: var(--text-primary);
+            line-height: 1.6;
+            font-size: 1.4rem;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        h1 { font-size: var(--h1-desktop); }
+        h2 { font-size: var(--h2-desktop); }
+        h3 { font-size: var(--h3-desktop); }
+        h4 { font-size: var(--h4-desktop); }
+        h5 { font-size: var(--h5-desktop); }
+        h6 { font-size: var(--h6-desktop); }
+
+        @media screen and (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+            
+            h1 { font-size: var(--h1-mobile); }
+            h2 { font-size: var(--h2-mobile); }
+            h3 { font-size: var(--h3-mobile); }
+            h4 { font-size: var(--h4-mobile); }
+            h5 { font-size: var(--h5-mobile); }
+            h6 { font-size: var(--h6-mobile); }
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-100), var(--primary-200));
+            padding: 2.5rem 2rem;
+            border-radius: 1.2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--primary-300);
+            box-shadow: 0 4px 6px var(--shadow);
+        }
+
+        .header h2 {
+            color: var(--primary-800);
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .header p {
+            color: var(--primary-700);
+            font-size: 1.6rem;
+            margin: 0;
+        }
+
+        .content {
+            background-color: var(--neutral-white);
+            padding: 2.5rem 2rem;
+            border: 1px solid var(--border);
+            border-radius: 1.2rem;
+            box-shadow: 0 2px 4px var(--shadow);
+        }
+
+        .button {
+            display: inline-block;
+            padding: 1.2rem 2.4rem;
+            background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+            color: var(--neutral-white);
+            text-decoration: none;
+            border-radius: 0.8rem;
+            margin-top: 2rem;
+            font-weight: 600;
+            font-size: 1.4rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px var(--shadow);
+        }
+
+        .button:hover {
+            background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px var(--shadow);
+        }
+
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            background-color: var(--surface);
+            border-radius: 0.8rem;
+            overflow: hidden;
+            box-shadow: 0 1px 3px var(--shadow);
+        }
+
+        .info-table td {
+            padding: 1.5rem 1.2rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 1.4rem;
+        }
+
+        .info-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .info-table td:first-child {
+            font-weight: 600;
+            color: var(--primary-700);
+            width: 150px;
+            background-color: var(--primary-100);
+        }
+
+        .info-table td:nth-child(2) {
+            color: var(--text-primary);
+        }
+
+        .footer {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.4rem 0.8rem;
+            background-color: var(--warning);
+            color: var(--neutral-white);
+            border-radius: 0.4rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .email-icon {
+            font-size: 2rem;
+            margin-right: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2><span class="email-icon">🔍</span>New KYC Verification Submission</h2>
+        <p>A new KYC verification has been submitted and requires your immediate review.</p>
+    </div>
+
+    <div class="content">
+        <table class="info-table">
+            <tr>
+                <td>User:</td>
+                <td>{{ user.vendor_profile.business_name }}</td>
+            </tr>
+            <tr>
+                <td>Email:</td>
+                <td>{{ user.email }}</td>
+            </tr>
+            <tr>
+                <td>Full Name:</td>
+                <td>{{ user.first_name }} {{ user.last_name }}</td>
+            </tr>
+            <tr>
+                <td>Submission Date:</td>
+                <td>{{ submission_date|date:"F d, Y H:i" }}</td>
+            </tr>
+            <tr>
+                <td>Status:</td>
+                <td><span class="status-badge">{{ kyc.verification_status|capfirst }}</span></td>
+            </tr>
+        </table>
+
+        <p style="font-size: 1.6rem; margin: 2rem 0; color: var(--text-primary);">
+            Please review this submission and take appropriate action to approve or reject the verification request.
+        </p>
+        
+        <a href="{{ admin_url }}" class="button">Review in Admin Panel</a>
+    </div>
+
+    <div class="footer">
+        <p>This is an automated notification from your KYC verification system.</p>
+        <p>Please do not reply to this email.</p>
+    </div>
+</body>
+</html>

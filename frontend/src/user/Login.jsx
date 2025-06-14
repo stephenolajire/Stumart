@@ -103,7 +103,7 @@ const Login = () => {
 
       // If user is picker, student picker, or vendor, handle KYC status
       if (["picker", "student_picker", "vendor"].includes(user_type)) {
-        if (!kyc_status || kyc_status === "rejected") {
+        if (!kyc_status || kyc_status === "rejected" || kyc_status === 'none') {
           Swal.fire({
             icon: "warning",
             title: "KYC Not Submitted or Rejected",

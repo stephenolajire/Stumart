@@ -18,7 +18,7 @@ from .throttles import RegisterThrottle, EmailVerificationThrottle
 import logging
 logger = logging.getLogger(__name__)
 from django.template.loader import render_to_string
-# from django.core.mail import send_mail
+from django.core.mail import send_mail
 from django.utils.html import strip_tags
 
 class BaseAPIView(APIView):
@@ -356,13 +356,54 @@ class KYCVerificationView(APIView):
     permission_classes = [IsAuthenticated]
     parser_classes = (MultiPartParser, FormParser)
     serializer_class = KYCVerificationSerializer
+    
+    def send_admin_notification(self, kyc_instance):
+        """Send email notification to admin about new KYC submission"""
+        try:
+            subject = f'New KYC Verification Submission - {kyc_instance.user.username}'
+            
+            # Create email context
+            context = {
+                'user': kyc_instance.user,
+                'kyc': kyc_instance,
+                'submission_date': kyc_instance.submission_date,
+                'admin_url': "https://stumart.com.ng/login"
+            }
+            
+            # HTML email using template
+            html_message = render_to_string('email/kyc_admin_notification.html', context)
+            
+            # Get admin email from settings
+            admin_email = getattr(settings, 'ADMIN_EMAIL', None)
+            if not admin_email:
+                admin_email = [admin[1] for admin in settings.ADMINS] if settings.ADMINS else []
+            message = "New KYC verification submission received:"
+            if admin_email:
+                send_mail(
+                    subject=subject,
+                    message=message,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[admin_email] if isinstance(admin_email, str) else admin_email,
+                    html_message=html_message,  # Now using HTML template
+                    fail_silently=False,
+                )
+                logger.info(f"Admin notification sent for KYC submission by user {kyc_instance.user.username}")
+            else:
+                logger.warning("No admin email configured for KYC notifications")
+                
+        except Exception as e:
+            logger.error(f"Failed to send admin notification for KYC submission: {str(e)}")
+            # Don't raise the exception - we don't want email failures to break KYC submission
 
     def post(self, request):
         try:
             # Check if KYC exists and get its status
             kyc_instance = None
+            is_new_submission = True
+            
             try:
                 kyc_instance = KYCVerification.objects.get(user=request.user)
+                is_new_submission = False
                 
                 # If KYC exists and status is not 'rejected' or 'none', prevent resubmission
                 # Fixed: Use lowercase status values to match model choices
@@ -370,17 +411,17 @@ class KYCVerificationView(APIView):
                     return Response({
                         'error': 'KYC verification already submitted and pending or approved'
                     }, status=status.HTTP_400_BAD_REQUEST)
-                
+                        
             except KYCVerification.DoesNotExist:
                 # No existing KYC record - will create new one
-                pass
+                is_new_submission = True
 
             serializer = self.serializer_class(
                 instance=kyc_instance,  # Will be None for new submissions
                 data=request.data,
                 context={'request': request}
             )
-            
+                    
             if serializer.is_valid():
                 if kyc_instance:
                     # Update existing rejected/none KYC
@@ -388,19 +429,22 @@ class KYCVerificationView(APIView):
                 else:
                     # Create new KYC
                     kyc_instance = serializer.save(user=request.user)
-                
+                        
                 # Set verification status to PENDING (use lowercase to match model)
                 kyc_instance.verification_status = 'pending'
                 kyc_instance.submission_date = timezone.now()
                 kyc_instance.rejection_reason = None  # Clear any previous rejection reason
                 kyc_instance.save()
+                
+                # Send admin notification email
+                self.send_admin_notification(kyc_instance)
 
                 return Response({
                     'message': 'KYC verification submitted successfully',
                     'data': serializer.data,
                     'status': kyc_instance.verification_status
                 }, status=status.HTTP_201_CREATED)
-            
+                    
             return Response(
                 serializer.errors,
                 status=status.HTTP_400_BAD_REQUEST
