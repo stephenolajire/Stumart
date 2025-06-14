@@ -130,6 +130,7 @@ export const nigeriaInstitutions = {
     "Ekiti State University, Ado-Ekiti",
     "Federal Polytechnic, Ado-Ekiti",
     "Federal University, Oye-Ekiti",
+    "Federal University, Oye-Ekiti, Ikole Campus",
   ],
   Enugu: [
     "Coal City University, Enugu",
