@@ -13,6 +13,7 @@ import { MEDIA_BASE_URL } from "../constant/api";
 import { nigeriaInstitutions } from "../constant/data";
 import Spinner from "../components/Spinner";
 import ThemeToggle from "../components/ThemeToggle";
+import SEO from "../components/Metadata";
 import {
   FaBook,
   FaUtensils,
@@ -143,7 +144,7 @@ const Home = memo(() => {
     clearError,
   } = useContext(GlobalContext);
 
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   // Consolidated state
   const [filters, setFilters] = useState({
@@ -707,10 +708,15 @@ const Home = memo(() => {
   // UI COMPONENTS SECTION
   return (
     <main className={styles.homeContainer}>
+      <SEO
+        title="Home"
+        description="StuMart - Your Campus Marketplace. Connect with student vendors, enjoy fast delivery, and access campus-specific products. Shop smart with secure payments, real-time chat, and reliable campus delivery services. Join the leading student e-commerce platform today!"
+        keywords="campus marketplace, student e-commerce, university shopping, campus delivery, student vendors, campus business, student marketplace, university E-commerce, campus food delivery, student services, campus shopping, university marketplace, student business platform, campus delivery service, student entrepreneurship"
+        url='/'
+      />
       {/* Hero Banner Section with Search */}
       <div className={styles.heroGrid}>
-
-        <div className={ styles.heroForms}>
+        <div className={styles.heroForms}>
           <form onSubmit={handleProductSearch} className={styles.searchBar}>
             <input
               type="text"
@@ -729,10 +735,9 @@ const Home = memo(() => {
               {uiState.isSearching ? "..." : <FaSearch />}
             </button>
           </form>
-          <ThemeToggle/>
+          <ThemeToggle />
         </div>
       </div>
-
       {/* Featured Deals Carousel */}
       <section className={styles.featuredDeals}>
         <div className={styles.sectionHeader}>
@@ -781,7 +786,6 @@ const Home = memo(() => {
           </div>
         </div>
       </section>
-
       {/* Categories Section */}
       <section className={styles.categories}>
         <div className={styles.sectionHeader}>
@@ -799,7 +803,6 @@ const Home = memo(() => {
           ))}
         </div>
       </section>
-
       {/* Filter and Sort Section */}
       <section className={styles.filterSection}>
         <div className={styles.filterBar}>
@@ -887,7 +890,6 @@ const Home = memo(() => {
           )}
         </div>
       </section>
-
       {/* Shops Grid Section */}
       <section className={styles.shopsSection}>
         {loading && !uiState.isInitialized ? (

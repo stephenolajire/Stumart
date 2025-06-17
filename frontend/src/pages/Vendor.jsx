@@ -4,6 +4,7 @@ import { FaStore, FaMoneyBillWave, FaUsers, FaTruck, FaChartLine, FaShieldAlt } 
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 import styles from '../css/Vendor.module.css';
+import SEO from '../components/Metadata';
 
 const Vendors = () => {
   useEffect(() => {
@@ -15,10 +16,19 @@ const Vendors = () => {
 
   return (
     <div className={styles.vendorContainer}>
+      <SEO
+        title="Become a StuMart Vendor - Sell to Students | Campus Marketplace"
+        description="Join StuMart as a vendor and sell to thousands of students across campus. Free registration, 10% commission, 24-48hr payouts. Start your campus business today!"
+        keywords="campus vendor, sell to students, student marketplace vendor, campus business, university marketplace, student market, campus selling, vendor registration, campus e-commerce, student business opportunity, sell on campus, campus store, university vendor, student marketplace, campus entrepreneur, sell to university students, campus retail, student customers, campus commerce, Nigeria campus business, campus food vendor, student fashion vendor, campus electronics, academic materials vendor, campus delivery business, student market access"
+        url="/vendors"
+      />
       <section className={styles.hero}>
         <div className={styles.container} data-aos="fade-up">
           <h1>Become a StuMart Vendor</h1>
-          <p>Expand your business reach across campus and connect with thousands of students</p>
+          <p>
+            Expand your business reach across campus and connect with thousands
+            of students
+          </p>
           <NavLink to="/register" className={styles.ctaButton}>
             Start Selling Today
           </NavLink>
@@ -29,25 +39,51 @@ const Vendors = () => {
         <div className={styles.container}>
           <h2 data-aos="fade-up">Why Sell on StuMart?</h2>
           <div className={styles.benefitsGrid}>
-            <div className={styles.benefitCard} data-aos="fade-up" data-aos-delay="100">
+            <div
+              className={styles.benefitCard}
+              data-aos="fade-up"
+              data-aos-delay="100"
+            >
               <FaUsers className={styles.icon} />
               <h3>Access Student Market</h3>
-              <p>Connect directly with thousands of students on campus looking for your products</p>
+              <p>
+                Connect directly with thousands of students on campus looking
+                for your products
+              </p>
             </div>
-            <div className={styles.benefitCard} data-aos="fade-up" data-aos-delay="200">
+            <div
+              className={styles.benefitCard}
+              data-aos="fade-up"
+              data-aos-delay="200"
+            >
               <FaTruck className={styles.icon} />
               <h3>Easy Delivery</h3>
-              <p>Our network of student pickers handles all deliveries, so you can focus on your products</p>
+              <p>
+                Our network of student pickers handles all deliveries, so you
+                can focus on your products
+              </p>
             </div>
-            <div className={styles.benefitCard} data-aos="fade-up" data-aos-delay="300">
+            <div
+              className={styles.benefitCard}
+              data-aos="fade-up"
+              data-aos-delay="300"
+            >
               <FaMoneyBillWave className={styles.icon} />
               <h3>Quick Payments</h3>
-              <p>Receive payments directly to your account within 24-48 hours</p>
+              <p>
+                Receive payments directly to your account within 24-48 hours
+              </p>
             </div>
-            <div className={styles.benefitCard} data-aos="fade-up" data-aos-delay="400">
+            <div
+              className={styles.benefitCard}
+              data-aos="fade-up"
+              data-aos-delay="400"
+            >
               <FaChartLine className={styles.icon} />
               <h3>Business Growth</h3>
-              <p>Access analytics and insights to help grow your campus business</p>
+              <p>
+                Access analytics and insights to help grow your campus business
+              </p>
             </div>
           </div>
         </div>
@@ -57,22 +93,38 @@ const Vendors = () => {
         <div className={styles.container}>
           <h2 data-aos="fade-up">How It Works</h2>
           <div className={styles.steps}>
-            <div className={styles.step} data-aos="fade-right" data-aos-delay="100">
+            <div
+              className={styles.step}
+              data-aos="fade-right"
+              data-aos-delay="100"
+            >
               <div className={styles.stepNumber}>1</div>
               <h3>Register</h3>
               <p>Sign up as a vendor and complete your business profile</p>
             </div>
-            <div className={styles.step} data-aos="fade-right" data-aos-delay="200">
+            <div
+              className={styles.step}
+              data-aos="fade-right"
+              data-aos-delay="200"
+            >
               <div className={styles.stepNumber}>2</div>
               <h3>List Products</h3>
               <p>Add your products with photos, descriptions, and prices</p>
             </div>
-            <div className={styles.step} data-aos="fade-right" data-aos-delay="300">
+            <div
+              className={styles.step}
+              data-aos="fade-right"
+              data-aos-delay="300"
+            >
               <div className={styles.stepNumber}>3</div>
               <h3>Receive Orders</h3>
               <p>Get notified instantly when students place orders</p>
             </div>
-            <div className={styles.step} data-aos="fade-right" data-aos-delay="400">
+            <div
+              className={styles.step}
+              data-aos="fade-right"
+              data-aos-delay="400"
+            >
               <div className={styles.stepNumber}>4</div>
               <h3>Fulfill & Earn</h3>
               <p>Prepare orders for pickup by our student pickers</p>
@@ -132,15 +184,24 @@ const Vendors = () => {
           <div className={styles.questions}>
             <div className={styles.question}>
               <h3>How long does verification take?</h3>
-              <p>Verification typically takes 1-2 business days after submitting all required documents.</p>
+              <p>
+                Verification typically takes 1-2 business days after submitting
+                all required documents.
+              </p>
             </div>
             <div className={styles.question}>
               <h3>What products can I sell?</h3>
-              <p>You can sell any legal products suitable for students, including food, fashion, electronics, and academic materials.</p>
+              <p>
+                You can sell any legal products suitable for students, including
+                food, fashion, electronics, and academic materials.
+              </p>
             </div>
             <div className={styles.question}>
               <h3>How do I receive payments?</h3>
-              <p>Payments are automatically transferred to your registered bank account within 24-48 hours of order completion.</p>
+              <p>
+                Payments are automatically transferred to your registered bank
+                account within 24-48 hours of order completion.
+              </p>
             </div>
           </div>
         </div>

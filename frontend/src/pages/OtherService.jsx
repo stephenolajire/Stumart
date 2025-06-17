@@ -6,7 +6,8 @@ import api from "../constant/api";
 import styles from "../css/OtherService.module.css";
 import Swal from "sweetalert2";
 import { nigeriaInstitutions } from "../constant/data";
-import Header from "../components/Header"
+import Header from "../components/Header";
+import SEO from "../components/Metadata";
 
 // Other service specific categories
 const otherServiceCategories = [
@@ -154,8 +155,16 @@ const OtherService = () => {
 
   return (
     <div className={styles.otherServiceContainer}>
+      <SEO
+        title="Other Services - Campus Marketplace | StuMart"
+        description="Discover diverse campus services including laundry, tutoring, printing, barbing, hair styling, computer repairs, phone repairs, photography, graphic design, tailoring, cleaning, event planning and more at your university through StuMart"
+        keywords="campus services, student services, university services, universuty laundry services, university tutoring, university printing services, university barbing services, university hair styling, university computer repairs, university phone repairs, university photography services, university graphic design, university tailoring services, university cleaning services, university event planning, university assignment help, university note writing, university campus marketplace, university student marketplace, university marketplace, campus business, student entrepreneurs, campus delivery, Nigeria universities, student life services, campus convenience"
+        url="/other-services"
+      />
       <div className={styles.header}>
-        <Header title={`Other Services ${schoolParam ? `in ${schoolParam}` : ""}`}/>
+        <Header
+          title={`Other Services ${schoolParam ? `in ${schoolParam}` : ""}`}
+        />
       </div>
 
       <div className={styles.searchSection}>

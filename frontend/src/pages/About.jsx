@@ -8,6 +8,7 @@ import campus from "../assets/uni.jpeg";
 import { Link } from "react-router-dom";
 import { GlobalContext } from "../constant/GlobalContext";
 import Header from "../components/Header";
+import SEO from '../components/Metadata'
 
 const About = () => {
   const { isAuthenticated } = useContext(GlobalContext);
@@ -20,9 +21,12 @@ const About = () => {
 
   return (
     <div className={styles.aboutContainer}>
-      {/* <div className={styles.backHeader} style={{ paddingLeft: "2rem" }}>
-        <Header title=" " />
-      </div> */}
+      <SEO
+        title="About StuMart"
+        description="Learn about StuMart - the revolutionary campus marketplace connecting students, vendors, and delivery partners across university communities in Nigeria"
+        keywords="stumart about, campus marketplace, student commerce, university delivery, campus vendors, student opportunities, Nigeria university shopping"
+        url="/about"
+      />
       <section className={styles.hero} data-aos="fade-down">
         <h1>About StuMart</h1>
         <p>Connecting Campus Communities Through Commerce</p>

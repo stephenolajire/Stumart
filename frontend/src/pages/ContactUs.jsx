@@ -12,6 +12,7 @@ import styles from "../css/Contact.module.css";
 import api from "../constant/api";
 import Swal from "sweetalert2";
 import Header from "../components/Header";
+import SEO from "../components/Metadata";
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -85,9 +86,12 @@ const Contact = () => {
 
   return (
     <div className={styles.contactContainer} style={{ marginTop: "2.5rem" }}>
-      {/* <div className={styles.backHeader} style={{ paddingLeft: "2rem" }}>
-        <Header title=" " />
-      </div> */}
+      <SEO
+        title="Contact Us - StuMart | Get Help & Support"
+        description="Contact StuMart support team for help with your campus marketplace experience. Get in touch via email, phone, or social media. We're here to assist with orders, vendor inquiries, and technical support."
+        keywords="stumart contact, campus marketplace support, student marketplace help, contact stumart team, stumart customer service, campus marketplace contact, student support, university marketplace help, stumart email, stumart phone, campus delivery support, student marketplace customer service, stumart assistance, contact us stumart"
+        url="/contact"
+      />
       <section className={styles.hero}>
         <div className={styles.container}>
           <h1>Contact Us</h1>

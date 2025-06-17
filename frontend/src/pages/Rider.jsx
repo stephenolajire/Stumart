@@ -12,6 +12,7 @@ import {
 import AOS from "aos";
 import "aos/dist/aos.css";
 import styles from "../css/Rider.module.css";
+import SEO from "../components/Metadata";
 
 const Rider = () => {
   useEffect(() => {
@@ -23,6 +24,12 @@ const Rider = () => {
 
   return (
     <div className={styles.riderContainer}>
+      <SEO
+        title="Become a Campus Picker - Earn Money Delivering | StuMart"
+        description="Join StuMart as a campus picker and earn ₦300-500 per delivery with flexible hours that fit your student schedule. Deliver to fellow students while studying. Apply now!"
+        keywords="campus picker, student delivery job, part time job for students, campus delivery, student picker, earn money while studying, flexible student job, delivery partner, student income, campus earnings, university delivery, student work, Nigeria student jobs, campus marketplace delivery, student entrepreneurship, delivery service jobs, student side hustle, campus work opportunity, university part time job, student delivery partner"
+        url="/rider"
+      />
       <section className={styles.hero}>
         <div className={styles.container} data-aos="fade-up">
           <h1>Become a Campus Picker</h1>

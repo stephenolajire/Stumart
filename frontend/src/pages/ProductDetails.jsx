@@ -13,6 +13,7 @@ import {
 } from "react-icons/fa";
 import Spinner from "../components/Spinner";
 import Header from "../components/Header";
+import SEO from "../components/Metadata";
 
 const Toast = Swal.mixin({
   toast: true,
@@ -376,6 +377,33 @@ const ProductDetails = () => {
 
   return (
     <div className={styles.productDetails}>
+      <SEO
+        title={
+          product
+            ? `${product.name} - StuMart | ${product.vendor_name}`
+            : "Product Details - StuMart"
+        }
+        description={
+          product
+            ? `Buy ${product.name} from ${
+                product.vendor_name
+              } on StuMart campus marketplace. ${product.description?.substring(
+                0,
+                120
+              )}${
+                product.description?.length > 120 ? "..." : ""
+              } Price: ₦${Number(
+                product.promotion_price || product.price
+              ).toLocaleString()}`
+            : "View product details on StuMart campus marketplace. Buy from verified student vendors with secure delivery across Nigerian universities."
+        }
+        keywords={
+          product
+            ? `${product.name}, ${product.vendor_name}, stumart product, campus marketplace, student shopping, university product, ${product.vendor_category}, buy ${product.name}, student vendor, campus delivery, university shopping nigeria, student marketplace product, campus e-commerce`
+            : "stumart product details, campus marketplace product, student shopping, university product, campus delivery, student vendor, university marketplace"
+        }
+        url={`/products/${productId}`}
+      />
       <Header title="Product Details" />
       <div className={styles.container}>
         <div className={styles.productGrid}>
