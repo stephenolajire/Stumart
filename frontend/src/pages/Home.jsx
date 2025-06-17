@@ -709,10 +709,10 @@ const Home = memo(() => {
   return (
     <main className={styles.homeContainer}>
       <SEO
-        title="Home"
+        title="Home - Stumart | Campus Marketplace"
         description="StuMart - Your Campus Marketplace. Connect with student vendors, enjoy fast delivery, and access campus-specific products. Shop smart with secure payments, real-time chat, and reliable campus delivery services. Join the leading student e-commerce platform today!"
         keywords="campus marketplace, student e-commerce, university shopping, campus delivery, student vendors, campus business, student marketplace, university E-commerce, campus food delivery, student services, campus shopping, university marketplace, student business platform, campus delivery service, student entrepreneurship"
-        url='/'
+        url="/"
       />
       {/* Hero Banner Section with Search */}
       <div className={styles.heroGrid}>

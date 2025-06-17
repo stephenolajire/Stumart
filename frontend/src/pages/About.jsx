@@ -22,7 +22,7 @@ const About = () => {
   return (
     <div className={styles.aboutContainer}>
       <SEO
-        title="About StuMart"
+        title="About-StuMart | Campus Marketplace"
         description="Learn about StuMart - the revolutionary campus marketplace connecting students, vendors, and delivery partners across university communities in Nigeria"
         keywords="stumart about, campus marketplace, student commerce, university delivery, campus vendors, student opportunities, Nigeria university shopping"
         url="/about"

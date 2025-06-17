@@ -254,7 +254,7 @@ const AllProducts = () => {
   return (
     <div className={styles.productsPage}>
       <SEO
-        title="All Products - StuMart"
+        title="All Products - StuMart | Campus Marketplace"
         description="Browse all products available on StuMart campus marketplace. Find textbooks, electronics, food, fashion, and more from students and vendors across Nigerian universities. Filter by school, category, price, and location."
         keywords="stumart products, campus marketplace products, student products, university shopping, campus textbooks, student electronics, campus food, university fashion, student vendors, campus delivery, buy sell students, university marketplace, student business, campus e-commerce, nigeria student shopping, campus products online, university store, student marketplace nigeria"
         url="/products"
