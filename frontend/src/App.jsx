@@ -46,7 +46,7 @@ import AllProducts from "./pages/AllProducts";
 import Chatbot from "./chatbot/Chatbot";
 import ThemeToggle from "./components/ThemeToggle";
 import { ThemeProvider } from "./constant/ThemeContext";
-import NotificationPage from "./pages/Notification";
+// import NotificationPage from "./pages/Notification";
 import Service from "./pages/Service";
 import Message from "./pages/Message";
 // import UnifiedMessages from "./components/UnifiedMessage";
@@ -69,14 +69,7 @@ function App() {
               <Route path="other-services" element={<OtherService />} />
               <Route path="shopping-cart" element={<ShoppingCart />} />
               <Route path="search" element={<SearchPage />} />
-              <Route
-                path="notification"
-                element={
-                  <ProtectedRoute>
-                    <NotificationPage />
-                  </ProtectedRoute>
-                }
-              />
+              
               <Route
                 path="service"
                 element={
