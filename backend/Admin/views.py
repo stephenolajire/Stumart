@@ -237,6 +237,8 @@ class VendorsAPIView(APIView):
                 'date_joined': vendor.user.date_joined,
                 'user_name': f"{vendor.user.first_name} {vendor.user.last_name}",
                 'phone_number': vendor.user.phone_number,
+                'state':vendor.user.state,
+                'institution':vendor.user.institution
             }
             
             # Get total products

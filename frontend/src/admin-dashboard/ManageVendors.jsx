@@ -34,6 +34,7 @@ const ManageVendors = () => {
 
       const response = await api.get(url);
       setVendors(response.data);
+      console.log(response.data)
       setLoading(false);
     } catch (err) {
       console.error("Error fetching vendors:", err);
@@ -324,25 +325,25 @@ const ManageVendors = () => {
                   <div className={styles.detailItem}>
                     <span className={styles.label}>Email:</span>
                     <span className={styles.value}>
-                      {selectedVendor.user?.email}
+                      {selectedVendor.email}
                     </span>
                   </div>
                   <div className={styles.detailItem}>
                     <span className={styles.label}>Phone:</span>
                     <span className={styles.value}>
-                      {selectedVendor.user?.phone_number}
+                      {selectedVendor.phone_number}
                     </span>
                   </div>
                   <div className={styles.detailItem}>
                     <span className={styles.label}>State:</span>
                     <span className={styles.value}>
-                      {selectedVendor.user?.state}
+                      {selectedVendor.state}
                     </span>
                   </div>
                   <div className={styles.detailItem}>
                     <span className={styles.label}>Institution:</span>
                     <span className={styles.value}>
-                      {selectedVendor.user?.institution}
+                      {selectedVendor.institution}
                     </span>
                   </div>
                 </div>
