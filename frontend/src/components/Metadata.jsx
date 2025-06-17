@@ -1,47 +1,63 @@
-import React from "react";
+import { useEffect } from "react";
 
 const SEO = ({
-  title,
-  description,
-  keywords,
-  image,
-  url,
-  type = "website",
+  title = "StuMart - Campus Marketplace & Delivery Service",
+  description = "StuMart connects university students with campus vendors and delivery services. Shop for food, fashion, electronics, books and more with reliable campus delivery.",
+  keywords = "campus marketplace, student delivery, university shopping, campus vendors, student commerce, campus food delivery, student marketplace, campus fashion, student shopping platform, university delivery service",
+  ogImage = "/path-to-your-logo.png",
 }) => {
-  const siteTitle = "Stumart.com.ng";
-  const fullTitle = title ? `${title} | ${siteTitle}` : siteTitle;
-  const siteUrl = "https://stumart.com.ng";
-  const fullUrl = url ? `${siteUrl}${url}` : siteUrl;
-  const defaultImage = `${siteUrl}/og-image.jpg`;
+  useEffect(() => {
+    // Update meta tags
+    document.title = title;
 
-  return (
-    <>
-      {/* Basic Meta Tags */}
-      <title>{fullTitle}</title>
-      <meta name="description" content={description} />
-      <meta name="keywords" content={keywords} />
-      <link rel="canonical" href={fullUrl} />
+    const metaTags = {
+      description: description,
+      keywords: keywords,
+      "og:title": title,
+      "og:description": description,
+      "og:type": "website",
+      "og:image": ogImage,
+      robots: "index, follow",
+      language: "English",
+      author: "StuMart",
+    };
 
-      {/* Open Graph Tags */}
-      <meta property="og:type" content={type} />
-      <meta property="og:title" content={fullTitle} />
-      <meta property="og:description" content={description} />
-      <meta property="og:image" content={image || defaultImage} />
-      <meta property="og:url" content={fullUrl} />
-      <meta property="og:site_name" content={siteTitle} />
+    // Update existing or create new meta tags
+    Object.entries(metaTags).forEach(([name, content]) => {
+      let meta =
+        document.querySelector(`meta[name="${name}"]`) ||
+        document.querySelector(`meta[property="${name}"]`);
 
-      {/* Twitter Card Tags */}
-      <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content={fullTitle} />
-      <meta name="twitter:description" content={description} />
-      <meta name="twitter:image" content={image || defaultImage} />
+      if (!meta) {
+        meta = document.createElement("meta");
+        if (name.startsWith("og:")) {
+          meta.setAttribute("property", name);
+        } else {
+          meta.setAttribute("name", name);
+        }
+        document.head.appendChild(meta);
+      }
 
-      {/* Additional SEO Tags */}
-      <meta name="robots" content="index, follow" />
-      <meta name="author" content="Stumart Team" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    </>
-  );
+      meta.setAttribute("content", content);
+    });
+
+    // Update canonical link
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement("link");
+      canonical.setAttribute("rel", "canonical");
+      document.head.appendChild(canonical);
+    }
+    canonical.setAttribute("href", window.location.href);
+
+    // Cleanup function
+    return () => {
+      // Optional: Remove meta tags on component unmount
+      // Usually not needed for SEO tags
+    };
+  }, [title, description, keywords, ogImage]);
+
+  return null; // This component doesn't render anything
 };
 
 export default SEO;
