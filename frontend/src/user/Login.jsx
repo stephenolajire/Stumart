@@ -160,6 +160,16 @@ const Login = () => {
     } catch (error) {
       console.error("Login error:", error);
 
+      if (error.response.status === 401) {
+        Swal.fire({
+          icon: "error",
+          title: "Login Failed",
+          text: "Invalid email or password. Please try again.",
+          confirmButtonColor: "var(--primary-500)",
+        });
+        return;
+      }
+
       // Check if it's a throttle error (status code 429)
       if (error.response?.status === 429) {
         const waitSeconds = error.response.data.wait_seconds || 60;

@@ -1,4 +1,4 @@
-import {
+import React, {
   useContext,
   useState,
   useEffect,
@@ -6,15 +6,14 @@ import {
   memo,
   useMemo,
 } from "react";
-import { useNavigate } from "react-router-dom";
-import Swal from "sweetalert2";
-import "sweetalert2/dist/sweetalert2.css";
+import { Link, useNavigate } from "react-router-dom";
+import { GlobalContext } from "../constant/GlobalContext";
 import styles from "../css/Home.module.css";
+import { MEDIA_BASE_URL } from "../constant/api";
+import { nigeriaInstitutions } from "../constant/data";
 import Spinner from "../components/Spinner";
-import ourwife from "../assets/our-wife.jpg";
-import abu from "../assets/abu.jpg";
-import james from "../assets/james.jpg";
-// import Spinner from "../components/Spinner";
+import ThemeToggle from "../components/ThemeToggle";
+import SEO from "../components/Metadata";
 import {
   FaBook,
   FaUtensils,
@@ -35,12 +34,11 @@ import {
   FaClock,
   FaShoppingCart,
 } from "react-icons/fa";
-import { GlobalContext } from "../constant/GlobalContext";
-import { nigeriaInstitutions } from "../constant/data";
-import api from "../constant/api";
-import { MEDIA_BASE_URL } from "../constant/api";
-import { Link } from "react-router-dom";
+import Swal from "sweetalert2";
 import debounce from "lodash/debounce";
+import ourwife from "../assets/our-wife.jpg";
+import abu from "../assets/abu.jpg";
+import james from "../assets/james.jpg";
 
 // Categories with icons
 const categories = [
@@ -61,7 +59,7 @@ const promotions = [
     id: 1,
     title: "Back to School Sale!",
     description: "Get 20% off on all stationery items",
-    link: "/category/stationery",
+    link: "/products",
     gradient: "primary",
     image: ourwife,
   },
@@ -69,7 +67,7 @@ const promotions = [
     id: 2,
     title: "Food Festival Week",
     description: "Amazing deals on campus restaurants",
-    link: "/category/food",
+    link: "/products",
     gradient: "secondary",
     image: abu,
   },
@@ -77,16 +75,76 @@ const promotions = [
     id: 3,
     title: "Tech Gadget Fair",
     description: "Latest gadgets at student-friendly prices",
-    link: "/category/tech",
+    link: "/products",
     gradient: "tertiary",
     image: james,
   },
 ];
 
+// Move constants outside component
+const SHOPS_PER_PAGE = 12;
+
+// Separate components
+const CategoryCard = memo(({ category, isActive, onClick }) => (
+  <button
+    className={`${styles.categoryCard} ${
+      isActive ? styles.activeCategory : ""
+    }`}
+    onClick={() => onClick(category.name.toLowerCase())}
+  >
+    <div className={styles.categoryIcon}>{category.icon}</div>
+    <span className={styles.categoryName}>{category.name}</span>
+  </button>
+));
+
+const ShopCard = memo(({ shop }) => (
+  <div className={styles.shopCard}>
+    <Link to={`/shop/${shop.id}`} className={styles.shopLink}>
+      <div className={styles.shopImage}>
+        <img
+          src={`${MEDIA_BASE_URL}${shop.shop_image}`}
+          alt={shop.business_name}
+        />
+      </div>
+      <div className={styles.shopDetails}>
+        <h3 className={styles.shopName}>{shop.business_name}</h3>
+        <div className={styles.shopMeta}>
+          <span className={styles.shopCategory}>{shop.business_category}</span>
+          <div className={styles.shopRating}>
+            <FaStar className={styles.starIcon} />
+            <span>{shop.rating}</span>
+          </div>
+        </div>
+        <div className={styles.shopLocation}>
+          <FaMapMarkerAlt className={styles.locationIcon} />
+          <span>{shop.user.institution}</span>
+        </div>
+        <div className={styles.shopDelivery}>
+          <FaClock className={styles.clockIcon} />
+          <span>15-30 mins</span>
+        </div>
+        <button className={styles.viewShopButton}>
+          <FaShoppingCart /> Shop Now
+        </button>
+      </div>
+    </Link>
+  </div>
+));
+
 const Home = memo(() => {
+  // Get all necessary functions and data from GlobalContext
+  const {
+    shopsData,
+    searchResults,
+    fetchShopsBySchool,
+    searchProducts,
+    loading,
+    error,
+    isAuthenticated,
+    clearError,
+  } = useContext(GlobalContext);
+
   const navigate = useNavigate();
-  const { shopsData, fetchShopsBySchool, loading, isAuthenticated } =
-    useContext(GlobalContext);
 
   // Consolidated state
   const [filters, setFilters] = useState({
@@ -114,7 +172,6 @@ const Home = memo(() => {
 
   // Constants
   const institution = localStorage.getItem("institution");
-  const shopsPerPage = 12;
 
   // Get all states from Nigeria institutions
   const states = useMemo(() => Object.keys(nigeriaInstitutions), []);
@@ -139,15 +196,15 @@ const Home = memo(() => {
 
   // Computed properties
   const totalPages = useMemo(() => {
-    return Math.ceil((shopState.filteredShops?.length || 0) / shopsPerPage);
-  }, [shopState.filteredShops, shopsPerPage]);
+    return Math.ceil((shopState.filteredShops?.length || 0) / SHOPS_PER_PAGE);
+  }, [shopState.filteredShops, SHOPS_PER_PAGE]);
 
   const currentShops = useMemo(() => {
     const { currentPage } = uiState;
-    const indexOfLastShop = currentPage * shopsPerPage;
-    const indexOfFirstShop = indexOfLastShop - shopsPerPage;
+    const indexOfLastShop = currentPage * SHOPS_PER_PAGE;
+    const indexOfFirstShop = indexOfLastShop - SHOPS_PER_PAGE;
     return shopState.filteredShops?.slice(indexOfFirstShop, indexOfLastShop);
-  }, [shopState.filteredShops, uiState.currentPage, shopsPerPage]);
+  }, [shopState.filteredShops, uiState.currentPage, SHOPS_PER_PAGE]);
 
   // Format category name - memoized helper function
   const formatCategoryName = useCallback((category) => {
@@ -220,7 +277,7 @@ const Home = memo(() => {
     return () => clearInterval(timer);
   }, []);
 
-  // Centralized shop fetching function - memoized with useCallback
+  // Centralized shop fetching function using GlobalContext
   const fetchShops = useCallback(
     async (schoolName) => {
       try {
@@ -510,7 +567,7 @@ const Home = memo(() => {
     requestInstitutionSwitch,
   ]);
 
-  // Handle product search
+  // Handle product search using GlobalContext searchProducts function
   const handleProductSearch = useCallback(
     async (e) => {
       e.preventDefault();
@@ -530,22 +587,18 @@ const Home = memo(() => {
       setUiState((prev) => ({ ...prev, isSearching: true }));
 
       try {
-        const params = {
-          product_name: uiState.productName,
+        const searchParams = {
+          productName: uiState.productName,
           ...(filters.school && { institution: filters.school }),
           ...(filters.state && { state: filters.state }),
         };
 
-        const response = await api.get("search-products/", { params });
+        const result = await searchProducts(searchParams);
 
-        if (
-          response.data &&
-          response.data.products &&
-          response.data.products.length > 0
-        ) {
+        if (result.success && result.products && result.products.length > 0) {
           navigate("/search", {
             state: {
-              products: response.data.products,
+              products: result.products,
               searchParams: {
                 productName: uiState.productName,
                 school: filters.school,
@@ -557,24 +610,18 @@ const Home = memo(() => {
           Swal.fire({
             icon: "info",
             title: "No Products Found",
-            text: `No products matching "${uiState.productName}" found in the selected location.`,
+            text:
+              result.message ||
+              `No products matching "${uiState.productName}" found in the selected location.`,
           });
         }
       } catch (error) {
         console.error("Search error:", error);
-        if (isAuthenticated && error.status === 404) {
-          Swal.fire({
-            icon: "error",
-            title: "Search Error",
-            text: `Product not found in your school .`,
-          });
-        } else {
-          Swal.fire({
-            icon: "error",
-            title: "Search Error",
-            text: "Product is not availbale.",
-          });
-        }
+        Swal.fire({
+          icon: "error",
+          title: "Search Error",
+          text: "An error occurred while searching. Please try again.",
+        });
       } finally {
         setUiState((prev) => ({ ...prev, isSearching: false }));
       }
@@ -588,6 +635,7 @@ const Home = memo(() => {
       filters.state,
       navigate,
       requestInstitutionSwitch,
+      searchProducts,
     ]
   );
 
@@ -647,22 +695,28 @@ const Home = memo(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
+  // Clear errors when component unmounts or error changes
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        clearError();
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [error, clearError]);
+
   // UI COMPONENTS SECTION
   return (
     <main className={styles.homeContainer}>
+      <SEO
+        title="Home - Stumart | Campus Marketplace"
+        description="StuMart - Your Campus Marketplace. Connect with student vendors, enjoy fast delivery, and access campus-specific products. Shop smart with secure payments, real-time chat, and reliable campus delivery services. Join the leading student e-commerce platform today!"
+        keywords="campus marketplace, student e-commerce, university shopping, campus delivery, student vendors, campus business, student marketplace, university E-commerce, campus food delivery, student services, campus shopping, university marketplace, student business platform, campus delivery service, student entrepreneurship"
+        url="/"
+      />
       {/* Hero Banner Section with Search */}
       <div className={styles.heroGrid}>
-        {isAuthenticated && (
-          <div className={styles.heroSwitch}>
-            <button
-              onClick={handleResetFilter}
-              className={styles.resetFiltersButtonTop}
-            >
-              Switch Institution
-            </button>
-          </div>
-        )}
-        <div className={isAuthenticated ? styles.heroForm : styles.heroForms}>
+        <div className={styles.heroForms}>
           <form onSubmit={handleProductSearch} className={styles.searchBar}>
             <input
               type="text"
@@ -670,7 +724,7 @@ const Home = memo(() => {
               onChange={(e) =>
                 setUiState((prev) => ({ ...prev, productName: e.target.value }))
               }
-              placeholder="What are you looking for?"
+              placeholder="Search for product / shop"
               className={styles.searchInput}
             />
             <button
@@ -681,9 +735,9 @@ const Home = memo(() => {
               {uiState.isSearching ? "..." : <FaSearch />}
             </button>
           </form>
+          <ThemeToggle />
         </div>
       </div>
-
       {/* Featured Deals Carousel */}
       <section className={styles.featuredDeals}>
         <div className={styles.sectionHeader}>
@@ -732,7 +786,6 @@ const Home = memo(() => {
           </div>
         </div>
       </section>
-
       {/* Categories Section */}
       <section className={styles.categories}>
         <div className={styles.sectionHeader}>
@@ -741,22 +794,15 @@ const Home = memo(() => {
 
         <div className={styles.categoryGrid}>
           {categories.map((category) => (
-            <button
+            <CategoryCard
               key={category.id}
-              className={`${styles.categoryCard} ${
-                filters.category === category.name.toLowerCase()
-                  ? styles.activeCategory
-                  : ""
-              }`}
-              onClick={() => handleCategoryChange(category.name.toLowerCase())}
-            >
-              <div className={styles.categoryIcon}>{category.icon}</div>
-              <span className={styles.categoryName}>{category.name}</span>
-            </button>
+              category={category}
+              isActive={filters.category === category.name.toLowerCase()}
+              onClick={handleCategoryChange}
+            />
           ))}
         </div>
       </section>
-
       {/* Filter and Sort Section */}
       <section className={styles.filterSection}>
         <div className={styles.filterBar}>
@@ -844,7 +890,6 @@ const Home = memo(() => {
           )}
         </div>
       </section>
-
       {/* Shops Grid Section */}
       <section className={styles.shopsSection}>
         {loading && !uiState.isInitialized ? (
@@ -856,41 +901,7 @@ const Home = memo(() => {
             <div className={styles.shopsGrid}>
               {currentShops.map((shop) =>
                 shop.business_category !== "others" ? (
-                  <div key={shop.id} className={styles.shopCard}>
-                    <Link to={`/shop/${shop.id}`} className={styles.shopLink}>
-                      <div className={styles.shopImage}>
-                        <img
-                          src={`${MEDIA_BASE_URL}${shop.shop_image}`}
-                          alt={shop.business_name}
-                        />
-                      </div>
-                      <div className={styles.shopDetails}>
-                        <h3 className={styles.shopName}>
-                          {shop.business_name}
-                        </h3>
-                        <div className={styles.shopMeta}>
-                          <span className={styles.shopCategory}>
-                            {shop.business_category}
-                          </span>
-                          <div className={styles.shopRating}>
-                            <FaStar className={styles.starIcon} />
-                            <span>{shop.rating}</span>
-                          </div>
-                        </div>
-                        <div className={styles.shopLocation}>
-                          <FaMapMarkerAlt className={styles.locationIcon} />
-                          <span>{shop.user.institution}</span>
-                        </div>
-                        <div className={styles.shopDelivery}>
-                          <FaClock className={styles.clockIcon} />
-                          <span>15-30 mins</span>
-                        </div>
-                        <button className={styles.viewShopButton}>
-                          <FaShoppingCart /> Shop Now
-                        </button>
-                      </div>
-                    </Link>
-                  </div>
+                  <ShopCard key={shop.id} shop={shop} />
                 ) : null
               )}
             </div>

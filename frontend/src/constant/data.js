@@ -341,7 +341,7 @@ export const businessCategories = [
   "Home",
   "Books",
   "Electronics",
-  "Others",
+  // "Others",
 ];
 
 export const otherBusinessCategories = [
@@ -361,6 +361,6 @@ export const otherBusinessCategories = [
   { value: "event_planning", label: "Event Planning" },
 ];
 
-export const userTypes = ["Student", "Picker", "Vendor", "Student Picker"];
+export const userTypes = ["Student", "Vendor", "Student Picker"];
 
 export const fleetTypes = ["Bike", "Bicycle"];

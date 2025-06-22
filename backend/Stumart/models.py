@@ -57,6 +57,12 @@ class Product(models.Model):
         blank=True
     )
 
+    delivery_day = models.CharField(
+        max_length=50, 
+        default=" ",
+        help_text="Estimated delivery time for the product"
+    )
+
     class Meta:
         ordering = ['-created_at']
     

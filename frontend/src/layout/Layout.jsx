@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import Navigation from "../components/Navigation";
-import Footer from "../components/Footer";
+import Navigation from '../components/nav/Navigation';
+import Footer from '../components/nav/Footer';
 import { Outlet } from "react-router-dom";
 import { FaPlayCircle, FaTimes, FaComments } from "react-icons/fa";
 import Chatbot from "../chatbot/Chatbot";

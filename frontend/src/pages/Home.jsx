@@ -194,17 +194,23 @@ const Home = memo(() => {
     );
   }, []);
 
-  // Computed properties
+  const visibleShops = useMemo(() => {
+    // Filter out "others" before paginating
+    return shopState.filteredShops?.filter(
+      (shop) => shop.business_category !== "others"
+    );
+  }, [shopState.filteredShops]);
+
   const totalPages = useMemo(() => {
-    return Math.ceil((shopState.filteredShops?.length || 0) / SHOPS_PER_PAGE);
-  }, [shopState.filteredShops, SHOPS_PER_PAGE]);
+    return Math.ceil((visibleShops?.length || 0) / SHOPS_PER_PAGE);
+  }, [visibleShops, SHOPS_PER_PAGE]);
 
   const currentShops = useMemo(() => {
     const { currentPage } = uiState;
     const indexOfLastShop = currentPage * SHOPS_PER_PAGE;
     const indexOfFirstShop = indexOfLastShop - SHOPS_PER_PAGE;
-    return shopState.filteredShops?.slice(indexOfFirstShop, indexOfLastShop);
-  }, [shopState.filteredShops, uiState.currentPage, SHOPS_PER_PAGE]);
+    return visibleShops?.slice(indexOfFirstShop, indexOfLastShop);
+  }, [visibleShops, uiState.currentPage, SHOPS_PER_PAGE]);
 
   // Format category name - memoized helper function
   const formatCategoryName = useCallback((category) => {
@@ -758,6 +764,10 @@ const Home = memo(() => {
               backgroundSize: "cover",
               backgroundRepeat: "no-repeat",
               backgroundPosition: "center",
+              objectFit: "cover",
+              objectPosition: "center",
+              height: "100%",
+              width: "100%",
             }}
           >
             <h3>{promotions[uiState.currentPromoIndex].title}</h3>
@@ -899,11 +909,9 @@ const Home = memo(() => {
         ) : shopState.filteredShops && shopState.filteredShops.length > 0 ? (
           <>
             <div className={styles.shopsGrid}>
-              {currentShops.map((shop) =>
-                shop.business_category !== "others" ? (
-                  <ShopCard key={shop.id} shop={shop} />
-                ) : null
-              )}
+              {currentShops.map((shop) => (
+                <ShopCard key={shop.id} shop={shop} />
+              ))}
             </div>
 
             {/* Pagination */}

@@ -5,6 +5,7 @@ import json
 from User.models import Vendor
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+import re
 
 User = get_user_model()
 
@@ -63,7 +64,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'id', 'name', 'description', 'price', 'in_stock',
             'gender', 'created_at', 'updated_at',
             'additional_images', 'sizes', 'colors', 'image_url',
-            'vendor_name', 'vendor_rating','vendor_category', 'keyword', 'promotion_price'
+            'vendor_name', 'vendor_rating','vendor_category', 'keyword', 'promotion_price', 'delivery_day'
         ]
     
     def get_vendor_name(self, obj):
@@ -128,7 +129,8 @@ class ProductCreateSerializer(serializers.ModelSerializer):
             'gender',
             'sizes',
             'colors',
-            'keyword'
+            'keyword',
+            'delivery_day',
         ]
         read_only_fields = ['vendor']
     
@@ -190,6 +192,53 @@ class ProductCreateSerializer(serializers.ModelSerializer):
         if 'in_stock' in data:
             data.pop('in_stock')
         return data
+
+    def validate_delivery_day(self, value):
+        """
+        Validate the delivery day for the product.
+        Expects text like "2 days", "1 day", "5 days", etc.
+        """
+        if not value:
+            return value
+        
+        # Convert to string and strip whitespace
+        value = str(value).strip().lower()
+        
+        # Check minimum length
+        if len(value) < 3:
+            raise serializers.ValidationError(
+                "Delivery day must be specified (e.g., '2 days', '1 day')."
+            )
+        
+        # Pattern to match valid delivery day formats
+        # Matches: "1 day", "2 days", "10 days", etc.
+        pattern = r'^(\d+)\s+(day|days)$'
+        match = re.match(pattern, value)
+        
+        if not match:
+            raise serializers.ValidationError(
+                "Delivery day must be in format like '1 day', '2 days', '5 days', etc."
+            )
+        
+        # Extract the number of days
+        days_count = int(match.group(1))
+        
+        # Validate reasonable delivery timeframe
+        if days_count < 1:
+            raise serializers.ValidationError(
+                "Delivery day must be at least 1 day."
+            )
+        
+        if days_count > 30:
+            raise serializers.ValidationError(
+                "Delivery day cannot exceed 30 days."
+            )
+        
+        # Normalize the format (optional)
+        if days_count == 1:
+            return "1 day"
+        else:
+            return f"{days_count} days"
     
     def validate_default(self, data):
         # For other categories, in_stock is required
@@ -262,12 +311,13 @@ class CartItemSerializer(serializers.ModelSerializer):
     promotion_price = serializers.DecimalField(source='product.promotion_price', max_digits=10, decimal_places=2, read_only=True)
     product_image = serializers.SerializerMethodField()
     total_price = serializers.SerializerMethodField()
+    delivery_day = serializers.CharField(source='product.delivery_day', read_only=True)
     
     class Meta:
         model = CartItem
         fields = [
             'id', 'product', 'product_name', 'product_price', 'product_image',
-            'quantity', 'size', 'color', 'total_price', 'created_at', 'promotion_price'
+            'quantity', 'size', 'color', 'total_price', 'created_at', 'promotion_price', 'delivery_day'
         ]
         
     def get_product_image(self, obj):

@@ -989,6 +989,7 @@
   overflow: hidden;
   box-shadow: 0 10px 40px var(--shadow);
   height: 30rem;
+
 }
 
 .dealCard {
@@ -1001,6 +1002,8 @@
   position: relative;
   padding: 4rem;
   color: white;
+  object-fit: cover;
+  object-position: center;
 }
 
 .dealCard::before {

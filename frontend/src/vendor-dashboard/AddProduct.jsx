@@ -25,7 +25,8 @@ const AddProduct = () => {
     price: "",
     in_stock: 0,
     image: null,
-    keyword: "", // Change from keywords to keyword
+    keyword: "",
+    delivery_day: "",
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -103,6 +104,17 @@ const AddProduct = () => {
       }
     }
 
+    if (businessCategory !== "food") {
+      if (product.delivery_day.trim() === "") {
+        newErrors.delivery_day = "Product delivery day is required"; 
+      } else if (product.delivery_day.length > 100) {
+        newErrors.delivery_day = "Product delivery day should be specific";
+      }
+    } else {
+      // If business category is food, set default delivery day
+      product.delivery_day = "Today, in few minutes";
+    }
+
     // Image validation - optional but validate if provided
     if (product.image) {
       const allowedTypes = [
@@ -110,6 +122,7 @@ const AddProduct = () => {
         "image/png",
         "image/gif",
         "image/webp",
+        "image/avif",
       ];
       if (!allowedTypes.includes(product.image.type)) {
         newErrors.image = "Only JPG, PNG, GIF, and WEBP images are allowed";
@@ -353,6 +366,7 @@ const AddProduct = () => {
       formData.append("name", product.name.trim());
       formData.append("description", product.description.trim());
       formData.append("price", product.price);
+      formData.append("delivery_day", product.delivery_day.trim());
 
       // Only append in_stock if the business category is not food
       if (businessCategory !== "food") {
@@ -473,7 +487,8 @@ const AddProduct = () => {
       price: "",
       in_stock: 0,
       image: null,
-      keyword: "", // Change from keywords to keyword
+      keyword: "",
+      delivery_day: "",
     });
     setErrors({});
     setImagePreview(null);
@@ -527,7 +542,7 @@ const AddProduct = () => {
 
   return (
     <div className={styles.container}>
-      <Header title= "Add Product"/>
+      <Header title="Add Product" />
 
       {businessCategory && (
         <div className={styles.categoryInfo}>
@@ -637,6 +652,28 @@ const AddProduct = () => {
             </div>
           )}
         </div>
+
+        {businessCategory !== "food" && (
+          <div className={styles.formGroup}>
+            <label htmlFor="delivery_day" className={styles.label}>
+              Delivery Day*
+            </label>
+            <input
+              type="text"
+              id="delivery_day"
+              name="delivery_day"
+              value={product.delivery_day}
+              onChange={handleChange}
+              className={`${styles.input} ${
+                errors.delivery_day ? styles.inputError : "" 
+              }`}
+              placeholder="eg: 1 day, 2 days etc."
+            />
+            {errors.delivery_day && (
+              <span className={styles.errorText}>{errors.delivery_day}</span>
+            )}
+          </div>
+        )}
 
         {/* Main product image */}
         <div className={styles.formGroup}>

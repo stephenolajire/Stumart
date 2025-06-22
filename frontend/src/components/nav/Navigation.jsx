@@ -1,11 +1,11 @@
 import { useContext, useState } from "react";
 import { Link, Navigate, NavLink, useNavigate } from "react-router-dom";
 import { HiMenu, HiX } from "react-icons/hi"; // Import icons
-import styles from "../css/Navigation.module.css";
+import styles from "../../css/Navigation.module.css";
 // import { FaCarAlt } from "react-icons/fa";
 import { FaCartPlus } from "react-icons/fa";
-import logo from "../assets/stumart.jpeg";
-import { GlobalContext } from "../constant/GlobalContext";
+import logo from "../../assets/stumart.jpeg";
+import { GlobalContext } from "../../constant/GlobalContext";
 
 const Navigation = () => {
   const navigate = useNavigate();
