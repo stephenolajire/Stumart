@@ -4,6 +4,7 @@ import ProductCard from "../components/ProductCard";
 import Spinner from "../components/Spinner";
 import styles from "../css/AllProducts.module.css";
 import SEO from "../components/Metadata";
+import Swal from "sweetalert2";
 import {
   FaFilter,
   FaSort,
@@ -16,7 +17,6 @@ import {
 import { nigeriaInstitutions, nigeriaStates } from "../constant/data";
 import { GlobalContext } from "../constant/GlobalContext";
 import Header from "../components/Header";
-// import ProductCard from "../components/ProductCard";
 
 const AllProducts = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -104,6 +104,73 @@ const AllProducts = () => {
     return null;
   }, [allProducts, allProductsVendors]);
 
+  // Show delivery warning for other schools
+  const showDeliveryWarning = useCallback(() => {
+    Swal.fire({
+      title: "🚚 Delivery Notice",
+      html: `
+        <div style="text-align: center; padding: 20px;">
+          <div style="font-size: 60px; margin-bottom: 20px;">🎒📚</div>
+          <h3 style="color: #e74c3c; margin-bottom: 15px;">Important Delivery Information!</h3>
+          <p style="font-size: 16px; line-height: 1.6; color: #34495e; margin-bottom: 20px;">
+            We only deliver within your registered school campus: <strong style="color: #3498db;">${school}</strong>
+          </p>
+          <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 15px; margin: 15px 0;">
+            <p style="margin: 0; color: #856404; font-weight: 500; font-size: 12px;">
+              📍 If you order from other schools, make sure you're physically present at that school to receive your items or have someone to receive it!
+            </p>
+          </div>
+          <p style="font-size: 14px; color: #7f8c8d; margin-top: 15px;">
+            Happy shopping! 🛒✨
+          </p>
+        </div>
+      `,
+      icon: "info",
+      confirmButtonText: "I Understand 👍",
+      confirmButtonColor: "#3498db",
+      showCancelButton: true,
+      cancelButtonText: "Go Back to My School",
+      cancelButtonColor: "#95a5a6",
+      allowOutsideClick: false,
+      customClass: {
+        popup: "swal-wide",
+        title: "swal-title-custom",
+        htmlContainer: "swal-html-custom",
+      },
+      didOpen: () => {
+        // Add custom styles
+        const style = document.createElement("style");
+        style.textContent = `
+          .swal-wide {
+            width: 90% !important;
+            max-width: 500px !important;
+          }
+          .swal-title-custom {
+            font-size: 24px !important;
+            font-weight: bold !important;
+          }
+          .swal-html-custom {
+            padding: 0 !important;
+          }
+        `;
+        document.head.appendChild(style);
+      },
+    }).then((result) => {
+      if (result.isDismissed || result.dismiss === Swal.DismissReason.cancel) {
+        // User clicked "Go Back to My School" - revert to school mode
+        setViewMode("school");
+        const params = new URLSearchParams(searchParams);
+        params.delete("viewOtherProducts");
+        if (school) {
+          setFilters((prev) => ({ ...prev, school: school }));
+          params.set("school", school);
+        }
+        setSearchParams(params);
+      }
+      // If user clicked "I Understand", continue with the mode change
+    });
+  }, [school, searchParams, setSearchParams]);
+
   // Handle state change for school filtering
   const handleStateChange = useCallback((state) => {
     setSelectedState(state);
@@ -134,6 +201,11 @@ const AllProducts = () => {
     (newViewMode) => {
       console.log("View mode changing from", viewMode, "to", newViewMode);
 
+      // Show warning when switching to other schools
+      if (newViewMode === "other" && viewMode === "school") {
+        showDeliveryWarning();
+      }
+
       setToggleLoading(true);
       setViewMode(newViewMode);
 
@@ -157,7 +229,14 @@ const AllProducts = () => {
 
       setSearchParams(params);
     },
-    [viewMode, searchParams, filters.school, school, setSearchParams]
+    [
+      viewMode,
+      searchParams,
+      filters.school,
+      school,
+      setSearchParams,
+      showDeliveryWarning,
+    ]
   );
 
   // Clear all filters

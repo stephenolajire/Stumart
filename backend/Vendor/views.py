@@ -27,6 +27,8 @@ from decimal import Decimal
 from rest_framework import generics
 from Stumart.serializers import VendorReviewSerializer
 from Stumart.models import VendorReview
+from django.db.models import Sum, F, Case, When, DecimalField
+from decimal import Decimal
 
 class DashboardStatsView(views.APIView):
     permission_classes = [IsAuthenticated]
@@ -211,12 +213,109 @@ class ProductViewSet(viewsets.ModelViewSet):
 class OrderView(APIView):
     def get(self, request):
         vendor = request.user.vendor_profile
-        # Get all orders that contain items from this vendor
-        order_items = OrderItem.objects.filter(vendor=vendor)
-        orders = Order.objects.filter(order_items__in=order_items).distinct()
         
-        serializer = OrderSerializer(orders, many=True, context={'vendor': vendor})
-        return Response(serializer.data)
+        # Get orders with vendor-specific calculations using database aggregation
+        vendor_orders = Order.objects.filter(
+            order_items__vendor=vendor
+        ).distinct().annotate(
+            # Calculate vendor subtotal with promotion price logic
+            vendor_subtotal=Sum(
+                Case(
+                    When(
+                        order_items__product__promotion_price__gt=0,
+                        order_items__product__promotion_price__lt=F('order_items__product__price'),
+                        then=F('order_items__product__promotion_price') * F('order_items__quantity')
+                    ),
+                    default=F('order_items__product__price') * F('order_items__quantity'),
+                    output_field=DecimalField(max_digits=10, decimal_places=2)
+                ),
+                filter=models.Q(order_items__vendor=vendor)
+            )
+        ).select_related('picker').prefetch_related(
+            'order_items__product', 
+            'order_items__vendor'
+        )
+        
+        processed_orders = []
+        
+        for order in vendor_orders:
+            # Get vendor-specific items
+            vendor_items = order.order_items.filter(vendor=vendor)
+            
+            # Calculate proportional shipping and tax
+            if order.subtotal > 0:
+                vendor_proportion = order.vendor_subtotal / order.subtotal
+                vendor_shipping = order.shipping_fee * vendor_proportion
+                vendor_tax = order.tax * vendor_proportion
+            else:
+                vendor_shipping = Decimal('0.00')
+                vendor_tax = Decimal('0.00')
+            
+            vendor_total = order.vendor_subtotal + vendor_shipping + vendor_tax
+            
+            # Process items
+            processed_items = []
+            for item in vendor_items:
+                effective_price = (
+                    item.product.promotion_price 
+                    if (item.product.promotion_price and 
+                        item.product.promotion_price > 0 and 
+                        item.product.promotion_price < item.product.price)
+                    else item.product.price
+                )
+                
+                processed_items.append({
+                    'id': item.id,
+                    'product_name': item.product.name,
+                    'quantity': item.quantity,
+                    'original_price': item.product.price,
+                    'promotion_price': item.product.promotion_price,
+                    'effective_price': effective_price,
+                    'total': effective_price * item.quantity,
+                    'size': item.size,
+                    'color': item.color,
+                    'is_packed': item.is_packed,
+                    'packed_at': item.packed_at
+                })
+            
+            # Check if all vendor items are packed
+            all_vendor_items_packed = all(item.is_packed for item in vendor_items)
+            
+            order_data = {
+                'id': order.id,
+                'order_number': order.order_number,
+                'first_name': order.first_name,
+                'last_name': order.last_name,
+                'email': order.email,
+                'address': order.address,
+                'subtotal': order.vendor_subtotal,
+                'shipping_fee': vendor_shipping,
+                'tax': vendor_tax,
+                'total': vendor_total,
+                'order_status': order.order_status,
+                'created_at': order.created_at,
+                'order_items': processed_items,
+                'packed': all_vendor_items_packed,
+                'confirm': order.confirm,
+                'picker': {
+                    'id': order.picker.id if order.picker else None,
+                    'name': f"{order.picker.first_name} {order.picker.last_name}" if order.picker else None,
+                    'email': order.picker.email if order.picker else None,
+                    'phone': order.picker.phone_number if order.picker else None
+                } if order.picker else None
+            }
+            
+            processed_orders.append(order_data)
+        
+        # Sort by creation date (newest first)
+        processed_orders.sort(key=lambda x: x['created_at'], reverse=True)
+        
+        return Response({
+            'success': True,
+            'count': len(processed_orders),
+            'orders': processed_orders
+        }, status=status.HTTP_200_OK)
+
 
 
 class InventoryViewSet(viewsets.ViewSet):

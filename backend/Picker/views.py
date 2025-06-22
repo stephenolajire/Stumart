@@ -257,7 +257,7 @@ class AvailableOrdersView(APIView):
             subject=f"Order #{order.order_number} Packed",
             message=(
                 f"Hello {order.first_name},\n\n"
-                f"Your order #{order.order_number} has been packed and is ready for delivery.\n\n"
+                f"Your order #{order.order_number} has been picked by a picker and will be delivered soon.\n\n"
                 "Thank you for your patronage!"
             ),
             from_email=settings.DEFAULT_FROM_EMAIL,

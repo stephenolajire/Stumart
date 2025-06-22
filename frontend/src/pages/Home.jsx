@@ -82,7 +82,7 @@ const promotions = [
 ];
 
 // Move constants outside component
-const SHOPS_PER_PAGE = 12;
+const SHOPS_PER_PAGE = 14;
 
 // Separate components
 const CategoryCard = memo(({ category, isActive, onClick }) => (
@@ -763,9 +763,6 @@ const Home = memo(() => {
               })`,
               backgroundSize: "cover",
               backgroundRepeat: "no-repeat",
-              backgroundPosition: "center",
-              objectFit: "cover",
-              objectPosition: "center",
               height: "100%",
               width: "100%",
             }}

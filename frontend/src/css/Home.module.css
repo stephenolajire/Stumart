@@ -1002,8 +1002,9 @@
   position: relative;
   padding: 4rem;
   color: white;
-  object-fit: cover;
-  object-position: center;
+  background-size: cover !important;
+  background-position: center top !important; /* Adjust as needed */
+  background-repeat: no-repeat !important;
 }
 
 .dealCard::before {
@@ -1066,6 +1067,9 @@
   .searchBar {
     width: 88%;
   }
+  .featuredDeals{
+    height: 30rem;
+  }
 }
 
 
@@ -1073,4 +1077,16 @@
   .searchBar {
     width: 86%;
   }
+  .featuredDeals{
+    height: 30rem;
+  }
 }
+
+@media (min-width: 1024px) {
+  .dealCard {
+    background-position: center top !important;
+    /* background-position: center 40% !important; */
+  }
+}
+
+

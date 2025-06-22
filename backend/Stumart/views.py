@@ -46,6 +46,7 @@ from .serializers import VendorReviewSerializer
 from User.models import Vendor
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
+import uuid
 
 class ProductsView(APIView):
     def get(self, request, id):
@@ -714,14 +715,50 @@ class PaystackPaymentInitializeView(APIView):
             # Get the order
             order = Order.objects.get(id=order_id)
             
-            # Initialize Paystack payment
-            url = "https://api.paystack.co/transaction/initialize"
+            # Validate that all vendors in the order are from the same institution
+            order_items = OrderItem.objects.filter(order=order).select_related('vendor', 'vendor__user')
             
+            if not order_items.exists():
+                return Response({
+                    'status': 'failed',
+                    'message': 'No items found in the order'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Check that all vendors are from the same institution
+            vendor_institutions = set()
+            vendors_by_institution = {}
+            
+            for item in order_items:
+                vendor_institution = item.vendor.user.institution
+                vendor_institutions.add(vendor_institution)
+                
+                # Group vendors by institution for detailed error reporting
+                if vendor_institution not in vendors_by_institution:
+                    vendors_by_institution[vendor_institution] = []
+                
+                vendors_by_institution[vendor_institution].append({
+                    'vendor_name': item.vendor.business_name,
+                    'product_name': item.product.name
+                })
+            
+            # Ensure all vendors are from the same institution
+            if len(vendor_institutions) > 1:
+                return Response({
+                    'status': 'failed',
+                    'message': 'Cannot process payment. All vendors in your order must be from the same institution for delivery purposes.',
+                    'error_details': {
+                        'multiple_institutions_found': list(vendor_institutions),
+                        'vendors_by_institution': vendors_by_institution,
+                        'suggestion': 'Please split your order by institution or remove items from different institutions.'
+                    }
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # If validation passes, proceed with Paystack payment initialization
+            url = "https://api.paystack.co/transaction/initialize"
             headers = {
                 "Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}",
                 "Content-Type": "application/json"
             }
-            
             payload = {
                 "email": email,
                 "amount": amount,
@@ -744,7 +781,8 @@ class PaystackPaymentInitializeView(APIView):
                 return Response({
                     'status': 'success',
                     'authorization_url': response_data['data']['authorization_url'],
-                    'reference': response_data['data']['reference']
+                    'reference': response_data['data']['reference'],
+                    'delivery_institution': list(vendor_institutions)[0]  # Single institution for delivery
                 }, status=status.HTTP_200_OK)
             else:
                 return Response({
@@ -752,13 +790,19 @@ class PaystackPaymentInitializeView(APIView):
                     'message': response_data.get('message', 'Payment initialization failed')
                 }, status=status.HTTP_400_BAD_REQUEST)
                 
+        except Order.DoesNotExist:
+            return Response({
+                'status': 'failed',
+                'message': 'Order not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+            
         except Exception as e:
             import traceback
             error_trace = traceback.format_exc()
             print(f"Error in PaystackPaymentInitializeView: {str(e)}")
             print(error_trace)
             return Response(
-                {"error": f"An error occurred: {str(e)}"}, 
+                {"error": f"An error occurred: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -1930,117 +1974,6 @@ class AllProductsView(APIView):
             },
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
-
-
-class PackOrderView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request):
-        try:
-            order_id = request.data.get('order_id')
-            if not order_id:
-                return Response({
-                    'error': 'Order ID is required'
-                }, status=status.HTTP_400_BAD_REQUEST)
-
-            # Find order items belonging to this vendor
-            vendor_order_items = OrderItem.objects.filter(
-                order_id=order_id,
-                vendor__user=request.user
-            )
-
-            if not vendor_order_items.exists():
-                return Response({
-                    'error': 'No order items found or unauthorized'
-                }, status=status.HTTP_404_NOT_FOUND)
-
-            # Get the order
-            order = Order.objects.get(id=order_id)
-            
-            # Update packed status for the order
-            order.packed = True
-            order.save()
-
-            email = order.email
-            # Send email to the customer
-            send_mail(
-                subject=f"Order #{order.order_number} Packed",
-                message=(
-                    f"Hello {order.first_name},\n\n"
-                    f"Your order #{order.order_number} has been packed and is ready for delivery.\n\n"
-                    "Thank you for your patronage!"
-                ),
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[email],
-                fail_silently=False
-            )
-
-            # Get vendor details from the first order item
-            first_item = vendor_order_items.first()
-            vendor = first_item.vendor
-
-            # Find and notify eligible pickers
-            try:
-                # Get the vendor's institution
-                vendor_institution = vendor.user.institution
-                
-                # Find all pickers from the same institution
-                regular_pickers = User.objects.filter(
-                    user_type='picker',
-                    institution=vendor_institution,
-                    is_active=True
-                )
-                student_pickers = User.objects.filter(
-                    user_type='student_picker',
-                    institution=vendor_institution,
-                    is_active=True
-                )
-                
-                # Combine picker emails
-                all_pickers_emails = []
-                for picker in list(regular_pickers) + list(student_pickers):
-                    all_pickers_emails.append(picker.email)
-                
-                if all_pickers_emails:
-                    # Build email content
-                    picker_subject = f"New Delivery Opportunity - Order #{order.order_number}"
-                    picker_message = (
-                        f"Hello,\n\n"
-                        f"A new order is ready for pickup from {vendor.business_name} "
-                        f"at {vendor_institution}.\n\n"
-                        f"Order Number: {order.order_number}\n"
-                        f"Order Date: {order.created_at}\n"
-                        f"Pickup Location: {vendor.business_name}\n"  # Changed from vendor.address which doesn't exist
-                        f"Delivery Location: {order.address}\n\n"
-                        f"Please log in to your dashboard to accept this delivery. "
-                        f"This opportunity is available on a first-come, first-served basis."
-                    )
-                    
-                    # Send email to all eligible pickers
-                    send_mail(
-                        subject=picker_subject,
-                        message=picker_message,
-                        from_email=settings.DEFAULT_FROM_EMAIL,
-                        recipient_list=all_pickers_emails,
-                        fail_silently=False
-                    )
-                    
-                    logger.info(f"Notified {len(all_pickers_emails)} pickers about order {order.order_number}")
-
-            except Exception as e:
-                logger.error(f"Failed to notify pickers for order {order_id}: {str(e)}")
-                # Don't return error response here as the main operation succeeded
-
-            return Response({
-                'message': 'Order packed successfully and pickers notified',
-                'order_id': order_id
-            }, status=status.HTTP_200_OK)
-
-        except Exception as e:
-            logger.error(f"Error in PackOrderView: {str(e)}")
-            return Response({
-                'error': f'An error occurred: {str(e)}'
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 
 class CreateVendorReviewView(APIView):
@@ -2984,3 +2917,474 @@ class SendMessageView(BaseMessagingView):
                 'success': False,
                 'error': str(e)
             }, status=500)
+
+
+class PackOrderView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            order_id = request.data.get('order_id')
+            if not order_id:
+                return Response({
+                    'error': 'Order ID is required'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # First, check if order exists and user has permission
+            try:
+                order = Order.objects.get(id=order_id)
+            except Order.DoesNotExist:
+                return Response({
+                    'error': 'Order not found'
+                }, status=status.HTTP_404_NOT_FOUND)
+
+            # Check if vendor has items in this order
+            vendor_order_items = OrderItem.objects.filter(
+                order_id=order_id,
+                vendor__user=request.user
+            )
+
+            if not vendor_order_items.exists():
+                return Response({
+                    'error': 'No order items found or unauthorized'
+                }, status=status.HTTP_404_NOT_FOUND)
+
+            # Now perform the transaction
+            with transaction.atomic():
+                # Re-fetch with select_for_update inside transaction
+                vendor_order_items = OrderItem.objects.filter(
+                    order_id=order_id,
+                    vendor__user=request.user
+                ).select_for_update()
+
+                order = Order.objects.select_for_update().get(id=order_id)
+                
+                # Mark this vendor's items as packed
+                vendor_order_items.update(is_packed=True, packed_at=timezone.now())
+                
+                # Get current vendor info
+                current_vendor = vendor_order_items.first().vendor
+                
+                # Check if current vendor has food items
+                has_food_items = vendor_order_items.filter(
+                    vendor__business_category='food'
+                ).exists()
+                
+                # If vendor has food items, create separate order for immediate delivery
+                if has_food_items:
+                    food_response = self.handle_food_items_separation(
+                        order, vendor_order_items, current_vendor
+                    )
+                    
+                    # Continue with regular flow for non-food items
+                    remaining_response = self.handle_remaining_items(
+                        order, current_vendor, order_id
+                    )
+                    
+                    # Send notifications after transaction commits
+                    if food_response.get('food_order_created'):
+                        food_order = food_response.get('food_order')
+                        if food_order:
+                            transaction.on_commit(lambda: self.send_food_order_notification(order, food_order, current_vendor))
+                            transaction.on_commit(lambda: self.notify_pickers(food_order, current_vendor, is_food_order=True))
+                    
+                    # Handle remaining order notifications
+                    if remaining_response.get('all_packed'):
+                        transaction.on_commit(lambda: self.send_customer_notification(order, all_packed=True))
+                        transaction.on_commit(lambda: self.notify_pickers(order, current_vendor))
+                    else:
+                        transaction.on_commit(lambda: self.send_customer_notification(
+                            order, 
+                            all_packed=False, 
+                            packed_vendor=current_vendor,
+                            packed_vendors=remaining_response.get('packed_vendors_obj', []),
+                            unpacked_vendors=remaining_response.get('unpacked_vendors_obj', [])
+                        ))
+                    
+                    # Combine responses (only JSON serializable data)
+                    combined_response = {
+                        'message': f'{current_vendor.business_name} has packed their items.',
+                        'order_id': order_id,
+                        'vendor_packed': current_vendor.business_name,
+                        'food_order_created': food_response.get('food_order_created', False),
+                        'food_order_id': food_response.get('food_order_id'),
+                        'food_order_number': food_response.get('food_order_number'),
+                        'remaining_order_status': {
+                            'all_packed': remaining_response.get('all_packed', False),
+                            'message': remaining_response.get('message', ''),
+                            'packed_vendors': remaining_response.get('packed_vendors', []),
+                            'unpacked_vendors': remaining_response.get('unpacked_vendors', [])
+                        }
+                    }
+                    
+                    return Response(combined_response, status=status.HTTP_200_OK)
+                
+                else:
+                    # No food items, handle normally
+                    return self.handle_regular_packing(order, current_vendor, order_id)
+
+        except Exception as e:
+            logger.error(f"Error in PackOrderView: {str(e)}", exc_info=True)
+            return Response({
+                'error': f'An error occurred while processing your request. Please try again.'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def handle_food_items_separation(self, original_order, vendor_order_items, current_vendor):
+        """Handle separation of food items into a new order for immediate delivery"""
+        try:
+            # Get food items from this vendor
+            food_items = vendor_order_items.filter(
+                vendor__business_category='food'
+            )
+            
+            if not food_items.exists():
+                return {'food_order_created': False}
+            
+            # Calculate food order totals
+            food_subtotal = sum(item.price * item.quantity for item in food_items)
+            
+            # Get distinct food vendors count (should be 1 in this case, but keeping it flexible)
+            distinct_food_vendors = food_items.values('vendor').distinct().count()
+            food_shipping_fee = Decimal('300.00') * distinct_food_vendors
+            
+            # For simplicity, assume same tax rate as original order
+           
+            food_tax = food_subtotal * Decimal('0.030')
+            food_total = food_subtotal + food_shipping_fee + food_tax
+            
+            # Generate unique order number for food order (keep within 20 char limit)
+            timestamp = timezone.now().strftime('%m%d%H%M')  # MMDDHHMM format (8 chars)
+            # Take first 7 chars of original order number to ensure total stays under 20
+            original_short = str(original_order.order_number)[:7]
+            food_order_number = f"F{original_short}{timestamp}"  # F + 7 + 8 = 16 chars max
+            
+            # Create new order for food items
+            food_order = Order.objects.create(
+                order_number=food_order_number,
+                user=original_order.user,
+                first_name=original_order.first_name,
+                last_name=original_order.last_name,
+                email=original_order.email,
+                phone=original_order.phone,
+                address=original_order.address,
+                room_number=original_order.room_number,
+                subtotal=food_subtotal,
+                shipping_fee=food_shipping_fee,
+                tax=food_tax,
+                total=food_total,
+                order_status='PAID',
+                packed=True,  # Food is already packed
+                confirm=False,
+                reviewed=False
+            )
+            
+            # Create new order items for the food order
+            food_order_items = []
+            for food_item in food_items:
+                food_order_items.append(OrderItem(
+                    order=food_order,
+                    product=food_item.product,
+                    quantity=food_item.quantity,
+                    price=food_item.price,
+                    vendor=food_item.vendor,
+                    size=food_item.size,
+                    color=food_item.color,
+                    is_packed=True,
+                    packed_at=timezone.now()
+                ))
+            
+            # Bulk create the new order items
+            OrderItem.objects.bulk_create(food_order_items)
+            
+            # Remove food items from original order
+            food_items.delete()
+            
+            # Update original order totals
+            self.recalculate_original_order(original_order, food_shipping_fee)
+            
+            return {
+                'food_order_created': True,
+                'food_order_id': food_order.id,
+                'food_order_number': food_order_number,
+                'food_order': food_order  # Keep this for internal use in notifications
+            }
+            
+        except Exception as e:
+            logger.error(f"Error handling food items separation: {str(e)}", exc_info=True)
+            raise  # Re-raise to rollback transaction
+
+    def recalculate_original_order(self, original_order, food_shipping_fee_to_subtract):
+        """Recalculate original order totals after removing food items"""
+        try:
+            # Get remaining order items
+            remaining_items = OrderItem.objects.filter(order=original_order)
+            
+            if remaining_items.exists():
+                # Recalculate subtotal
+                new_subtotal = sum(item.price * item.quantity for item in remaining_items)
+                
+                # Recalculate shipping fee (subtract food shipping fee)
+                new_shipping_fee = max(
+                    Decimal('0.00'), 
+                    original_order.shipping_fee - food_shipping_fee_to_subtract
+                )
+                
+                # Recalculate tax (proportional to new subtotal)
+                if original_order.subtotal > 0:
+                    tax_rate = original_order.tax / original_order.subtotal
+                    new_tax = new_subtotal * tax_rate
+                else:
+                    new_tax = Decimal('0.00')
+                
+                # Update original order
+                original_order.subtotal = new_subtotal
+                original_order.shipping_fee = new_shipping_fee
+                original_order.tax = new_tax
+                original_order.total = new_subtotal + new_shipping_fee + new_tax
+                original_order.save()
+                
+            else:
+                # No remaining items, mark original order as completed
+                original_order.order_status = 'COMPLETED'
+                original_order.save()
+                
+        except Exception as e:
+            logger.error(f"Error recalculating original order: {str(e)}", exc_info=True)
+            raise  # Re-raise to rollback transaction
+
+    def handle_remaining_items(self, order, current_vendor, order_id):
+        """Handle the remaining non-food items in the original order"""
+        # Check if all remaining vendors have packed their items
+        all_order_items = OrderItem.objects.filter(order_id=order_id)
+        unpacked_items = all_order_items.filter(is_packed=False)
+        
+        all_vendors_packed = not unpacked_items.exists()
+        
+        if all_vendors_packed:
+            order.packed = True
+            order.save()
+            
+            return {
+                'all_packed': True,
+                'message': 'All remaining vendors have packed their items. Order is ready for delivery.'
+            }
+        else:
+            # Not all vendors have packed yet
+            packed_vendors = self.get_packed_vendors(order_id)
+            unpacked_vendors = self.get_unpacked_vendors(order_id)
+            
+            return {
+                'all_packed': False,
+                'message': 'Waiting for other vendors to pack remaining items.',
+                'packed_vendors': [v.business_name for v in packed_vendors],
+                'unpacked_vendors': [v.business_name for v in unpacked_vendors],
+                'packed_vendors_obj': packed_vendors,  # Keep for internal use
+                'unpacked_vendors_obj': unpacked_vendors  # Keep for internal use
+            }
+
+    def handle_regular_packing(self, order, current_vendor, order_id):
+        """Handle regular packing flow for non-food vendors"""
+        # Check if all vendors have packed their items
+        all_order_items = OrderItem.objects.filter(order_id=order_id)
+        unpacked_items = all_order_items.filter(is_packed=False)
+        
+        all_vendors_packed = not unpacked_items.exists()
+        
+        if all_vendors_packed:
+            order.packed = True
+            order.save()
+            
+            # Schedule notifications after transaction commits
+            transaction.on_commit(lambda: self.send_customer_notification(order, all_packed=True))
+            transaction.on_commit(lambda: self.notify_pickers(order, current_vendor))
+            
+            return Response({
+                'message': 'All vendors have packed their items. Order is ready for delivery and pickers have been notified.',
+                'order_id': order_id,
+                'all_packed': True,
+                'vendor_packed': current_vendor.business_name
+            }, status=status.HTTP_200_OK)
+        
+        else:
+            # Not all vendors have packed yet
+            packed_vendors = self.get_packed_vendors(order_id)
+            unpacked_vendors = self.get_unpacked_vendors(order_id)
+            
+            # Schedule notification after transaction commits
+            transaction.on_commit(lambda: self.send_customer_notification(
+                order, 
+                all_packed=False, 
+                packed_vendor=current_vendor,
+                packed_vendors=packed_vendors,
+                unpacked_vendors=unpacked_vendors
+            ))
+            
+            return Response({
+                'message': f'{current_vendor.business_name} has packed their items. Waiting for other vendors to pack.',
+                'order_id': order_id,
+                'all_packed': False,
+                'vendor_packed': current_vendor.business_name,
+                'packed_vendors': [v.business_name for v in packed_vendors],
+                'unpacked_vendors': [v.business_name for v in unpacked_vendors]
+            }, status=status.HTTP_200_OK)
+
+    def get_packed_vendors(self, order_id):
+        """Get list of vendors who have packed their items"""
+        return Vendor.objects.filter(
+            orderitem__order_id=order_id,
+            orderitem__is_packed=True
+        ).distinct()
+    
+    def get_unpacked_vendors(self, order_id):
+        """Get list of vendors who haven't packed their items yet"""
+        return Vendor.objects.filter(
+            orderitem__order_id=order_id,
+            orderitem__is_packed=False
+        ).distinct()
+
+    def send_food_order_notification(self, original_order, food_order, food_vendor):
+        """Send notification about food order separation"""
+        try:
+            subject = f"Food Order #{food_order.order_number} - Out for Delivery"
+            message = (
+                f"Hello {original_order.first_name},\n\n"
+                f"Your food items from {food_vendor.business_name} have been packed and "
+                f"are now being delivered separately for freshness.\n\n"
+                f"Food Order Details:\n"
+                f"• Order Number: {food_order.order_number}\n"
+                f"• Vendor: {food_vendor.business_name}\n"
+                f"• Total: ₦{food_order.total}\n\n"
+                f"Your remaining items from other vendors will be delivered separately "
+                f"once they are all ready.\n\n"
+                f"Original Order: #{original_order.order_number}\n"
+                f"Remaining Total: ₦{original_order.total}\n\n"
+                f"Thank you for your patronage!"
+            )
+
+            send_mail(
+                subject=subject,
+                message=message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[original_order.email],
+                fail_silently=True
+            )
+        except Exception as e:
+            logger.error(f"Failed to send food order notification: {str(e)}", exc_info=True)
+
+    def send_customer_notification(self, order, all_packed=False, packed_vendor=None, 
+                                 packed_vendors=None, unpacked_vendors=None):
+        """Send email notification to customer about packing status"""
+        try:
+            if all_packed:
+                subject = f"Order #{order.order_number} Ready for Delivery"
+                message = (
+                    f"Hello {order.first_name},\n\n"
+                    f"Great news! Your order #{order.order_number} has been completely packed "
+                    f"by all vendors and is now ready for delivery.\n\n"
+                    f"Our delivery team has been notified and will contact you soon.\n\n"
+                    f"Thank you for your patronage!"
+                )
+            else:
+                packed_names = [v.business_name for v in packed_vendors] if packed_vendors else []
+                unpacked_names = [v.business_name for v in unpacked_vendors] if unpacked_vendors else []
+                
+                subject = f"Order #{order.order_number} Partially Packed"
+                message = (
+                    f"Hello {order.first_name},\n\n"
+                    f"Your order #{order.order_number} is being prepared.\n\n"
+                    f"✅ Packed by: {', '.join(packed_names)}\n"
+                    f"⏳ Still preparing: {', '.join(unpacked_names)}\n\n"
+                    f"We'll notify you once all items are ready for delivery.\n\n"
+                    f"Thank you for your patience!"
+                )
+
+            send_mail(
+                subject=subject,
+                message=message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[order.email],
+                fail_silently=True
+            )
+        except Exception as e:
+            logger.error(f"Failed to send customer notification for order {order.order_number}: {str(e)}", exc_info=True)
+
+    def notify_pickers(self, order, vendor, is_food_order=False):
+        """Notify all pickers in the same institution as the vendor"""
+        try:
+            # Get the vendor's institution
+            vendor_institution = vendor.user.institution
+            logger.info(f"Vendor institution: {vendor_institution}")
+            
+            if not vendor_institution:
+                logger.warning(f"Vendor {vendor.business_name} has no institution set")
+                return
+            
+            # Find ALL pickers from the same institution (both regular and student pickers)
+            all_pickers = User.objects.filter(
+                user_type__in=['picker', 'student_picker'],  # Both types
+                institution=vendor_institution,
+                is_active=True
+            )
+            
+            logger.info(f"Found {all_pickers.count()} total pickers in institution {vendor_institution}")
+            
+            if not all_pickers.exists():
+                logger.warning(f"No pickers found in institution {vendor_institution}")
+                return
+            
+            # Get all picker emails
+            picker_emails = [picker.email for picker in all_pickers]
+            
+            logger.info(f"Picker emails to notify: {picker_emails}")
+            
+            # Get all vendors involved in this order
+            order_vendors = Vendor.objects.filter(
+                orderitem__order=order
+            ).distinct()
+            
+            vendor_names = [v.business_name for v in order_vendors]
+            
+            # Build email content
+            urgency_text = "🍽️ URGENT - FOOD DELIVERY" if is_food_order else "New Delivery Opportunity"
+            subject = f"{urgency_text} - Order #{order.order_number}"
+            
+            urgency_message = (
+                "⚡ This is a FOOD ORDER that needs immediate delivery to maintain freshness!\n\n"
+                if is_food_order else ""
+            )
+            
+            message = (
+                f"Hello,\n\n"
+                f"{urgency_message}"
+                f"A {'food' if is_food_order else 'new'} order is ready for pickup at {vendor_institution}.\n\n"
+                f"Order Details:\n"
+                f"• Order Number: {order.order_number}\n"
+                f"• Order Type: {'🍽️ FOOD ORDER' if is_food_order else '📦 Regular Order'}\n"
+                f"• Order Date: {order.created_at.strftime('%Y-%m-%d %H:%M')}\n"
+                f"• Vendors: {', '.join(vendor_names)}\n"
+                f"• Delivery Address: {order.address}\n"
+                f"• Room Number: {order.room_number or 'Not specified'}\n"
+                f"• Total Amount: ₦{order.total}\n\n"
+                f"{'⏰ Please respond quickly as food orders are time-sensitive!' if is_food_order else ''}\n"
+                f"Please log in to your dashboard to accept this delivery. "
+                f"This opportunity is available on a first-come, first-served basis.\n\n"
+                f"Best regards,\n"
+                f"Stumart Team"
+            )
+            
+            # Send email to all pickers
+            try:
+                send_mail(
+                    subject=subject,
+                    message=message,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=picker_emails,
+                    fail_silently=False  # Set to False to see actual errors
+                )
+                logger.info(f"Successfully sent email to {len(picker_emails)} pickers")
+                
+            except Exception as email_error:
+                logger.error(f"Failed to send email: {str(email_error)}", exc_info=True)
+                
+        except Exception as e:
+            logger.error(f"Failed to notify pickers for order {order.id}: {str(e)}", exc_info=True)

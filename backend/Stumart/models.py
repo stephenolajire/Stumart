@@ -180,12 +180,22 @@ class OrderItem(models.Model):
     quantity = models.PositiveIntegerField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
     vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE)
-    size = models.CharField(max_length=50, null=True, blank=True)  # New
+    size = models.CharField(max_length=50, null=True, blank=True)
     color = models.CharField(max_length=50, null=True, blank=True)
- # New
+    
+    # Add this new field
+    is_packed = models.BooleanField(default=False)
+    packed_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.product.name} - {self.quantity}"
+
+    def save(self, *args, **kwargs):
+        # Auto-set packed_at when is_packed changes to True
+        if self.is_packed and not self.packed_at:
+            from django.utils import timezone
+            self.packed_at = timezone.now()
+        super().save(*args, **kwargs)
 
 
 class Transaction(models.Model):

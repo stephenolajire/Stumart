@@ -112,7 +112,7 @@ const AddProduct = () => {
       }
     } else {
       // If business category is food, set default delivery day
-      product.delivery_day = "Today, in few minutes";
+      product.delivery_day = "1 day";
     }
 
     // Image validation - optional but validate if provided

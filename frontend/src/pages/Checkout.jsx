@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import api from "../constant/api";
 import Header from "../components/Header";
+import Swal from "sweetalert2"; // Import SweetAlert2
 
 const Checkout = () => {
   // Form states
@@ -88,8 +89,71 @@ const Checkout = () => {
       window.location.href = paymentResponse.data.authorization_url;
     } catch (err) {
       console.error("Checkout error:", err);
+
+      // Handle different types of errors with SweetAlert2
+      if (err.response?.data?.error_details) {
+        // Handle the multiple institutions error specifically
+        const errorDetails = err.response.data.error_details;
+        const institutions = errorDetails.multiple_institutions_found;
+        const vendorsByInstitution = errorDetails.vendors_by_institution;
+
+        // Create a detailed message showing vendors by institution
+        let institutionDetails = "";
+        Object.entries(vendorsByInstitution).forEach(
+          ([institution, vendors]) => {
+            institutionDetails += `<strong>${institution}:</strong><br>`;
+            vendors.forEach((vendor) => {
+              institutionDetails += `• ${vendor}<br>`;
+            });
+            institutionDetails += "<br>";
+          }
+        );
+
+        Swal.fire({
+          icon: "error",
+          title: "Order Cannot Be Processed",
+          html: `
+            <div style="text-align: left;">
+              <p><strong>Error:</strong> ${err.response.data.message}</p>
+              <br>
+              <p><strong>Vendors by Institution:</strong></p>
+              <div style="margin-left: 10px;">
+                ${institutionDetails}
+              </div>
+              <p><strong>Suggestion:</strong> ${errorDetails.suggestion}</p>
+            </div>
+          `,
+          confirmButtonText: "Go Back to Cart",
+          confirmButtonColor: "#3085d6",
+          width: "500px",
+          customClass: {
+            htmlContainer: "swal-html-container",
+          },
+        }).then((result) => {
+          if (result.isConfirmed) {
+            navigate(-1); // Go back to cart
+          }
+        });
+      } else {
+        // Handle other types of errors
+        const errorMessage =
+          err.response?.data?.message ||
+          err.response?.data?.error ||
+          "An error occurred during checkout. Please try again.";
+
+        Swal.fire({
+          icon: "error",
+          title: "Checkout Error",
+          text: errorMessage,
+          confirmButtonText: "Try Again",
+          confirmButtonColor: "#3085d6",
+        });
+      }
+
+      // Also set the error state for any additional UI handling
       setError(
-        err.response?.data?.error ||
+        err.response?.data?.message ||
+          err.response?.data?.error ||
           "An error occurred during checkout. Please try again."
       );
     } finally {

@@ -26,7 +26,10 @@ const Orders = ({ orders, onOrderUpdate }) => {
   // Replace the single loading state with a Set to track multiple loading states
   const [loadingPickerDetails, setLoadingPickerDetails] = useState(new Set());
 
-  // console.log("Orders component rendered with orders:", orders);
+  console.log("Orders component rendered with orders:", orders);
+
+  // Extract the orders array from the response object
+  const ordersArray = orders?.orders || [];
 
   const packedOrders = async (orderId) => {
     setLoadingOrders((prev) => new Set([...prev, orderId]));
@@ -93,7 +96,7 @@ const Orders = ({ orders, onOrderUpdate }) => {
     return "N/A";
   };
 
-  const filteredOrders = orders.filter((order) => {
+  const filteredOrders = ordersArray.filter((order) => {
     const customerName = getCustomerName(order);
     const matchesSearch =
       customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
