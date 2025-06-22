@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 
 const SEO = ({
-  title = "StuMart - Campus Marketplace ",
+  title = "StuMart - Campus Marketplace",
   description = "StuMart connects university students with campus vendors and delivery services. Shop for food, fashion, electronics, books and more with reliable campus delivery.",
   keywords = "campus marketplace, student delivery, university shopping, campus vendors, student commerce, campus food delivery, student marketplace, campus fashion, student shopping platform, university delivery service",
   ogImage = "/stumart.jpg",
@@ -41,14 +41,17 @@ const SEO = ({
       meta.setAttribute("content", content);
     });
 
-    // Update canonical link
+    // Update canonical link - BEST PRACTICE APPROACH
     let canonical = document.querySelector('link[rel="canonical"]');
     if (!canonical) {
       canonical = document.createElement("link");
       canonical.setAttribute("rel", "canonical");
       document.head.appendChild(canonical);
     }
-    canonical.setAttribute("href", window.location.href);
+
+    // Build canonical URL explicitly with HTTPS (most reliable approach)
+    const canonicalUrl = `https://${window.location.host}${window.location.pathname}${window.location.search}`;
+    canonical.setAttribute("href", canonicalUrl);
 
     // Cleanup function
     return () => {

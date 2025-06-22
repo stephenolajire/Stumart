@@ -3364,7 +3364,7 @@ class PackOrderView(APIView):
                 f"• Vendors: {', '.join(vendor_names)}\n"
                 f"• Delivery Address: {order.address}\n"
                 f"• Room Number: {order.room_number or 'Not specified'}\n"
-                f"• Total Amount: ₦{order.total}\n\n"
+                # f"• Total Amount: ₦{order.total}\n\n"
                 f"{'⏰ Please respond quickly as food orders are time-sensitive!' if is_food_order else ''}\n"
                 f"Please log in to your dashboard to accept this delivery. "
                 f"This opportunity is available on a first-come, first-served basis.\n\n"
