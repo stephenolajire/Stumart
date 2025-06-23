@@ -1,9 +1,10 @@
 // OrderHistory.jsx
-import React, { useState, useEffect, useRef, useContext } from "react";
+import React, { useState, useRef, useContext } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useReactToPrint } from "react-to-print";
 import api from "../constant/api";
 import style from "../css/OrderHistory.module.css";
-import Swal from "sweetalert2"; // Add this import
+import Swal from "sweetalert2";
 import { Link } from "react-router-dom";
 import { GlobalContext } from "../constant/GlobalContext";
 import Spinner from "../components/Spinner";
@@ -21,44 +22,165 @@ const OrderHistory = () => {
   const navigate = useNavigate();
   const user_type = localStorage.getItem("user_type");
 
-  const { orders, setOrders, loading, error, fetchOrders} = useContext(GlobalContext);
+  const { isAuthenticated } = useContext(GlobalContext);
+  const queryClient = useQueryClient();
 
-  const toggleOrderDetails = (orderId) => {
-    setExpandedOrder((prev) => (prev === orderId ? null : orderId));
-  };
+  // Query for fetching orders
+  const {
+    data: orders = [],
+    isLoading: loading,
+    error,
+    refetch: fetchOrders,
+  } = useQuery({
+    queryKey: ["orders"],
+    queryFn: async () => {
+      const response = await api.get("orders/");
+      return response.data;
+    },
+    enabled: isAuthenticated,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    retry: 2,
+    refetchOnWindowFocus: false,
+  });
 
-  // console.log("Orders:", orders);
-
-  const handleMarkAsDelivered = async (orderId) => {
-    try {
-      // Use the actual orderId parameter instead of the 'order' object
-      await api.post(`confirm/${orderId}/`, {
+  // Mutation for marking order as delivered
+  const markAsDeliveredMutation = useMutation({
+    mutationFn: async (orderId) => {
+      const response = await api.post(`confirm/${orderId}/`, {
         status: "DELIVERED",
       });
-
-      // Update the local state to reflect the change
-      setOrders((prevOrders) =>
-        prevOrders.map((order) =>
+      return response.data;
+    },
+    onSuccess: (data, orderId) => {
+      // Update the cache optimistically
+      queryClient.setQueryData(["orders"], (oldOrders) => {
+        if (!oldOrders) return oldOrders;
+        return oldOrders.map((order) =>
           order.order_number === orderId
             ? { ...order, order_status: "DELIVERED" }
             : order
-        )
-      );
+        );
+      });
 
       Swal.fire({
         icon: "success",
         text: "Thank you for your patronage!",
         title: "Order Delivered",
       });
-      window.location.reload();
-    } catch (error) {
+    },
+    onError: (error) => {
       console.error("Error marking order as delivered:", error);
       Swal.fire({
         icon: "error",
         title: "Status Error",
         text: "Order status failed, pls try again later",
       });
-    }
+    },
+  });
+
+  // Mutation for canceling order
+  const cancelOrderMutation = useMutation({
+    mutationFn: async (orderId) => {
+      const response = await api.post(`orders/${orderId}/cancel/`);
+      return response.data;
+    },
+    onSuccess: (data, orderId) => {
+      // Update the cache optimistically
+      queryClient.setQueryData(["orders"], (oldOrders) => {
+        if (!oldOrders) return oldOrders;
+        return oldOrders.map((order) =>
+          order.id === orderId ? { ...order, order_status: "CANCELLED" } : order
+        );
+      });
+
+      Swal.fire({
+        icon: "success",
+        title: "Order Cancelled",
+        text: "Your order has been cancelled successfully",
+      });
+    },
+    onError: (error) => {
+      console.error("Error cancelling order:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Cancellation Failed",
+        text:
+          error.response?.data?.message ||
+          "Failed to cancel order. Please try again later.",
+      });
+    },
+  });
+
+  // Mutation for submitting reviews
+  const submitReviewMutation = useMutation({
+    mutationFn: async ({ orderId, reviews }) => {
+      const order = orders.find((o) => o.id === orderId);
+      const pickerId = order.picker?.profile_id;
+
+      if (!pickerId) {
+        throw new Error("This order doesn't have a picker assigned yet.");
+      }
+
+      // Get unique vendors from order items
+      const uniqueVendors = new Set();
+      order.order_items?.forEach((item) => {
+        uniqueVendors.add(item.vendor_id);
+      });
+
+      // Submit review for each unique vendor with the same picker
+      const reviewPromises = Array.from(uniqueVendors).map((vendorId) =>
+        api.post(`submit-reviews/`, {
+          order_id: orderId,
+          vendor_id: vendorId,
+          picker_id: pickerId,
+          vendor_rating: reviews.vendor.rating,
+          vendor_comment: reviews.vendor.comment,
+          picker_rating: reviews.picker.rating,
+          picker_comment: reviews.picker.comment,
+        })
+      );
+
+      await Promise.all(reviewPromises);
+      return { uniqueVendorsCount: uniqueVendors.size };
+    },
+    onSuccess: (data, { orderId }) => {
+      // Update the cache optimistically
+      queryClient.setQueryData(["orders"], (oldOrders) => {
+        if (!oldOrders) return oldOrders;
+        return oldOrders.map((order) =>
+          order.id === orderId ? { ...order, reviewed: true } : order
+        );
+      });
+
+      Swal.fire({
+        icon: "success",
+        title: "Thank you for your reviews!",
+        text:
+          data.uniqueVendorsCount > 1
+            ? `Reviews submitted for ${data.uniqueVendorsCount} vendors and 1 picker.`
+            : "Reviews submitted successfully!",
+      });
+    },
+    onError: (error) => {
+      console.error("Error submitting reviews:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Failed to submit reviews",
+        text:
+          error.response?.data?.error ||
+          error.message ||
+          "Please try again later",
+      });
+    },
+  });
+
+  const toggleOrderDetails = (orderId) => {
+    setExpandedOrder((prev) => (prev === orderId ? null : orderId));
+  };
+
+  const handleMarkAsDelivered = async (orderId) => {
+    markAsDeliveredMutation.mutate(orderId);
   };
 
   const handleCancelOrder = async (orderId) => {
@@ -76,104 +198,24 @@ const OrderHistory = () => {
       });
 
       if (result.isConfirmed) {
-        // Send cancel request to API
-        await api.post(`orders/${orderId}/cancel/`);
-
-        // Update local state
-        setOrders((prevOrders) =>
-          prevOrders.map((order) =>
-            order.id === orderId
-              ? { ...order, order_status: "CANCELLED" }
-              : order
-          )
-        );
-
-        // Show success message
-        await Swal.fire({
-          icon: "success",
-          title: "Order Cancelled",
-          text: "Your order has been cancelled successfully",
-        });
-        fetchOrders(); // Refresh the order list
+        cancelOrderMutation.mutate(orderId);
       }
     } catch (error) {
-      console.error("Error cancelling order:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Cancellation Failed",
-        text:
-          error.response?.data?.message ||
-          "Failed to cancel order. Please try again later.",
-      });
+      console.error("Error in cancel order handler:", error);
     }
   };
 
   const handleReviewSubmit = async (reviews) => {
-    try {
-      // Get the picker info from the order level
-      const pickerId = reviewOrder.picker?.profile_id;
+    if (!reviewOrder) return;
 
-      // Check if picker exists (some orders might not have a picker assigned yet)
-      if (!pickerId) {
-        Swal.fire({
-          icon: "warning",
-          title: "Cannot Submit Review",
-          text: "This order doesn't have a picker assigned yet.",
-        });
-        return;
+    submitReviewMutation.mutate(
+      { orderId: reviewOrder.id, reviews },
+      {
+        onSuccess: () => {
+          setReviewOrder(null);
+        },
       }
-
-      // Get unique vendors from order items
-      const uniqueVendors = new Set();
-      reviewOrder.order_items?.forEach((item) => {
-        uniqueVendors.add(item.vendor_id);
-      });
-
-      // Submit one review for the picker and one review for each vendor
-      const reviewPromises = [];
-
-      // Submit review for each unique vendor with the same picker
-      Array.from(uniqueVendors).forEach((vendorId) => {
-        reviewPromises.push(
-          api.post(`submit-reviews/`, {
-            order_id: reviewOrder.id,
-            vendor_id: vendorId,
-            picker_id: pickerId,
-            vendor_rating: reviews.vendor.rating,
-            vendor_comment: reviews.vendor.comment,
-            picker_rating: reviews.picker.rating,
-            picker_comment: reviews.picker.comment,
-          })
-        );
-      });
-
-      // Wait for all reviews to be submitted
-      await Promise.all(reviewPromises);
-
-      Swal.fire({
-        icon: "success",
-        title: "Thank you for your reviews!",
-        text:
-          uniqueVendors.size > 1
-            ? `Reviews submitted for ${uniqueVendors.size} vendors and 1 picker.`
-            : "Reviews submitted successfully!",
-      });
-
-      // Update local state to show review submitted
-      setOrders((prevOrders) =>
-        prevOrders.map((order) =>
-          order.id === reviewOrder.id ? { ...order, reviewed: true } : order
-        )
-      );
-    } catch (error) {
-      console.error("Error submitting reviews:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Failed to submit reviews",
-        text: error.response?.data?.error || "Please try again later",
-      });
-    }
-    setReviewOrder(null);
+    );
   };
 
   const getStatusClass = (status) => {
@@ -215,14 +257,17 @@ const OrderHistory = () => {
   // Pagination logic
   const indexOfLastOrder = currentPage * ordersPerPage;
   const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
-  const currentOrders = orders.slice(indexOfFirstOrder, indexOfLastOrder);
+  const currentOrders = orders?.slice(indexOfFirstOrder, indexOfLastOrder);
   const totalPages = Math.ceil(orders.length / ordersPerPage);
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   if (loading) {
     return (
-      <div className={style.orderHistoryContainer} style={{marginTop: "10rem"}}>
+      <div
+        className={style.orderHistoryContainer}
+        style={{ marginTop: "10rem" }}
+      >
         <Spinner />
       </div>
     );
@@ -231,7 +276,9 @@ const OrderHistory = () => {
   if (error) {
     return (
       <div className={style.orderHistoryContainer}>
-        <div className={style.errorMessage}>{error}</div>
+        <div className={style.errorMessage}>
+          {error.message || "An error occurred while fetching orders"}
+        </div>
       </div>
     );
   }
@@ -381,8 +428,11 @@ const OrderHistory = () => {
                       <button
                         className={style.reviewButton}
                         onClick={() => setReviewOrder(order)}
+                        disabled={submitReviewMutation.isPending}
                       >
-                        Write Review
+                        {submitReviewMutation.isPending
+                          ? "Submitting..."
+                          : "Write Review"}
                       </button>
                     ))}
                   {order.order_status.toUpperCase() === "DELIVERED" &&
@@ -390,16 +440,22 @@ const OrderHistory = () => {
                       <button
                         className={style.confirmOrderBtn}
                         onClick={() => handleMarkAsDelivered(order.id)}
+                        disabled={markAsDeliveredMutation.isPending}
                       >
-                        Confirm
+                        {markAsDeliveredMutation.isPending
+                          ? "Confirming..."
+                          : "Confirm"}
                       </button>
                     )}
                   {order.order_status.toUpperCase() === "PENDING" && (
                     <button
                       className={style.cancelOrderBtn}
                       onClick={() => handleCancelOrder(order.id)}
+                      disabled={cancelOrderMutation.isPending}
                     >
-                      Cancel Order
+                      {cancelOrderMutation.isPending
+                        ? "Cancelling..."
+                        : "Cancel Order"}
                     </button>
                   )}
                   {/* {order.order_status.toUpperCase() !== "PENDING" && (

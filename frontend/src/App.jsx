@@ -49,173 +49,194 @@ import { ThemeProvider } from "./constant/ThemeContext";
 // import NotificationPage from "./pages/Notification";
 import Service from "./pages/Service";
 import Message from "./pages/Message";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 // import UnifiedMessages from "./components/UnifiedMessage";
+
+// Create a client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 10 * 60 * 1000, // 10 minutes default
+      gcTime: 15 * 60 * 1000, // 15 minutes garbage collection
+      retry: 2,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: true,
+    },
+    mutations: {
+      retry: 1,
+    },
+  },
+});
 
 function App() {
   return (
-    <ThemeProvider>
-      <GlobalProvider>
-        <Router>
-          <ScrollToTop />
-          <Routes>
-            <Route path="/" element={<Layout />}>
-              <Route index element={<Home />} />
-              <Route path="about" element={<About />} />
-              <Route path="vendors" element={<Vendors />} />
-              <Route path="rider" element={<Rider />} />
-              <Route path="contact" element={<Contact />} />
-              <Route path="shop/:shopId" element={<ShopDetails />} />
-              <Route path="product/:productId" element={<ProductDetails />} />
-              <Route path="other-services" element={<OtherService />} />
-              <Route path="shopping-cart" element={<ShoppingCart />} />
-              <Route path="search" element={<SearchPage />} />
-              
-              <Route
-                path="service"
-                element={
-                  <ProtectedRoute>
-                    <Service />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="messages"
-                element={
-                  <ProtectedRoute>
-                    <Message />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="order-history"
-                element={
-                  <ProtectedRoute>
-                    <OrderHistory />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="checkout"
-                element={
-                  <ProtectedRoute>
-                    <Checkout />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="order-details" element={<OrderDetails />} />
-              <Route
-                path="profile"
-                element={
-                  <ProtectedRoute>
-                    <StudentProfile />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/service-application/:serviceId"
-                element={
-                  <ProtectedRoute>
-                    <ServiceApplication />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/service-application-success/:serviceId"
-                element={<ServiceApplicationSuccess />}
-              />
-              <Route
-                path="/subscription-plans"
-                element={<SubscriptionPlans />}
-              />
-              <Route path="/products" element={<AllProducts />} />
-            </Route>
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Signup />} />
-            <Route path="/verify-email" element={<VerifyEmail />} />
-            <Route
-              path="/verify-account"
-              element={
-                <ProtectedRoute>
-                  <KYCVerification />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/kyc-status"
-              element={
-                <ProtectedRoute>
-                  <KYCStatus />
-                </ProtectedRoute>
-              }
-            />
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <GlobalProvider>
+          <Router>
+            <ScrollToTop />
+            <Routes>
+              <Route path="/" element={<Layout />}>
+                <Route index element={<Home />} />
+                <Route path="about" element={<About />} />
+                <Route path="vendors" element={<Vendors />} />
+                <Route path="rider" element={<Rider />} />
+                <Route path="contact" element={<Contact />} />
+                <Route path="shop/:shopId" element={<ShopDetails />} />
+                <Route path="product/:productId" element={<ProductDetails />} />
+                <Route path="other-services" element={<OtherService />} />
+                <Route path="shopping-cart" element={<ShoppingCart />} />
+                <Route path="search" element={<SearchPage />} />
 
-            <Route path="/payment/verify" element={<PaymentVerification />} />
-            <Route path="/orders/:orderNumber" element={<OrderDetails />} />
+                <Route
+                  path="service"
+                  element={
+                    <ProtectedRoute>
+                      <Service />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="messages"
+                  element={
+                    <ProtectedRoute>
+                      <Message />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="order-history"
+                  element={
+                    <ProtectedRoute>
+                      <OrderHistory />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="checkout"
+                  element={
+                    <ProtectedRoute>
+                      <Checkout />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="order-details" element={<OrderDetails />} />
+                <Route
+                  path="profile"
+                  element={
+                    <ProtectedRoute>
+                      <StudentProfile />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/service-application/:serviceId"
+                  element={
+                    <ProtectedRoute>
+                      <ServiceApplication />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/service-application-success/:serviceId"
+                  element={<ServiceApplicationSuccess />}
+                />
+                <Route
+                  path="/subscription-plans"
+                  element={<SubscriptionPlans />}
+                />
+                <Route path="/products" element={<AllProducts />} />
+              </Route>
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Signup />} />
+              <Route path="/verify-email" element={<VerifyEmail />} />
+              <Route
+                path="/verify-account"
+                element={
+                  <ProtectedRoute>
+                    <KYCVerification />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/kyc-status"
+                element={
+                  <ProtectedRoute>
+                    <KYCStatus />
+                  </ProtectedRoute>
+                }
+              />
 
-            <Route
-              path="/vendor-dashboard"
-              element={
-                <ProtectedRoute>
-                  <VendorDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/other-dashboard"
-              element={
-                <ProtectedRoute>
-                  <OtherDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/add-product"
-              element={
-                <ProtectedRoute>
-                  <AddProduct />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/picker"
-              element={
-                <ProtectedRoute>
-                  <DashboardLayout />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin-dashboard"
-              element={
-                <ProtectedRoute>
-                  <AdminDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="/picker/dashboard" element={<HomePage />} />
-            <Route
-              path="/picker/available-orders"
-              element={<AvailableOrders />}
-            />
-            <Route path="/picker/my-deliveries" element={<MyDeliveries />} />
-            <Route path="/earnings" element={<Earnings />} />
-            <Route
-              path="/delivery-detail/:orderId"
-              element={<DeliveryDetail />}
-            />
-            <Route
-              path="/admin-order-detail/:orderId"
-              element={<AdminOrderDetail />}
-            />
+              <Route path="/payment/verify" element={<PaymentVerification />} />
+              <Route path="/orders/:orderNumber" element={<OrderDetails />} />
 
-            <Route path="/forgot-password" element={<RequestOTPForm />} />
-            <Route path="/verify-otp" element={<VerifyOTPForm />} />
-            <Route path="/reset-password" element={<SetNewPasswordForm />} />
-            <Route path="/chatbot" element={<Chatbot />} />
-          </Routes>
-        </Router>
-      </GlobalProvider>
-    </ThemeProvider>
+              <Route
+                path="/vendor-dashboard"
+                element={
+                  <ProtectedRoute>
+                    <VendorDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/other-dashboard"
+                element={
+                  <ProtectedRoute>
+                    <OtherDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/add-product"
+                element={
+                  <ProtectedRoute>
+                    <AddProduct />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/picker"
+                element={
+                  <ProtectedRoute>
+                    <DashboardLayout />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin-dashboard"
+                element={
+                  <ProtectedRoute>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/picker/dashboard" element={<HomePage />} />
+              <Route
+                path="/picker/available-orders"
+                element={<AvailableOrders />}
+              />
+              <Route path="/picker/my-deliveries" element={<MyDeliveries />} />
+              <Route path="/earnings" element={<Earnings />} />
+              <Route
+                path="/delivery-detail/:orderId"
+                element={<DeliveryDetail />}
+              />
+              <Route
+                path="/admin-order-detail/:orderId"
+                element={<AdminOrderDetail />}
+              />
+
+              <Route path="/forgot-password" element={<RequestOTPForm />} />
+              <Route path="/verify-otp" element={<VerifyOTPForm />} />
+              <Route path="/reset-password" element={<SetNewPasswordForm />} />
+              <Route path="/chatbot" element={<Chatbot />} />
+            </Routes>
+          </Router>
+        </GlobalProvider>
+      </ThemeProvider>
+      <ReactQueryDevtools initialIsOpen={false} />
+    </QueryClientProvider>
   );
 }
 

@@ -1,34 +1,26 @@
-import React, { useState, useEffect } from "react";
-import Navigation from '../components/nav/Navigation';
-import Footer from '../components/nav/Footer';
+import React, { useState, useContext, useMemo } from "react";
+import Navigation from "../components/nav/Navigation";
+import Footer from "../components/nav/Footer";
 import { Outlet } from "react-router-dom";
 import { FaPlayCircle, FaTimes, FaComments } from "react-icons/fa";
 import Chatbot from "../chatbot/Chatbot";
 import styles from "../css/Layout.module.css";
-import api from "../constant/api";
+import { GlobalContext } from "../constant/GlobalContext";
 
 const Layout = () => {
   const [showModal, setShowModal] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [videos, setVideos] = useState({});
 
-  const fetchVideos = async () => {
-    try {
-      const response = await api.get("videos/both/");
-      if (response.data) {
-        setVideos(response.data);
-        // console.log(response.data);
-      }
-    } catch (error) {
-      console.error("Error fetching videos:", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchVideos();
-  }, []);
+  // Use TanStack Query hook for videos
+  const { useVideos } = useContext(GlobalContext);
+  const {
+    data: videos = {},
+    isLoading: videosLoading,
+    isError: videosError,
+    error: videosErrorDetails,
+  } = useVideos();
 
   const toggleModal = () => {
     setShowModal(!showModal);
@@ -43,28 +35,31 @@ const Layout = () => {
     setShowVideoModal(true);
   };
 
-  // Only create video options if videos data is available
-  const videoOptions =
-    videos.register_video && videos.product_video
-      ? [
-          {
-            title: "Register as Vendor",
-            video: videos.register_video.video_secure_url,
-          },
-          {
-            title: "Register as Picker",
-            video: videos.register_video.video_secure_url,
-          },
-          {
-            title: "Register as Customer",
-            video: videos.register_video.video_secure_url,
-          },
-          {
-            title: "Add Product Tutorial",
-            video: videos.product_video.video_secure_url,
-          },
-        ]
-      : [];
+  // Memoize video options to avoid unnecessary recalculations
+  const videoOptions = useMemo(() => {
+    if (!videos.register_video && !videos.product_video) {
+      return [];
+    }
+
+    return [
+      {
+        title: "Register as Vendor",
+        video: videos.register_video?.video_secure_url,
+      },
+      {
+        title: "Register as Picker",
+        video: videos.register_video?.video_secure_url,
+      },
+      {
+        title: "Register as Customer",
+        video: videos.register_video?.video_secure_url,
+      },
+      {
+        title: "Add Product Tutorial",
+        video: videos.product_video?.video_secure_url,
+      },
+    ].filter((option) => option.video); // Filter out options without video URLs
+  }, [videos]);
 
   return (
     <div className={styles.layoutWrapper}>
@@ -98,19 +93,24 @@ const Layout = () => {
               <FaTimes />
             </button>
             <div className={styles.optionsGrid}>
-              {videoOptions.length > 0 ? (
+              {videosLoading ? (
+                <div>Loading videos...</div>
+              ) : videosError ? (
+                <div>Error loading videos. Please try again later.</div>
+              ) : videoOptions.length > 0 ? (
                 videoOptions.map((option, index) => (
                   <button
                     key={index}
                     className={styles.optionButton}
                     onClick={() => handleVideoSelect(option.video)}
+                    disabled={!option.video}
                   >
                     <FaPlayCircle className={styles.optionIcon} />
                     <span>{option.title}</span>
                   </button>
                 ))
               ) : (
-                <div>Loading videos...</div>
+                <div>No videos available at the moment.</div>
               )}
             </div>
           </div>

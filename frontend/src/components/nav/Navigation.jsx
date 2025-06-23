@@ -10,14 +10,23 @@ import { GlobalContext } from "../../constant/GlobalContext";
 const Navigation = () => {
   const navigate = useNavigate();
 
-  const { isAuthenticated, count } = useContext(GlobalContext);
+  const { isAuthenticated, useCart, clearCache } = useContext(GlobalContext);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  // Use the TanStack Query hook for cart data
+  const { data: cartData } = useCart();
+  const count = cartData?.count || 0;
 
   const handleLogout = () => {
     localStorage.removeItem("access");
     localStorage.removeItem("refresh");
     localStorage.removeItem("user_type");
     localStorage.removeItem("institution");
+    localStorage.removeItem("cart_code"); // Also clear cart code on logout
+
+    // Clear all cached data on logout
+    clearCache("all");
+
     navigate("/");
     window.location.reload();
   };

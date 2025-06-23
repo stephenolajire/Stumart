@@ -7,7 +7,12 @@ import React, {
   useMemo,
 } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { GlobalContext } from "../constant/GlobalContext";
+import {
+  GlobalContext,
+  useShops,
+  useShopsBySchool,
+  useProductSearch,
+} from "../constant/GlobalContext";
 import styles from "../css/Home.module.css";
 import { MEDIA_BASE_URL } from "../constant/api";
 import { nigeriaInstitutions } from "../constant/data";
@@ -132,19 +137,18 @@ const ShopCard = memo(({ shop }) => (
 ));
 
 const Home = memo(() => {
-  // Get all necessary functions and data from GlobalContext
-  const {
-    shopsData,
-    searchResults,
-    fetchShopsBySchool,
-    searchProducts,
-    loading,
-    error,
-    isAuthenticated,
-    clearError,
-  } = useContext(GlobalContext);
-
+  // Get authentication data from GlobalContext
+  const { isAuthenticated } = useContext(GlobalContext);
   const navigate = useNavigate();
+
+  // Use TanStack Query hooks
+  const {
+    data: allShopsData,
+    isLoading: allShopsLoading,
+    error: allShopsError,
+  } = useShops();
+  const { searchResults, searchProducts, isSearching, searchError } =
+    useProductSearch();
 
   // Consolidated state
   const [filters, setFilters] = useState({
@@ -162,7 +166,6 @@ const Home = memo(() => {
   // UI state
   const [uiState, setUiState] = useState({
     productName: "",
-    isSearching: false,
     isInitialized: false,
     isLockedToInstitution: true,
     showFilters: false,
@@ -172,6 +175,14 @@ const Home = memo(() => {
 
   // Constants
   const institution = localStorage.getItem("institution");
+
+  // Use the school-specific hook when needed
+  const {
+    data: schoolShopsData,
+    isLoading: schoolShopsLoading,
+    error: schoolShopsError,
+    refetch: refetchSchoolShops,
+  } = useShopsBySchool(filters.school);
 
   // Get all states from Nigeria institutions
   const states = useMemo(() => Object.keys(nigeriaInstitutions), []);
@@ -203,14 +214,14 @@ const Home = memo(() => {
 
   const totalPages = useMemo(() => {
     return Math.ceil((visibleShops?.length || 0) / SHOPS_PER_PAGE);
-  }, [visibleShops, SHOPS_PER_PAGE]);
+  }, [visibleShops]);
 
   const currentShops = useMemo(() => {
     const { currentPage } = uiState;
     const indexOfLastShop = currentPage * SHOPS_PER_PAGE;
     const indexOfFirstShop = indexOfLastShop - SHOPS_PER_PAGE;
     return visibleShops?.slice(indexOfFirstShop, indexOfLastShop);
-  }, [visibleShops, uiState.currentPage, SHOPS_PER_PAGE]);
+  }, [visibleShops, uiState.currentPage]);
 
   // Format category name - memoized helper function
   const formatCategoryName = useCallback((category) => {
@@ -283,29 +294,17 @@ const Home = memo(() => {
     return () => clearInterval(timer);
   }, []);
 
-  // Centralized shop fetching function using GlobalContext
-  const fetchShops = useCallback(
-    async (schoolName) => {
-      try {
-        const fetchedShops = await fetchShopsBySchool(schoolName);
-
-        if (Array.isArray(fetchedShops)) {
-          setShopState((prev) => ({
-            ...prev,
-            schoolShops: fetchedShops,
-            filteredShops: applyFilters(fetchedShops, filters.category),
-            displayMode: "schoolShops",
-          }));
-          return true;
-        }
-        return false;
-      } catch (error) {
-        console.error("Error fetching shops:", error);
-        return false;
-      }
-    },
-    [fetchShopsBySchool, applyFilters, filters.category]
-  );
+  // Handle school shops data when it changes
+  useEffect(() => {
+    if (schoolShopsData && filters.school) {
+      setShopState((prev) => ({
+        ...prev,
+        schoolShops: schoolShopsData,
+        filteredShops: applyFilters(schoolShopsData, filters.category),
+        displayMode: "schoolShops",
+      }));
+    }
+  }, [schoolShopsData, filters.school, filters.category, applyFilters]);
 
   // Debounced filter update function - properly memoized
   const debouncedFilterUpdate = useMemo(
@@ -313,11 +312,12 @@ const Home = memo(() => {
       debounce(async (newFilters) => {
         try {
           if (newFilters.school) {
-            await fetchShops(newFilters.school);
+            // The useShopsBySchool hook will handle fetching automatically
+            // when filters.school changes
           } else {
             setShopState((prev) => ({
               ...prev,
-              filteredShops: applyFilters(shopsData, newFilters.category),
+              filteredShops: applyFilters(allShopsData, newFilters.category),
               displayMode: "allShops",
             }));
           }
@@ -325,7 +325,7 @@ const Home = memo(() => {
           console.error("Error updating filters:", error);
         }
       }, 500),
-    [fetchShops, applyFilters, shopsData]
+    [applyFilters, allShopsData]
   );
 
   // Clean up debounce on unmount
@@ -354,22 +354,12 @@ const Home = memo(() => {
             school: institution,
           }));
 
-          // Fetch shops for user's institution
-          const success = await fetchShops(institution);
-
-          if (!success) {
-            // Fall back to all shops if institution fetch fails
-            setShopState((prev) => ({
-              ...prev,
-              filteredShops: applyFilters(shopsData, filters.category),
-              displayMode: "allShops",
-            }));
-          }
+          // The useShopsBySchool hook will automatically fetch when school changes
         } else {
           // Not authenticated, show all shops
           setShopState((prev) => ({
             ...prev,
-            filteredShops: applyFilters(shopsData, filters.category),
+            filteredShops: applyFilters(allShopsData, filters.category),
             displayMode: "allShops",
           }));
         }
@@ -384,7 +374,7 @@ const Home = memo(() => {
         // Fall back to all shops on error
         setShopState((prev) => ({
           ...prev,
-          filteredShops: applyFilters(shopsData, filters.category),
+          filteredShops: applyFilters(allShopsData, filters.category),
           displayMode: "allShops",
         }));
 
@@ -395,13 +385,16 @@ const Home = memo(() => {
       }
     };
 
-    initializeData();
+    // Only initialize if we have shop data or if we're not loading
+    if (allShopsData || !allShopsLoading) {
+      initializeData();
+    }
   }, [
     isAuthenticated,
     institution,
-    shopsData,
+    allShopsData,
+    allShopsLoading,
     filters.category,
-    fetchShops,
     applyFilters,
     uiState.isInitialized,
   ]);
@@ -412,7 +405,7 @@ const Home = memo(() => {
       const currentShops =
         shopState.displayMode === "schoolShops"
           ? shopState.schoolShops
-          : shopsData;
+          : allShopsData;
 
       setShopState((prev) => ({
         ...prev,
@@ -430,7 +423,7 @@ const Home = memo(() => {
     uiState.isInitialized,
     shopState.displayMode,
     shopState.schoolShops,
-    shopsData,
+    allShopsData,
     applyFilters,
   ]);
 
@@ -504,7 +497,8 @@ const Home = memo(() => {
 
       if (filters.school) {
         try {
-          await fetchShops(filters.school);
+          // The useShopsBySchool hook will automatically refetch when filters.school changes
+          await refetchSchoolShops();
         } catch (error) {
           console.error("Error fetching shops by school:", error);
           setShopState((prev) => ({
@@ -520,7 +514,7 @@ const Home = memo(() => {
       institution,
       uiState.isLockedToInstitution,
       filters.school,
-      fetchShops,
+      refetchSchoolShops,
       requestInstitutionSwitch,
     ]
   );
@@ -561,19 +555,19 @@ const Home = memo(() => {
       ...prev,
       displayMode: "allShops",
       schoolShops: [],
-      filteredShops: applyFilters(shopsData, filters.category),
+      filteredShops: applyFilters(allShopsData, filters.category),
     }));
   }, [
     isAuthenticated,
     institution,
     uiState.isLockedToInstitution,
     filters.category,
-    shopsData,
+    allShopsData,
     applyFilters,
     requestInstitutionSwitch,
   ]);
 
-  // Handle product search using GlobalContext searchProducts function
+  // Handle product search using TanStack Query searchProducts function
   const handleProductSearch = useCallback(
     async (e) => {
       e.preventDefault();
@@ -590,8 +584,6 @@ const Home = memo(() => {
         if (switched) return;
       }
 
-      setUiState((prev) => ({ ...prev, isSearching: true }));
-
       try {
         const searchParams = {
           productName: uiState.productName,
@@ -599,28 +591,11 @@ const Home = memo(() => {
           ...(filters.state && { state: filters.state }),
         };
 
-        const result = await searchProducts(searchParams);
+        // Use the TanStack Query mutation
+        searchProducts(searchParams);
 
-        if (result.success && result.products && result.products.length > 0) {
-          navigate("/search", {
-            state: {
-              products: result.products,
-              searchParams: {
-                productName: uiState.productName,
-                school: filters.school,
-                state: filters.state,
-              },
-            },
-          });
-        } else {
-          Swal.fire({
-            icon: "info",
-            title: "No Products Found",
-            text:
-              result.message ||
-              `No products matching "${uiState.productName}" found in the selected location.`,
-          });
-        }
+        // The searchProducts mutation will handle success/error states
+        // We'll handle navigation in a separate effect that watches searchResults
       } catch (error) {
         console.error("Search error:", error);
         Swal.fire({
@@ -628,8 +603,6 @@ const Home = memo(() => {
           title: "Search Error",
           text: "An error occurred while searching. Please try again.",
         });
-      } finally {
-        setUiState((prev) => ({ ...prev, isSearching: false }));
       }
     },
     [
@@ -639,11 +612,39 @@ const Home = memo(() => {
       institution,
       filters.school,
       filters.state,
-      navigate,
       requestInstitutionSwitch,
       searchProducts,
     ]
   );
+
+  // Handle search results
+  useEffect(() => {
+    if (searchResults && searchResults.length > 0) {
+      navigate("/search", {
+        state: {
+          products: searchResults,
+          searchParams: {
+            productName: uiState.productName,
+            school: filters.school,
+            state: filters.state,
+          },
+        },
+      });
+    } else if (searchError) {
+      Swal.fire({
+        icon: "info",
+        title: "No Products Found",
+        text: `No products matching "${uiState.productName}" found in the selected location.`,
+      });
+    }
+  }, [
+    searchResults,
+    searchError,
+    navigate,
+    uiState.productName,
+    filters.school,
+    filters.state,
+  ]);
 
   // Handle state selection
   const handleStateChange = useCallback(
@@ -701,15 +702,9 @@ const Home = memo(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
-  // Clear errors when component unmounts or error changes
-  useEffect(() => {
-    if (error) {
-      const timer = setTimeout(() => {
-        clearError();
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [error, clearError]);
+  // Determine loading state
+  const isLoading = allShopsLoading || (filters.school && schoolShopsLoading);
+  const hasError = allShopsError || schoolShopsError;
 
   // UI COMPONENTS SECTION
   return (
@@ -736,9 +731,9 @@ const Home = memo(() => {
             <button
               type="submit"
               className={styles.searchButton}
-              disabled={!uiState.productName.trim() || uiState.isSearching}
+              disabled={!uiState.productName.trim() || isSearching}
             >
-              {uiState.isSearching ? "..." : <FaSearch />}
+              {isSearching ? "..." : <FaSearch />}
             </button>
           </form>
           <ThemeToggle />
@@ -899,9 +894,13 @@ const Home = memo(() => {
       </section>
       {/* Shops Grid Section */}
       <section className={styles.shopsSection}>
-        {loading && !uiState.isInitialized ? (
+        {isLoading && !uiState.isInitialized ? (
           <div className={styles.loadingContainer}>
             <Spinner />
+          </div>
+        ) : hasError ? (
+          <div className={styles.errorContainer}>
+            <p>Error loading shops. Please try again.</p>
           </div>
         ) : shopState.filteredShops && shopState.filteredShops.length > 0 ? (
           <>

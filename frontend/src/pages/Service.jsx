@@ -1,31 +1,28 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import api from "../constant/api";
 import styles from "../css/Service.module.css";
 
 const Service = () => {
-  const [applications, setApplications] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  const fetchService = async () => {
-    try {
-      setLoading(true);
+  const {
+    data: applications = [],
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["my-applications"],
+    queryFn: async () => {
       const response = await api.get("my-submitted-applications");
-      setApplications(response.data.applications || []);
-      setError(null);
-    } catch (err) {
-      setError("Failed to fetch applications. Please try again.");
-      console.error("Error fetching applications:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchService();
-  }, []);
+      return response.data.applications || [];
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 10 * 60 * 1000, // 10 minutes
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+  });
 
   const handleChatClick = (serviceId, serviceName) => {
     // Navigate to messages page with service details
@@ -60,7 +57,7 @@ const Service = () => {
     });
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className={styles.container}>
         <div className={styles.loading}>
@@ -76,8 +73,10 @@ const Service = () => {
       <div className={styles.container}>
         <div className={styles.error}>
           <h2>Oops! Something went wrong</h2>
-          <p>{error}</p>
-          <button onClick={fetchService} className={styles.retryButton}>
+          <p>
+            {error.message || "Failed to fetch applications. Please try again."}
+          </p>
+          <button onClick={() => refetch()} className={styles.retryButton}>
             Try Again
           </button>
         </div>

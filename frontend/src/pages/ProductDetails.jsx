@@ -1,5 +1,6 @@
 import { useState, useEffect, useContext } from "react";
 import { useParams } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import styles from "../css/ProductDetails.module.css";
 import { GlobalContext } from "../constant/GlobalContext";
 import api from "../constant/api";
@@ -29,9 +30,12 @@ const Toast = Swal.mixin({
 
 const ProductDetails = () => {
   const { productId } = useParams();
+  const queryClient = useQueryClient();
   const [quantity, setQuantity] = useState(1);
-  const { fetchProduct, incrementCount, product, loading, generateCartCode } =
-    useContext(GlobalContext);
+
+  // Access context values
+  const { useCartMutations } = useContext(GlobalContext);
+  const { addToCart, generateCartCode } = useCartMutations();
 
   // New state for selected image, color, and size
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -39,22 +43,7 @@ const ProductDetails = () => {
   const [selectedSize, setSelectedSize] = useState(null);
 
   // Review states
-  const [reviews, setReviews] = useState([]);
-  const [reviewStats, setReviewStats] = useState({
-    total_reviews: 0,
-    average_rating: 0,
-    rating_breakdown: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
-  });
-  const [reviewsLoading, setReviewsLoading] = useState(false);
   const [showAllReviews, setShowAllReviews] = useState(false);
-
-  // User review states
-  const [userReviewStatus, setUserReviewStatus] = useState({
-    hasBought: false,
-    hasReviewed: false,
-    existingReview: null,
-    loading: true,
-  });
 
   // Review modal states
   const [showReviewModal, setShowReviewModal] = useState(false);
@@ -62,7 +51,161 @@ const ProductDetails = () => {
     rating: 0,
     comment: "",
   });
-  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+
+  // Fetch product using TanStack Query
+  const {
+    data: product,
+    isLoading: productLoading,
+    error: productError,
+  } = useQuery({
+    queryKey: ["product", productId],
+    queryFn: async () => {
+      const response = await api.get(`product/${productId}`);
+      return response.data;
+    },
+    enabled: !!productId,
+    staleTime: 10 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    retry: 2,
+    refetchOnWindowFocus: false,
+  });
+
+  // Fetch reviews using TanStack Query
+  const {
+    data: reviewsData,
+    isLoading: reviewsLoading,
+    error: reviewsError,
+  } = useQuery({
+    queryKey: ["reviews", productId],
+    queryFn: async () => {
+      const response = await api.get(`products/${productId}/reviews/`);
+      return {
+        reviews: response.data.reviews || [],
+        stats: response.data.stats || {
+          total_reviews: 0,
+          average_rating: 0,
+          rating_breakdown: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+        },
+      };
+    },
+    enabled: !!productId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000,
+    retry: 2,
+    refetchOnWindowFocus: false,
+  });
+
+  // Fetch user review status using TanStack Query
+  const { data: userReviewStatus, isLoading: userReviewStatusLoading } =
+    useQuery({
+      queryKey: ["userReviewStatus", productId],
+      queryFn: async () => {
+        try {
+          const response = await api.get(
+            `products/${productId}/user-review-status/`
+          );
+          return {
+            hasBought: response.data.has_bought,
+            hasReviewed: response.data.has_reviewed,
+            existingReview: response.data.existing_review,
+            loading: false,
+          };
+        } catch (error) {
+          console.error(
+            "Error checking review status:",
+            error.response?.data || error
+          );
+          return {
+            hasBought: false,
+            hasReviewed: false,
+            existingReview: null,
+            loading: false,
+          };
+        }
+      },
+      enabled: !!productId,
+      staleTime: 5 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
+      retry: 1,
+      refetchOnWindowFocus: false,
+    });
+
+  // Review submission mutation
+  const reviewSubmitMutation = useMutation({
+    mutationFn: async (reviewData) => {
+      const endpoint = userReviewStatus?.hasReviewed
+        ? `products/${productId}/reviews/${userReviewStatus.existingReview.id}/`
+        : `products/${productId}/reviews/create/`;
+
+      const method = userReviewStatus?.hasReviewed ? "put" : "post";
+
+      const response = await api[method](endpoint, {
+        product_id: productId,
+        rating: reviewData.rating,
+        comment: reviewData.comment,
+      });
+
+      return response.data;
+    },
+    onSuccess: () => {
+      Toast.fire({
+        icon: "success",
+        title: userReviewStatus?.hasReviewed
+          ? "Review updated successfully!"
+          : "Review submitted successfully!",
+      });
+
+      // Invalidate and refetch related queries
+      queryClient.invalidateQueries({ queryKey: ["reviews", productId] });
+      queryClient.invalidateQueries({
+        queryKey: ["userReviewStatus", productId],
+      });
+
+      // Close modal and reset form
+      setShowReviewModal(false);
+      setReviewForm({ rating: 0, comment: "" });
+    },
+    onError: (error) => {
+      console.error("Error submitting review:", error);
+      Toast.fire({
+        icon: "error",
+        title: "Failed to submit review. Please try again.",
+      });
+    },
+  });
+
+  // Add to cart mutation
+  const addToCartMutation = useMutation({
+    mutationFn: async (cartData) => {
+      const cartCode = localStorage.getItem("cart_code") || generateCartCode();
+
+      const response = await api.post("add-to-cart/", {
+        product_id: product.id,
+        quantity: cartData.quantity,
+        size: cartData.selectedSize,
+        color: cartData.selectedColor,
+        cart_code: cartCode,
+      });
+
+      return response.data;
+    },
+    onSuccess: () => {
+      Toast.fire({
+        icon: "success",
+        title: `${product.name} added to cart`,
+      });
+
+      // Invalidate cart queries to update cart count
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
+    },
+    onError: (error) => {
+      console.error("Add to cart error:", error);
+      Toast.fire({
+        icon: "error",
+        title: "Failed to add item to cart",
+      });
+    },
+  });
 
   // Star Rating Component
   const StarRating = ({ rating, size = 16 }) => {
@@ -110,51 +253,6 @@ const ProductDetails = () => {
     );
   };
 
-  // Check user's review status for this product
-  const checkUserReviewStatus = async () => {
-    try {
-      setUserReviewStatus((prev) => ({ ...prev, loading: true }));
-
-      const response = await api.get(
-        `products/${productId}/user-review-status/`
-      );
-
-      // console.log("Review status response:", response.data); // Debug log
-
-      setUserReviewStatus({
-        hasBought: response.data.has_bought,
-        hasReviewed: response.data.has_reviewed,
-        existingReview: response.data.existing_review,
-        loading: false,
-      });
-    } catch (error) {
-      console.error(
-        "Error checking review status:",
-        error.response?.data || error
-      );
-      setUserReviewStatus({
-        hasBought: false,
-        hasReviewed: false,
-        existingReview: null,
-        loading: false,
-      });
-    }
-  };
-
-  // Fetch reviews
-  const fetchReviews = async () => {
-    setReviewsLoading(true);
-    try {
-      const response = await api.get(`products/${productId}/reviews/`);
-      setReviews(response.data.reviews);
-      setReviewStats(response.data.stats);
-    } catch (error) {
-      console.error("Error fetching reviews:", error);
-    } finally {
-      setReviewsLoading(false);
-    }
-  };
-
   // Handle review submission
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
@@ -167,49 +265,15 @@ const ProductDetails = () => {
       return;
     }
 
-    setReviewSubmitting(true);
-
-    try {
-      // Updated endpoint URLs
-      const endpoint = userReviewStatus.hasReviewed
-        ? `products/${productId}/reviews/${userReviewStatus.existingReview.id}/`
-        : `products/${productId}/reviews/create/`;
-
-      const method = userReviewStatus.hasReviewed ? "put" : "post";
-
-      const response = await api[method](endpoint, {
-        product_id: productId,
-        rating: reviewForm.rating,
-        comment: reviewForm.comment,
-      });
-
-      if (response.status === 200 || response.status === 201) {
-        Toast.fire({
-          icon: "success",
-          title: userReviewStatus.hasReviewed
-            ? "Review updated successfully!"
-            : "Review submitted successfully!",
-        });
-
-        // Close modal and refresh data
-        setShowReviewModal(false);
-        fetchReviews();
-        checkUserReviewStatus();
-      }
-    } catch (error) {
-      console.error("Error submitting review:", error);
-      Toast.fire({
-        icon: "error",
-        title: "Failed to submit review. Please try again.",
-      });
-    } finally {
-      setReviewSubmitting(false);
-    }
+    reviewSubmitMutation.mutate({
+      rating: reviewForm.rating,
+      comment: reviewForm.comment,
+    });
   };
 
   // Handle opening review modal
   const handleOpenReviewModal = () => {
-    if (userReviewStatus.hasReviewed && userReviewStatus.existingReview) {
+    if (userReviewStatus?.hasReviewed && userReviewStatus.existingReview) {
       setReviewForm({
         rating: userReviewStatus.existingReview.rating,
         comment: userReviewStatus.existingReview.comment || "",
@@ -254,54 +318,20 @@ const ProductDetails = () => {
       }
     }
 
-    try {
-      const cartCode = localStorage.getItem("cart_code") || generateCartCode();
-
-      const res = await api.post("add-to-cart/", {
-        product_id: product.id,
-        quantity,
-        size: selectedSize,
-        color: selectedColor,
-        cart_code: cartCode,
-      });
-
-      if (res.status === 201) {
-        Toast.fire({
-          icon: "success",
-          title: `${product.name} added to cart`,
-        });
-        incrementCount();
-      }
-    } catch (error) {
-      console.error("Add to cart error:", error);
-      Toast.fire({
-        icon: "error",
-        title: "Failed to add item to cart",
-      });
-    }
+    addToCartMutation.mutate({
+      quantity,
+      selectedSize,
+      selectedColor,
+    });
   };
 
+  // Set default selections when product loads
   useEffect(() => {
-    fetchProduct(productId);
-  }, [productId]);
+    if (!product) return;
 
-  useEffect(() => {
-    if (productId) {
-      fetchReviews();
-      checkUserReviewStatus();
-    }
-  }, [productId]);
+    const isFashionProduct = product.vendor_category === "fashion";
 
-  useEffect(() => {
-    // Set default selections when product loads
-    const isFashionProduct = product?.vendor_category === "fashion";
-
-    if (
-      isFashionProduct &&
-      product &&
-      product.colors &&
-      product.colors.length > 0
-    ) {
+    if (isFashionProduct && product.colors && product.colors.length > 0) {
       // Find first color with quantity > 0
       const availableColor = product.colors.find((color) => color.quantity > 0);
       if (availableColor) {
@@ -309,12 +339,7 @@ const ProductDetails = () => {
       }
     }
 
-    if (
-      isFashionProduct &&
-      product &&
-      product.sizes &&
-      product.sizes.length > 0
-    ) {
+    if (isFashionProduct && product.sizes && product.sizes.length > 0) {
       // Find first size with quantity > 0
       const availableSize = product.sizes.find((size) => size.quantity > 0);
       if (availableSize) {
@@ -323,11 +348,29 @@ const ProductDetails = () => {
     }
   }, [product]);
 
-  // Combine the loading states
-  if (loading || reviewsLoading) {
+  // Loading state
+  if (productLoading || reviewsLoading || userReviewStatusLoading) {
     return (
       <div style={{ marginTop: "10rem" }}>
         <Spinner />
+      </div>
+    );
+  }
+
+  // Error state
+  if (productError) {
+    return (
+      <div className={styles.errorContainer}>
+        <p>Error loading product details. Please try again.</p>
+      </div>
+    );
+  }
+
+  // No product found
+  if (!product) {
+    return (
+      <div className={styles.errorContainer}>
+        <p>Product not found.</p>
       </div>
     );
   }
@@ -367,6 +410,14 @@ const ProductDetails = () => {
   // Check if we have a carousel
   const hasCarousel =
     product.additional_images && product.additional_images.length > 0;
+
+  // Get reviews data with fallbacks
+  const reviews = reviewsData?.reviews || [];
+  const reviewStats = reviewsData?.stats || {
+    total_reviews: 0,
+    average_rating: 0,
+    rating_breakdown: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+  };
 
   // Display limited reviews
   const displayedReviews = showAllReviews ? reviews : reviews.slice(0, 3);
@@ -592,10 +643,15 @@ const ProductDetails = () => {
                 className={`${styles.addButton} ${
                   isFashionProduct && isOutOfStock ? styles.disabledButton : ""
                 }`}
-                disabled={isFashionProduct && isOutOfStock}
+                disabled={
+                  (isFashionProduct && isOutOfStock) ||
+                  addToCartMutation.isPending
+                }
                 onClick={handleAddToCart}
               >
-                {isFashionProduct && isOutOfStock
+                {addToCartMutation.isPending
+                  ? "Adding..."
+                  : isFashionProduct && isOutOfStock
                   ? "Out of Stock"
                   : "Add to Cart"}
               </button>
@@ -610,7 +666,7 @@ const ProductDetails = () => {
               <h2>Customer Reviews</h2>
 
               {/* User Review Action Buttons */}
-              {!userReviewStatus.loading && userReviewStatus.hasBought && (
+              {!userReviewStatusLoading && userReviewStatus?.hasBought && (
                 <div className={styles.userReviewActions}>
                   {userReviewStatus.hasReviewed ? (
                     <button
@@ -697,11 +753,6 @@ const ProductDetails = () => {
                     {review.comment && (
                       <p className={styles.reviewComment}>{review.comment}</p>
                     )}
-                    {/* {review.order_number && (
-                      <div className={styles.orderInfo}>
-                        Order: {review.order_number}
-                      </div>
-                    )} */}
                   </div>
                 ))}
 
@@ -727,7 +778,7 @@ const ProductDetails = () => {
           <div className={styles.modalContent}>
             <div className={styles.modalHeader}>
               <h3>
-                {userReviewStatus.hasReviewed
+                {userReviewStatus?.hasReviewed
                   ? "Edit Your Review"
                   : "Write a Review"}
               </h3>
@@ -771,18 +822,20 @@ const ProductDetails = () => {
                   type="button"
                   className={styles.cancelButton}
                   onClick={handleCloseReviewModal}
-                  disabled={reviewSubmitting}
+                  disabled={reviewSubmitMutation.isPending}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   className={styles.submitButton}
-                  disabled={reviewSubmitting || reviewForm.rating === 0}
+                  disabled={
+                    reviewSubmitMutation.isPending || reviewForm.rating === 0
+                  }
                 >
-                  {reviewSubmitting
+                  {reviewSubmitMutation.isPending
                     ? "Submitting..."
-                    : userReviewStatus.hasReviewed
+                    : userReviewStatus?.hasReviewed
                     ? "Update Review"
                     : "Submit Review"}
                 </button>

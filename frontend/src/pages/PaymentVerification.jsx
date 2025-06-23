@@ -1,16 +1,22 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import styles from "../css/PaymentVerification.module.css";
 import api from "../constant/api";
-import { GlobalContext } from "../constant/GlobalContext";
+import { GlobalContext, useCartMutations } from "../constant/GlobalContext";
 
 const PaymentVerification = () => {
   const [verificationStatus, setVerificationStatus] = useState("verifying");
   const [orderDetails, setOrderDetails] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
 
-  const {setCount, fetchCartData} = useContext(GlobalContext)
+  // Access the context for authentication and other utilities
+  const { isAuthenticated } = useContext(GlobalContext);
+
+  // Use the cart mutations hook for cart operations
+  const { generateCartCode } = useCartMutations();
 
   useEffect(() => {
     const verifyPayment = async () => {
@@ -52,8 +58,12 @@ const PaymentVerification = () => {
 
           // Clear the cart from localStorage after successful payment
           localStorage.removeItem("cart_code");
-          setCount(0);
-          fetchCartData();
+
+          // Invalidate cart queries to refresh cart data across the app
+          queryClient.invalidateQueries({ queryKey: ["cart"] });
+
+          // Also clear all cart-related cache to ensure fresh data
+          queryClient.removeQueries({ queryKey: ["cart"] });
 
           // Update state with order details
           setVerificationStatus("success");
@@ -61,7 +71,10 @@ const PaymentVerification = () => {
             orderNumber: response.data.order_number,
           });
 
-          // Removed the window.location.reload() that was causing multiple verifications
+          // If user is authenticated, also invalidate orders to refresh order list
+          if (isAuthenticated) {
+            queryClient.invalidateQueries({ queryKey: ["orders"] });
+          }
         } else {
           setVerificationStatus("failed");
         }
@@ -80,10 +93,10 @@ const PaymentVerification = () => {
       // localStorage.removeItem("verified_reference");
       // localStorage.removeItem("verified_order_number");
     };
-  }, [location.search]); // Added location.search as dependency to re-run if URL changes
+  }, [location.search, queryClient, isAuthenticated]); // Added dependencies
 
   const handleContinueShopping = () => {
-    navigate('/products');
+    navigate("/products");
   };
 
   const handleViewOrder = () => {
@@ -115,6 +128,15 @@ const PaymentVerification = () => {
             >
               Continue Shopping
             </button>
+            {/* Only show view order button if user is authenticated */}
+            {/* {isAuthenticated && (
+              <button
+                className={styles.viewOrderButton}
+                onClick={handleViewOrder}
+              >
+                View Order
+              </button>
+            )} */}
           </div>
         </div>
       )}

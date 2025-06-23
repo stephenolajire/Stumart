@@ -1,4 +1,4 @@
-import { useEffect, useContext } from "react";
+import { useContext } from "react";
 import { Link, useParams } from "react-router-dom";
 import { FaBuilding, FaClock, FaStar } from "react-icons/fa";
 import { GlobalContext } from "../constant/GlobalContext";
@@ -9,14 +9,13 @@ import ProductCard from "../components/ProductCard";
 
 const ShopDetails = () => {
   const { shopId } = useParams();
-  const { fetchProducts, products, details } = useContext(GlobalContext);
+  const { useProducts } = useContext(GlobalContext);
 
-  useEffect(() => {
-    fetchProducts(shopId);
-  }, []);
+  // Use the TanStack Query hook for products
+  const { data: productsData, isLoading, isError, error } = useProducts(shopId);
 
   // Loading state
-  if (!Array.isArray(products.products)) {
+  if (isLoading) {
     return (
       <div className={styles.loadingContainer}>
         <Spinner />
@@ -24,8 +23,35 @@ const ShopDetails = () => {
     );
   }
 
+  // Error state
+  if (isError) {
+    return (
+      <div className={styles.errorContainer} style={{ marginTop: "10rem" }}>
+        <FaBuilding size={48} className={styles.errorIcon} />
+        <h2>Error loading shop details</h2>
+        <p>{error?.message || "Something went wrong"}</p>
+        <Link to="/" className={styles.backButton}>
+          Return to Shops
+        </Link>
+      </div>
+    );
+  }
+
+  // No data state
+  if (!productsData) {
+    return (
+      <div className={styles.loadingContainer}>
+        <Spinner />
+      </div>
+    );
+  }
+
+  const { products, vendor_details: details } = productsData;
+  // Check if details are available
+  console.log(productsData)
+
   // No products state
-  if (products.products.length === 0) {
+  if (!Array.isArray(products) || products.length === 0) {
     return (
       <div
         className={styles.noProductsContainer}
@@ -43,16 +69,17 @@ const ShopDetails = () => {
   return (
     <div className={styles.shopDetailsContainer}>
       {/* Shop Header Section */}
-      <div style={{paddingLeft:"2rem"}}>
-        <Header title={details.business_name} />
+      <div style={{ paddingLeft: "2rem" }}>
+        <Header title={details?.business_name || "Shop Details"} />
       </div>
+
       <div className={styles.shopHeader}>
         <div className={styles.shopInfo}>
-          <p className={styles.shopCategory}>{details.business_category}</p>
+          <p className={styles.shopCategory}>{details?.business_category}</p>
           <p className={styles.shopDescription}>
-            Discover quality {details.business_category} and excellence at{" "}
-            {details.business_name}, your trusted destination for top{" "}
-            {details.business_category} and services.
+            Discover quality {details?.business_category} and excellence at{" "}
+            {details?.business_name}, your trusted destination for top{" "}
+            {details?.business_category} and services.
           </p>
 
           <div className={styles.shopMeta}>
@@ -62,7 +89,7 @@ const ShopDetails = () => {
             </div>
             <div className={styles.shopMetaItem}>
               <FaStar className={styles.icon} />
-              <span>{details.rating || "New"}</span>
+              <span>{details?.rating || "New"}</span>
             </div>
           </div>
         </div>
@@ -72,7 +99,7 @@ const ShopDetails = () => {
       <div className={styles.productsSection}>
         <h2 className={styles.sectionTitle}>Products</h2>
         <div className={styles.productsGrid}>
-          {products.products.map((product) => (
+          {products.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>

@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useContext } from "react";
 import styles from "../css/ShoppingCart.module.css";
 import { Link } from "react-router-dom";
-// import axios from "axios";
-import api from "../constant/api";
 import { GlobalContext } from "../constant/GlobalContext";
 import { useNavigate } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
 import Swal from "sweetalert2";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import api from "../constant/api";
 
 const Toast = Swal.mixin({
   toast: true,
@@ -25,69 +25,109 @@ const Toast = Swal.mixin({
 });
 
 const ShoppingCart = () => {
-  //   const [cartItems, setCartItems] = useState([]);
-  //   const [loading, setLoading] = useState(true);
-  //   const [error, setError] = useState(null);
-  const {
-    cartItems,
-    cartSummary,
-    fetchCartData,
-    loading,
-    error,
-    getCartCode,
-    setError,
-    setCartItems,
-  } = useContext(GlobalContext);
-
-  // Calculate cart totals
-  const subtotal = cartItems.reduce((total, item) => {
-    const price =
-      item.promotion_price && parseFloat(item.promotion_price) > 0
-        ? parseFloat(item.promotion_price)
-        : parseFloat(item.product_price);
-    return total + price * item.quantity;
-  }, 0);
-
-  // console.log (cartSummary)
-
+  const { useCart, useCartMutations } = useContext(GlobalContext);
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
+
+  // Use the TanStack Query hooks
+  const {
+    data: cartData,
+    isLoading: loading,
+    error,
+    refetch: refetchCart,
+  } = useCart();
+
+  const { removeFromCart, updateCartItem } = useCartMutations();
+
+  // Extract cart data with defaults
+  const cartItems = cartData?.items || [];
+  const cartSummary = cartData?.summary || {
+    subTotal: 0,
+    shippingFee: 0,
+    tax: 0,
+    total: 0,
+  };
+
+  // Helper function to get cart code
+  const getCartCode = () => localStorage.getItem("cart_code");
 
   const goBack = () => {
     navigate(-1);
   };
 
-  // Handle quantity change
-  const updateQuantity = async (itemId, newQuantity) => {
-    if (newQuantity < 1) return;
-
-    try {
-      // Determine if we need to use cart_code parameter
+  // Custom mutation for updating quantity
+  const updateQuantityMutation = useMutation({
+    mutationFn: async ({ itemId, newQuantity }) => {
       const cartCode = getCartCode();
       const params = cartCode ? { cart_code: cartCode } : {};
 
-      await api.put(
+      const response = await api.put(
         `update-cart-item/${itemId}/`,
         { quantity: newQuantity },
         { params }
       );
-
-      // Update local state to avoid refetching
-      setCartItems(
-        cartItems.map((item) =>
-          item.id === itemId
-            ? {
-                ...item,
-                quantity: newQuantity,
-                total_price: item.product_price * newQuantity,
-              }
-            : item
-        )
-      );
-      fetchCartData();
-    } catch (err) {
-      setError("Failed to update quantity. Please try again.");
+      return response.data;
+    },
+    onSuccess: () => {
+      // Invalidate cart queries to refetch fresh data
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
+    },
+    onError: (err) => {
+      handleError("Failed to update quantity. Please try again.");
       console.error("Error updating quantity:", err);
-    }
+    },
+  });
+
+  // Custom mutation for removing items
+  const removeItemMutation = useMutation({
+    mutationFn: async (itemId) => {
+      const cartCode = getCartCode();
+      const params = cartCode ? { cart_code: cartCode } : {};
+
+      const response = await api.delete(`remove-cart-item/${itemId}/`, {
+        params,
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
+      Toast.fire({
+        icon: "success",
+        title: "Item removed from cart",
+      });
+    },
+    onError: (err) => {
+      handleError("Failed to remove item");
+      console.error("Error removing item:", err);
+    },
+  });
+
+  // Custom mutation for clearing cart
+  const clearCartMutation = useMutation({
+    mutationFn: async () => {
+      const cartCode = getCartCode();
+      const params = cartCode ? { cart_code: cartCode } : {};
+
+      const response = await api.delete("clear-cart/", { params });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
+      Toast.fire({
+        icon: "success",
+        title: "Cart cleared successfully",
+      });
+    },
+    onError: (err) => {
+      handleError("Failed to clear cart");
+      console.error("Error clearing cart:", err);
+    },
+  });
+
+  // Handle quantity change
+  const updateQuantity = (itemId, newQuantity) => {
+    if (newQuantity < 1) return;
+    updateQuantityMutation.mutate({ itemId, newQuantity });
   };
 
   // Add Toast notifications
@@ -99,49 +139,14 @@ const ShoppingCart = () => {
   };
 
   // Remove item from cart
-  const removeItem = async (itemId) => {
-    try {
-      // Determine if we need to use cart_code parameter
-      const cartCode = getCartCode();
-      const params = cartCode ? { cart_code: cartCode } : {};
-
-      await api.delete(`remove-cart-item/${itemId}/`, { params });
-      await fetchCartData();
-
-      Toast.fire({
-        icon: "success",
-        title: "Item removed from cart",
-      });
-    } catch (err) {
-      handleError("Failed to remove item");
-      console.error("Error removing item:", err);
-    }
+  const removeItem = (itemId) => {
+    removeItemMutation.mutate(itemId);
   };
 
   // Clear entire cart
-  const clearCart = async () => {
-    try {
-      // Determine if we need to use cart_code parameter
-      const cartCode = getCartCode();
-      const params = cartCode ? { cart_code: cartCode } : {};
-
-      await api.delete("clear-cart/", { params });
-      await fetchCartData();
-
-      Toast.fire({
-        icon: "success",
-        title: "Cart cleared successfully",
-      });
-    } catch (err) {
-      handleError("Failed to clear cart");
-      console.error("Error clearing cart:", err);
-    }
+  const clearCart = () => {
+    clearCartMutation.mutate();
   };
-
-  // Load cart data on component mount
-  useEffect(() => {
-    fetchCartData();
-  }, []);
 
   // Add this function to format prices
   const formatPrice = (price) => {
@@ -151,6 +156,7 @@ const ShoppingCart = () => {
     }).format(price || 0);
   };
 
+  // Handle loading state
   if (loading) {
     return (
       <div style={{ paddingTop: "10rem" }} className={styles.loading}>
@@ -158,6 +164,18 @@ const ShoppingCart = () => {
       </div>
     );
   }
+
+  // // Handle error state
+  // if (error) {
+  //   return (
+  //     <div style={{ paddingTop: "10rem" }} className={styles.error}>
+  //       <p>Error loading cart: {error.message}</p>
+  //       <button onClick={() => refetchCart()} className={styles.retryButton}>
+  //         Retry
+  //       </button>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className={styles.cartContainer}>
@@ -191,7 +209,6 @@ const ShoppingCart = () => {
             <span>Product Name</span>
             <span>Price</span>
             <span>Quantity</span>
-            {/* <span>Subtotal</span> */}
             <span>Delete</span>
           </div>
 
@@ -241,12 +258,11 @@ const ShoppingCart = () => {
                   <span className={styles.mobileLabel}>Qty:</span>
                   <div className={styles.quantityControl}>
                     <button
-                      onClick={() => [
-                        updateQuantity(item.id, item.quantity - 1),
-                        fetchCartData(),
-                      ]}
+                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
                       className={styles.quantityButton}
-                      disabled={item.quantity <= 1}
+                      disabled={
+                        item.quantity <= 1 || updateQuantityMutation.isPending
+                      }
                     >
                       -
                     </button>
@@ -254,28 +270,21 @@ const ShoppingCart = () => {
                       {item.quantity}
                     </span>
                     <button
-                      onClick={() => [
-                        updateQuantity(item.id, item.quantity + 1),
-                        fetchCartData(),
-                      ]}
+                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
                       className={styles.quantityButton}
+                      disabled={updateQuantityMutation.isPending}
                     >
                       +
                     </button>
                   </div>
                 </div>
 
-                {/* Item Subtotal */}
-                {/* <div className={styles.itemSubtotal}>
-                  <span className={styles.mobileLabel}>Subtotal:</span>
-                  <span>{cartSummary.subtotal}</span>
-                </div> */}
-
                 {/* Remove Button */}
                 <button
-                  onClick={() => [removeItem(item.id), fetchCartData()]}
+                  onClick={() => removeItem(item.id)}
                   className={styles.removeButton}
                   aria-label="Remove item"
+                  disabled={removeItemMutation.isPending}
                 >
                   <svg
                     width="18"
@@ -299,8 +308,12 @@ const ShoppingCart = () => {
 
           {/* Cart Actions */}
           <div className={styles.cartActions}>
-            <button onClick={clearCart} className={styles.clearCartButton}>
-              Clear Cart
+            <button
+              onClick={clearCart}
+              className={styles.clearCartButton}
+              disabled={clearCartMutation.isPending}
+            >
+              {clearCartMutation.isPending ? "Clearing..." : "Clear Cart"}
             </button>
             <Link to="/products" className={styles.continueShoppingButton}>
               Continue Shopping

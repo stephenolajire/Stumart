@@ -1,7 +1,8 @@
 // OrderDetails.js
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useReactToPrint } from "react-to-print";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Package,
   Truck,
@@ -9,14 +10,12 @@ import {
   CreditCard,
   ChevronDown,
   ChevronUp,
+  RefreshCw,
 } from "lucide-react";
 import styles from "../css/OrderDetails.module.css";
 import api from "../constant/api";
 
 export default function OrderDetails() {
-  const [orderData, setOrderData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [expandedSections, setExpandedSections] = useState({
     items: true,
     shipping: true,
@@ -26,25 +25,65 @@ export default function OrderDetails() {
   const { orderNumber } = useParams();
   const navigate = useNavigate();
   const componentRef = useRef();
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const fetchOrderDetails = async () => {
-      try {
-        setLoading(true);
-        const response = await api.get(`orders/${orderNumber}/`);
-        setOrderData(response.data);
-        setLoading(false);
-      } catch (err) {
-        console.error("Error fetching order details:", err);
-        setError("Failed to load order details. Please try again later.");
-        setLoading(false);
-      }
-    };
+  // Fetch order details with TanStack Query
+  const {
+    data: orderData,
+    isLoading: loading,
+    error,
+    refetch,
+    isRefetching,
+  } = useQuery({
+    queryKey: ["orderDetails", orderNumber],
+    queryFn: async () => {
+      if (!orderNumber) throw new Error("Order number is required");
+      const response = await api.get(`orders/${orderNumber}/`);
+      return response.data;
+    },
+    enabled: !!orderNumber,
+    staleTime: 300000, // Consider data fresh for 5 minutes
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    onError: (error) => {
+      console.error("Error fetching order details:", error);
+    },
+  });
 
-    if (orderNumber) {
-      fetchOrderDetails();
-    }
-  }, [orderNumber]);
+  // Update order status mutation (if you have this functionality)
+  const updateOrderMutation = useMutation({
+    mutationFn: async (updateData) => {
+      const response = await api.patch(`orders/${orderNumber}/`, updateData);
+      return response.data;
+    },
+    onSuccess: (updatedOrder) => {
+      // Update the cache with new data
+      queryClient.setQueryData(["orderDetails", orderNumber], updatedOrder);
+
+      // Invalidate related queries
+      queryClient.invalidateQueries({
+        queryKey: ["orders"], // If you have an orders list
+      });
+    },
+    onError: (error) => {
+      console.error("Error updating order:", error);
+    },
+  });
+
+  // Cancel order mutation (if you have this functionality)
+  const cancelOrderMutation = useMutation({
+    mutationFn: async () => {
+      const response = await api.post(`orders/${orderNumber}/cancel/`);
+      return response.data;
+    },
+    onSuccess: (updatedOrder) => {
+      queryClient.setQueryData(["orderDetails", orderNumber], updatedOrder);
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
+    onError: (error) => {
+      console.error("Error cancelling order:", error);
+    },
+  });
 
   const toggleSection = (section) => {
     setExpandedSections((prev) => ({
@@ -56,7 +95,28 @@ export default function OrderDetails() {
   // Enhanced print handler using useReactToPrint
   const handlePrint = useReactToPrint({
     content: () => componentRef.current,
+    documentTitle: `Order-${orderNumber}`,
+    onBeforeGetContent: () => {
+      // Ensure all sections are expanded for printing
+      setExpandedSections({
+        items: true,
+        shipping: true,
+        payment: true,
+      });
+    },
   });
+
+  // Manual refresh handler
+  const handleRefresh = () => {
+    refetch();
+  };
+
+  // Cancel order handler
+  const handleCancelOrder = () => {
+    if (window.confirm("Are you sure you want to cancel this order?")) {
+      cancelOrderMutation.mutate();
+    }
+  };
 
   // Format date helper
   const formatDate = (dateString) => {
@@ -88,6 +148,12 @@ export default function OrderDetails() {
     }
   };
 
+  // Check if order can be cancelled
+  const canCancelOrder = (status) => {
+    const cancellableStatuses = ["PENDING", "PROCESSING"];
+    return cancellableStatuses.includes(status?.toUpperCase());
+  };
+
   if (loading) {
     return (
       <div className={styles.container}>
@@ -103,13 +169,34 @@ export default function OrderDetails() {
     return (
       <div className={styles.container}>
         <div className={styles.errorState}>
-          <p>{error}</p>
-          <button
-            className={styles.secondaryButton}
-            onClick={() => navigate(-1)}
-          >
-            Go Back
-          </button>
+          <p>
+            {error.response?.status === 404
+              ? "Order not found"
+              : error.message ||
+                "Failed to load order details. Please try again later."}
+          </p>
+          <div className={styles.errorActions}>
+            <button
+              className={styles.primaryButton}
+              onClick={handleRefresh}
+              disabled={isRefetching}
+            >
+              {isRefetching ? (
+                <>
+                  <RefreshCw size={16} className={styles.spinning} />
+                  Retrying...
+                </>
+              ) : (
+                "Try Again"
+              )}
+            </button>
+            <button
+              className={styles.secondaryButton}
+              onClick={() => navigate(-1)}
+            >
+              Go Back
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -129,7 +216,15 @@ export default function OrderDetails() {
         {/* Order Header */}
         <div className={styles.header}>
           <div className={styles.headerFlex}>
-            <h1 className={styles.headerTitle}>Order Details</h1>
+            <div className={styles.headerLeft}>
+              <h1 className={styles.headerTitle}>Order Details</h1>
+              {isRefetching && (
+                <RefreshCw
+                  size={16}
+                  className={`${styles.refreshIcon} ${styles.spinning}`}
+                />
+              )}
+            </div>
             <span
               className={`${styles.statusBadge} ${getStatusClass(
                 orderData.order_status
@@ -149,6 +244,15 @@ export default function OrderDetails() {
                 {formatDate(orderData.created_at)}
               </p>
             </div>
+            {orderData.updated_at &&
+              orderData.updated_at !== orderData.created_at && (
+                <div>
+                  <p className={styles.infoLabel}>Last Updated</p>
+                  <p className={styles.infoValue}>
+                    {formatDate(orderData.updated_at)}
+                  </p>
+                </div>
+              )}
           </div>
         </div>
 
@@ -178,6 +282,7 @@ export default function OrderDetails() {
                       src={item.product?.image || "/api/placeholder/80/80"}
                       alt={item.product?.name}
                       className={styles.itemImage}
+                      loading="lazy"
                     />
                     <div className={styles.itemDetails}>
                       <h3 className={styles.itemName}>{item.product?.name}</h3>
@@ -242,6 +347,16 @@ export default function OrderDetails() {
                 <p className={styles.infoValue}>
                   ₦{orderData.shipping_fee.toFixed(2)}
                 </p>
+                {orderData.tracking_number && (
+                  <>
+                    <p className={`${styles.infoLabel} ${styles.mt4}`}>
+                      Tracking Number
+                    </p>
+                    <p className={styles.infoValue}>
+                      {orderData.tracking_number}
+                    </p>
+                  </>
+                )}
               </div>
               <div>
                 <p className={styles.infoLabel}>Delivery Address</p>
@@ -301,6 +416,14 @@ export default function OrderDetails() {
                   <p className={styles.infoValue}>
                     {orderData.transaction.transaction_id}
                   </p>
+                  {orderData.transaction.payment_status && (
+                    <>
+                      <p className={styles.infoLabel}>Payment Status</p>
+                      <p className={styles.infoValue}>
+                        {orderData.transaction.payment_status}
+                      </p>
+                    </>
+                  )}
                 </div>
               )}
 
@@ -323,6 +446,14 @@ export default function OrderDetails() {
                     ₦{orderData.tax.toFixed(2)}
                   </p>
                 </div>
+                {orderData.discount && orderData.discount > 0 && (
+                  <div className={styles.summaryRow}>
+                    <p className={styles.summaryLabel}>Discount</p>
+                    <p className={styles.summaryValue}>
+                      -₦{orderData.discount.toFixed(2)}
+                    </p>
+                  </div>
+                )}
                 <div className={styles.totalRow}>
                   <p className={styles.totalLabel}>Total</p>
                   <p className={styles.totalValue}>
@@ -340,6 +471,29 @@ export default function OrderDetails() {
         <button className={styles.primaryButton} onClick={handlePrint}>
           Print Order
         </button>
+        <button
+          className={styles.secondaryButton}
+          onClick={handleRefresh}
+          disabled={isRefetching}
+        >
+          {isRefetching ? (
+            <>
+              <RefreshCw size={16} className={styles.spinning} />
+              Refreshing...
+            </>
+          ) : (
+            "Refresh"
+          )}
+        </button>
+        {canCancelOrder(orderData.order_status) && (
+          <button
+            className={`${styles.secondaryButton} ${styles.dangerButton}`}
+            onClick={handleCancelOrder}
+            disabled={cancelOrderMutation.isPending}
+          >
+            {cancelOrderMutation.isPending ? "Cancelling..." : "Cancel Order"}
+          </button>
+        )}
         <button
           className={styles.secondaryButton}
           onClick={() => navigate("/orders")}

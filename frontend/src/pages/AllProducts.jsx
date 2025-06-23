@@ -25,17 +25,8 @@ const AllProducts = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [toggleLoading, setToggleLoading] = useState(false);
 
-  // Get data and functions from global context
-  const {
-    allProducts,
-    allProductsVendors,
-    allProductsCategories,
-    allProductsLoading,
-    allProductsError,
-    fetchAllProducts,
-    debouncedFetchAllProducts,
-    isAuthenticated,
-  } = useContext(GlobalContext);
+  // Get auth and hooks from global context
+  const { isAuthenticated, useAllProducts } = useContext(GlobalContext);
 
   const navigate = useNavigate();
 
@@ -82,6 +73,19 @@ const AllProducts = () => {
     filters.vendor,
     filters.state,
   ]);
+
+  // Use the React Query hook for fetching products
+  const {
+    data: productsData,
+    isLoading: allProductsLoading,
+    error: allProductsError,
+    refetch: refetchProducts,
+  } = useAllProducts(currentFilters, viewMode, isAuthenticated);
+
+  // Extract data from React Query response
+  const allProducts = productsData?.products || [];
+  const allProductsCategories = productsData?.categories || [];
+  const allProductsVendors = productsData?.vendors || [];
 
   // Check if all products belong to the same vendor
   const singleVendorInfo = useMemo(() => {
@@ -268,29 +272,6 @@ const AllProducts = () => {
     setSearchParams(params);
   }, [viewMode, school, setSearchParams]);
 
-  // Effect for initial load and filter changes
-  useEffect(() => {
-    console.log(
-      "Fetching products with filters:",
-      currentFilters,
-      "viewMode:",
-      viewMode
-    );
-
-    // Use debounced version for search to avoid too many API calls
-    if (filters.search) {
-      debouncedFetchAllProducts(currentFilters, viewMode);
-    } else {
-      fetchAllProducts(currentFilters, viewMode);
-    }
-  }, [
-    currentFilters,
-    viewMode,
-    fetchAllProducts,
-    debouncedFetchAllProducts,
-    filters.search,
-  ]);
-
   // Effect to stop toggle loading when main loading stops
   useEffect(() => {
     if (!allProductsLoading && toggleLoading) {
@@ -330,6 +311,10 @@ const AllProducts = () => {
     return "No products are available at this time. Please check back later.";
   }, [filters.search, filters.category, filters.state, filters.school]);
 
+  // Handle error state
+  const errorMessage =
+    allProductsError?.message || "Failed to load products. Please try again.";
+
   return (
     <div className={styles.productsPage}>
       <SEO
@@ -338,6 +323,7 @@ const AllProducts = () => {
         keywords="stumart products, campus marketplace products, student products, university shopping, campus textbooks, student electronics, campus food, university fashion, student vendors, campus delivery, buy sell students, university marketplace, student business, campus e-commerce, nigeria student shopping, campus products online, university store, student marketplace nigeria"
         url="/products"
       />
+
       {isAuthenticated && (
         <div className={styles.viewToggle}>
           <select
@@ -559,7 +545,24 @@ const AllProducts = () => {
       {allProductsLoading || toggleLoading ? (
         <Spinner />
       ) : allProductsError ? (
-        <div className={styles.error}>{allProductsError}</div>
+        <div className={styles.error}>
+          <p>{errorMessage}</p>
+          <button
+            onClick={() => refetchProducts()}
+            className={styles.retryButton}
+            style={{
+              marginTop: "1rem",
+              padding: "0.5rem 1rem",
+              backgroundColor: "#007bff",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer",
+            }}
+          >
+            Try Again
+          </button>
+        </div>
       ) : productsCount === 0 ? (
         <div className={styles.noProducts}>
           <FaBox className={styles.noProductsIcon} />

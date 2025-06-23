@@ -1,116 +1,152 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Send, MessageCircle, User, Clock, CheckCircle2 } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../constant/api";
 import { useNavigate } from "react-router-dom";
 import styles from "../css/Message.module.css";
 
 const Message = () => {
-  const [conversations, setConversations] = useState([]);
-  const [applications, setApplications] = useState([]);
   const [activeConversation, setActiveConversation] = useState(null);
-  const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [userType, setUserType] = useState("student");
-  const [totalUnread, setTotalUnread] = useState(0);
   const [activeTab, setActiveTab] = useState("conversations");
-  const [sendingMessage, setSendingMessage] = useState(false);
   const messagesEndRef = useRef(null);
-
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  // Fetch conversations
-  const fetchConversations = async () => {
-    try {
+  // Fetch conversations with TanStack Query
+  const {
+    data: conversationsData,
+    isLoading: conversationsLoading,
+    error: conversationsError,
+  } = useQuery({
+    queryKey: ["conversations"],
+    queryFn: async () => {
       const response = await api.get("chats/");
-      setConversations(response.data.conversations);
-      setTotalUnread(response.data.total_unread);
-      setUserType(response.data.user_type);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+      return response.data;
+    },
+    onSuccess: (data) => {
+      setUserType(data.user_type);
+    },
+    staleTime: 30000, // Consider data fresh for 30 seconds
+    refetchInterval: 60000, // Refetch every minute to get new messages
+  });
 
-  // Fetch applications
-  const fetchApplications = async () => {
-    try {
+  // Fetch applications with TanStack Query
+  const {
+    data: applicationsData,
+    isLoading: applicationsLoading,
+    error: applicationsError,
+  } = useQuery({
+    queryKey: ["applications"],
+    queryFn: async () => {
       const response = await api.get("application/");
-      setApplications(response.data.applications);
-    } catch (err) {
+      return response.data;
+    },
+    onError: (err) => {
       if (err.response?.status === 401) {
-        // Redirect to login with return URL
         navigate("/login?next=/messages");
-      } else {
-        setError("Failed to load applications");
-        console.error(err);
       }
-    }
-  };
+    },
+    staleTime: 300000, // Consider applications fresh for 5 minutes
+  });
 
-  // Fetch messages for a conversation
-  const fetchMessages = async (conversationId) => {
-    try {
-      const response = await api.get(`chats/${conversationId}/`);
+  // Fetch messages for active conversation
+  const {
+    data: messagesData,
+    isLoading: messagesLoading,
+    error: messagesError,
+  } = useQuery({
+    queryKey: ["messages", activeConversation?.id],
+    queryFn: async () => {
+      if (!activeConversation?.id) return null;
+      const response = await api.get(`chats/${activeConversation.id}/`);
+      return response.data;
+    },
+    enabled: !!activeConversation?.id,
+    staleTime: 10000, // Consider messages fresh for 10 seconds
+    refetchInterval: 5000, // Refetch every 5 seconds for real-time feel
+  });
 
-      // Using axios response format (response.data)
-      const data = response.data;
-      setMessages(data.messages);
-      setActiveConversation({
-        id: conversationId,
-        otherParticipant: data.other_participant_name,
-        serviceName: data.service_name,
-        participantType: data.participant_type,
-      });
-    } catch (err) {
-      setError("Failed to load messages");
-      console.error(err);
-    }
-  };
-
-  // Send message
-  const sendMessage = async () => {
-    if (!newMessage.trim() || !activeConversation || sendingMessage) return;
-
-    setSendingMessage(true);
-    try {
+  // Send message mutation
+  const sendMessageMutation = useMutation({
+    mutationFn: async (messageData) => {
       const response = await api.post(`chats/${activeConversation.id}/send/`, {
-        content: newMessage.trim(), // Include the message content in the request body
+        content: messageData.content.trim(),
       });
+      return response.data;
+    },
+    onSuccess: (data) => {
+      // Optimistically update the messages
+      queryClient.setQueryData(
+        ["messages", activeConversation.id],
+        (oldData) => {
+          if (!oldData) return oldData;
+          return {
+            ...oldData,
+            messages: [...oldData.messages, data.message],
+          };
+        }
+      );
 
-      // Using axios response format (response.data)
-      const data = response.data;
-      setMessages((prev) => [...prev, data.message]);
+      // Invalidate conversations to update unread counts
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
       setNewMessage("");
+    },
+    onError: (error) => {
+      console.error("Failed to send message:", error);
+    },
+  });
 
-      // Refresh conversations to update unread counts
-      fetchConversations();
-    } catch (err) {
-      setError("Failed to send message");
-      console.error(err);
-    } finally {
-      setSendingMessage(false);
-    }
-  };
-
-  // Start conversation from application
-  const startConversation = async (applicationId) => {
-    try {
+  // Start conversation mutation
+  const startConversationMutation = useMutation({
+    mutationFn: async (applicationId) => {
       const response = await api.post(`chats/start/${applicationId}/`);
-
-      // Using axios response format (response.data)
-      const data = response.data;
-
-      // Refresh conversations and switch to conversations tab
-      await fetchConversations();
+      return response.data;
+    },
+    onSuccess: (data) => {
+      // Invalidate conversations to get the new conversation
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
       setActiveTab("conversations");
 
-      // Select the new/existing conversation
-      fetchMessages(data.conversation_id);
-    } catch (err) {
-      setError("Failed to start conversation");
-      console.error(err);
-    }
+      // Set the active conversation
+      setActiveConversation({
+        id: data.conversation_id,
+        otherParticipant: "",
+        serviceName: "",
+        participantType: userType,
+      });
+    },
+    onError: (error) => {
+      console.error("Failed to start conversation:", error);
+    },
+  });
+
+  // Handle conversation selection
+  const handleConversationSelect = (conversation) => {
+    setActiveConversation({
+      id: conversation.conversation_id,
+      otherParticipant: conversation.other_participant_name,
+      serviceName: conversation.service_name,
+      participantType: userType,
+    });
+  };
+
+  // Send message handler
+  const sendMessage = async () => {
+    if (
+      !newMessage.trim() ||
+      !activeConversation ||
+      sendMessageMutation.isPending
+    )
+      return;
+
+    sendMessageMutation.mutate({ content: newMessage });
+  };
+
+  // Start conversation handler
+  const startConversation = (applicationId) => {
+    startConversationMutation.mutate(applicationId);
   };
 
   // Handle key press in message input
@@ -128,17 +164,19 @@ const Message = () => {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messagesData?.messages]);
 
+  // Update active conversation details when messages are loaded
   useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      await Promise.all([fetchConversations(), fetchApplications()]);
-      setLoading(false);
-    };
-
-    loadData();
-  }, []);
+    if (messagesData && activeConversation) {
+      setActiveConversation((prev) => ({
+        ...prev,
+        otherParticipant: messagesData.other_participant_name,
+        serviceName: messagesData.service_name,
+        participantType: messagesData.participant_type,
+      }));
+    }
+  }, [messagesData]);
 
   const formatTime = (timestamp) => {
     return new Date(timestamp).toLocaleTimeString([], {
@@ -160,7 +198,8 @@ const Message = () => {
     }
   };
 
-  if (loading) {
+  // Loading state
+  if (conversationsLoading || applicationsLoading) {
     return (
       <div className={styles.chatContainer}>
         <div className={styles.loading}>
@@ -170,6 +209,13 @@ const Message = () => {
       </div>
     );
   }
+
+  // Error state
+  const error = conversationsError || applicationsError || messagesError;
+  const conversations = conversationsData?.conversations || [];
+  const applications = applicationsData?.applications || [];
+  const messages = messagesData?.messages || [];
+  const totalUnread = conversationsData?.total_unread || 0;
 
   return (
     <div className={styles.chatContainer}>
@@ -226,7 +272,7 @@ const Message = () => {
                       ? styles.conversationItemActive
                       : ""
                   }`}
-                  onClick={() => fetchMessages(conv.conversation_id)}
+                  onClick={() => handleConversationSelect(conv)}
                 >
                   <div className={styles.conversationInfo}>
                     <div className={styles.participantName}>
@@ -307,7 +353,9 @@ const Message = () => {
                           fontSize: "1.2rem",
                         }}
                       >
-                        Click to start chat
+                        {startConversationMutation.isPending
+                          ? "Starting..."
+                          : "Click to start chat"}
                       </span>
                     ) : (
                       <span
@@ -345,23 +393,32 @@ const Message = () => {
 
             {/* Messages */}
             <div className={styles.messagesContainer}>
-              {messages.map((message) => {
-                const isOwn =
-                  activeConversation.participantType === message.sender_type;
-                return (
-                  <div
-                    key={message.id}
-                    className={`${styles.message} ${
-                      isOwn ? styles.messageOwn : styles.messageOther
-                    }`}
-                  >
-                    <div>{message.content}</div>
-                    <div className={styles.messageInfo}>
-                      {message.sender_name} • {formatTime(message.created_at)}
+              {messagesLoading ? (
+                <div className={styles.loading}>
+                  <MessageCircle size={24} />
+                  <span style={{ marginLeft: "1rem" }}>
+                    Loading messages...
+                  </span>
+                </div>
+              ) : (
+                messages.map((message) => {
+                  const isOwn =
+                    activeConversation.participantType === message.sender_type;
+                  return (
+                    <div
+                      key={message.id}
+                      className={`${styles.message} ${
+                        isOwn ? styles.messageOwn : styles.messageOther
+                      }`}
+                    >
+                      <div>{message.content}</div>
+                      <div className={styles.messageInfo}>
+                        {message.sender_name} • {formatTime(message.created_at)}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
               <div ref={messagesEndRef} />
             </div>
 
@@ -378,12 +435,12 @@ const Message = () => {
                 />
                 <button
                   className={`${styles.sendButton} ${
-                    sendingMessage || !newMessage.trim()
+                    sendMessageMutation.isPending || !newMessage.trim()
                       ? styles.sendButtonDisabled
                       : ""
                   }`}
                   onClick={sendMessage}
-                  disabled={sendingMessage || !newMessage.trim()}
+                  disabled={sendMessageMutation.isPending || !newMessage.trim()}
                 >
                   <Send size={20} />
                 </button>
@@ -401,7 +458,7 @@ const Message = () => {
       {/* Error Message */}
       {error && (
         <div className={styles.error}>
-          {error}
+          {error.message || "An error occurred"}
           <button
             style={{
               background: "none",
@@ -410,9 +467,9 @@ const Message = () => {
               marginLeft: "1rem",
               cursor: "pointer",
             }}
-            onClick={() => setError(null)}
+            onClick={() => queryClient.invalidateQueries()}
           >
-            ×
+            Retry
           </button>
         </div>
       )}
