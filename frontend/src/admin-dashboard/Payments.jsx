@@ -1,52 +1,64 @@
 // Payments.jsx
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import React, { useState, useMemo } from "react";
+import { useDebouncedCallback } from "use-debounce";
 import styles from "./css/Payments.module.css";
-import api from "../constant/api";
+import LoadingSpinner from "./LoadingSpinner";
+import { usePaymentTransactions } from "./hooks/usePayments";
 
 const Payments = () => {
-  const [transactions, setTransactions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [filter, setFilter] = useState({
-    query: "",
-    status: "",
-  });
+  const [query, setQuery] = useState("");
+  const [status, setStatus] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
 
-  useEffect(() => {
-    fetchTransactions();
-  }, [filter]);
+  // Debounce search input for better performance
+  const debouncedSearch = useDebouncedCallback((value) => {
+    setDebouncedQuery(value);
+  }, 500);
 
-  const fetchTransactions = async () => {
-    try {
-      setLoading(true);
-      const params = new URLSearchParams();
-      if (filter.query) params.append("query", filter.query);
-      if (filter.status) params.append("status", filter.status);
+  // Update debounced query when query changes
+  React.useEffect(() => {
+    debouncedSearch(query);
+  }, [query, debouncedSearch]);
 
-      const response = await api.get("admin-payments/", { params });
-      setTransactions(response.data);
-      setError(null);
-    } catch (err) {
-      setError("Failed to fetch payment transactions. Please try again later.");
-      console.error("Error fetching transactions:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Memoize filters to prevent unnecessary re-renders
+  const filters = useMemo(
+    () => ({
+      query: debouncedQuery.trim(),
+      status,
+    }),
+    [debouncedQuery, status]
+  );
 
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilter((prev) => ({ ...prev, [name]: value }));
-  };
+  // Fetch transactions with current filters
+  const {
+    data: transactions = [],
+    isLoading,
+    error,
+    isError,
+    isFetching,
+    refetch,
+    isRefetching,
+  } = usePaymentTransactions(filters);
+
+  const handleSearch = React.useCallback((e) => {
+    e.preventDefault();
+    // The debounced search will handle the actual filtering
+  }, []);
+
+  const clearFilters = React.useCallback(() => {
+    setQuery("");
+    setStatus("");
+    setDebouncedQuery("");
+  }, []);
 
   const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
     const date = new Date(dateString);
     return date.toLocaleDateString() + " " + date.toLocaleTimeString();
   };
 
   const getStatusClass = (status) => {
-    switch (status.toLowerCase()) {
+    switch (status?.toLowerCase()) {
       case "success":
         return styles.statusSuccess;
       case "pending":
@@ -58,85 +70,123 @@ const Payments = () => {
     }
   };
 
+  if (isLoading && !transactions.length) return <LoadingSpinner />;
+
+  if (isError) {
+    return (
+      <div className={styles.error}>
+        <p>Failed to load payment transactions</p>
+        <button onClick={() => refetch()} className={styles.retryButton}>
+          Try Again
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.container}>
-      <div className={styles.filterSection}>
-        <h3>Payment Transactions</h3>
-        <div className={styles.filters}>
-          <div className={styles.searchInput}>
+      <div className={styles.headerSection}>
+        <div className={styles.titleSection}>
+          <h2 className={styles.sectionTitle}>
+            Payment Transactions
+            {transactions.length > 0 && (
+              <span className={styles.transactionCount}>
+                ({transactions.length})
+              </span>
+            )}
+          </h2>
+          <button
+            onClick={() => refetch()}
+            className={styles.refreshButton}
+            disabled={isFetching}
+          >
+            {isRefetching ? "Refreshing..." : "Refresh"}
+          </button>
+        </div>
+
+        <div className={styles.filterSection}>
+          <form onSubmit={handleSearch} className={styles.searchForm}>
             <input
               type="text"
-              name="query"
               placeholder="Search by transaction ID or order number..."
-              value={filter.query}
-              onChange={handleFilterChange}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className={styles.searchInput}
             />
-          </div>
-          <div className={styles.statusFilter}>
+            <button type="submit" className={styles.searchButton}>
+              Search
+            </button>
+          </form>
+
+          <div className={styles.filterControls}>
             <select
-              name="status"
-              value={filter.status}
-              onChange={handleFilterChange}
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              className={styles.filterSelect}
             >
               <option value="">All Statuses</option>
               <option value="success">Success</option>
               <option value="pending">Pending</option>
               <option value="failed">Failed</option>
             </select>
+
+            <button onClick={clearFilters} className={styles.clearButton}>
+              Clear Filters
+            </button>
           </div>
         </div>
       </div>
 
-      {loading ? (
-        <div className={styles.loading}>Loading transactions...</div>
-      ) : error ? (
-        <div className={styles.error}>{error}</div>
-      ) : (
-        <div className={styles.transactionsTable}>
-          <table>
-            <thead>
-              <tr>
-                <th>Transaction ID</th>
-                <th>Order Number</th>
-                <th>Customer</th>
-                <th>Amount</th>
-                <th>Payment Method</th>
-                <th>Date</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {transactions.length > 0 ? (
-                transactions.map((transaction) => (
-                  <tr key={transaction.id}>
-                    <td>{transaction.transaction_id}</td>
-                    <td>{transaction.order_number}</td>
-                    <td>{transaction.customer_name}</td>
-                    <td>₦{transaction.amount.toLocaleString()}</td>
-                    <td>{transaction.payment_method}</td>
-                    <td>{formatDate(transaction.created_at)}</td>
-                    <td>
-                      <span
-                        className={`${styles.statusBadge} ${getStatusClass(
-                          transaction.status
-                        )}`}
-                      >
-                        {transaction.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="7" className={styles.noTransactions}>
-                    No transactions found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+      {isFetching && !isRefetching && (
+        <div className={styles.loadingOverlay}>
+          <span>Searching...</span>
         </div>
       )}
+
+      <div className={styles.tableContainer}>
+        <table className={styles.transactionsTable}>
+          <thead>
+            <tr>
+              <th>Transaction ID</th>
+              <th>Order Number</th>
+              <th>Customer</th>
+              <th>Amount</th>
+              <th>Payment Method</th>
+              <th>Date</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {transactions.length === 0 ? (
+              <tr>
+                <td colSpan="7" className={styles.noData}>
+                  {isFetching ? "Searching..." : "No transactions found"}
+                </td>
+              </tr>
+            ) : (
+              transactions.map((transaction) => (
+                <tr key={transaction.id}>
+                  <td>{transaction.transaction_id}</td>
+                  <td>{transaction.order_number}</td>
+                  <td>{transaction.customer_name}</td>
+                  <td>₦{transaction.amount?.toLocaleString() || 0}</td>
+                  <td>{transaction.payment_method}</td>
+                  <td>{formatDate(transaction.created_at)}</td>
+                  <td>
+                    <span
+                      className={`${styles.statusBadge} ${getStatusClass(
+                        transaction.status
+                      )}`}
+                    >
+                      {transaction.status}
+                    </span>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

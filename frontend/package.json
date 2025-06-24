@@ -29,6 +29,7 @@
     "slick-carousel": "^1.8.1",
     "sweetalert2": "^11.17.2",
     "swiper": "^11.2.6",
+    "use-debounce": "^10.0.5",
     "uuid": "^11.1.0"
   },
   "devDependencies": {

@@ -1,94 +1,100 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useCallback, useMemo } from "react";
+import { useDebouncedCallback } from "use-debounce";
 import styles from "./css/ManageUsers.module.css";
-import axios from "axios";
 import LoadingSpinner from "./LoadingSpinner";
-import api from "../constant/api";
+import {
+  useUsers,
+  useToggleUserStatus,
+  useToggleVerificationStatus,
+} from "./hooks/useManageUsers";
 
 const ManageUsers = () => {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [query, setQuery] = useState("");
   const [userType, setUserType] = useState("");
   const [verified, setVerified] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
 
-  useEffect(() => {
-    fetchUsers();
-  }, [query, userType, verified]);
+  // Debounce search input for better performance
+  const debouncedSearch = useDebouncedCallback((value) => {
+    setDebouncedQuery(value);
+  }, 500);
 
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      let url = "/users/";
-      const params = new URLSearchParams();
+  // Update debounced query when query changes
+  React.useEffect(() => {
+    debouncedSearch(query);
+  }, [query, debouncedSearch]);
 
-      if (query) params.append("query", query);
-      if (userType) params.append("user_type", userType);
-      if (verified) params.append("verified", verified);
+  // Memoize filters to prevent unnecessary re-renders
+  const filters = useMemo(
+    () => ({
+      query: debouncedQuery.trim(),
+      userType,
+      verified,
+    }),
+    [debouncedQuery, userType, verified]
+  );
 
-      if (params.toString()) {
-        url += `?${params.toString()}`;
+  // Fetch users with current filters
+  const {
+    data: users = [],
+    isLoading,
+    error,
+    isError,
+    isFetching,
+    refetch,
+    isRefetching,
+  } = useUsers(filters);
+
+  // Mutations
+  const toggleUserStatusMutation = useToggleUserStatus();
+  const toggleVerificationMutation = useToggleVerificationStatus();
+
+  const handleToggleUserStatus = useCallback(
+    async (userId, currentStatus) => {
+      try {
+        await toggleUserStatusMutation.mutateAsync({
+          userId,
+          isActive: currentStatus,
+        });
+        // Success feedback could be added here (toast notification)
+      } catch (err) {
+        console.error("Error updating user status:", err);
+        // Error handling could be improved with toast notifications
+        alert("Failed to update user status. Please try again.");
       }
+    },
+    [toggleUserStatusMutation]
+  );
 
-      const response = await api.get('admin/users/');
-      setUsers(response.data);
-      // console.log(response.data)
-      setLoading(false);
-    } catch (err) {
-      console.error("Error fetching users:", err);
-      setError("Failed to load users");
-      setLoading(false);
-    }
-  };
+  const handleToggleVerificationStatus = useCallback(
+    async (userId, currentStatus) => {
+      try {
+        await toggleVerificationMutation.mutateAsync({
+          userId,
+          isVerified: currentStatus,
+        });
+        // Success feedback could be added here
+      } catch (err) {
+        console.error("Error updating verification status:", err);
+        alert("Failed to update verification status. Please try again.");
+      }
+    },
+    [toggleVerificationMutation]
+  );
 
-  const toggleUserStatus = async (userId, currentStatus) => {
-    try {
-      await axios.put(`users/${userId}/`, {
-        is_active: !currentStatus,
-      });
-
-      // Update local state
-      setUsers(
-        users.map((user) =>
-          user.id === userId ? { ...user, is_active: !currentStatus } : user
-        )
-      );
-    } catch (err) {
-      console.error("Error updating user status:", err);
-      alert("Failed to update user status");
-    }
-  };
-
-  const toggleVerificationStatus = async (userId, currentStatus) => {
-    try {
-      await api.put(`users/${userId}/`, {
-        is_verified: !currentStatus,
-      });
-
-      // Update local state
-      setUsers(
-        users.map((user) =>
-          user.id === userId ? { ...user, is_verified: !currentStatus } : user
-        )
-      );
-    } catch (err) {
-      console.error("Error updating verification status:", err);
-      alert("Failed to update verification status");
-    }
-  };
-
-  const handleSearch = (e) => {
+  const handleSearch = useCallback((e) => {
     e.preventDefault();
-    fetchUsers();
-  };
+    // The debounced search will handle the actual filtering
+  }, []);
 
-  const clearFilters = () => {
+  const clearFilters = useCallback(() => {
     setQuery("");
     setUserType("");
     setVerified("");
-  };
+    setDebouncedQuery("");
+  }, []);
 
-  const getUserTypeLabel = (type) => {
+  const getUserTypeLabel = useCallback((type) => {
     const types = {
       student: "Student",
       vendor: "Vendor",
@@ -97,15 +103,53 @@ const ManageUsers = () => {
       admin: "Admin",
     };
     return types[type] || type;
-  };
+  }, []);
 
-  if (loading && users.length === 0) return <LoadingSpinner />;
-  if (error) return <div className={styles.error}>{error}</div>;
+  // Check if any mutation is in progress for a specific user
+  const isUserBeingUpdated = useCallback(
+    (userId) => {
+      return (
+        (toggleUserStatusMutation.isLoading &&
+          toggleUserStatusMutation.variables?.userId === userId) ||
+        (toggleVerificationMutation.isLoading &&
+          toggleVerificationMutation.variables?.userId === userId)
+      );
+    },
+    [toggleUserStatusMutation, toggleVerificationMutation]
+  );
+
+  if (isLoading && !users.length) return <LoadingSpinner />;
+
+  if (isError) {
+    return (
+      <div className={styles.error}>
+        <p>Failed to load users</p>
+        <button onClick={() => refetch()} className={styles.retryButton}>
+          Try Again
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.usersContainer}>
       <div className={styles.headerSection}>
-        <h2 className={styles.sectionTitle}>Manage Users</h2>
+        <div className={styles.titleSection}>
+          <h2 className={styles.sectionTitle}>
+            Manage Users
+            {users.length > 0 && (
+              <span className={styles.userCount}>({users.length})</span>
+            )}
+          </h2>
+          <button
+            onClick={() => refetch()}
+            className={styles.refreshButton}
+            disabled={isFetching}
+          >
+            {isRefetching ? "Refreshing..." : "Refresh"}
+          </button>
+        </div>
+
         <div className={styles.filterSection}>
           <form onSubmit={handleSearch} className={styles.searchForm}>
             <input
@@ -151,106 +195,120 @@ const ManageUsers = () => {
         </div>
       </div>
 
-      {loading ? (
-        <LoadingSpinner />
-      ) : (
-        <>
-          <div className={styles.tableContainer}>
-            <table className={styles.usersTable}>
-              <thead>
-                <tr>
-                  <th>User ID</th>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Phone</th>
-                  <th>User Type</th>
-                  <th>Institution</th>
-                  <th>Joined</th>
-                  <th>Status</th>
-                  <th>Verified</th>
-                  {/* <th>Actions</th> */}
-                </tr>
-              </thead>
-              <tbody>
-                {users.length === 0 ? (
-                  <tr>
-                    <td colSpan="10" className={styles.noData}>
-                      No users found
+      {isFetching && !isRefetching && (
+        <div className={styles.loadingOverlay}>
+          <span>Searching...</span>
+        </div>
+      )}
+
+      <div className={styles.tableContainer}>
+        <table className={styles.usersTable}>
+          <thead>
+            <tr>
+              <th>User ID</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>User Type</th>
+              <th>Institution</th>
+              <th>Joined</th>
+              <th>Status</th>
+              <th>Verified</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.length === 0 ? (
+              <tr>
+                <td colSpan="10" className={styles.noData}>
+                  {isFetching ? "Searching..." : "No users found"}
+                </td>
+              </tr>
+            ) : (
+              users.map((user) => {
+                const isUpdating = isUserBeingUpdated(user.id);
+
+                return (
+                  <tr
+                    key={user.id}
+                    className={isUpdating ? styles.updating : ""}
+                  >
+                    <td>{user.id}</td>
+                    <td>{`${user.first_name} ${user.last_name}`}</td>
+                    <td>{user.email}</td>
+                    <td>{user.phone_number}</td>
+                    <td>
+                      <span
+                        className={`${styles.badge} ${styles[user.user_type]}`}
+                      >
+                        {getUserTypeLabel(user.user_type)}
+                      </span>
+                    </td>
+                    <td>{user.institution || "-"}</td>
+                    <td>{new Date(user.date_joined).toLocaleDateString()}</td>
+                    <td>
+                      <span
+                        className={`${styles.statusBadge} ${
+                          user.is_active ? styles.active : styles.inactive
+                        }`}
+                      >
+                        {user.is_active ? "Active" : "Inactive"}
+                      </span>
+                    </td>
+                    <td>
+                      <span
+                        className={`${styles.verifiedBadge} ${
+                          user.is_verified ? styles.verified : styles.unverified
+                        }`}
+                      >
+                        {user.is_verified ? "Verified" : "Unverified"}
+                      </span>
+                    </td>
+                    <td>
+                      <div className={styles.actionButtons}>
+                        <button
+                          onClick={() =>
+                            handleToggleUserStatus(user.id, user.is_active)
+                          }
+                          className={`${styles.actionButton} ${
+                            user.is_active ? styles.deactivate : styles.activate
+                          }`}
+                          disabled={isUpdating}
+                        >
+                          {toggleUserStatusMutation.isLoading &&
+                          toggleUserStatusMutation.variables?.userId === user.id
+                            ? "Updating..."
+                            : user.is_active
+                            ? "Deactivate"
+                            : "Activate"}
+                        </button>
+                        <button
+                          onClick={() =>
+                            handleToggleVerificationStatus(
+                              user.id,
+                              user.is_verified
+                            )
+                          }
+                          className={`${styles.actionButton} ${styles.verify}`}
+                          disabled={isUpdating}
+                        >
+                          {toggleVerificationMutation.isLoading &&
+                          toggleVerificationMutation.variables?.userId ===
+                            user.id
+                            ? "Updating..."
+                            : user.is_verified
+                            ? "Unverify"
+                            : "Verify"}
+                        </button>
+                      </div>
                     </td>
                   </tr>
-                ) : (
-                  users.map((user) => (
-                    <tr key={user.id}>
-                      <td>{user.id}</td>
-                      <td>{`${user.first_name} ${user.last_name}`}</td>
-                      <td>{user.email}</td>
-                      <td>{user.phone_number}</td>
-                      <td>
-                        <span
-                          className={`${styles.badge} ${
-                            styles[user.user_type]
-                          }`}
-                        >
-                          {getUserTypeLabel(user.user_type)}
-                        </span>
-                      </td>
-                      <td>{user.institution || "-"}</td>
-                      <td>{new Date(user.date_joined).toLocaleDateString()}</td>
-                      <td>
-                        <span
-                          className={`${styles.statusBadge} ${
-                            user.is_active ? styles.active : styles.inactive
-                          }`}
-                        >
-                          {user.is_active ? "Active" : "Inactive"}
-                        </span>
-                      </td>
-                      <td>
-                        <span
-                          className={`${styles.verifiedBadge} ${
-                            user.is_verified
-                              ? styles.verified
-                              : styles.unverified
-                          }`}
-                        >
-                          {user.is_verified ? "Verified" : "Unverified"}
-                        </span>
-                      </td>
-                      {/* <td>
-                        <div className={styles.actionButtons}>
-                          <button
-                            onClick={() =>
-                              toggleUserStatus(user.id, user.is_active)
-                            }
-                            className={`${styles.actionButton} ${
-                              user.is_active
-                                ? styles.deactivate
-                                : styles.activate
-                            }`}
-                          >
-                            {user.is_active ? "Deactivate" : "Activate"}
-                          </button>
-                          <button
-                            onClick={() =>
-                              toggleVerificationStatus(
-                                user.id,
-                                user.is_verified
-                              )
-                            }
-                            className={`${styles.actionButton} ${styles.verify}`}
-                          >
-                            {user.is_verified ? "Unverify" : "Verify"}
-                          </button>
-                        </div>
-                      </td> */}
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </>
-      )}
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

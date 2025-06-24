@@ -1,37 +1,43 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import styles from "./css/DashboardHome.module.css";
-import axios from "axios";
 import StatCard from "./StatCard";
 import LoadingSpinner from "./LoadingSpinner";
-import api from "../constant/api";
+import { useDashboardStats } from "./hooks/useDashboardStats";
 
 const DashboardHome = () => {
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const {
+    data: stats,
+    isLoading,
+    error,
+    isError,
+    refetch,
+  } = useDashboardStats();
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const response = await api.get("admin/stats/");
-        setStats(response.data);
-        setLoading(false);
-      } catch (err) {
-        console.error("Error fetching dashboard stats:", err);
-        setError("Failed to load dashboard statistics");
-        setLoading(false);
-      }
-    };
+  if (isLoading) return <LoadingSpinner />;
 
-    fetchStats();
-  }, []);
-
-  if (loading) return <LoadingSpinner />;
-  if (error) return <div className={styles.error}>{error}</div>;
+  if (isError) {
+    return (
+      <div className={styles.error}>
+        <p>Failed to load dashboard statistics</p>
+        <button onClick={() => refetch()} className={styles.retryButton}>
+          Try Again
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.dashboardContainer}>
-      <h2 className={styles.sectionTitle}>Dashboard Overview</h2>
+      <div className={styles.header}>
+        <h2 className={styles.sectionTitle}>Dashboard Overview</h2>
+        <button
+          onClick={() => refetch()}
+          className={styles.refreshButton}
+          disabled={isLoading}
+        >
+          {isLoading ? "Refreshing..." : "Refresh"}
+        </button>
+      </div>
 
       <section className={styles.statsSection}>
         <h3 className={styles.subTitle}>Financial Overview</h3>
@@ -49,7 +55,7 @@ const DashboardHome = () => {
             color="primary"
           />
           <StatCard
-            title="weekly Sales"
+            title="Weekly Sales"
             value={`₦${stats.financial_stats.recent_sales.toLocaleString()}`}
             icon="💵"
             color="success"

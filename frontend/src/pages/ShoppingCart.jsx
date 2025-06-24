@@ -165,18 +165,6 @@ const ShoppingCart = () => {
     );
   }
 
-  // // Handle error state
-  // if (error) {
-  //   return (
-  //     <div style={{ paddingTop: "10rem" }} className={styles.error}>
-  //       <p>Error loading cart: {error.message}</p>
-  //       <button onClick={() => refetchCart()} className={styles.retryButton}>
-  //         Retry
-  //       </button>
-  //     </div>
-  //   );
-  // }
-
   return (
     <div className={styles.cartContainer}>
       <div className={styles.cartHeaderSection}>

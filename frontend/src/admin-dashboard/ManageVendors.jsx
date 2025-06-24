@@ -1,108 +1,140 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useCallback, useMemo } from "react";
+import { useDebouncedCallback } from "use-debounce";
 import styles from "./css/ManageVendors.module.css";
-import axios from "axios";
 import LoadingSpinner from "./LoadingSpinner";
-import api, { MEDIA_BASE_URL } from "../constant/api";
+import { MEDIA_BASE_URL } from "../constant/api";
+import {
+  useVendors,
+  useToggleVendorVerification,
+  useBusinessCategories,
+} from "./hooks/useManageVendors";
 
 const ManageVendors = () => {
-  const [vendors, setVendors] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("");
   const [verified, setVerified] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [selectedVendor, setSelectedVendor] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
-  useEffect(() => {
-    fetchVendors();
-  }, [query, category, verified]);
+  // Debounce search input for better performance
+  const debouncedSearch = useDebouncedCallback((value) => {
+    setDebouncedQuery(value);
+  }, 500);
 
-  const fetchVendors = async () => {
-    try {
-      setLoading(true);
-      let url = "admin/vendors/";
-      const params = new URLSearchParams();
+  // Update debounced query when query changes
+  React.useEffect(() => {
+    debouncedSearch(query);
+  }, [query, debouncedSearch]);
 
-      if (query) params.append("query", query);
-      if (category) params.append("category", category);
-      if (verified) params.append("verified", verified);
+  // Memoize filters to prevent unnecessary re-renders
+  const filters = useMemo(
+    () => ({
+      query: debouncedQuery.trim(),
+      category,
+      verified,
+    }),
+    [debouncedQuery, category, verified]
+  );
 
-      if (params.toString()) {
-        url += `?${params.toString()}`;
+  // Fetch vendors with current filters
+  const {
+    data: vendors = [],
+    isLoading,
+    error,
+    isError,
+    isFetching,
+    refetch,
+    isRefetching,
+  } = useVendors(filters);
+
+  // Get business categories
+  const { data: businessCategories = [] } = useBusinessCategories();
+
+  // Mutations
+  const toggleVerificationMutation = useToggleVendorVerification();
+
+  const handleToggleVerificationStatus = useCallback(
+    async (vendorId, currentStatus) => {
+      try {
+        await toggleVerificationMutation.mutateAsync({
+          vendorId,
+          isVerified: currentStatus,
+        });
+        // Success feedback could be added here (toast notification)
+      } catch (err) {
+        console.error("Error updating verification status:", err);
+        alert("Failed to update verification status. Please try again.");
       }
+    },
+    [toggleVerificationMutation]
+  );
 
-      const response = await api.get(url);
-      setVendors(response.data);
-      console.log(response.data)
-      setLoading(false);
-    } catch (err) {
-      console.error("Error fetching vendors:", err);
-      setError("Failed to load vendors");
-      setLoading(false);
-    }
-  };
-
-  const toggleVerificationStatus = async (vendorId, currentStatus) => {
-    try {
-      await api.put(`vendors/${vendorId}/`, {
-        is_verified: !currentStatus,
-      });
-
-      // Update local state
-      setVendors(
-        vendors.map((vendor) =>
-          vendor.id === vendorId
-            ? { ...vendor, is_verified: !currentStatus }
-            : vendor
-        )
-      );
-    } catch (err) {
-      console.error("Error updating verification status:", err);
-      alert("Failed to update verification status");
-    }
-  };
-
-  const handleSearch = (e) => {
+  const handleSearch = useCallback((e) => {
     e.preventDefault();
-    fetchVendors();
-  };
+    // The debounced search will handle the actual filtering
+  }, []);
 
-  const clearFilters = () => {
+  const clearFilters = useCallback(() => {
     setQuery("");
     setCategory("");
     setVerified("");
-  };
+    setDebouncedQuery("");
+  }, []);
 
-  const handleShowDetails = (vendor) => {
+  const handleShowDetails = useCallback((vendor) => {
     setSelectedVendor(vendor);
     setShowModal(true);
-  };
+  }, []);
 
-  const handleCloseModal = () => {
+  const handleCloseModal = useCallback(() => {
     setShowModal(false);
     setSelectedVendor(null);
-  };
+  }, []);
 
-  const businessCategories = [
-    "Food",
-    "Clothing",
-    "Electronics",
-    "Books",
-    "Services",
-    "Health",
-    "Beauty",
-    "Accessories",
-    "Other",
-  ];
+  // Check if verification is being updated for a specific vendor
+  const isVendorBeingUpdated = useCallback(
+    (vendorId) => {
+      return (
+        toggleVerificationMutation.isLoading &&
+        toggleVerificationMutation.variables?.vendorId === vendorId
+      );
+    },
+    [toggleVerificationMutation]
+  );
 
-  if (loading && vendors.length === 0) return <LoadingSpinner />;
-  if (error) return <div className={styles.error}>{error}</div>;
+  if (isLoading && !vendors.length) return <LoadingSpinner />;
+
+  if (isError) {
+    return (
+      <div className={styles.error}>
+        <p>Failed to load vendors</p>
+        <button onClick={() => refetch()} className={styles.retryButton}>
+          Try Again
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.vendorsContainer}>
       <div className={styles.headerSection}>
-        <h2 className={styles.sectionTitle}>Manage Vendors</h2>
+        <div className={styles.titleSection}>
+          <h2 className={styles.sectionTitle}>
+            Manage Vendors
+            {vendors.length > 0 && (
+              <span className={styles.vendorCount}>({vendors.length})</span>
+            )}
+          </h2>
+          <button
+            onClick={() => refetch()}
+            className={styles.refreshButton}
+            disabled={isFetching}
+          >
+            {isRefetching ? "Refreshing..." : "Refresh"}
+          </button>
+        </div>
+
         <div className={styles.filterSection}>
           <form onSubmit={handleSearch} className={styles.searchForm}>
             <input
@@ -148,90 +180,108 @@ const ManageVendors = () => {
         </div>
       </div>
 
-      {loading ? (
-        <LoadingSpinner />
-      ) : (
-        <>
-          <div className={styles.tableContainer}>
-            <table className={styles.vendorsTable}>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Business Name</th>
-                  {/* <th>Owner</th> */}
-                  <th>Category</th>
-                  {/* <th>Products</th> */}
-                  {/* <th>Sales</th> */}
-                  <th>Rating</th>
-                  <th>Joined</th>
-                  <th>Verified</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {vendors.length === 0 ? (
-                  <tr>
-                    <td colSpan="10" className={styles.noData}>
-                      No vendors found
+      {isFetching && !isRefetching && (
+        <div className={styles.loadingOverlay}>
+          <span>Searching...</span>
+        </div>
+      )}
+
+      <div className={styles.tableContainer}>
+        <table className={styles.vendorsTable}>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Business Name</th>
+              <th>Category</th>
+              <th>Rating</th>
+              <th>Joined</th>
+              <th>Verified</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {vendors.length === 0 ? (
+              <tr>
+                <td colSpan="7" className={styles.noData}>
+                  {isFetching ? "Searching..." : "No vendors found"}
+                </td>
+              </tr>
+            ) : (
+              vendors.map((vendor) => {
+                const isUpdating = isVendorBeingUpdated(vendor.id);
+
+                return (
+                  <tr
+                    key={vendor.id}
+                    className={isUpdating ? styles.updating : ""}
+                  >
+                    <td>{vendor.id}</td>
+                    <td className={styles.businessName}>
+                      {vendor.business_name}
+                    </td>
+                    <td>
+                      <span className={styles.categoryBadge}>
+                        {vendor.business_category}
+                      </span>
+                    </td>
+                    <td>
+                      <div className={styles.ratingContainer}>
+                        <span className={styles.ratingValue}>
+                          {vendor.rating || 0}
+                        </span>
+                        <span className={styles.ratingCount}>
+                          ({vendor.total_ratings || 0})
+                        </span>
+                      </div>
+                    </td>
+                    <td>{new Date(vendor.date_joined).toLocaleDateString()}</td>
+                    <td>
+                      <span
+                        className={`${styles.verifiedBadge} ${
+                          vendor.is_verified
+                            ? styles.verified
+                            : styles.unverified
+                        }`}
+                      >
+                        {vendor.is_verified ? "Verified" : "Unverified"}
+                      </span>
+                    </td>
+                    <td>
+                      <div className={styles.actionButtons}>
+                        <button
+                          onClick={() => handleShowDetails(vendor)}
+                          className={`${styles.actionButton} ${styles.view}`}
+                          disabled={isUpdating}
+                        >
+                          Details
+                        </button>
+                        <button
+                          onClick={() =>
+                            handleToggleVerificationStatus(
+                              vendor.id,
+                              vendor.is_verified
+                            )
+                          }
+                          className={`${styles.actionButton} ${styles.verify}`}
+                          disabled={isUpdating}
+                        >
+                          {toggleVerificationMutation.isLoading &&
+                          toggleVerificationMutation.variables?.vendorId ===
+                            vendor.id
+                            ? "Updating..."
+                            : vendor.is_verified
+                            ? "Unverify"
+                            : "Verify"}
+                        </button>
+                      </div>
                     </td>
                   </tr>
-                ) : (
-                  vendors.map((vendor) => (
-                    <tr key={vendor.id}>
-                      <td>{vendor.id}</td>
-                      <td className={styles.businessName}>
-                        {vendor.business_name}
-                      </td>
-                      {/* <td>{vendor.user_name}</td> */}
-                      <td>
-                        <span className={styles.categoryBadge}>
-                          {vendor.business_category}
-                        </span>
-                      </td>
-                      {/* <td>{vendor.total_products}</td> */}
-                      {/* <td>₦{vendor?.total_sales?.toLocaleString()}</td> */}
-                      <td>
-                        <div className={styles.ratingContainer}>
-                          <span className={styles.ratingValue}>
-                            {vendor.rating || 0}
-                          </span>
-                          <span className={styles.ratingCount}>
-                            ({vendor.total_ratings || 0})
-                          </span>
-                        </div>
-                      </td>
-                      <td>
-                        {new Date(vendor.date_joined).toLocaleDateString()}
-                      </td>
-                      <td>
-                        <span
-                          className={`${styles.verifiedBadge} ${
-                            vendor.is_verified
-                              ? styles.verified
-                              : styles.unverified
-                          }`}
-                        >
-                          {vendor.is_verified ? "Verified" : "Unverified"}
-                        </span>
-                      </td>
-                      <td>
-                        <div className={styles.actionButtons}>
-                          <button
-                            onClick={() => handleShowDetails(vendor)}
-                            className={`${styles.actionButton} ${styles.view}`}
-                          >
-                            Details
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </>
-      )}
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
 
       {/* Vendor Details Modal */}
       {showModal && selectedVendor && (
@@ -259,15 +309,9 @@ const ManageVendors = () => {
                       src={`${MEDIA_BASE_URL}${selectedVendor.shop_image}`}
                       alt={selectedVendor.business_name}
                       className={styles.shopImage}
+                      loading="lazy"
                     />
                   )}
-                  {/* {selectedVendor.user?.image_url && (
-                    <img
-                      src={selectedVendor.user.image_url}
-                      alt={`${selectedVendor.user.first_name} ${selectedVendor.user.last_name}`}
-                      className={styles.userImage}
-                    />
-                  )} */}
                 </div>
 
                 <div className={styles.businessInfo}>
@@ -314,8 +358,8 @@ const ManageVendors = () => {
                   <div className={styles.detailItem}>
                     <span className={styles.label}>Rating:</span>
                     <span className={styles.value}>
-                      {selectedVendor.rating} ({selectedVendor.total_ratings}{" "}
-                      reviews)
+                      {selectedVendor.rating || 0} (
+                      {selectedVendor.total_ratings || 0} reviews)
                     </span>
                   </div>
                 </div>
@@ -324,9 +368,7 @@ const ManageVendors = () => {
                   <h5 className={styles.sectionTitle}>Contact Information</h5>
                   <div className={styles.detailItem}>
                     <span className={styles.label}>Email:</span>
-                    <span className={styles.value}>
-                      {selectedVendor.email}
-                    </span>
+                    <span className={styles.value}>{selectedVendor.email}</span>
                   </div>
                   <div className={styles.detailItem}>
                     <span className={styles.label}>Phone:</span>
@@ -336,9 +378,7 @@ const ManageVendors = () => {
                   </div>
                   <div className={styles.detailItem}>
                     <span className={styles.label}>State:</span>
-                    <span className={styles.value}>
-                      {selectedVendor.state}
-                    </span>
+                    <span className={styles.value}>{selectedVendor.state}</span>
                   </div>
                   <div className={styles.detailItem}>
                     <span className={styles.label}>Institution:</span>
@@ -377,6 +417,25 @@ const ManageVendors = () => {
                     </div>
                   )}
                 </div>
+              </div>
+
+              <div className={styles.modalActions}>
+                <button
+                  onClick={() =>
+                    handleToggleVerificationStatus(
+                      selectedVendor.id,
+                      selectedVendor.is_verified
+                    )
+                  }
+                  className={`${styles.actionButton} ${styles.verify}`}
+                  disabled={isVendorBeingUpdated(selectedVendor.id)}
+                >
+                  {isVendorBeingUpdated(selectedVendor.id)
+                    ? "Updating..."
+                    : selectedVendor.is_verified
+                    ? "Unverify Vendor"
+                    : "Verify Vendor"}
+                </button>
               </div>
             </div>
 
