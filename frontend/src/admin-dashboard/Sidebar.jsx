@@ -18,6 +18,7 @@ const Sidebar = ({
     { id: "orders", label: "Orders", icon: "📦" },
     { id: "payments", label: "Payments", icon: "💰" },
     { id: "kyc", label: "KYC Verification", icon: "🔍" },
+    { id: "utilities", label: "Utilities", icon: "📈" },
   ];
 
   const navigate = useNavigate();

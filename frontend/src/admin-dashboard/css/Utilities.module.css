@@ -1,0 +1,390 @@
+/* Utilities.module.css */
+
+.utilitiesContainer {
+    padding: 2.4rem;
+    width: 100%;
+    margin: 0 auto;
+    background-color: var(--background);
+    min-height: 100vh;
+    /* margin-top: 10rem; */
+  }
+  
+  .utilitiesHeader {
+    margin-bottom: 3.2rem;
+    text-align: center;
+  }
+  
+  .utilitiesHeader h1 {
+    color: var(--text-primary);
+    margin-bottom: 0.8rem;
+    font-weight: 700;
+  }
+  
+  .utilitiesHeader p {
+    color: var(--text-secondary);
+    font-size: 1.6rem;
+    max-width: 60rem;
+    margin: 0 auto;
+  }
+  
+  .utilitiesGrid {
+    display: flex;
+    flex-direction: column;
+    gap: 4rem;
+  }
+  
+  .section {
+    background-color: var(--surface);
+    border-radius: 1.2rem;
+    padding: 2.4rem;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 8px var(--shadow);
+    transition: all 0.3s ease;
+  }
+  
+  .section:hover {
+    box-shadow: 0 4px 16px var(--shadow);
+  }
+  
+  .sectionHeader {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    margin-bottom: 2.4rem;
+    padding-bottom: 1.6rem;
+    border-bottom: 1px solid var(--border);
+  }
+  
+  .sectionIcon {
+    width: 2.4rem;
+    height: 2.4rem;
+    color: var(--primary-500);
+    flex-shrink: 0;
+  }
+  
+  .sectionHeader h2 {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin: 0;
+  }
+  
+  .sectionGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(28rem, 1fr));
+    gap: 2rem;
+  }
+  
+  .actionButton {
+    display: flex;
+    align-items: center;
+    gap: 1.6rem;
+    padding: 2rem;
+    background-color: var(--neutral-white);
+    border: 1px solid var(--border);
+    border-radius: 0.8rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: left;
+    font-family: inherit;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .actionButton:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--shadow);
+  }
+  
+  .actionButton:active {
+    transform: translateY(0);
+  }
+  
+  .actionButton:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+    transform: none;
+  }
+  
+  .actionButton:disabled:hover {
+    transform: none;
+    box-shadow: none;
+  }
+  
+  /* Button Variants */
+  .primary {
+    border-left: 4px solid var(--primary-500);
+  }
+  
+  .primary:hover {
+    border-left-color: var(--primary-600);
+    background-color: var(--primary-100);
+  }
+  
+  .download {
+    border-left: 4px solid var(--info);
+  }
+  
+  .download:hover {
+    border-left-color: var(--info);
+    background-color: #eff6ff;
+  }
+  
+  .newsletter {
+    border-left: 4px solid var(--success);
+  }
+  
+  .newsletter:hover {
+    border-left-color: var(--success);
+    background-color: #f0fdf4;
+  }
+  
+  .reminder {
+    border-left: 4px solid var(--warning);
+  }
+  
+  .reminder:hover {
+    border-left-color: var(--warning);
+    background-color: #fffbeb;
+  }
+  
+  .buttonIcon {
+    flex-shrink: 0;
+    width: 4rem;
+    height: 4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--primary-100);
+    border-radius: 0.8rem;
+    transition: all 0.3s ease;
+  }
+  
+  .download .buttonIcon {
+    background-color: #eff6ff;
+    color: var(--info);
+  }
+  
+  .newsletter .buttonIcon {
+    background-color: #f0fdf4;
+    color: var(--success);
+  }
+  
+  .reminder .buttonIcon {
+    background-color: #fffbeb;
+    color: var(--warning);
+  }
+  
+  .buttonIcon svg {
+    width: 2rem;
+    height: 2rem;
+  }
+  
+  .spinIcon {
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  
+  .buttonContent {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .buttonTitle {
+    color: var(--text-primary);
+    font-size: 1.6rem;
+    font-weight: 600;
+    margin: 0 0 0.4rem 0;
+    line-height: 1.4;
+  }
+  
+  .buttonDescription {
+    color: var(--text-secondary);
+    font-size: 1.4rem;
+    margin: 0;
+    line-height: 1.4;
+  }
+  
+  /* Dark theme adjustments */
+  :root[data-theme="dark"] .download:hover {
+    background-color: #1e3a8a;
+  }
+  
+  :root[data-theme="dark"] .newsletter:hover {
+    background-color: #14532d;
+  }
+  
+  :root[data-theme="dark"] .reminder:hover {
+    background-color: #78350f;
+  }
+  
+  :root[data-theme="dark"] .download .buttonIcon {
+    background-color: #1e3a8a;
+  }
+  
+  :root[data-theme="dark"] .newsletter .buttonIcon {
+    background-color: #14532d;
+  }
+  
+  :root[data-theme="dark"] .reminder .buttonIcon {
+    background-color: #78350f;
+  }
+  
+  /* Responsive Design */
+  @media screen and (max-width: 768px) {
+    .utilitiesContainer {
+      padding: 1.6rem;
+    }
+  
+    .utilitiesHeader {
+      margin-bottom: 2.4rem;
+    }
+  
+    .utilitiesHeader h1 {
+      font-size: var(--h2-mobile);
+    }
+  
+    .utilitiesHeader p {
+      font-size: 1.4rem;
+    }
+  
+    .utilitiesGrid {
+      gap: 2.4rem;
+    }
+  
+    .section {
+      padding: 1.6rem;
+    }
+  
+    .sectionHeader {
+      margin-bottom: 1.6rem;
+      padding-bottom: 1.2rem;
+    }
+  
+    .sectionHeader h2 {
+      font-size: var(--h4-mobile);
+    }
+  
+    .sectionIcon {
+      width: 2rem;
+      height: 2rem;
+    }
+  
+    .sectionGrid {
+      grid-template-columns: 1fr;
+      gap: 1.6rem;
+    }
+  
+    .actionButton {
+      padding: 1.6rem;
+      gap: 1.2rem;
+    }
+  
+    .buttonIcon {
+      width: 3.6rem;
+      height: 3.6rem;
+    }
+  
+    .buttonIcon svg {
+      width: 1.8rem;
+      height: 1.8rem;
+    }
+  
+    .buttonTitle {
+      font-size: 1.5rem;
+    }
+  
+    .buttonDescription {
+      font-size: 1.3rem;
+    }
+  }
+  
+  @media screen and (max-width: 480px) {
+    .utilitiesContainer {
+      padding: 1.2rem;
+    }
+  
+    .actionButton {
+      flex-direction: column;
+      text-align: center;
+      gap: 1rem;
+    }
+  
+    .buttonIcon {
+      width: 4.8rem;
+      height: 4.8rem;
+    }
+  
+    .buttonIcon svg {
+      width: 2.4rem;
+      height: 2.4rem;
+    }
+  
+    .buttonTitle {
+      font-size: 1.6rem;
+    }
+  
+    .buttonDescription {
+      font-size: 1.4rem;
+    }
+  }
+  
+  /* Loading state */
+  .actionButton:disabled .buttonIcon {
+    background-color: var(--neutral-gray-100);
+  }
+  
+  .actionButton:disabled .buttonTitle,
+  .actionButton:disabled .buttonDescription {
+    color: var(--text-secondary);
+  }
+  
+  /* Accessibility */
+  .actionButton:focus {
+    outline: 2px solid var(--primary-500);
+    outline-offset: 2px;
+  }
+  
+  .actionButton:focus:not(:focus-visible) {
+    outline: none;
+  }
+  
+  /* Animation for button content */
+  .actionButton::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.2),
+      transparent
+    );
+    transition: left 0.5s;
+  }
+  
+  .actionButton:hover::before {
+    left: 100%;
+  }
+  
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    .actionButton {
+      border-width: 2px;
+    }
+    
+    .buttonTitle {
+      font-weight: 700;
+    }
+  }

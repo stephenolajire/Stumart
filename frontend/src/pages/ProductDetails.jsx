@@ -34,7 +34,7 @@ const ProductDetails = () => {
   const [quantity, setQuantity] = useState(1);
 
   // Access context values
-  const { useCartMutations } = useContext(GlobalContext);
+  const { useCartMutations, isAuthenticated } = useContext(GlobalContext);
   const { addToCart, generateCartCode } = useCartMutations();
 
   // New state for selected image, color, and size
@@ -95,7 +95,7 @@ const ProductDetails = () => {
     refetchOnWindowFocus: false,
   });
 
-  // Fetch user review status using TanStack Query
+
   const { data: userReviewStatus, isLoading: userReviewStatusLoading } =
     useQuery({
       queryKey: ["userReviewStatus", productId],
@@ -123,13 +123,9 @@ const ProductDetails = () => {
           };
         }
       },
-      enabled: !!productId,
-      staleTime: 5 * 60 * 1000,
-      gcTime: 10 * 60 * 1000,
-      retry: 1,
-      refetchOnWindowFocus: false,
+      enabled: !!productId && isAuthenticated, // Only run if authenticated
+      // ...
     });
-
   // Review submission mutation
   const reviewSubmitMutation = useMutation({
     mutationFn: async (reviewData) => {

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import React, { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   FaUser,
   FaEdit,
@@ -12,53 +12,74 @@ import styles from "../css/StudentProfile.module.css";
 import api from "../constant/api";
 
 const StudentProfile = () => {
-  const [profile, setProfile] = useState({
-    user: {
-      first_name: "",
-      last_name: "",
-      email: "",
-      phone_number: "",
-      state: "",
-      institution: "",
-      profile_pic: null,
-    },
-    matric_number: "",
-    department: "",
-  });
-
+  const queryClient = useQueryClient();
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState({});
   const [newProfilePic, setNewProfilePic] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
 
-  useEffect(() => {
-    fetchStudentProfile();
-  }, []);
-
-  const fetchStudentProfile = async () => {
-    try {
-      setIsLoading(true);
+  // Fetch student profile using TanStack Query
+  const {
+    data: profile,
+    isLoading,
+    error: queryError,
+    isError,
+  } = useQuery({
+    queryKey: ["studentProfile"],
+    queryFn: async () => {
       const response = await api.get("student-details/");
-      // console.log(response.data)
-      setProfile(response.data);
+      return response.data;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 10 * 60 * 1000, // 10 minutes
+    onSuccess: (data) => {
+      // Initialize form data when profile is loaded
       setFormData({
-        first_name: response.data.user.first_name,
-        last_name: response.data.user.last_name,
-        phone_number: response.data.user.phone_number,
-        state: response.data.user.state,
-        institution: response.data.user.institution,
-        matric_number: response.data.matric_number,
-        department: response.data.department,
+        first_name: data.user.first_name,
+        last_name: data.user.last_name,
+        phone_number: data.user.phone_number,
+        state: data.user.state,
+        institution: data.user.institution,
+        matric_number: data.matric_number,
+        department: data.department,
       });
-      setIsLoading(false);
-    } catch (err) {
-      setError("Failed to load profile data. Please try again.");
-      setIsLoading(false);
-      console.error("Error fetching profile:", err);
+    },
+  });
+
+  // Update profile mutation
+  const updateProfileMutation = useMutation({
+    mutationFn: async (updateData) => {
+      const response = await api.patch("update-student-profile/", updateData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      return response.data;
+    },
+    onSuccess: (data) => {
+      // Update the cache with new data
+      queryClient.setQueryData(["studentProfile"], data);
+      setEditMode(false);
+      setNewProfilePic(null);
+    },
+    onError: (error) => {
+      console.error("Error updating profile:", error);
+    },
+  });
+
+  // Initialize form data when profile is loaded (for when query succeeds)
+  React.useEffect(() => {
+    if (profile && !editMode) {
+      setFormData({
+        first_name: profile.user.first_name,
+        last_name: profile.user.last_name,
+        phone_number: profile.user.phone_number,
+        state: profile.user.state,
+        institution: profile.user.institution,
+        matric_number: profile.matric_number,
+        department: profile.department,
+      });
     }
-  };
+  }, [profile, editMode]);
 
   const handleEdit = () => {
     setEditMode(true);
@@ -68,15 +89,17 @@ const StudentProfile = () => {
     setEditMode(false);
     setNewProfilePic(null);
     // Reset form data to original values
-    setFormData({
-      first_name: profile.user.first_name,
-      last_name: profile.user.last_name,
-      phone_number: profile.user.phone_number,
-      state: profile.user.state,
-      institution: profile.user.institution,
-      matric_number: profile.matric_number,
-      department: profile.department,
-    });
+    if (profile) {
+      setFormData({
+        first_name: profile.user.first_name,
+        last_name: profile.user.last_name,
+        phone_number: profile.user.phone_number,
+        state: profile.user.state,
+        institution: profile.user.institution,
+        matric_number: profile.matric_number,
+        department: profile.department,
+      });
+    }
   };
 
   const handleChange = (e) => {
@@ -92,46 +115,52 @@ const StudentProfile = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
 
-    try {
-      const updateData = new FormData();
+    const updateData = new FormData();
 
-      // Add all form fields to FormData
-      Object.keys(formData).forEach((key) => {
-        updateData.append(key, formData[key]);
-      });
+    // Add all form fields to FormData
+    Object.keys(formData).forEach((key) => {
+      updateData.append(key, formData[key]);
+    });
 
-      // Add profile pic if changed
-      if (newProfilePic) {
-        updateData.append("profile_pic", newProfilePic);
-      }
-
-      const response = await api.patch(
-        "update-student-profile/",
-        updateData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-
-      setProfile(response.data);
-      setEditMode(false);
-      setSuccess("Profile updated successfully!");
-      setTimeout(() => setSuccess(null), 3000);
-    } catch (err) {
-      setError("Failed to update profile. Please try again.");
-      setTimeout(() => setError(null), 3000);
-      console.error("Error updating profile:", err);
+    // Add profile pic if changed
+    if (newProfilePic) {
+      updateData.append("profile_pic", newProfilePic);
     }
 
-    setIsLoading(false);
+    updateProfileMutation.mutate(updateData);
   };
 
-  if (isLoading && !profile.user.first_name) {
-    return <div style={{marginTop:"10rem"}} className={styles.loading}>Loading profile...</div>;
+  // Handle loading state
+  if (isLoading) {
+    return (
+      <div style={{ marginTop: "10rem" }} className={styles.loading}>
+        Loading profile...
+      </div>
+    );
+  }
+
+  // Handle error state
+  if (isError) {
+    return (
+      <div className={styles.profileContainer}>
+        <div className={styles.errorAlert}>
+          {queryError?.message ||
+            "Failed to load profile data. Please try again."}
+        </div>
+        <button
+          onClick={() => queryClient.refetchQueries(["studentProfile"])}
+          className={styles.retryButton}
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  // Don't render if no profile data
+  if (!profile) {
+    return null;
   }
 
   return (
@@ -141,8 +170,18 @@ const StudentProfile = () => {
         Student Profile
       </h2>
 
-      {error && <div className={styles.errorAlert}>{error}</div>}
-      {success && <div className={styles.successAlert}>{success}</div>}
+      {/* Show mutation error */}
+      {updateProfileMutation.isError && (
+        <div className={styles.errorAlert}>
+          {updateProfileMutation.error?.message ||
+            "Failed to update profile. Please try again."}
+        </div>
+      )}
+
+      {/* Show success message */}
+      {updateProfileMutation.isSuccess && !editMode && (
+        <div className={styles.successAlert}>Profile updated successfully!</div>
+      )}
 
       <div className={styles.profileCard}>
         <div className={styles.profileHeader}>
@@ -205,7 +244,7 @@ const StudentProfile = () => {
                 <input
                   type="text"
                   name="first_name"
-                  value={formData.first_name}
+                  value={formData.first_name || ""}
                   onChange={handleChange}
                   required
                 />
@@ -215,7 +254,7 @@ const StudentProfile = () => {
                 <input
                   type="text"
                   name="last_name"
-                  value={formData.last_name}
+                  value={formData.last_name || ""}
                   onChange={handleChange}
                   required
                 />
@@ -228,7 +267,7 @@ const StudentProfile = () => {
                 <input
                   type="tel"
                   name="phone_number"
-                  value={formData.phone_number}
+                  value={formData.phone_number || ""}
                   onChange={handleChange}
                   required
                 />
@@ -238,7 +277,7 @@ const StudentProfile = () => {
                 <input
                   type="text"
                   name="state"
-                  value={formData.state}
+                  value={formData.state || ""}
                   onChange={handleChange}
                   required
                 />
@@ -251,7 +290,7 @@ const StudentProfile = () => {
                 <input
                   type="text"
                   name="institution"
-                  value={formData.institution}
+                  value={formData.institution || ""}
                   onChange={handleChange}
                   required
                 />
@@ -261,7 +300,7 @@ const StudentProfile = () => {
                 <input
                   type="text"
                   name="matric_number"
-                  value={formData.matric_number}
+                  value={formData.matric_number || ""}
                   onChange={handleChange}
                 />
               </div>
@@ -272,7 +311,7 @@ const StudentProfile = () => {
               <input
                 type="text"
                 name="department"
-                value={formData.department}
+                value={formData.department || ""}
                 onChange={handleChange}
                 required
               />
@@ -282,9 +321,9 @@ const StudentProfile = () => {
               <button
                 type="submit"
                 className={styles.saveButton}
-                disabled={isLoading}
+                disabled={updateProfileMutation.isLoading}
               >
-                {isLoading ? (
+                {updateProfileMutation.isLoading ? (
                   "Saving..."
                 ) : (
                   <>
@@ -296,6 +335,7 @@ const StudentProfile = () => {
                 type="button"
                 className={styles.cancelButton}
                 onClick={handleCancel}
+                disabled={updateProfileMutation.isLoading}
               >
                 <FaTimesCircle /> Cancel
               </button>

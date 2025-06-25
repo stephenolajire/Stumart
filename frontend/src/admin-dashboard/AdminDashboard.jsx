@@ -12,6 +12,7 @@ import VendorWallets from "./VendorWallets";
 import KYCVerification from "./KYCVerification";
 // import ThemeToggle from "../components/ThemeToggle"
 import ThemeToggle from "../components/ThemeToggle";
+import Utilities from "./Utilities";
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -49,6 +50,8 @@ const AdminDashboard = () => {
         );
       case "kyc":
         return <KYCVerification />;
+      case "utilities":
+        return <Utilities/>
       default:
         return <DashboardHome />;
     }
