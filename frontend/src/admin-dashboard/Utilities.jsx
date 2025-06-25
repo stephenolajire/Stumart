@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import Swal from "sweetalert2";
 import styles from "./css/Utilities.module.css";
+import api from "../constant/api";
 
 const Utilities = () => {
   const [loading, setLoading] = useState({});
@@ -31,17 +32,17 @@ const Utilities = () => {
   const handleDownloadUsers = async () => {
     setActionLoading("users", true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const response = await api.get("/admin/download/users", {
+        responseType: "blob",
+      });
 
-      // In real implementation, you'd call your API here
-      // const response = await fetch('/api/admin/export/users');
-      // const blob = await response.blob();
-      // const url = window.URL.createObjectURL(blob);
-      // const a = document.createElement('a');
-      // a.href = url;
-      // a.download = 'users_list.csv';
-      // a.click();
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "users_list.csv"); // Changed from .xlsx to .csv
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
 
       Swal.fire({
         title: "Success!",
@@ -64,7 +65,18 @@ const Utilities = () => {
   const handleDownloadVendors = async () => {
     setActionLoading("vendors", true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const response = await api.get("/admin/download/vendors", {
+        responseType: "blob",
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "vendors_list.csv"); // Changed from .xlsx to .csv
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
       Swal.fire({
         title: "Success!",
         text: "Vendors list has been downloaded successfully",
@@ -74,7 +86,7 @@ const Utilities = () => {
     } catch (error) {
       Swal.fire({
         title: "Error!",
-        text: "Failed to download vendors list",
+        text: "Failed to download users list",
         icon: "error",
         confirmButtonColor: "var(--error)",
       });
@@ -86,7 +98,18 @@ const Utilities = () => {
   const handleDownloadPickers = async () => {
     setActionLoading("pickers", true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const response = await api.get("/admin/download/pickers", {
+        responseType: "blob",
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "pickers_list.csv"); // Changed from .xlsx to .csv
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
       Swal.fire({
         title: "Success!",
         text: "Pickers list has been downloaded successfully",
@@ -96,7 +119,7 @@ const Utilities = () => {
     } catch (error) {
       Swal.fire({
         title: "Error!",
-        text: "Failed to download pickers list",
+        text: "Failed to download users list",
         icon: "error",
         confirmButtonColor: "var(--error)",
       });
@@ -104,7 +127,6 @@ const Utilities = () => {
       setActionLoading("pickers", false);
     }
   };
-
   const handleDownloadTransactions = async () => {
     setActionLoading("transactions", true);
     try {
@@ -153,13 +175,19 @@ const Utilities = () => {
     if (newsletter) {
       setActionLoading("newsletterPickers", true);
       try {
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        Swal.fire({
-          title: "Success!",
-          text: "Newsletter sent to all pickers successfully",
-          icon: "success",
-          confirmButtonColor: "var(--primary-500)",
+        const response = await api.post("admin/send/newsletter/", {
+          subject: newsletter.subject,
+          message: newsletter.message,
+          recipient_type: "pickers",
         });
+        if (response.status == 200) {
+          Swal.fire({
+            title: "Success!",
+            text: "Newsletter sent to all pickers successfully",
+            icon: "success",
+            confirmButtonColor: "var(--primary-500)",
+          });
+        }
       } catch (error) {
         Swal.fire({
           title: "Error!",
@@ -198,13 +226,19 @@ const Utilities = () => {
     if (newsletter) {
       setActionLoading("newsletterVendors", true);
       try {
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        Swal.fire({
-          title: "Success!",
-          text: "Newsletter sent to all vendors successfully",
-          icon: "success",
-          confirmButtonColor: "var(--primary-500)",
+        const response = await api.post("admin/send/newsletter/", {
+          subject: newsletter.subject,
+          message: newsletter.message,
+          recipient_type: "vendors",
         });
+        if (response.status == 200) {
+          Swal.fire({
+            title: "Success!",
+            text: "Newsletter sent to all vendors successfully",
+            icon: "success",
+            confirmButtonColor: "var(--primary-500)",
+          });
+        }
       } catch (error) {
         Swal.fire({
           title: "Error!",
@@ -243,13 +277,19 @@ const Utilities = () => {
     if (newsletter) {
       setActionLoading("newsletterAll", true);
       try {
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        Swal.fire({
-          title: "Success!",
-          text: "Newsletter sent to all users successfully",
-          icon: "success",
-          confirmButtonColor: "var(--primary-500)",
+        const response = await api.post("admin/send/newsletter/", {
+          subject: newsletter.subject,
+          message: newsletter.message,
+          recipient_type: "all",
         });
+        if (response.status == 200) {
+          Swal.fire({
+            title: "Success!",
+            text: "Newsletter sent to all users successfully",
+            icon: "success",
+            confirmButtonColor: "var(--primary-500)",
+          });
+        }
       } catch (error) {
         Swal.fire({
           title: "Error!",
@@ -277,13 +317,15 @@ const Utilities = () => {
     if (result.isConfirmed) {
       setActionLoading("kycReminder", true);
       try {
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        Swal.fire({
-          title: "Success!",
-          text: "KYC reminder sent to all unverified users",
-          icon: "success",
-          confirmButtonColor: "var(--primary-500)",
-        });
+        const response = await api.post("admin/send/kyc-reminder/");
+        if (response.status === 200) {
+          Swal.fire({
+            title: "Success!",
+            text: "KYC reminder sent to all unverified users",
+            icon: "success",
+            confirmButtonColor: "var(--primary-500)",
+          });
+        }
       } catch (error) {
         Swal.fire({
           title: "Error!",
@@ -311,13 +353,16 @@ const Utilities = () => {
     if (result.isConfirmed) {
       setActionLoading("productReminder", true);
       try {
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        Swal.fire({
-          title: "Success!",
-          text: "Product reminder sent to vendors without products",
-          icon: "success",
-          confirmButtonColor: "var(--primary-500)",
-        });
+        const response = await api.post("admin/send/product-reminder/");
+        if (response.status === 200) {
+          Swal.fire({
+            title: "Success!",
+            text: "Product reminder sent to vendors without products",
+            icon: "success",
+            confirmButtonColor: "var(--primary-500)",
+          });
+        }
+          
       } catch (error) {
         Swal.fire({
           title: "Error!",

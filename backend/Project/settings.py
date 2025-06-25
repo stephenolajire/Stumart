@@ -58,7 +58,8 @@ INSTALLED_APPS = [
     'Admin',
     'Other',
     'Chatbot',
-    'Chat'
+    'Chat',
+    'Utilities',
 ]
 
 MIDDLEWARE = [
