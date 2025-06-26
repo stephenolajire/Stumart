@@ -31,7 +31,6 @@ import logging
 logger = logging.getLogger(__name__)
 from rest_framework import generics
 from django.shortcuts import get_object_or_404
-from django.db.models import Q
 from django.utils import timezone
 from django.core.mail import send_mail
 from rest_framework.pagination import PageNumberPagination
@@ -39,14 +38,22 @@ from django.db import transaction
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from django.db.models import Avg, Count, Q
+from django.db.models import Avg, Count, Q, Max, Prefetch, OuterRef, Subquery
 from django.shortcuts import get_object_or_404
 from .models import Product, VendorReview, Vendor
 from .serializers import VendorReviewSerializer
 from User.models import Vendor
-from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 import uuid
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
+from django.views import View
+from django.utils import timezone
+from django.core.paginator import Paginator
+import json
+from .models import Conversation, Message, MessageReadStatus, ServiceApplication
 
 class ProductsView(APIView):
     def get(self, request, id):
@@ -2531,19 +2538,7 @@ class MySubmittedApplicationsAPIView(APIView):
 
 # views.py for unified messaging system
 
-from django.shortcuts import get_object_or_404
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
-from django.contrib.auth.decorators import login_required
-from django.utils.decorators import method_decorator
-from django.views import View
-from django.db.models import Q, Count, Max, Prefetch, OuterRef, Subquery
-from django.utils import timezone
-from django.core.paginator import Paginator
-import json
-from .models import Conversation, Message, MessageReadStatus, ServiceApplication
-from User.models import Vendor
+
 
 
 class BaseMessagingView(View):

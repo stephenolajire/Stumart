@@ -17,9 +17,10 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework import status
+from django.utils.html import strip_tags
 
 from User.models import User, Vendor, Picker, StudentPicker, KYCVerification, Student
-from User.serializers import UserSerializer  # Assuming you have serializers
+from User.serializers import UserSerializer
 
 
 class DownloadUsersListView(APIView):
@@ -306,13 +307,14 @@ class SendKYCReminderView(APIView):
                         'company_name': 'StuMart'
                     }
                     
-                    html_content = render_to_string('email/kyc_reminder.html', context)
-                    # plain_content = render_to_string('email/kyc_reminder.txt', context)
+                    html_message = render_to_string('email/service_notification.html', context)
+                    # Create plain text version by stripping HTML tags
+                    plain_message = strip_tags(html_message)
 
                     # Send email
                     email = EmailMessage(
                         subject='Complete Your KYC Verification - StuMart',
-                        body=html_content,
+                        body=plain_message,
                         from_email=settings.DEFAULT_FROM_EMAIL,
                         to=[user.email],
                     )
@@ -380,12 +382,12 @@ class SendProductReminderView(APIView):
                     }
 
                     html_content = render_to_string('email/product_reminder.html', context)
-                    # plain_content = render_to_string('emails/product_reminder.txt', context)
+                    plain_content = strip_tags(html_content)
 
                     # Send email
                     email = EmailMessage(
                         subject='Add Your First Product - StuMart',
-                        body=html_content,
+                        body=plain_content,
                         from_email=settings.DEFAULT_FROM_EMAIL,
                         to=[user.email],
                     )
@@ -501,11 +503,12 @@ class SendNewsletterView(APIView):
                     }
                     
                     html_content = render_to_string('email/newsletter.html', context)
+                    plain_content = strip_tags(html_content)    
 
                     # Send email
                     email = EmailMessage(
                         subject=f'{subject} - StuMart',
-                        body=html_content,
+                        body=plain_content,
                         from_email=settings.DEFAULT_FROM_EMAIL,
                         bcc=batch_recipients,  # Use BCC to hide recipients from each other
                     )
