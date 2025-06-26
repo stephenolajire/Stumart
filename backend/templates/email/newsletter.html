@@ -3,288 +3,461 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>{{ subject }} - StuMart Newsletter</title>
+    <!--[if mso]>
+    <noscript>
+        <xml>
+            <o:OfficeDocumentSettings>
+                <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+        </xml>
+    </noscript>
+    <![endif]-->
     <style>
+        /* Reset and Base Styles */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
-        :root {
-            font-size: 62.5%;
-            
-            /* Primary Colors - Brownish Gold */
-            --primary-100: #fdf6e9;
-            --primary-200: #f9e5bb;
-            --primary-300: #f4d08d;
-            --primary-400: #efbb5f;
-            --primary-500: #daa520;
-            --primary-600: #b38517;
-            --primary-700: #8c660f;
-            --primary-800: #664807;
-            --primary-900: #402c04;
-
-            /* State Colors */
-            --success: #22c55e;
-            --warning: #f59e0b;
-            --error: #ef4444;
-            --info: #3b82f6;
-
-            /* Light Theme */
-            --background: #ffffff;
-            --text-primary: #1f2937;
-            --text-secondary: #6b7280;
-            --surface: #f9fafb;
-            --border: #e5e7eb;
-            --shadow: rgba(0, 0, 0, 0.1);
-            --neutral-white: #ffffff;
-            --neutral-gray-100: #f3f4f6;
-            --hover-bg: #f3f4f6;
-
-            /* Font Sizes */
-            --h1-desktop: 4.8rem;
-            --h2-desktop: 4rem;
-            --h3-desktop: 3.2rem;
-            --h4-desktop: 2.4rem;
-            --h5-desktop: 2rem;
-            --h6-desktop: 1.8rem;
+        body, table, td, p, a, li, blockquote {
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
         }
 
-        body {
-            font-family: 'Montserrat', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            line-height: 1.6;
-            color: var(--text-primary);
+        /* table, td {
+            mso-table-lspace: 0pt;
+            mso-table-rspace: 0pt;
+        } */
+
+        img {
+            -ms-interpolation-mode: bicubic;
+            border: 0;
+            height: auto;
+            line-height: 100%;
+            outline: none;
+            text-decoration: none;
+        }
+
+        /* Color Variables */
+        .primary-gold { color: #daa520 !important; }
+        .primary-dark-gold { color: #b8941a !important; }
+        .text-primary { color: #1a1a1a !important; }
+        .text-secondary { color: #666666 !important; }
+        .text-white { color: #ffffff !important; }
+        .bg-white { background-color: #ffffff !important; }
+        .bg-light { background-color: #f8f9fa !important; }
+        .bg-gradient { background: linear-gradient(135deg, #daa520 0%, #b8941a 100%) !important; }
+
+        /* Main Container */
+        .email-container {
             max-width: 600px;
             margin: 0 auto;
-            padding: 2rem;
-            background-color: var(--surface);
-            font-size: 1.6rem;
+            background-color: #f5f5f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
-        .container {
-            background-color: var(--background);
-            border-radius: 1rem;
-            box-shadow: 0 0.4rem 2rem var(--shadow);
-            border: 1px solid var(--border);
+        .email-wrapper {
+            background-color: #ffffff;
+            margin: 20px auto;
+            border-radius: 12px;
             overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
         }
 
+        /* Header Styles */
         .header {
-            background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
-            color: var(--neutral-white);
-            padding: 3rem;
+            background: linear-gradient(135deg, #daa520 0%, #b8941a 100%);
+            padding: 40px 30px;
             text-align: center;
+            position: relative;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" patternUnits="userSpaceOnUse" width="100" height="100"><circle cx="50" cy="50" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
         }
 
         .logo {
-            font-size: 3.2rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-            letter-spacing: 0.1rem;
+            font-size: 36px;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 8px;
+            letter-spacing: 2px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 1;
         }
 
-        .subtitle {
-            font-size: 1.8rem;
-            opacity: 0.9;
+        .tagline {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.9);
             font-weight: 300;
+            position: relative;
+            z-index: 1;
         }
 
-        .title {
-            color: var(--text-primary);
-            font-size: var(--h4-desktop);
-            margin: 2rem 0;
-            font-weight: 600;
+        /* Title Section */
+        .title-section {
+            padding: 30px;
             text-align: center;
-            padding: 0 2rem;
+            background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
         }
 
+        .newsletter-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 12px;
+            line-height: 1.3;
+        }
+
+        .newsletter-subtitle {
+            font-size: 16px;
+            color: #666666;
+            font-weight: 400;
+        }
+
+        /* Content Styles */
         .content {
-            padding: 3rem;
+            padding: 40px 30px;
+            background-color: #ffffff;
         }
 
-        .content p {
-            margin-bottom: 1.5rem;
-            color: var(--text-primary);
-            font-size: 1.6rem;
+        .greeting {
+            font-size: 18px;
+            color: #1a1a1a;
+            margin-bottom: 25px;
+            font-weight: 500;
+        }
+
+        .message-box {
+            background: linear-gradient(135deg, #fff8e1 0%, #fff3c4 100%);
+            border-left: 5px solid #daa520;
+            padding: 30px;
+            margin: 30px 0;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(218, 165, 32, 0.15);
+            position: relative;
+        }
+
+        .message-box::before {
+            content: '"';
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            font-size: 48px;
+            color: rgba(218, 165, 32, 0.3);
+            font-family: Georgia, serif;
+            line-height: 1;
+        }
+
+        .message-text {
+            font-size: 16px;
             line-height: 1.7;
+            color: #1a1a1a;
+            margin: 0;
+            padding-left: 20px;
         }
 
-        .message-content {
-            background: linear-gradient(135deg, var(--primary-100), var(--primary-200));
-            padding: 2.5rem;
-            border-radius: 0.8rem;
-            margin: 2rem 0;
-            border-left: 0.4rem solid var(--primary-500);
-            box-shadow: 0 0.2rem 1rem rgba(218, 165, 32, 0.1);
+        .closing-text {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #333333;
+            margin: 25px 0;
         }
 
-        .message-content p {
-            color: var(--text-primary);
-            font-size: 1.6rem;
-            line-height: 1.7;
-        }
-
-        .button {
-            display: inline-block;
-            background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
-            color: var(--neutral-white);
-            padding: 1.5rem 3rem;
-            text-decoration: none;
-            border-radius: 0.8rem;
-            font-weight: 600;
-            margin: 2rem 0;
-            transition: all 0.3s ease;
-            box-shadow: 0 0.4rem 1.2rem rgba(218, 165, 32, 0.3);
-            font-size: 1.6rem;
-        }
-
-        .button:hover {
-            background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
-            transform: translateY(-0.2rem);
-            box-shadow: 0 0.6rem 2rem rgba(218, 165, 32, 0.4);
-        }
-
-        .footer {
-            background-color: var(--neutral-gray-100);
-            padding: 2.5rem;
-            border-top: 1px solid var(--border);
-        }
-
-        .footer-content {
+        /* Button Styles */
+        .cta-section {
             text-align: center;
+            margin: 40px 0;
         }
 
-        .footer p {
-            margin-bottom: 1rem;
-            font-size: 1.4rem;
-            color: var(--text-secondary);
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #daa520 0%, #b8941a 100%);
+            color: #ffffff;
+            text-decoration: none;
+            padding: 16px 32px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 6px 20px rgba(218, 165, 32, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(218, 165, 32, 0.5);
+        }
+
+        /* Signature */
+        .signature {
+            margin-top: 40px;
+            padding-top: 25px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .signature p {
+            font-size: 16px;
+            color: #333333;
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .team-name {
+            font-weight: 600;
+            color: #daa520;
+        }
+
+        /* Footer Styles */
+        .footer {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 40px 30px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .social-section {
+            text-align: center;
+            margin-bottom: 30px;
         }
 
         .social-links {
-            margin: 2rem 0;
-            text-align: center;
+            display: inline-flex;
+            gap: 15px;
+            margin-bottom: 20px;
         }
 
-        .social-links a {
-            display: inline-block;
-            margin: 0 1rem;
-            padding: 1rem;
-            background-color: var(--primary-500);
-            color: var(--neutral-white);
-            border-radius: 50%;
+        .social-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, #daa520 0%, #b8941a 100%);
+            color: #ffffff;
             text-decoration: none;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 16px;
             transition: all 0.3s ease;
-            width: 4rem;
-            height: 4rem;
-            line-height: 2rem;
+            box-shadow: 0 4px 12px rgba(218, 165, 32, 0.3);
+        }
+
+        .social-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(218, 165, 32, 0.4);
+        }
+
+        .social-text {
+            font-size: 14px;
+            color: #666666;
+            margin: 0;
+        }
+
+        /* Footer Links */
+        .footer-links {
             text-align: center;
+            padding: 25px 0;
+            border-top: 1px solid #e0e0e0;
+            margin-top: 25px;
         }
 
-        .social-links a:hover {
-            background-color: var(--primary-600);
-            transform: translateY(-0.2rem);
+        .footer-links a {
+            color: #666666;
+            text-decoration: none;
+            font-size: 14px;
+            margin: 0 15px;
+            transition: color 0.3s ease;
         }
 
-        .unsubscribe {
+        .footer-links a:hover {
+            color: #daa520;
+        }
+
+        .copyright {
             text-align: center;
-            margin-top: 2rem;
-            padding-top: 2rem;
-            border-top: 1px solid var(--border);
+            font-size: 12px;
+            color: #999999;
+            margin-top: 15px;
         }
 
-        .unsubscribe a {
-            color: var(--text-secondary);
-            text-decoration: underline;
-            font-size: 1.3rem;
-        }
-
-        .unsubscribe a:hover {
-            color: var(--primary-500);
-        }
-
-        @media screen and (max-width: 768px) {
-            body {
-                padding: 1rem;
-                font-size: 1.4rem;
+        /* Responsive Design */
+        @media screen and (max-width: 600px) {
+            .email-wrapper {
+                margin: 10px;
+                border-radius: 8px;
             }
 
             .header {
-                padding: 2rem;
+                padding: 30px 20px;
             }
 
             .logo {
-                font-size: 2.8rem;
+                font-size: 28px;
             }
 
-            .title {
-                font-size: 2.4rem;
-                padding: 0 1rem;
+            .title-section {
+                padding: 25px 20px;
+            }
+
+            .newsletter-title {
+                font-size: 24px;
             }
 
             .content {
-                padding: 2rem;
+                padding: 30px 20px;
             }
 
-            .message-content {
-                padding: 2rem;
+            .message-box {
+                padding: 20px;
+                margin: 20px 0;
+            }
+
+            .message-box::before {
+                font-size: 36px;
+                top: 10px;
+                left: 10px;
+            }
+
+            .message-text {
+                padding-left: 15px;
+            }
+
+            .cta-button {
+                padding: 14px 28px;
+                font-size: 15px;
             }
 
             .footer {
-                padding: 2rem;
+                padding: 30px 20px;
             }
 
-            .social-links a {
-                margin: 0 0.5rem;
-                width: 3.5rem;
-                height: 3.5rem;
-                line-height: 1.5rem;
+            .social-links {
+                gap: 10px;
+            }
+
+            .social-link {
+                width: 40px;
+                height: 40px;
+                font-size: 14px;
+            }
+
+            .footer-links a {
+                display: block;
+                margin: 8px 0;
+            }
+        }
+
+        /* Dark Mode Support */
+        @media (prefers-color-scheme: dark) {
+            .email-container {
+                background-color: #1a1a1a;
+            }
+
+            .email-wrapper {
+                background-color: #2d2d2d;
+            }
+
+            .title-section {
+                background: linear-gradient(180deg, #2d2d2d 0%, #262626 100%);
+            }
+
+            .newsletter-title {
+                color: #ffffff;
+            }
+
+            .newsletter-subtitle {
+                color: #cccccc;
+            }
+
+            .content {
+                background-color: #2d2d2d;
+            }
+
+            .greeting,
+            .closing-text {
+                color: #ffffff;
+            }
+
+            .message-text {
+                color: #1a1a1a;
+            }
+
+            .signature p {
+                color: #ffffff;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="logo">STUMART</div>
-            <div class="subtitle">Your Campus Marketplace</div>
-        </div>
-        
-        <h1 class="title">{{ subject }}</h1>
-        
-        <div class="content">
-            <p>Hello StuMart Community,</p>
-            
-            <div class="message-content">
-                {{ message|safe }}
+    <div class="email-container">
+        <div class="email-wrapper">
+            <!-- Header -->
+            <div class="header">
+                <div class="logo">STUMART</div>
+                <div class="tagline">Your Campus Marketplace</div>
             </div>
-            
-            <p>We're constantly working to improve your experience on StuMart. Thank you for being part of our growing community of students, vendors, and delivery partners.</p>
-            
-            <p style="text-align: center;">
-                <a href="https://stumart.com" class="button">Visit StuMart</a>
-            </p>
-            
-            <p>Best regards,<br>
-            The StuMart Team</p>
-        </div>
-        
-        <div class="footer">
-            <div class="footer-content">
-                <div class="social-links">
-                    <a href="#" title="Facebook">f</a>
-                    <a href="#" title="Twitter">t</a>
-                    <a href="#" title="Instagram">i</a>
-                    <a href="#" title="LinkedIn">in</a>
+
+            <!-- Title Section -->
+            <div class="title-section">
+                <h1 class="newsletter-title">{{ subject }}</h1>
+                <p class="newsletter-subtitle">Stay updated with the latest from StuMart</p>
+            </div>
+
+            <!-- Main Content -->
+            <div class="content">
+                <p class="greeting">Hello StuMart Community! 👋</p>
+
+                <div class="message-box">
+                    <div class="message-text">
+                        {{ message|safe }}
+                    </div>
                 </div>
-                
-                <p>Stay connected with us on social media for the latest updates and announcements.</p>
-                
-                <div class="unsubscribe">
-                    <p>
-                        <a href="{{ unsubscribe_url }}">Unsubscribe from these emails</a> | 
-                        <a href="mailto:{{ support_email }}">Contact Support</a>
-                    </p>
+
+                <p class="closing-text">
+                    We're constantly working to improve your experience on StuMart. Thank you for being part of our growing community of students, vendors, and delivery partners who are transforming campus commerce.
+                </p>
+
+                <div class="cta-section">
+                    <a href="https://stumart.com" class="cta-button">Visit StuMart</a>
+                </div>
+
+                <div class="signature">
+                    <p>Best regards,<br>
+                    <span class="team-name">The StuMart Team</span></p>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="footer">
+                <div class="social-section">
+                    <div class="social-links">
+                        <a href="#" class="social-link" title="Facebook">f</a>
+                        <a href="#" class="social-link" title="Twitter">𝕏</a>
+                        <a href="#" class="social-link" title="Instagram">📷</a>
+                        <a href="#" class="social-link" title="LinkedIn">in</a>
+                    </div>
+                    <p class="social-text">Stay connected for the latest updates and announcements</p>
+                </div>
+
+                <div class="footer-links">
+                    <a href="{{ unsubscribe_url }}">Unsubscribe</a>
+                    <a href="mailto:{{ support_email }}">Contact Support</a>
+                    <a href="https://stumart.com/privacy">Privacy Policy</a>
+                </div>
+
+                <div class="copyright">
                     <p>&copy; 2024 {{ company_name }}. All rights reserved.</p>
                 </div>
             </div>
