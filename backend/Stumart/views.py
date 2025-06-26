@@ -1876,7 +1876,7 @@ class AllProductsView(APIView):
         
         # Category filter
         if filters['category']:
-            queryset = queryset.filter(vendor__business_category__iexact=filters['category'])
+            queryset = queryset.filter(vendor__vendor_profile__business_category__iexact=filters['category'])
             print(f"After category filter: {queryset.count()}")
 
         # Price range filter

@@ -4,7 +4,7 @@ import csv
 import json
 from datetime import datetime
 from django.http import HttpResponse, JsonResponse
-from django.core.mail import send_mail, EmailMessage
+from django.core.mail import send_mail, EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
@@ -274,6 +274,7 @@ class DownloadTransactionsListView(APIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+
 class SendKYCReminderView(APIView):
     """Send KYC reminder to users without KYC verification"""
     permission_classes = [IsAdminUser]
@@ -310,15 +311,15 @@ class SendKYCReminderView(APIView):
                     html_content = render_to_string('email/kyc_reminder.html', context)
                     plain_content = strip_tags(html_content)
 
-                    # Send email
-                    email = EmailMessage(
+                    # Send email using EmailMultiAlternatives
+                    email = EmailMultiAlternatives(
                         subject='Complete Your KYC Verification - StuMart',
-                        html_message=html_content,
-                        message=plain_content,
+                        body=plain_content,  # Plain text version
                         from_email=settings.DEFAULT_FROM_EMAIL,
                         to=[user.email],
                     )
-                    email.content_subtype = 'html'
+                    # Attach HTML version
+                    email.attach_alternative(html_content, "text/html")
                     email.send()
                     
                     sent_count += 1
@@ -384,15 +385,15 @@ class SendProductReminderView(APIView):
                     html_content = render_to_string('email/product_reminder.html', context)
                     plain_content = strip_tags(html_content)
 
-                    # Send email
-                    email = EmailMessage(
+                    # Send email using EmailMultiAlternatives
+                    email = EmailMultiAlternatives(
                         subject='Add Your First Product - StuMart',
-                        html_message=html_content,
-                        message=plain_content,
+                        body=plain_content,  # Plain text version
                         from_email=settings.DEFAULT_FROM_EMAIL,
                         to=[user.email],
                     )
-                    email.content_subtype = 'html'
+                    # Attach HTML version
+                    email.attach_alternative(html_content, "text/html")
                     email.send()
 
                     sent_count += 1
@@ -418,34 +419,6 @@ class SendProductReminderView(APIView):
                 'success': False,
                 'message': f'Error sending product reminders: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-    # def get(self, request):
-    #     """Get count of vendors without products (for preview)"""
-    #     try:
-    #         vendors_without_products = Vendor.objects.filter(
-    #             user__products__isnull=True,
-    #             user__kyc__verification_status='approved',  # Only KYC verified vendors
-    #         ).exclude(
-    #             business_category='others'
-    #         ).distinct()
-
-    #         # Get breakdown by category
-    #         category_breakdown = vendors_without_products.values('business_category').annotate(
-    #             count=models.Count('id')
-    #         ).order_by('business_category')
-
-    #         return Response({
-    #             'success': True,
-    #             'total_count': vendors_without_products.count(),
-    #             'category_breakdown': list(category_breakdown),
-    #             'message': f'Found {vendors_without_products.count()} eligible vendors without products'
-    #         })
-
-    #     except Exception as e:
-    #         return Response({
-    #             'success': False,
-    #             'message': f'Error getting vendor count: {str(e)}'
-    #         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class SendNewsletterView(APIView):
@@ -506,15 +479,15 @@ class SendNewsletterView(APIView):
                     html_content = render_to_string('email/newsletter.html', context)
                     plain_content = strip_tags(html_content)
 
-                    # Send email
-                    email = EmailMessage(
+                    # Send email using EmailMultiAlternatives for HTML support
+                    email = EmailMultiAlternatives(
                         subject=f'{subject} - StuMart',
-                        html_message=html_content,
-                        message=plain_content,
+                        body=plain_content,  # Plain text version
                         from_email=settings.DEFAULT_FROM_EMAIL,
                         bcc=batch_recipients,  # Use BCC to hide recipients from each other
                     )
-                    email.content_subtype = 'html'
+                    # Attach HTML version
+                    email.attach_alternative(html_content, "text/html")
                     email.send()
                     
                     sent_count += len(batch_recipients)
