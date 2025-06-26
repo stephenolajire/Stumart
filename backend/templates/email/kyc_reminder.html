@@ -3,244 +3,571 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Complete Your KYC Verification</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Complete Your KYC Verification - StuMart</title>
+    <!--[if mso]>
+    <noscript>
+        <xml>
+            <o:OfficeDocumentSettings>
+                <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+        </xml>
+    </noscript>
+    <![endif]-->
     <style>
+        /* Reset and Base Styles */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
-        :root {
-            font-size: 62.5%;
-            
-            /* Primary Colors - Brownish Gold */
-            --primary-100: #fdf6e9;
-            --primary-200: #f9e5bb;
-            --primary-300: #f4d08d;
-            --primary-400: #efbb5f;
-            --primary-500: #daa520;
-            --primary-600: #b38517;
-            --primary-700: #8c660f;
-            --primary-800: #664807;
-            --primary-900: #402c04;
-
-            /* State Colors */
-            --success: #22c55e;
-            --warning: #f59e0b;
-            --error: #ef4444;
-            --info: #3b82f6;
-
-            /* Light Theme */
-            --background: #ffffff;
-            --text-primary: #1f2937;
-            --text-secondary: #6b7280;
-            --surface: #f9fafb;
-            --border: #e5e7eb;
-            --shadow: rgba(0, 0, 0, 0.1);
-            --neutral-white: #ffffff;
-            --neutral-gray-100: #f3f4f6;
-            --hover-bg: #f3f4f6;
-
-            /* Font Sizes */
-            --h1-desktop: 4.8rem;
-            --h2-desktop: 4rem;
-            --h3-desktop: 3.2rem;
-            --h4-desktop: 2.4rem;
-            --h5-desktop: 2rem;
-            --h6-desktop: 1.8rem;
+        body, table, td, p, a, li, blockquote {
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
         }
 
-        body {
-            font-family: 'Montserrat', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            line-height: 1.6;
-            color: var(--text-primary);
+        table, td {
+            mso-table-lspace: 0pt;
+            mso-table-rspace: 0pt;
+        }
+
+        img {
+            -ms-interpolation-mode: bicubic;
+            border: 0;
+            height: auto;
+            line-height: 100%;
+            outline: none;
+            text-decoration: none;
+        }
+
+        /* Color Variables */
+        .primary-gold { color: #daa520 !important; }
+        .primary-dark-gold { color: #b8941a !important; }
+        .text-primary { color: #1a1a1a !important; }
+        .text-secondary { color: #666666 !important; }
+        .text-white { color: #ffffff !important; }
+        .warning-color { color: #f59e0b !important; }
+        .success-color { color: #22c55e !important; }
+
+        /* Main Container */
+        .email-container {
             max-width: 600px;
             margin: 0 auto;
-            padding: 2rem;
-            background-color: var(--surface);
-            font-size: 1.6rem;
+            background-color: #f5f5f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
-        .container {
-            background-color: var(--background);
-            padding: 3rem;
-            border-radius: 1rem;
-            box-shadow: 0 0.4rem 2rem var(--shadow);
-            border: 1px solid var(--border);
+        .email-wrapper {
+            background-color: #ffffff;
+            margin: 20px auto;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
         }
 
+        /* Header Styles */
         .header {
+            background: linear-gradient(135deg, #daa520 0%, #b8941a 100%);
+            padding: 40px 30px;
             text-align: center;
-            margin-bottom: 3rem;
+            position: relative;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" patternUnits="userSpaceOnUse" width="100" height="100"><circle cx="50" cy="50" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
         }
 
         .logo {
-            font-size: 3.2rem;
-            font-weight: 700;
-            color: var(--primary-500);
-            margin-bottom: 1rem;
-            letter-spacing: 0.1rem;
+            font-size: 36px;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 15px;
+            letter-spacing: 2px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 1;
         }
 
-        .title {
-            color: var(--text-primary);
-            font-size: var(--h4-desktop);
-            margin-bottom: 2rem;
+        .header-title {
+            font-size: 24px;
             font-weight: 600;
+            color: #ffffff;
+            position: relative;
+            z-index: 1;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
         }
 
+        /* Security Badge */
+        .security-badge {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            margin-top: 15px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .security-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 8px;
+            background: #ffffff;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #daa520;
+        }
+
+        .security-text {
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* Content Styles */
         .content {
-            margin-bottom: 3rem;
+            padding: 40px 30px;
+            background-color: #ffffff;
         }
 
-        .content p {
-            margin-bottom: 1.5rem;
-            color: var(--text-primary);
-            font-size: 1.6rem;
+        .greeting {
+            font-size: 18px;
+            color: #1a1a1a;
+            margin-bottom: 25px;
+            font-weight: 500;
         }
 
-        .button {
-            display: inline-block;
-            background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
-            color: var(--neutral-white);
-            padding: 1.5rem 3rem;
-            text-decoration: none;
-            border-radius: 0.8rem;
+        .intro-text {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #333333;
+            margin-bottom: 30px;
+        }
+
+        /* Importance Box */
+        .importance-box {
+            background: linear-gradient(135deg, #fff8e1 0%, #fff3c4 100%);
+            border: 2px solid #fbbf24;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 30px 0;
+            position: relative;
+            box-shadow: 0 4px 16px rgba(251, 191, 36, 0.15);
+        }
+
+        .importance-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .importance-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .importance-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #92400e;
+            margin: 0;
+        }
+
+        .benefits-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .benefits-list li {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            font-size: 15px;
+            color: #1a1a1a;
+            line-height: 1.5;
+        }
+
+        .benefits-list li::before {
+            content: '✓';
+            background: #22c55e;
+            color: #ffffff;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            margin-top: 2px;
+            flex-shrink: 0;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        /* Requirements Section */
+        .requirements-section {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 25px;
+            margin: 30px 0;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .requirements-title {
+            font-size: 16px;
             font-weight: 600;
-            margin: 2rem 0;
+            color: #1e40af;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .requirements-title::before {
+            content: '📋';
+            margin-right: 8px;
+            font-size: 18px;
+        }
+
+        .requirements-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .requirements-list li {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 15px;
+            color: #334155;
+        }
+
+        .requirements-list li::before {
+            content: '•';
+            color: #3b82f6;
+            font-size: 20px;
+            margin-right: 12px;
+            line-height: 1;
+        }
+
+        /* CTA Button */
+        .cta-section {
+            text-align: center;
+            margin: 40px 0;
+            padding: 30px 0;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border-radius: 12px;
+            border: 2px dashed #0ea5e9;
+        }
+
+        .cta-text {
+            font-size: 16px;
+            color: #0c4a6e;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #daa520 0%, #b8941a 100%);
+            color: #ffffff;
+            text-decoration: none;
+            padding: 18px 36px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 6px 20px rgba(218, 165, 32, 0.4);
             transition: all 0.3s ease;
-            box-shadow: 0 0.4rem 1.2rem rgba(218, 165, 32, 0.3);
-            font-size: 1.6rem;
+            position: relative;
+            overflow: hidden;
         }
 
-        .button:hover {
-            background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
-            transform: translateY(-0.2rem);
-            box-shadow: 0 0.6rem 2rem rgba(218, 165, 32, 0.4);
+        .cta-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
         }
 
+        .cta-button:hover::before {
+            left: 100%;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(218, 165, 32, 0.5);
+        }
+
+        /* Support Section */
+        .support-section {
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            padding: 25px;
+            border-radius: 8px;
+            margin: 30px 0;
+            text-align: center;
+        }
+
+        .support-text {
+            font-size: 15px;
+            color: #475569;
+            margin-bottom: 15px;
+        }
+
+        .support-link {
+            color: #daa520;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .support-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Closing */
+        .closing {
+            margin-top: 40px;
+            padding-top: 25px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .closing p {
+            font-size: 16px;
+            color: #333333;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .signature {
+            font-weight: 600;
+            color: #daa520;
+        }
+
+        /* Footer */
         .footer {
-            margin-top: 3rem;
-            padding-top: 2rem;
-            border-top: 1px solid var(--border);
-            font-size: 1.4rem;
-            color: var(--text-secondary);
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 30px;
+            border-top: 1px solid #e0e0e0;
+            text-align: center;
         }
 
-        .footer p {
-            margin-bottom: 1rem;
+        .footer-text {
+            font-size: 13px;
+            color: #666666;
+            margin-bottom: 10px;
+            line-height: 1.4;
         }
 
-        .highlight {
-            background: linear-gradient(135deg, var(--warning), #fbbf24);
-            color: var(--text-primary);
-            padding: 2rem;
-            border-radius: 0.8rem;
-            border-left: 0.4rem solid var(--primary-500);
-            margin: 2rem 0;
-            box-shadow: 0 0.2rem 1rem rgba(245, 158, 11, 0.2);
+        .footer-email {
+            color: #daa520;
+            text-decoration: none;
         }
 
-        .highlight strong {
-            display: block;
-            margin-bottom: 1rem;
-            font-size: 1.8rem;
-            color: var(--text-primary);
+        .footer-email:hover {
+            text-decoration: underline;
         }
 
-        .highlight ul {
-            margin-left: 2rem;
-            margin-top: 1rem;
+        .copyright {
+            font-size: 12px;
+            color: #999999;
+            margin-top: 15px;
         }
 
-        .highlight li {
-            margin-bottom: 0.8rem;
-            color: var(--text-primary);
-        }
-
-        ul {
-            margin-left: 2rem;
-            margin-bottom: 1.5rem;
-        }
-
-        li {
-            margin-bottom: 0.8rem;
-            color: var(--text-primary);
-        }
-
-        @media screen and (max-width: 768px) {
-            body {
-                padding: 1rem;
-                font-size: 1.4rem;
+        /* Responsive Design */
+        @media screen and (max-width: 600px) {
+            .email-wrapper {
+                margin: 10px;
+                border-radius: 8px;
             }
 
-            .container {
-                padding: 2rem;
+            .header {
+                padding: 30px 20px;
             }
 
             .logo {
-                font-size: 2.8rem;
+                font-size: 28px;
             }
 
-            .title {
-                font-size: 2.4rem;
+            .header-title {
+                font-size: 20px;
             }
 
-            .button {
-                padding: 1.2rem 2.4rem;
-                font-size: 1.4rem;
+            .content {
+                padding: 30px 20px;
             }
 
-            .highlight {
-                padding: 1.5rem;
+            .importance-box,
+            .requirements-section,
+            .cta-section,
+            .support-section {
+                padding: 20px;
+                margin: 20px 0;
+            }
+
+            .cta-button {
+                padding: 16px 32px;
+                font-size: 15px;
+            }
+
+            .footer {
+                padding: 25px 20px;
+            }
+
+            .importance-header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .importance-icon {
+                margin-right: 0;
+                margin-bottom: 8px;
+            }
+        }
+
+        /* Dark Mode Support */
+        @media (prefers-color-scheme: dark) {
+            .email-container {
+                background-color: #1a1a1a;
+            }
+
+            .email-wrapper {
+                background-color: #2d2d2d;
+            }
+
+            .content {
+                background-color: #2d2d2d;
+            }
+
+            .greeting,
+            .intro-text,
+            .closing p {
+                color: #ffffff;
+            }
+
+            .requirements-section {
+                background-color: #374151;
+            }
+
+            .support-section {
+                background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+            }
+
+            .support-text {
+                color: #d1d5db;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="logo">STUMART</div>
-            <h1 class="title">Complete Your KYC Verification</h1>
-        </div>
-        
-        <div class="content">
-            <p>Dear {{ user_name }},</p>
-            
-            <p>We hope this email finds you well. We noticed that your KYC (Know Your Customer) verification is still pending on your StuMart account.</p>
-            
-            <div class="highlight">
-                <strong>Why is KYC verification important?</strong>
-                <ul>
-                    <li>Ensures the security of your account</li>
-                    <li>Enables full access to all platform features</li>
-                    <li>Builds trust within our community</li>
-                    <li>Required for certain transactions and services</li>
-                </ul>
+    <div class="email-container">
+        <div class="email-wrapper">
+            <!-- Header -->
+            <div class="header">
+                <div class="logo">STUMART</div>
+                <h1 class="header-title">Complete Your KYC Verification</h1>
+                <div class="security-badge">
+                    <div class="security-icon">🔒</div>
+                    <span class="security-text">Secure Verification Process</span>
+                </div>
             </div>
-            
-            <p>Completing your KYC verification is quick and easy. You'll need:</p>
-            <ul>
-                <li>A clear selfie photo</li>
-                <li>A valid government-issued ID (Student ID, National ID, Driver's License, etc.)</li>
-            </ul>
-            
-            <p style="text-align: center;">
-                <a href="{{ kyc_url }}" class="button">Complete KYC Verification Now</a>
-            </p>
-            
-            <p>If you have any questions or need assistance with the verification process, please don't hesitate to contact our support team.</p>
-            
-            <p>Thank you for being part of the StuMart community!</p>
-            
-            <p>Best regards,<br>
-            The StuMart Team</p>
-        </div>
-        
-        <div class="footer">
-            <p>This email was sent to {{ user_email }}. If you have any questions, please contact us at {{ support_email }}.</p>
-            <p>&copy; 2024 {{ company_name }}. All rights reserved.</p>
+
+            <!-- Main Content -->
+            <div class="content">
+                <p class="greeting">Dear {{ user_name }},</p>
+                
+                <p class="intro-text">
+                    We hope this email finds you well! We noticed that your KYC (Know Your Customer) verification is still pending on your StuMart account. Let's get this completed so you can enjoy the full StuMart experience! 🚀
+                </p>
+
+                <!-- Importance Highlight -->
+                <div class="importance-box">
+                    <div class="importance-header">
+                        <div class="importance-icon">!</div>
+                        <h3 class="importance-title">Why is KYC verification important?</h3>
+                    </div>
+                    <ul class="benefits-list">
+                        <li>Ensures maximum security for your account and transactions</li>
+                        <li>Unlocks full access to all premium platform features</li>
+                        <li>Builds trust and credibility within our community</li>
+                        <li>Required for secure payments and vendor transactions</li>
+                        <li>Protects you and other users from fraud</li>
+                    </ul>
+                </div>
+
+                <!-- Requirements -->
+                <div class="requirements-section">
+                    <h3 class="requirements-title">What you'll need to get started:</h3>
+                    <ul class="requirements-list">
+                        <li>A clear, well-lit selfie photo</li>
+                        <li>Valid government-issued ID (Student ID, National ID, Driver's License, or Passport)</li>
+                        <li>Just 2-3 minutes of your time!</li>
+                    </ul>
+                </div>
+
+                <!-- Call to Action -->
+                <div class="cta-section">
+                    <p class="cta-text">Ready to verify your account? It's quick and secure!</p>
+                    <a href="https://stumart.com.ng/login" class="cta-button">
+                        🚀 Complete KYC Verification Now
+                    </a>
+                </div>
+
+                <!-- Support Section -->
+                <div class="support-section">
+                    <p class="support-text">
+                        Need help with the verification process? Our friendly support team is here to assist you!
+                    </p>
+                    <a href="mailto:{{ support_email }}" class="support-link">Contact Support Team</a>
+                </div>
+
+                <p style="font-size: 16px; color: #333333; margin: 25px 0; line-height: 1.6;">
+                    Thank you for being a valued member of the StuMart community. We're excited to help you unlock the full potential of our platform! 🎉
+                </p>
+
+                <!-- Closing -->
+                <div class="closing">
+                    <p>Warm regards,<br>
+                    <span class="signature">The StuMart Verification Team</span></p>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="footer">
+                <p class="footer-text">
+                    This email was sent to <strong>{{ user_email }}</strong><br>
+                    Questions? Contact us at <a href="mailto:{{ support_email }}" class="footer-email">{{ support_email }}</a>
+                </p>
+                <div class="copyright">
+                    <p>&copy; 2025 {{ company_name }}. All rights reserved.</p>
+                </div>
+            </div>
         </div>
     </div>
 </body>
