@@ -673,10 +673,10 @@ class KYCVerificationAPIView(APIView):
                 try:
                     send_mail(
                         subject=subject,
-                        message=plain_message,
                         from_email=settings.DEFAULT_FROM_EMAIL,
                         recipient_list=[verification.user.email],
                         html_message=html_message,
+                        message=plain_message,
                         fail_silently=False,
                     )
                 except Exception as e:
