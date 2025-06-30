@@ -14,6 +14,7 @@ import {
   FaMoneyBill,
   FaEye,
   FaEyeSlash,
+  FaHouseUser
 } from "react-icons/fa";
 import Swal from "sweetalert2";
 import styles from "../css/SignUp.module.css";
@@ -55,6 +56,7 @@ const Signup = () => {
     accountNumber: "",
     accountName: "",
     bankName: "",
+    residence:""
   });
 
   const navigate = useNavigate();
@@ -137,6 +139,7 @@ const Signup = () => {
       accountNumber: "account_number",
       accountName: "account_name",
       bankName: "bank_name",
+      residence:"residence"
     };
 
     const mappedErrors = {};
@@ -160,6 +163,9 @@ const Signup = () => {
     // Common validations
     if (!formData.firstName?.trim()) {
       newErrors.firstName = "First name is required";
+    }
+    if (!formData.residence) {
+      newErrors.firstName = "Residence is required";
     }
     if (!formData.lastName?.trim()) {
       newErrors.lastName = "Last name is required";
@@ -470,6 +476,7 @@ const Signup = () => {
       formDataToSend.append("phone_number", formData.phoneNumber);
       formDataToSend.append("state", formData.state);
       formDataToSend.append("institution", formData.institution);
+      formDataToSend.append("residence", formData.residence)
       formDataToSend.append(
         "user_type",
         formData.userType.toLowerCase().replace(" ", "_")
@@ -719,6 +726,23 @@ const Signup = () => {
           {errors.institution && (
             <span className={styles.error}>{errors.institution}</span>
           )}
+        </div>
+
+        <div className={styles.formGroup}>
+          <label>
+            <FaHouseUser /> Residence
+          </label>
+          <select
+            name="residence"
+            value={formData.residence}
+            onChange={handleChange}
+            className={styles.formControl}
+          >
+            <option value="">Select Residence</option>
+            <option value="on_campus">On Campus</option>
+            <option value="off_campus">Off Campus</option>
+          </select>
+          {errors.residence && <span className={styles.error}>{errors.residence}</span>}
         </div>
 
         <div className={styles.formGroup}>

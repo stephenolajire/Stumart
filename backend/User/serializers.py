@@ -63,7 +63,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'email', 'username', 'password',
+        fields = ('id', 'email', 'username', 'password','residence',
                   'first_name', 'last_name', 'phone_number', 'user_type',
                   'profile_pic', 'state', 'institution', 'image_url')
         extra_kwargs = {
@@ -122,6 +122,17 @@ class UserSerializer(serializers.ModelSerializer):
             raise UsernameExistsError()
         
         return value.lower()
+    
+    def validate_residence(self, value):
+        if not value:
+            raise MissingRequiredFieldError("Residence is required.")
+        
+        # Get the instance being updated (if this is an update operation)
+        instance = getattr(self, 'instance', None)
+        
+        # If this is an update and the username hasn't changed, allow it
+        if instance and instance.residence == value:
+            return value
 
     def validate_phone_number(self, value):
         if not value:

@@ -42,9 +42,15 @@ class User(AbstractUser):
         ('student_picker', 'Student Picker'),
     )
 
+    RESIDENCE_CHOICES = (
+        ('on_campus', 'On Campus'),
+        ('off_campus', 'Off Campus'),
+    )
+
     email = models.EmailField(_('email address'), unique=True)
     phone_number = models.CharField(max_length=15, unique=True)
     user_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES)
+    residence = models.CharField(max_length=20, choices=RESIDENCE_CHOICES, default=" ")
     profile_pic = CloudinaryField('profile_pics/', null=True, blank=True)
     state = models.CharField(max_length=50)
     first_name = models.CharField(max_length=200)
