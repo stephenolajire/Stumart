@@ -121,7 +121,7 @@ const Login = () => {
         // }
 
         if (
-          kyc_status === "approved" || kyc_status === "pending" &&
+          (kyc_status === "approved" || kyc_status === "pending") &&
           user_type === "vendor" &&
           category !== "others"
         ) {
@@ -129,7 +129,7 @@ const Login = () => {
           auth();
           return;
         } else if (
-          kyc_status === "approved" &&
+          (kyc_status === "approved" || kyc_status === "pending") &&
           user_type === "vendor" &&
           category === "others"
         ) {
@@ -143,7 +143,7 @@ const Login = () => {
             return;
           }
         }
-        if (kyc_status === "approved") {
+        if (kyc_status === "approved" || kyc_status === "pending") {
           if (user_type === "picker" || user_type === "student_picker") {
             navigate("/picker");
           }
