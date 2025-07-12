@@ -3,7 +3,7 @@ import axios from "axios";
 import styles from "./css/AddProduct.module.css";
 import api from "../constant/api";
 import Swal from "sweetalert2";
-import Header from "../components/Header";
+import Header from "./Header";
 
 // Configure toast notification
 const Toast = Swal.mixin({
@@ -542,8 +542,7 @@ const AddProduct = () => {
 
   return (
     <div className={styles.container}>
-      <Header title="Add Product" />
-
+      <Header/>
       {businessCategory && (
         <div className={styles.categoryInfo}>
           Category: <strong>{businessCategory}</strong>

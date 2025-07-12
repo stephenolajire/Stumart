@@ -115,13 +115,13 @@ const Login = () => {
           return;
         }
 
-        if (kyc_status === "pending") {
-          navigate("/kyc-status");
-          return;
-        }
+        // if (kyc_status === "pending") {
+        //   navigate("/kyc-status");
+        //   return;
+        // }
 
         if (
-          kyc_status === "approved" &&
+          kyc_status === "approved" || kyc_status === "pending" &&
           user_type === "vendor" &&
           category !== "others"
         ) {

@@ -18,6 +18,6 @@ def create_vendor_subscription(sender, instance, created, **kwargs):
                 user=user,
                 plan=None,  # Free trial has no specific plan
                 start_date=timezone.now(),
-                end_date=timezone.now() + timedelta(days=180),
+                end_date=timezone.now() + timedelta(days=1000),
                 status='trial'
             )

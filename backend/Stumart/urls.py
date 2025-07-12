@@ -5,7 +5,7 @@ from .views import SearchSpecificServiceView
 from .views import CancelOrderView
 
 urlpatterns = [
-    path('vendor-products/<int:id>', ProductsView.as_view(), name='list-vendor-products'),
+    path('vendor-products/<int:id>', SpecificVendorProductsView.as_view(), name='list-vendor-products'),
     path("shops-by-school/", VendorsBySchoolView.as_view(), name="shops-by-school"),
     path("shops-by-category/", VendorsByOtherView.as_view()),
     path("shops-by-school-and-category/", VendorsByOtherandSchoolView.as_view()),

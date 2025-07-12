@@ -165,7 +165,7 @@ const Signup = () => {
       newErrors.firstName = "First name is required";
     }
     if (!formData.residence) {
-      newErrors.firstName = "Residence is required";
+      newErrors.residence = "Residence is required";
     }
     if (!formData.lastName?.trim()) {
       newErrors.lastName = "Last name is required";

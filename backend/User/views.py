@@ -193,24 +193,56 @@ class StudentAPIView(BaseAPIView):
 class VendorAPIView(BaseAPIView):
     model = Vendor
     serializer_class = VendorSerializer
-
+    
     def get(self, request, pk=None):
         if pk:
             vendor = get_object_or_404(Vendor, pk=pk)
+            # Check if vendor has approved KYC before returning details
+            if not self._is_vendor_kyc_approved(vendor):
+                return Response(
+                    {'error': 'Vendor not found or not available.'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
             serializer = VendorSerializer(vendor)
             return Response(serializer.data)
-
+        
+        # Get query parameters
         category = request.query_params.get('category')
         specific_category = request.query_params.get('specific_category')
         
+        # Start with all vendors and apply KYC filtering
         vendors = Vendor.objects.all()
+        vendors = self._apply_kyc_filtering(vendors)
+        
+        # Apply category filters
         if category:
             vendors = vendors.filter(business_category=category)
         if specific_category:
             vendors = vendors.filter(specific_category=specific_category)
-            
+        
         serializer = VendorSerializer(vendors, many=True)
         return Response(serializer.data)
+    
+    def _apply_kyc_filtering(self, queryset):
+        """
+        Filter out vendors whose KYC is not approved.
+        Only show vendors with approved KYC status.
+        """
+        # Filter to only include vendors with approved KYC
+        queryset = queryset.filter(user__kyc__verification_status='approved')
+        print(f"After KYC filtering (approved vendors only): {queryset.count()}")
+        return queryset
+    
+    def _is_vendor_kyc_approved(self, vendor):
+        """
+        Check if a specific vendor has approved KYC status.
+        """
+        try:
+            return vendor.user.kyc.verification_status == 'approved'
+        except AttributeError:
+            # If vendor doesn't have KYC record, consider as not approved
+            return False
+        
 
 class PickerAPIView(BaseAPIView):
     model = Picker

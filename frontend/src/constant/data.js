@@ -341,7 +341,7 @@ export const businessCategories = [
   "Home",
   "Books",
   "Electronics",
-  // "Others",
+  "Others",
 ];
 
 export const otherBusinessCategories = [

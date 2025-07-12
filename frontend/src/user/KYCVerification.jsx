@@ -145,7 +145,7 @@ const KYCVerification = () => {
         confirmButtonColor: "var(--primary-500)",
       });
 
-      navigate("/login");
+      navigate("/add-product");
     } catch (error) {
       console.error("KYC Submission Error:", error);
       Swal.fire({

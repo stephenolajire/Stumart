@@ -87,7 +87,7 @@ const promotions = [
 ];
 
 // Move constants outside component
-const SHOPS_PER_PAGE = 14;
+const SHOPS_PER_PAGE = 18;
 
 // Separate components
 const CategoryCard = memo(({ category, isActive, onClick }) => (
@@ -900,7 +900,7 @@ const Home = memo(() => {
           </div>
         ) : hasError ? (
           <div className={styles.errorContainer}>
-            <p>Error loading shops. Please try again.</p>
+            <p>No Verified shops found in the selected school.</p>
           </div>
         ) : shopState.filteredShops && shopState.filteredShops.length > 0 ? (
           <>

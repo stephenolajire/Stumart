@@ -55,7 +55,7 @@ from django.core.paginator import Paginator
 import json
 from .models import Conversation, Message, MessageReadStatus, ServiceApplication
 
-class ProductsView(APIView):
+class SpecificVendorProductsView(APIView):
     def get(self, request, id):
         try:
             vendor = get_object_or_404(Vendor, id=id)
@@ -108,8 +108,9 @@ class VendorsBySchoolView(APIView):
                     status=status.HTTP_404_NOT_FOUND
                 )
             
-            # Get vendors linked to those users
+            # Get vendors linked to those users and apply KYC filtering
             vendors = Vendor.objects.filter(user__in=users).distinct()
+            vendors = self._apply_kyc_filtering(vendors)
             
             if not vendors.exists():
                 return Response(
@@ -123,11 +124,20 @@ class VendorsBySchoolView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         except Exception as e:
-            
             return Response(
                 {"error": "An unexpected error occurred. Please try again."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+    
+    def _apply_kyc_filtering(self, queryset):
+        """
+        Filter out vendors whose KYC is not approved.
+        Only show vendors with approved KYC status.
+        """
+        queryset = queryset.filter(user__kyc__verification_status='approved')
+        print(f"After KYC filtering (approved vendors only): {queryset.count()}")
+        return queryset
+
 
 class VendorsByOtherView(APIView):
     def get(self, request):
@@ -147,6 +157,8 @@ class VendorsByOtherView(APIView):
                 filters["specific_category__iexact"] = specific_category
 
             vendors = Vendor.objects.filter(**filters)
+            # Apply KYC filtering
+            vendors = self._apply_kyc_filtering(vendors)
 
             if not vendors.exists():
                 return Response(
@@ -163,6 +175,16 @@ class VendorsByOtherView(APIView):
                 {"error": "An unexpected error occurred. Please try again."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+    
+    def _apply_kyc_filtering(self, queryset):
+        """
+        Filter out vendors whose KYC is not approved.
+        Only show vendors with approved KYC status.
+        """
+        queryset = queryset.filter(user__kyc__verification_status='approved')
+        print(f"After KYC filtering (approved vendors only): {queryset.count()}")
+        return queryset
+
         
 class VendorsByOtherandSchoolView(APIView):
     def get(self, request):
@@ -191,8 +213,9 @@ class VendorsByOtherandSchoolView(APIView):
                         status=status.HTTP_404_NOT_FOUND
                     )
                 
-                # Get vendors belonging to these users
+                # Get vendors belonging to these users and apply KYC filtering
                 vendors = Vendor.objects.filter(user__in=users_in_school)
+                vendors = self._apply_kyc_filtering(vendors)
                 
                 # Apply category filters if provided
                 if category:
@@ -227,8 +250,9 @@ class VendorsByOtherandSchoolView(APIView):
                         status=status.HTTP_404_NOT_FOUND
                     )
                 
-                # Get vendors belonging to these users
+                # Get vendors belonging to these users and apply KYC filtering
                 vendors = Vendor.objects.filter(user__in=users_in_school)
+                vendors = self._apply_kyc_filtering(vendors)
                 
                 # Apply category filters
                 if category:
@@ -251,6 +275,15 @@ class VendorsByOtherandSchoolView(APIView):
                 {"error": "An unexpected error occurred. Please try again."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+    
+    def _apply_kyc_filtering(self, queryset):
+        """
+        Filter out vendors whose KYC is not approved.
+        Only show vendors with approved KYC status.
+        """
+        queryset = queryset.filter(user__kyc__verification_status='approved')
+        print(f"After KYC filtering (approved vendors only): {queryset.count()}")
+        return queryset
         
 class ProductView(APIView):
     def get(self, request, id):
@@ -1773,7 +1806,7 @@ class CancelOrderView(APIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class ProductPagination(PageNumberPagination):
-    page_size = 12
+    page_size = 18
     page_size_query_param = 'page_size'
     max_page_size = 100
 
@@ -1802,6 +1835,9 @@ class AllProductsView(APIView):
             else:
                 queryset = self._handle_anonymous_user(request, filters)
             
+            # Apply KYC filtering first (most restrictive)
+            queryset = self._apply_kyc_filtering(queryset)
+            
             # Apply common filters and return response
             queryset = self._apply_common_filters(queryset, filters)
             queryset = self._apply_sorting(queryset, filters['sort'])
@@ -1810,6 +1846,16 @@ class AllProductsView(APIView):
 
         except Exception as e:
             return self._handle_error(e)
+
+    def _apply_kyc_filtering(self, queryset):
+        """
+        Filter out products from vendors whose KYC is not approved.
+        Only show products from vendors with approved KYC status.
+        """
+        # Filter to only include products from vendors with approved KYC
+        queryset = queryset.filter(vendor__kyc__verification_status='approved')
+        print(f"After KYC filtering (approved only): {queryset.count()}")
+        return queryset
 
     def _handle_authenticated_viewing_own_school(self, request, filters):
         """
@@ -1963,9 +2009,12 @@ class AllProductsView(APIView):
         
         # Calculate user's institution product count for authenticated users
         if request.user.is_authenticated:
-            response.data['user_institution_product_count'] = Product.objects.filter(
-                vendor__institution__iexact=request.user.institution
+            # Also apply KYC filtering to user's institution product count
+            user_institution_products = Product.objects.filter(
+                vendor__institution__iexact=request.user.institution,
+                vendor__kyc__verification_status='approved'
             ).count()
+            response.data['user_institution_product_count'] = user_institution_products
         else:
             response.data['user_institution_product_count'] = None
         
