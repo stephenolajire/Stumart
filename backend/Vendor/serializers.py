@@ -111,8 +111,20 @@ class DashboardStatsSerializer(serializers.Serializer):
 
 
 class WithdrawalSerializer(serializers.ModelSerializer):
-    # vendor = serializers.SerializerMethodField()
-
+    vendor_name = serializers.CharField(source='vendor.user.get_full_name', read_only=True)
+    bank_details = serializers.SerializerMethodField()
+    
     class Meta:
         model = Withdrawal
-        fields = ['id', 'vendor', 'amount', 'reference', 'payment_reference', 'status', 'created_at']
+        fields = [
+            'id', 'amount', 'reference', 'status', 'notes',
+            'created_at', 'processed_at', 'vendor_name', 'bank_details'
+        ]
+        read_only_fields = ['reference', 'created_at', 'processed_at']
+    
+    def get_bank_details(self, obj):
+        return {
+            'bank_name': obj.vendor.bank_name,
+            'account_number': f"***{obj.vendor.account_number[-4:]}" if obj.vendor.account_number else None,
+            'account_name': obj.vendor.account_name
+        }

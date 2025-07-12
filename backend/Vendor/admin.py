@@ -36,6 +36,6 @@ class VendorSalesDataAdmin(admin.ModelAdmin):
 
 @admin.register(Withdrawal)
 class WithdrawalAdmin(admin.ModelAdmin):
-    list_display = ('vendor', 'amount', 'reference', 'status', 'created_at', 'updated_at')
+    list_display = ('vendor', 'amount', 'reference', 'status', 'created_at')
     search_fields = ('vendor__business_name', 'reference', 'payment_reference')
     list_filter = ('status', 'created_at')

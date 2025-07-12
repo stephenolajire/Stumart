@@ -134,6 +134,7 @@ const vendorApi = {
   getWithdrawalHistory: async () => {
     try {
       const response = await api.get("payments/withdrawal_history/");
+      console.log(response.data)
       return response.data;
     } catch (error) {
       throw error;

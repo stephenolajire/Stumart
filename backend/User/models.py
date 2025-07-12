@@ -59,6 +59,12 @@ class User(AbstractUser):
     date_joined = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
     is_verified = models.BooleanField(default=False)
+    paystack_recipient_code = models.CharField(max_length=100, blank=True, null=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['paystack_recipient_code']),
+        ]
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []  # Empty list means only email and password required for superuser

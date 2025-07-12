@@ -49,39 +49,49 @@ const Payments = () => {
       // Try to fetch withdrawal history separately to handle errors
       try {
         const withdrawalData = await vendorApi.getWithdrawalHistory();
-        setWithdrawalHistory(withdrawalData);
+
+        // Handle both paginated response and direct array response
+        let withdrawalArray;
+        if (withdrawalData && typeof withdrawalData === "object") {
+          // If it's a paginated response, extract results
+          if (withdrawalData.results && Array.isArray(withdrawalData.results)) {
+            withdrawalArray = withdrawalData.results;
+          }
+          // If it's already an array
+          else if (Array.isArray(withdrawalData)) {
+            withdrawalArray = withdrawalData;
+          }
+          // If it's neither, default to empty array
+          else {
+            withdrawalArray = [];
+          }
+        } else {
+          withdrawalArray = [];
+        }
+
+        setWithdrawalHistory(withdrawalArray);
+        setWithdrawalError(false); // Reset error state on success
       } catch (withdrawalError) {
         console.error("Withdrawal history fetch error:", withdrawalError);
         setWithdrawalError(true);
-
-        // Set mock data for demonstration
-        setWithdrawalHistory([
-          {
-            id: 2,
-            vendor: 1,
-            amount: "1000.00",
-            reference: "WDR-ff575d213c",
-            payment_reference: null,
-            status: "PROCESSING",
-          },
-          {
-            id: 1,
-            vendor: 1,
-            amount: "1000.00",
-            reference: "WDR-0307d6895a",
-            payment_reference: null,
-            status: "PROCESSING",
-          },
-        ]);
+        setWithdrawalHistory([]); // Set empty array on error
       }
     } catch (error) {
-      console.error("Payments data fetch error:", error);
-      Swal.fire("Error", "Failed to fetch payment data", "error");
+      console.error("Main fetch error:", error);
+      // Handle main fetch errors here
+      setPayments([]);
+      setPaymentStats({
+        total_amount: 0,
+        paid_amount: 0,
+        pending_amount: 0,
+        total_transactions: 0,
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Move handleWithdraw outside of fetchPayments - it should be a separate function
   const handleWithdraw = () => {
     Swal.fire({
       title: "Request Withdrawal",
@@ -105,7 +115,8 @@ const Payments = () => {
         try {
           await vendorApi.requestWithdrawal(parseFloat(result.value));
           Swal.fire("Success", "Withdrawal successful", "success");
-          window.location.reload();
+          // Instead of window.location.reload(), consider calling fetchPayments()
+          fetchPayments();
         } catch (error) {
           console.error("Withdrawal error:", error);
           Swal.fire(
@@ -119,7 +130,7 @@ const Payments = () => {
   };
 
   const filterPayments = () => {
-    if (!payments) return [];
+    if (!Array.isArray(payments)) return [];
 
     const now = new Date();
     const thirtyDaysAgo = new Date();
@@ -152,12 +163,16 @@ const Payments = () => {
 
   // Pagination functions
   const paginatePayments = (data) => {
+    if (!Array.isArray(data)) return [];
+
     const indexOfLastItem = paymentsCurrentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
     return data.slice(indexOfFirstItem, indexOfLastItem);
   };
 
   const paginateWithdrawals = (data) => {
+    if (!Array.isArray(data)) return [];
+
     const indexOfLastItem = withdrawalCurrentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
     return data.slice(indexOfFirstItem, indexOfLastItem);

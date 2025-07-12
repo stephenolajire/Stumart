@@ -321,3 +321,38 @@ try:
 except Exception as e:
     print(f"Dialogflow initialization error: {str(e)}")
     session_client = None
+
+
+PAYSTACK_SECRET_KEY = os.getenv('PAYSTACK_SECRET_KEY', 'your-secret-key-here')
+PAYSTACK_PUBLIC_KEY = os.getenv('PAYSTACK_PUBLIC_KEY', 'your-public-key-here')
+PAYSTACK_BASE_URL = 'https://api.paystack.co'
+
+# Withdrawal Settings
+MIN_WITHDRAWAL_AMOUNT = 5000  # ₦1,000
+MAX_WITHDRAWAL_AMOUNT = 100000  # ₦100,000
+WITHDRAWAL_FEE = 0  # No fee for now
+DAILY_WITHDRAWAL_LIMIT = 500000  # ₦500,000
+MONTHLY_WITHDRAWAL_LIMIT = 2000000  # ₦2,000,000
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': 'withdrawal.log',
+        },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'Vendor': {
+            'handlers': ['file', 'console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    },
+}

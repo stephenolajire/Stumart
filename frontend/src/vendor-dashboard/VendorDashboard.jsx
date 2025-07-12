@@ -67,8 +67,8 @@ const VendorDashboard = () => {
 
       // Handle withdrawal history separately if the API exists
       try {
-        const withdrawData = await vendorApi.getWithdrawals();
-        setWithrawalHistory(withdrawData);
+        const withdrawalData = await vendorApi.getWithdrawalHistory();
+        setWithrawalHistory(withdrawalData);
       } catch (withdrawError) {
         console.warn("Withdrawal data not available:", withdrawError);
         setWithrawalHistory([]);

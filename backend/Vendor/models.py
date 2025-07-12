@@ -2,6 +2,7 @@ from django.db import models
 from django.db.models import Sum, Count
 from User.models import Vendor, User
 from Stumart.models import Product, Order, OrderItem, Transaction, Wallet
+from django.utils import timezone
 
 class VendorStats(models.Model):
     """Model to cache vendor dashboard statistics"""
@@ -62,21 +63,30 @@ class VendorSalesData(models.Model):
     
 
 class Withdrawal(models.Model):
-    STATUS_CHOICES = (
+    STATUS_CHOICES = [
         ('PENDING', 'Pending'),
         ('PROCESSING', 'Processing'),
         ('COMPLETED', 'Completed'),
         ('FAILED', 'Failed'),
-    )
+        ('REVERSED', 'Reversed'),
+    ]
     
-    vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE)
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE, related_name='withdrawals')
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
     reference = models.CharField(max_length=50, unique=True)
     payment_reference = models.CharField(max_length=100, null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
-    notes = models.TextField(blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    processed_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['vendor', 'status']),
+            models.Index(fields=['reference']),
+            models.Index(fields=['payment_reference']),
+        ]
     
     def __str__(self):
-        return f"{self.reference} - {self.amount}"
+        return f"Withdrawal {self.reference} - {self.vendor.user.email}"
