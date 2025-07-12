@@ -354,42 +354,243 @@ class PaymentViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = TransactionSerializer
     permission_classes = [IsAuthenticated]
     
-    # Bank code mapping for Nigerian banks
-    BANK_CODES = {
-        'access bank': '044',
-        'guaranty trust bank': '058',
-        'gtbank': '058',
-        'first bank of nigeria': '011',
-        'first bank': '011',
-        'united bank for africa': '033',
-        'uba': '033',
-        'zenith bank': '057',
-        'union bank': '032',
-        'fidelity bank': '070',
-        'sterling bank': '232',
-        'stanbic ibtc bank': '221',
-        'standard chartered': '068',
-        'citibank': '023',
-        'heritage bank': '030',
-        'keystone bank': '082',
-        'polaris bank': '076',
-        'providus bank': '101',
-        'suntrust bank': '100',
-        'titan trust bank': '102',
-        'unity bank': '215',
-        'wema bank': '035',
-        'ecobank': '050',
-        'fcmb': '214',
-        'jaiz bank': '301',
-        'taj bank': '302',
-        'globus bank': '103',
-        'premium trust bank': '105',
-    }
+    # Cache for bank codes - will be populated from Paystack API
+    _bank_codes_cache = {}
+    _cache_timestamp = None
     
     def get_queryset(self):
         vendor = self.request.user.vendor_profile
         vendor_orders = Order.objects.filter(order_items__vendor=vendor).values_list('id', flat=True)
         return Transaction.objects.filter(order__id__in=vendor_orders)
+    
+    def _get_paystack_banks(self) -> Dict[str, str]:
+        """
+        Fetch bank codes from Paystack API and cache them
+        Returns dict mapping bank names to bank codes
+        """
+        from datetime import datetime, timedelta
+        
+        # Check if cache is valid (refresh every 24 hours)
+        if (self._bank_codes_cache and self._cache_timestamp and 
+            datetime.now() - self._cache_timestamp < timedelta(hours=24)):
+            return self._bank_codes_cache
+        
+        try:
+            headers = {
+                "Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}",
+                "Content-Type": "application/json"
+            }
+            
+            response = requests.get(
+                f"{settings.PAYSTACK_BASE_URL}/bank",
+                headers=headers,
+                params={
+                    'country': 'nigeria',
+                    'use_cursor': 'false',
+                    'perPage': 100
+                },
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('status') and data.get('data'):
+                    # Create mapping of bank names to codes
+                    bank_codes = {}
+                    for bank in data['data']:
+                        bank_name = bank['name'].lower().strip()
+                        bank_code = bank['code']
+                        bank_codes[bank_name] = bank_code
+                        
+                        # Add common aliases
+                        if 'guaranty trust bank' in bank_name or 'gtbank' in bank_name:
+                            bank_codes['gtbank'] = bank_code
+                            bank_codes['guaranty trust bank'] = bank_code
+                        elif 'united bank for africa' in bank_name or 'uba' in bank_name:
+                            bank_codes['uba'] = bank_code
+                            bank_codes['united bank for africa'] = bank_code
+                        elif 'first bank' in bank_name:
+                            bank_codes['first bank'] = bank_code
+                            bank_codes['first bank of nigeria'] = bank_code
+                        elif 'access bank' in bank_name:
+                            bank_codes['access bank'] = bank_code
+                        elif 'zenith bank' in bank_name:
+                            bank_codes['zenith bank'] = bank_code
+                        elif 'fcmb' in bank_name or 'first city monument bank' in bank_name:
+                            bank_codes['fcmb'] = bank_code
+                            bank_codes['first city monument bank'] = bank_code
+                    
+                    # Update cache
+                    self._bank_codes_cache = bank_codes
+                    self._cache_timestamp = datetime.now()
+                    
+                    logger.info(f"Successfully fetched {len(bank_codes)} bank codes from Paystack")
+                    return bank_codes
+                else:
+                    logger.error(f"Invalid response from Paystack banks API: {data}")
+            else:
+                logger.error(f"Failed to fetch banks from Paystack: {response.status_code} - {response.text}")
+        
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Error fetching banks from Paystack: {str(e)}")
+        
+        # Return fallback bank codes if API fails
+        return self._get_fallback_bank_codes()
+    
+    def _get_fallback_bank_codes(self) -> Dict[str, str]:
+        """
+        Fallback bank codes in case Paystack API is unavailable
+        These are the most common Nigerian banks
+        """
+        return {
+            'access bank': '044',
+            'guaranty trust bank': '058',
+            'gtbank': '058',
+            'first bank of nigeria': '011',
+            'first bank': '011',
+            'united bank for africa': '033',
+            'uba': '033',
+            'zenith bank': '057',
+            'union bank': '032',
+            'fidelity bank': '070',
+            'sterling bank': '232',
+            'stanbic ibtc bank': '221',
+            'standard chartered': '068',
+            'citibank': '023',
+            'heritage bank': '030',
+            'keystone bank': '082',
+            'polaris bank': '076',
+            'providus bank': '101',
+            'suntrust bank': '100',
+            'titan trust bank': '102',
+            'unity bank': '215',
+            'wema bank': '035',
+            'ecobank': '050',
+            'fcmb': '214',
+            'first city monument bank': '214',
+            'jaiz bank': '301',
+            'taj bank': '302',
+            'globus bank': '103',
+            'premium trust bank': '105',
+        }
+    
+    def _get_bank_code(self, bank_name: str) -> Optional[str]:
+        """Get bank code from bank name using Paystack API"""
+        if not bank_name:
+            return None
+        
+        # Get latest bank codes
+        bank_codes = self._get_paystack_banks()
+        
+        # Normalize bank name for lookup
+        normalized_name = bank_name.lower().strip()
+        
+        # Direct lookup
+        if normalized_name in bank_codes:
+            return bank_codes[normalized_name]
+        
+        # Partial match lookup
+        for bank, code in bank_codes.items():
+            if bank in normalized_name or normalized_name in bank:
+                return code
+        
+        logger.warning(f"Bank code not found for: {bank_name}")
+        return None
+    
+    @action(detail=False, methods=['get'])
+    def supported_banks(self, request):
+        """Get list of supported banks"""
+        try:
+            bank_codes = self._get_paystack_banks()
+            
+            # Convert to list of bank objects
+            banks = []
+            processed_codes = set()  # Avoid duplicates
+            
+            for bank_name, bank_code in bank_codes.items():
+                if bank_code not in processed_codes:
+                    banks.append({
+                        'name': bank_name.title(),
+                        'code': bank_code
+                    })
+                    processed_codes.add(bank_code)
+            
+            # Sort by name
+            banks.sort(key=lambda x: x['name'])
+            
+            return Response({
+                'banks': banks,
+                'total': len(banks),
+                'last_updated': self._cache_timestamp.isoformat() if self._cache_timestamp else None
+            })
+            
+        except Exception as e:
+            logger.error(f"Error fetching supported banks: {str(e)}")
+            return Response(
+                {"error": "Failed to fetch supported banks"}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=False, methods=['post'])
+    def verify_account(self, request):
+        """Verify bank account details"""
+        bank_code = request.data.get('bank_code')
+        account_number = request.data.get('account_number')
+        
+        if not bank_code or not account_number:
+            return Response(
+                {"error": "Bank code and account number are required"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if not account_number.isdigit() or len(account_number) != 10:
+            return Response(
+                {"error": "Account number must be 10 digits"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            headers = {
+                "Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}",
+                "Content-Type": "application/json"
+            }
+            
+            response = requests.get(
+                f"{settings.PAYSTACK_BASE_URL}/bank/resolve",
+                headers=headers,
+                params={
+                    'account_number': account_number,
+                    'bank_code': bank_code
+                },
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('status') and data.get('data'):
+                    return Response({
+                        'success': True,
+                        'account_name': data['data']['account_name'],
+                        'account_number': data['data']['account_number'],
+                        'bank_code': bank_code
+                    })
+                else:
+                    return Response(
+                        {"error": "Could not verify account details"}, 
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            else:
+                return Response(
+                    {"error": "Account verification failed"}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+                
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Account verification error: {str(e)}")
+            return Response(
+                {"error": "Account verification service temporarily unavailable"}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
     
     @action(detail=False, methods=['get'])
     def summary(self, request):
@@ -791,25 +992,6 @@ class PaymentViewSet(viewsets.ReadOnlyModelViewSet):
                 'message': 'Payment service temporarily unavailable'
             }
     
-    def _get_bank_code(self, bank_name: str) -> Optional[str]:
-        """Get bank code from bank name"""
-        if not bank_name:
-            return None
-        
-        # Normalize bank name for lookup
-        normalized_name = bank_name.lower().strip()
-        
-        # Direct lookup
-        if normalized_name in self.BANK_CODES:
-            return self.BANK_CODES[normalized_name]
-        
-        # Partial match lookup
-        for bank, code in self.BANK_CODES.items():
-            if bank in normalized_name or normalized_name in bank:
-                return code
-        
-        return None
-    
     @action(detail=False, methods=['get'])
     def withdrawal_history(self, request):
         """Get withdrawal history for vendor"""
@@ -863,7 +1045,6 @@ class PaymentViewSet(viewsets.ReadOnlyModelViewSet):
             'daily_limit': getattr(settings, 'DAILY_WITHDRAWAL_LIMIT', 500000),
             'monthly_limit': getattr(settings, 'MONTHLY_WITHDRAWAL_LIMIT', 2000000)
         })
-
 @csrf_exempt
 @require_POST
 def paystack_webhook(request):
