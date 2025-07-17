@@ -44,7 +44,7 @@ class StudentAdmin(admin.ModelAdmin):
 
 @admin.register(Vendor)
 class VendorAdmin(admin.ModelAdmin):
-    list_display = ('id', 'business_name', 'get_email', 'business_category', 
+    list_display = ('id', 'business_name', 'get_email', 'business_category','business_description', 
                    'specific_category', 'rating', 'is_verified', 'get_shop_image')
     list_filter = ('business_category', 'specific_category', 'is_verified')
     search_fields = ('business_name', 'user__email', 'user__first_name', 

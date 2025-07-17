@@ -46,7 +46,7 @@ const ShopDetails = () => {
     );
   }
 
-  const { products, vendor_details: details } = productsData;
+  const { products, details } = productsData;
   // Check if details are available
   console.log(productsData)
 
@@ -77,9 +77,10 @@ const ShopDetails = () => {
         <div className={styles.shopInfo}>
           <p className={styles.shopCategory}>{details?.business_category}</p>
           <p className={styles.shopDescription}>
-            Discover quality {details?.business_category} and excellence at{" "}
-            {details?.business_name}, your trusted destination for top{" "}
-            {details?.business_category} and services.
+            {details?.business_description &&
+            details.business_description.trim()
+              ? details.business_description
+              : `Discover quality ${details?.business_category} and excellence at ${details?.business_name}, your trusted destination for top ${details?.business_category} and services.`}
           </p>
 
           <div className={styles.shopMeta}>

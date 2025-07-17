@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   FaSave,
   FaKey,
@@ -7,47 +7,73 @@ import {
   FaFileInvoiceDollar,
   FaTruck,
   FaBell,
+  FaSpinner,
 } from "react-icons/fa";
 import styles from "./css/VendorDashboard.module.css";
+import api from "../constant/api";
 
 const Settings = () => {
   const [activeSettingsTab, setActiveSettingsTab] = useState("account");
+  const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [formData, setFormData] = useState({
     // Account settings
-    firstName: "John",
-    lastName: "Smith",
-    email: "johnsmith@example.com",
-    phone: "+1 (555) 123-4567",
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
 
     // Store settings
-    storeName: "John's Electronics",
-    storeDescription:
-      "Premium electronics and accessories at affordable prices",
+    storeName: "",
+    storeDescription: "",
     logo: null,
     banner: null,
 
     // Payment settings
-    bankName: "National Bank",
-    accountNumber: "****4567",
-    accountHolder: "John Smith",
-    taxId: "123-45-6789",
-
-    // Shipping settings
-    freeShippingThreshold: "100",
-    processingTime: "1-2",
-    internationalShipping: true,
-
-    // Notification settings
-    emailNotifications: true,
-    orderNotifications: true,
-    reviewNotifications: true,
-    promotionalEmails: false,
+    bankName: "",
+    accountNumber: "",
+    accountHolder: "",
+    taxId: "",
 
     // Password
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
+
+  // Load settings data on component mount
+  useEffect(() => {
+    loadSettingsData();
+  }, []);
+
+  const loadSettingsData = async () => {
+    try {
+      setInitialLoading(true);
+      const response = await api.get("vendor/settings/");
+      const data = response.data;
+
+      setFormData((prev) => ({
+        ...prev,
+        // User data
+        firstName: data.user.firstName || "",
+        lastName: data.user.lastName || "",
+        email: data.user.email || "",
+        phone: data.user.phone || "",
+
+        // Vendor data (if user is vendor)
+        storeName: data.vendor.storeName || "",
+        storeDescription: data.vendor.storeDescription || "",
+        bankName: data.vendor.bankName || "",
+        accountNumber: data.vendor.accountNumber || "",
+        accountHolder: data.vendor.accountHolder || "",
+      }));
+    } catch (error) {
+      console.error("Error loading settings:", error);
+      alert("Failed to load settings data");
+    } finally {
+      setInitialLoading(false);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -67,9 +93,147 @@ const Settings = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleAccountSubmit = async (e) => {
     e.preventDefault();
-    alert("Settings updated successfully!");
+    setLoading(true);
+
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append("first_name", formData.firstName);
+      formDataToSend.append("last_name", formData.lastName);
+      formDataToSend.append("phone_number", formData.phone);
+
+      if (formData.logo instanceof File) {
+        formDataToSend.append("profile_pic", formData.logo);
+      }
+
+      const response = await api.put("/settings/account/", formDataToSend, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      alert("Account settings updated successfully!");
+      console.log("Account updated:", response.data);
+    } catch (error) {
+      console.error("Error updating account:", error);
+      if (error.response?.data) {
+        const errorMessages = Object.values(error.response.data)
+          .flat()
+          .join(", ");
+        alert(`Error updating account: ${errorMessages}`);
+      } else {
+        alert("Failed to update account settings");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStoreSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append("business_name", formData.storeName);
+      formDataToSend.append("business_description", formData.storeDescription);
+
+      if (formData.banner instanceof File) {
+        formDataToSend.append("shop_image", formData.banner);
+      }
+
+      const response = await api.put("/settings/store/", formDataToSend, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      alert("Store settings updated successfully!");
+      console.log("Store updated:", response.data);
+    } catch (error) {
+      console.error("Error updating store:", error);
+      if (error.response?.data) {
+        const errorMessages = Object.values(error.response.data)
+          .flat()
+          .join(", ");
+        alert(`Error updating store: ${errorMessages}`);
+      } else {
+        alert("Failed to update store settings");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePaymentSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const paymentData = {
+        bank_name: formData.bankName,
+        account_name: formData.accountHolder,
+      };
+
+      const response = await api.patch("/settings/payment/", paymentData);
+
+      alert("Payment settings updated successfully!");
+      console.log("Payment updated:", response.data);
+    } catch (error) {
+      console.error("Error updating payment:", error);
+      if (error.response?.data) {
+        const errorMessages = Object.values(error.response.data)
+          .flat()
+          .join(", ");
+        alert(`Error updating payment: ${errorMessages}`);
+      } else {
+        alert("Failed to update payment settings");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const passwordData = {
+        current_password: formData.currentPassword,
+        new_password: formData.newPassword,
+        confirm_password: formData.confirmPassword,
+      };
+
+      const response = await api.post("/settings/password/", passwordData);
+
+      alert("Password changed successfully! Please log in again.");
+      console.log("Password changed:", response.data);
+
+      // Clear password fields
+      setFormData((prev) => ({
+        ...prev,
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      }));
+
+      // Optionally redirect to login page
+      // window.location.href = '/login';
+    } catch (error) {
+      console.error("Error changing password:", error);
+      if (error.response?.data) {
+        const errorMessages = Object.values(error.response.data)
+          .flat()
+          .join(", ");
+        alert(`Error changing password: ${errorMessages}`);
+      } else {
+        alert("Failed to change password");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const settingsTabs = [
@@ -80,16 +244,23 @@ const Settings = () => {
       label: "Payment Information",
       icon: <FaFileInvoiceDollar />,
     },
-    { id: "shipping", label: "Shipping Settings", icon: <FaTruck /> },
-    { id: "notifications", label: "Notifications", icon: <FaBell /> },
     { id: "password", label: "Change Password", icon: <FaKey /> },
   ];
 
   const renderSettingsContent = () => {
+    if (initialLoading) {
+      return (
+        <div className={styles.loadingContainer}>
+          <FaSpinner className={styles.spinner} />
+          <p>Loading settings...</p>
+        </div>
+      );
+    }
+
     switch (activeSettingsTab) {
       case "account":
         return (
-          <form onSubmit={handleSubmit} className={styles.settingsForm}>
+          <form onSubmit={handleAccountSubmit} className={styles.settingsForm}>
             <div className={styles.formGroup}>
               <label htmlFor="firstName">First Name</label>
               <input
@@ -99,6 +270,7 @@ const Settings = () => {
                 value={formData.firstName}
                 onChange={handleInputChange}
                 className={styles.formInput}
+                required
               />
             </div>
 
@@ -111,6 +283,7 @@ const Settings = () => {
                 value={formData.lastName}
                 onChange={handleInputChange}
                 className={styles.formInput}
+                required
               />
             </div>
 
@@ -123,7 +296,11 @@ const Settings = () => {
                 value={formData.email}
                 onChange={handleInputChange}
                 className={styles.formInput}
+                disabled
               />
+              <small className={styles.formHelper}>
+                Email cannot be changed
+              </small>
             </div>
 
             <div className={styles.formGroup}>
@@ -135,18 +312,41 @@ const Settings = () => {
                 value={formData.phone}
                 onChange={handleInputChange}
                 className={styles.formInput}
+                required
               />
             </div>
 
-            <button type="submit" className={styles.saveButton}>
-              <FaSave /> Save Changes
+            <div className={styles.formGroup}>
+              <label htmlFor="logo">Profile Picture</label>
+              <div className={styles.fileUpload}>
+                <input
+                  type="file"
+                  id="logo"
+                  name="logo"
+                  onChange={handleFileChange}
+                  className={styles.fileInput}
+                  accept="image/*"
+                />
+                <label htmlFor="logo" className={styles.fileLabel}>
+                  {formData.logo ? formData.logo.name : "Choose a file"}
+                </label>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className={styles.saveButton}
+              disabled={loading}
+            >
+              {loading ? <FaSpinner className={styles.spinner} /> : <FaSave />}
+              {loading ? "Saving..." : "Save Changes"}
             </button>
           </form>
         );
 
       case "store":
         return (
-          <form onSubmit={handleSubmit} className={styles.settingsForm}>
+          <form onSubmit={handleStoreSubmit} className={styles.settingsForm}>
             <div className={styles.formGroup}>
               <label htmlFor="storeName">Store Name</label>
               <input
@@ -156,6 +356,7 @@ const Settings = () => {
                 value={formData.storeName}
                 onChange={handleInputChange}
                 className={styles.formInput}
+                required
               />
             </div>
 
@@ -172,24 +373,7 @@ const Settings = () => {
             </div>
 
             <div className={styles.formGroup}>
-              <label htmlFor="logo">Store Logo</label>
-              <div className={styles.fileUpload}>
-                <input
-                  type="file"
-                  id="logo"
-                  name="logo"
-                  onChange={handleFileChange}
-                  className={styles.fileInput}
-                  accept="image/*"
-                />
-                <label htmlFor="logo" className={styles.fileLabel}>
-                  {formData.logo ? formData.logo.name : "Choose a file"}
-                </label>
-              </div>
-            </div>
-
-            <div className={styles.formGroup}>
-              <label htmlFor="banner">Store Banner</label>
+              <label htmlFor="banner">Store Image</label>
               <div className={styles.fileUpload}>
                 <input
                   type="file"
@@ -205,15 +389,20 @@ const Settings = () => {
               </div>
             </div>
 
-            <button type="submit" className={styles.saveButton}>
-              <FaSave /> Save Changes
+            <button
+              type="submit"
+              className={styles.saveButton}
+              disabled={loading}
+            >
+              {loading ? <FaSpinner className={styles.spinner} /> : <FaSave />}
+              {loading ? "Saving..." : "Save Changes"}
             </button>
           </form>
         );
 
       case "payment":
         return (
-          <form onSubmit={handleSubmit} className={styles.settingsForm}>
+          <form onSubmit={handlePaymentSubmit} className={styles.settingsForm}>
             <div className={styles.formGroup}>
               <label htmlFor="bankName">Bank Name</label>
               <input
@@ -223,6 +412,7 @@ const Settings = () => {
                 value={formData.bankName}
                 onChange={handleInputChange}
                 className={styles.formInput}
+                required
               />
             </div>
 
@@ -251,146 +441,24 @@ const Settings = () => {
                 value={formData.accountHolder}
                 onChange={handleInputChange}
                 className={styles.formInput}
+                required
               />
             </div>
 
-            <div className={styles.formGroup}>
-              <label htmlFor="taxId">Tax ID / SSN</label>
-              <input
-                type="text"
-                id="taxId"
-                name="taxId"
-                value={formData.taxId}
-                onChange={handleInputChange}
-                className={styles.formInput}
-              />
-            </div>
-
-            <button type="submit" className={styles.saveButton}>
-              <FaSave /> Save Changes
-            </button>
-          </form>
-        );
-
-      case "shipping":
-        return (
-          <form onSubmit={handleSubmit} className={styles.settingsForm}>
-            <div className={styles.formGroup}>
-              <label htmlFor="freeShippingThreshold">
-                Free Shipping Threshold ($)
-              </label>
-              <input
-                type="number"
-                id="freeShippingThreshold"
-                name="freeShippingThreshold"
-                value={formData.freeShippingThreshold}
-                onChange={handleInputChange}
-                className={styles.formInput}
-                min="0"
-                step="0.01"
-              />
-              <small className={styles.formHelper}>
-                Set to 0 for no free shipping
-              </small>
-            </div>
-
-            <div className={styles.formGroup}>
-              <label htmlFor="processingTime">
-                Processing Time (Business Days)
-              </label>
-              <input
-                type="text"
-                id="processingTime"
-                name="processingTime"
-                value={formData.processingTime}
-                onChange={handleInputChange}
-                className={styles.formInput}
-              />
-            </div>
-
-            <div className={styles.formGroup}>
-              <label className={styles.checkboxLabel}>
-                <input
-                  type="checkbox"
-                  name="internationalShipping"
-                  checked={formData.internationalShipping}
-                  onChange={handleInputChange}
-                  className={styles.checkbox}
-                />
-                Enable International Shipping
-              </label>
-            </div>
-
-            <button type="submit" className={styles.saveButton}>
-              <FaSave /> Save Changes
-            </button>
-          </form>
-        );
-
-      case "notifications":
-        return (
-          <form onSubmit={handleSubmit} className={styles.settingsForm}>
-            <div className={styles.formGroup}>
-              <label className={styles.checkboxLabel}>
-                <input
-                  type="checkbox"
-                  name="emailNotifications"
-                  checked={formData.emailNotifications}
-                  onChange={handleInputChange}
-                  className={styles.checkbox}
-                />
-                Email Notifications
-              </label>
-            </div>
-
-            <div className={styles.formGroup}>
-              <label className={styles.checkboxLabel}>
-                <input
-                  type="checkbox"
-                  name="orderNotifications"
-                  checked={formData.orderNotifications}
-                  onChange={handleInputChange}
-                  className={styles.checkbox}
-                />
-                New Order Notifications
-              </label>
-            </div>
-
-            <div className={styles.formGroup}>
-              <label className={styles.checkboxLabel}>
-                <input
-                  type="checkbox"
-                  name="reviewNotifications"
-                  checked={formData.reviewNotifications}
-                  onChange={handleInputChange}
-                  className={styles.checkbox}
-                />
-                New Review Notifications
-              </label>
-            </div>
-
-            <div className={styles.formGroup}>
-              <label className={styles.checkboxLabel}>
-                <input
-                  type="checkbox"
-                  name="promotionalEmails"
-                  checked={formData.promotionalEmails}
-                  onChange={handleInputChange}
-                  className={styles.checkbox}
-                />
-                Promotional Emails
-              </label>
-            </div>
-
-            <button type="submit" className={styles.saveButton}>
-              <FaSave /> Save Changes
+            <button
+              type="submit"
+              className={styles.saveButton}
+              disabled={loading}
+            >
+              {loading ? <FaSpinner className={styles.spinner} /> : <FaSave />}
+              {loading ? "Saving..." : "Save Changes"}
             </button>
           </form>
         );
 
       case "password":
         return (
-          <form onSubmit={handleSubmit} className={styles.settingsForm}>
+          <form onSubmit={handlePasswordSubmit} className={styles.settingsForm}>
             <div className={styles.formGroup}>
               <label htmlFor="currentPassword">Current Password</label>
               <input
@@ -433,8 +501,13 @@ const Settings = () => {
               />
             </div>
 
-            <button type="submit" className={styles.saveButton}>
-              <FaSave /> Save Changes
+            <button
+              type="submit"
+              className={styles.saveButton}
+              disabled={loading}
+            >
+              {loading ? <FaSpinner className={styles.spinner} /> : <FaSave />}
+              {loading ? "Saving..." : "Save Changes"}
             </button>
           </form>
         );
@@ -446,8 +519,6 @@ const Settings = () => {
 
   return (
     <div className={styles.settingsContainer}>
-      {/* <h2 className={styles.sectionTitle}>Settings</h2> */}
-
       <div className={styles.settingsLayout}>
         <div className={styles.settingsSidebar}>
           <ul className={styles.settingsTabs}>

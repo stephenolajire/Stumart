@@ -127,6 +127,7 @@ class Vendor(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='vendor_profile')
     business_name = models.CharField(max_length=100)
     business_category = models.CharField(max_length=20, choices=BUSINESS_CATEGORIES)
+    business_description = models.CharField(max_length=1000, default="")
     specific_category = models.CharField(max_length=30, choices=OTHER_BUSINESS_CATEGORIES, blank=True, null=True)
     shop_image = CloudinaryField('shop_images/', null=True, blank=True)
     rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.0)

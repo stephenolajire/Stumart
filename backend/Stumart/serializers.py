@@ -19,7 +19,7 @@ class VendorProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Vendor
-        fields = ['id', 'user', 'business_category']
+        fields = ['id', 'user', 'business_category', 'business_description']
 
 
 class ProductSizeSerializer(serializers.ModelSerializer):

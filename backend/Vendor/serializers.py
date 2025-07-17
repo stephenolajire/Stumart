@@ -3,6 +3,10 @@ from rest_framework import serializers
 from User.models import Vendor
 from Stumart.models import Product, Order, OrderItem, Transaction, Wallet
 from .models import VendorStats, VendorRevenueData, VendorSalesData, Withdrawal
+from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
+
+User = get_user_model()
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -128,3 +132,95 @@ class WithdrawalSerializer(serializers.ModelSerializer):
             'account_number': f"***{obj.vendor.account_number[-4:]}" if obj.vendor.account_number else None,
             'account_name': obj.vendor.account_name
         }
+
+
+class UserAccountSerializer(serializers.ModelSerializer):
+    """Serializer for user account information"""
+    
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email', 'phone_number', 'profile_pic']
+        read_only_fields = ['email']  # Email should not be editable in settings
+    
+    def validate_phone_number(self, value):
+        """Validate phone number is unique (excluding current user)"""
+        user = self.context['request'].user
+        if User.objects.filter(phone_number=value).exclude(pk=user.pk).exists():
+            raise serializers.ValidationError("This phone number is already in use.")
+        return value
+
+
+class VendorStoreSerializer(serializers.ModelSerializer):
+    """Serializer for vendor store settings"""
+    
+    class Meta:
+        model = Vendor
+        fields = ['business_name', 'business_description', 'shop_image']
+    
+    def validate_business_name(self, value):
+        """Validate business name is unique (excluding current vendor)"""
+        user = self.context['request'].user
+        if hasattr(user, 'vendor_profile'):
+            if Vendor.objects.filter(business_name=value).exclude(pk=user.vendor_profile.pk).exists():
+                raise serializers.ValidationError("This business name is already taken.")
+        return value
+
+
+class VendorPaymentSerializer(serializers.ModelSerializer):
+    """Serializer for vendor payment information"""
+    
+    class Meta:
+        model = Vendor
+        fields = ['bank_name', 'account_number', 'account_name']
+        read_only_fields = ['account_number']  # Account number should not be editable
+    
+    def validate_account_number(self, value):
+        """Validate account number format"""
+        if len(value) != 10:
+            raise serializers.ValidationError("Account number must be exactly 10 digits.")
+        if not value.isdigit():
+            raise serializers.ValidationError("Account number must contain only digits.")
+        return value
+
+
+class PasswordChangeSerializer(serializers.Serializer):
+    """Serializer for password change"""
+    current_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
+    confirm_password = serializers.CharField(required=True)
+    
+    def validate_current_password(self, value):
+        """Validate current password"""
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("Current password is incorrect.")
+        return value
+    
+    def validate_new_password(self, value):
+        """Validate new password"""
+        validate_password(value)
+        return value
+    
+    def validate(self, attrs):
+        """Validate that new passwords match"""
+        if attrs['new_password'] != attrs['confirm_password']:
+            raise serializers.ValidationError("New passwords do not match.")
+        return attrs
+    
+    def save(self):
+        """Change user password"""
+        user = self.context['request'].user
+        user.set_password(self.validated_data['new_password'])
+        user.save()
+        return user
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    """Serializer for complete user profile (read-only)"""
+    vendor_profile = VendorStoreSerializer(read_only=True)
+    
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email', 'phone_number', 'profile_pic', 
+                 'user_type', 'vendor_profile']
+        read_only_fields = ['email', 'user_type']

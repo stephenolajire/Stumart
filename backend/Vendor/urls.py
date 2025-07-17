@@ -36,5 +36,14 @@ urlpatterns = [
          ProductPromtionAPIView.as_view(), 
          name='product_stock_history'),
 
-     path('products/bulk-discount/', views.BulkDiscountAPIView.as_view())
+     path('products/bulk-discount/', views.BulkDiscountAPIView.as_view()),
+
+    path('vendor/settings/', views.get_settings_data, name='get_settings_data'),
+    path('settings/account/', views.UserAccountUpdateView.as_view(), name='user_account_update'),
+    path('settings/store/', views.VendorStoreUpdateView.as_view(), name='vendor_store_update'),
+    path('settings/payment/', views.VendorPaymentUpdateView.as_view(), name='vendor_payment_update'),
+    path('settings/password/', views.PasswordChangeView.as_view(), name='password_change'),
+    
+    # Profile endpoint
+    path('profile/', views.UserProfileView.as_view(), name='user_profile'),
 ]

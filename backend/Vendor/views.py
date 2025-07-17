@@ -11,9 +11,7 @@ from User.models import Vendor
 from rest_framework.views import APIView
 from Stumart.models import Product, Order, OrderItem, Transaction, Wallet
 from .models import VendorStats, VendorRevenueData, VendorSalesData, Withdrawal
-from .serializers import (
-    ProductSerializer, OrderSerializer, TransactionSerializer,  DashboardStatsSerializer, WithdrawalSerializer
-)
+from .serializers import *
 from Stumart.models import *
 from django.db import transaction
 import requests
@@ -30,6 +28,13 @@ from Stumart.models import VendorReview
 from django.db.models import Sum, F, Case, When, DecimalField
 from decimal import Decimal
 import logging
+from User.models import Vendor
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.parsers import MultiPartParser, FormParser
+from django.contrib.auth import logout
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 from typing import Dict, Optional, Tuple
 
@@ -1787,3 +1792,229 @@ class BulkDiscountAPIView(APIView):
             return Response({
                 'error': f'Failed to remove bulk discount: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+class UserAccountUpdateView(APIView):
+    """View to update user account information"""
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+    
+    def get(self, request):
+        """Get current user account information"""
+        serializer = UserAccountSerializer(request.user)
+        return Response(serializer.data)
+    
+    def put(self, request):
+        """Update user account information"""
+        serializer = UserAccountSerializer(
+            request.user, 
+            data=request.data, 
+            context={'request': request}
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                'message': 'Account information updated successfully',
+                'data': serializer.data
+            })
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def patch(self, request):
+        """Partially update user account information"""
+        serializer = UserAccountSerializer(
+            request.user, 
+            data=request.data, 
+            partial=True,
+            context={'request': request}
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                'message': 'Account information updated successfully',
+                'data': serializer.data
+            })
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class VendorStoreUpdateView(APIView):
+    """View to update vendor store settings"""
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+    
+    def get(self, request):
+        """Get current vendor store information"""
+        if not hasattr(request.user, 'vendor_profile'):
+            return Response(
+                {'error': 'User is not a vendor'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        serializer = VendorStoreSerializer(request.user.vendor_profile)
+        return Response(serializer.data)
+    
+    def put(self, request):
+        """Update vendor store information"""
+        if not hasattr(request.user, 'vendor_profile'):
+            return Response(
+                {'error': 'User is not a vendor'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        serializer = VendorStoreSerializer(
+            request.user.vendor_profile,
+            data=request.data,
+            context={'request': request}
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                'message': 'Store information updated successfully',
+                'data': serializer.data
+            })
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def patch(self, request):
+        """Partially update vendor store information"""
+        if not hasattr(request.user, 'vendor_profile'):
+            return Response(
+                {'error': 'User is not a vendor'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        serializer = VendorStoreSerializer(
+            request.user.vendor_profile,
+            data=request.data,
+            partial=True,
+            context={'request': request}
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                'message': 'Store information updated successfully',
+                'data': serializer.data
+            })
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class VendorPaymentUpdateView(APIView):
+    """View to update vendor payment information"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """Get current vendor payment information"""
+        if not hasattr(request.user, 'vendor_profile'):
+            return Response(
+                {'error': 'User is not a vendor'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        serializer = VendorPaymentSerializer(request.user.vendor_profile)
+        return Response(serializer.data)
+    
+    def put(self, request):
+        """Update vendor payment information"""
+        if not hasattr(request.user, 'vendor_profile'):
+            return Response(
+                {'error': 'User is not a vendor'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        serializer = VendorPaymentSerializer(
+            request.user.vendor_profile,
+            data=request.data,
+            context={'request': request}
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                'message': 'Payment information updated successfully',
+                'data': serializer.data
+            })
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def patch(self, request):
+        """Partially update vendor payment information"""
+        if not hasattr(request.user, 'vendor_profile'):
+            return Response(
+                {'error': 'User is not a vendor'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        serializer = VendorPaymentSerializer(
+            request.user.vendor_profile,
+            data=request.data,
+            partial=True,
+            context={'request': request}
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                'message': 'Payment information updated successfully',
+                'data': serializer.data
+            })
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PasswordChangeView(APIView):
+    """View to change user password"""
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        """Change user password"""
+        serializer = PasswordChangeSerializer(
+            data=request.data,
+            context={'request': request}
+        )
+        if serializer.is_valid():
+            serializer.save()
+            # Log out user after password change for security
+            logout(request)
+            return Response({
+                'message': 'Password changed successfully. Please log in again.'
+            })
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserProfileView(APIView):
+    """View to get complete user profile"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """Get complete user profile"""
+        serializer = UserProfileSerializer(request.user)
+        return Response(serializer.data)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_settings_data(request):
+    """Get all settings data for the current user"""
+    user = request.user
+    
+    # Base user data
+    user_data = {
+        'firstName': user.first_name,
+        'lastName': user.last_name,
+        'email': user.email,
+        'phone': user.phone_number,
+        'profilePic': user.profile_pic.url if user.profile_pic else None,
+    }
+    
+    # Vendor specific data
+    vendor_data = {}
+    if hasattr(user, 'vendor_profile'):
+        vendor = user.vendor_profile
+        vendor_data = {
+            'storeName': vendor.business_name,
+            'storeDescription': f"{vendor.business_category} business",
+            'storeImage': vendor.shop_image.url if vendor.shop_image else None,
+            'bankName': vendor.bank_name,
+            'accountNumber': vendor.account_number,
+            'accountHolder': vendor.account_name,
+        }
+    
+    return Response({
+        'user': user_data,
+        'vendor': vendor_data,
+        'userType': user.user_type
+    })

@@ -67,6 +67,7 @@ class SpecificVendorProductsView(APIView):
                 "business_name": vendor.business_name,
                 "shop_image": request.build_absolute_uri(vendor.shop_image.url) if vendor.shop_image else None,
                 "business_category": vendor.business_category,
+                "business_description":vendor.business_description,
                 "rating": vendor.rating
             }
 
