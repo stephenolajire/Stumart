@@ -31,6 +31,7 @@ import api from "../constant/api";
 import { useNavigate } from "react-router-dom";
 import { banks } from "../constant/bank";
 import { NavLink } from "react-router-dom";
+import CategoryDescriptionModal from "./RegistrationModal";
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -70,6 +71,8 @@ const Signup = () => {
   const [throttleWaitTime, setThrottleWaitTime] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [pendingCategory, setPendingCategory] = useState("");
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
 
   // Error message mapping for backend errors
   const errorMessages = {
@@ -298,10 +301,23 @@ const Signup = () => {
     const { name, value, files } = e.target;
 
     if (name === "businessCategory") {
-      setShowOtherCategories(value === "Others");
+      if (value && value !== formData.businessCategory) {
+        // Show modal for category confirmation
+        setPendingCategory(value);
+        setShowCategoryModal(true);
+        return; // Don't update formData yet
+      } else if (!value) {
+        // Handle clearing the selection
+        setShowOtherCategories(false);
+        setFormData((prev) => ({
+          ...prev,
+          businessCategory: "",
+          specificCategory: "",
+        }));
+      }
     }
 
-    if (name === "profilePic" || name === "shopImage") {
+    if (files) {
       setFormData((prev) => ({
         ...prev,
         [name]: files[0],
@@ -313,7 +329,7 @@ const Signup = () => {
       }));
     }
 
-    // Clear specific field error when user starts typing
+   
     if (errors[name]) {
       setErrors((prev) => ({
         ...prev,
@@ -574,6 +590,29 @@ const Signup = () => {
     }
   };
 
+  const handleConfirmCategory = () => {
+    setFormData((prev) => ({
+      ...prev,
+      businessCategory: pendingCategory,
+      specificCategory: "", // Reset specific category when main category changes
+    }));
+    setShowOtherCategories(pendingCategory === "Others");
+    setShowCategoryModal(false);
+    setPendingCategory("");
+  };
+
+  const handleCancelCategory = () => {
+    setShowCategoryModal(false);
+    setPendingCategory("");
+    // Reset the select element to show current value
+    const selectElement = document.querySelector(
+      'select[name="businessCategory"]'
+    );
+    if (selectElement) {
+      selectElement.value = formData.businessCategory;
+    }
+  };
+
   return (
     <div className={styles.signupContainer}>
       <form onSubmit={handleSubmit} className={styles.signupForm}>
@@ -742,7 +781,9 @@ const Signup = () => {
             <option value="on_campus">On Campus</option>
             <option value="off_campus">Off Campus</option>
           </select>
-          {errors.residence && <span className={styles.error}>{errors.residence}</span>}
+          {errors.residence && (
+            <span className={styles.error}>{errors.residence}</span>
+          )}
         </div>
 
         <div className={styles.formGroup}>
@@ -1070,6 +1111,13 @@ const Signup = () => {
           Already have an account? <NavLink to="/login">log in</NavLink>
         </div>
       </form>
+
+      <CategoryDescriptionModal
+        category={pendingCategory}
+        isOpen={showCategoryModal}
+        onConfirm={handleConfirmCategory}
+        onCancel={handleCancelCategory}
+      />
     </div>
   );
 };
