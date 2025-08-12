@@ -12,7 +12,10 @@ import {
   FaBox,
   FaSadTear,
   FaArrowLeft,
+  FaArrowRight,
   FaStore,
+  FaChevronLeft,
+  FaChevronRight,
 } from "react-icons/fa";
 import { nigeriaInstitutions, nigeriaStates } from "../constant/data";
 import { GlobalContext } from "../constant/GlobalContext";
@@ -24,6 +27,7 @@ const AllProducts = () => {
   const [schools, setSchools] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
   const [toggleLoading, setToggleLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Get auth and hooks from global context
   const { isAuthenticated, useAllProducts } = useContext(GlobalContext);
@@ -40,6 +44,7 @@ const AllProducts = () => {
     school: searchParams.get("school") || "",
     vendor: searchParams.get("vendor") || "",
     state: searchParams.get("state") || "",
+    page: parseInt(searchParams.get("page")) || 1,
   });
 
   // Initialize view mode from URL params
@@ -62,6 +67,7 @@ const AllProducts = () => {
       school: filters.school,
       vendor: filters.vendor,
       state: filters.state,
+      page: filters.page,
     };
   }, [
     filters.category,
@@ -72,6 +78,7 @@ const AllProducts = () => {
     filters.school,
     filters.vendor,
     filters.state,
+    filters.page,
   ]);
 
   // Use the React Query hook for fetching products
@@ -82,10 +89,17 @@ const AllProducts = () => {
     refetch: refetchProducts,
   } = useAllProducts(currentFilters, viewMode, isAuthenticated);
 
-  // Extract data from React Query response
-  const allProducts = productsData?.products || [];
+  // Extract data from React Query response - Updated to handle paginated response
+  const allProducts = productsData?.results || productsData?.products || [];
   const allProductsCategories = productsData?.categories || [];
   const allProductsVendors = productsData?.vendors || [];
+  const totalProducts =
+    productsData?.count || productsData?.total_products || 0;
+  const nextPage = productsData?.next;
+  const previousPage = productsData?.previous;
+
+  // console.log("Products Data:", productsData);
+  console.log("All Products:", allProducts);
 
   // Check if all products belong to the same vendor
   const singleVendorInfo = useMemo(() => {
@@ -187,17 +201,45 @@ const AllProducts = () => {
   const handleFilterChange = useCallback(
     (name, value) => {
       console.log("Filter changed:", name, value);
-      setFilters((prev) => ({ ...prev, [name]: value }));
-      setSearchParams((prev) => {
-        if (value) {
-          prev.set(name, value);
-        } else {
-          prev.delete(name);
-        }
-        return prev;
-      });
+
+      // Reset to page 1 when filters change (except for page filter)
+      if (name !== "page") {
+        setFilters((prev) => ({ ...prev, [name]: value, page: 1 }));
+        setCurrentPage(1);
+
+        setSearchParams((prev) => {
+          if (value) {
+            prev.set(name, value);
+          } else {
+            prev.delete(name);
+          }
+          prev.set("page", "1"); // Reset to page 1
+          return prev;
+        });
+      } else {
+        setFilters((prev) => ({ ...prev, [name]: value }));
+        setCurrentPage(value);
+
+        setSearchParams((prev) => {
+          if (value && value > 1) {
+            prev.set(name, value.toString());
+          } else {
+            prev.delete(name);
+          }
+          return prev;
+        });
+      }
     },
     [setSearchParams]
+  );
+
+  // Handle pagination
+  const handlePageChange = useCallback(
+    (newPage) => {
+      handleFilterChange("page", newPage);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    },
+    [handleFilterChange]
   );
 
   // Handle view mode changes
@@ -212,21 +254,23 @@ const AllProducts = () => {
 
       setToggleLoading(true);
       setViewMode(newViewMode);
+      setCurrentPage(1); // Reset to page 1 when switching view modes
 
       const params = new URLSearchParams(searchParams);
+      params.set("page", "1"); // Reset pagination
 
       if (newViewMode === "other") {
         params.set("viewOtherProducts", "true");
         // Clear school filter when switching to other schools
         if (filters.school) {
-          setFilters((prev) => ({ ...prev, school: "" }));
+          setFilters((prev) => ({ ...prev, school: "", page: 1 }));
           params.delete("school");
         }
       } else {
         params.delete("viewOtherProducts");
         // Add own school filter when switching to my school
         if (school && !filters.school) {
-          setFilters((prev) => ({ ...prev, school: school }));
+          setFilters((prev) => ({ ...prev, school: school, page: 1 }));
           params.set("school", school);
         }
       }
@@ -254,11 +298,13 @@ const AllProducts = () => {
       school: viewMode === "school" && school ? school : "",
       vendor: "",
       state: "",
+      page: 1,
     };
 
     setFilters(resetFilters);
     setSelectedState("");
     setSchools([]);
+    setCurrentPage(1);
 
     const params = new URLSearchParams();
     if (viewMode === "other") {
@@ -290,6 +336,13 @@ const AllProducts = () => {
     }
   }, [isAuthenticated, viewMode, school, filters.school, setSearchParams]);
 
+  // Sync currentPage with filters.page
+  useEffect(() => {
+    if (filters.page !== currentPage) {
+      setCurrentPage(filters.page);
+    }
+  }, [filters.page]);
+
   // Memoized products count for performance
   const productsCount = useMemo(() => allProducts.length, [allProducts.length]);
 
@@ -310,6 +363,11 @@ const AllProducts = () => {
 
     return "No products are available at this time. Please check back later.";
   }, [filters.search, filters.category, filters.state, filters.school]);
+
+  // Calculate pagination info
+  const totalPages = Math.ceil(totalProducts / 18); // Assuming 18 products per page
+  const hasNextPage = !!nextPage;
+  const hasPreviousPage = !!previousPage;
 
   // Handle error state
   const errorMessage =
@@ -398,6 +456,23 @@ const AllProducts = () => {
           </>
         )}
       </div>
+
+      {/* Products Count and Pagination Info */}
+      {!allProductsLoading && productsCount > 0 && (
+        <div
+          style={{
+            textAlign: "center",
+            marginBottom: "1rem",
+            color: "#666",
+            fontSize: "0.9rem",
+          }}
+        >
+          Showing {(currentPage - 1) * 18 + 1} -{" "}
+          {Math.min(currentPage * 18, totalProducts)} of {totalProducts}{" "}
+          products
+          {totalPages > 1 && ` (Page ${currentPage} of ${totalPages})`}
+        </div>
+      )}
 
       {/* Single Vendor Display */}
       {singleVendorInfo && productsCount > 0 && !allProductsLoading && (
@@ -570,11 +645,155 @@ const AllProducts = () => {
           <p>{noProductsMessage}</p>
         </div>
       ) : (
-        <div className={styles.productsGrid}>
-          {allProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
+        <>
+          <div className={styles.productsGrid}>
+            {allProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div
+              className={styles.pagination}
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                gap: "0.5rem",
+                margin: "2rem 0",
+                flexWrap: "wrap",
+              }}
+            >
+              {/* Previous Button */}
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={!hasPreviousPage || allProductsLoading}
+                className={styles.paginationButton}
+                style={{
+                  padding: "0.5rem 1rem",
+                  border: "1px solid #ddd",
+                  backgroundColor: hasPreviousPage ? "#fff" : "#f5f5f5",
+                  color: hasPreviousPage ? "#007bff" : "#999",
+                  cursor: hasPreviousPage ? "pointer" : "not-allowed",
+                  borderRadius: "4px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.25rem",
+                }}
+              >
+                <FaChevronLeft size={12} />
+                Previous
+              </button>
+
+              {/* Page Numbers */}
+              <div style={{ display: "flex", gap: "0.25rem" }}>
+                {/* First page */}
+                {currentPage > 3 && (
+                  <>
+                    <button
+                      onClick={() => handlePageChange(1)}
+                      className={styles.pageButton}
+                      style={{
+                        padding: "0.5rem 0.75rem",
+                        border: "1px solid #ddd",
+                        backgroundColor: "#fff",
+                        color: "#007bff",
+                        cursor: "pointer",
+                        borderRadius: "4px",
+                      }}
+                    >
+                      1
+                    </button>
+                    {currentPage > 4 && (
+                      <span style={{ padding: "0.5rem", color: "#999" }}>
+                        ...
+                      </span>
+                    )}
+                  </>
+                )}
+
+                {/* Current page and surrounding pages */}
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  const startPage = Math.max(
+                    1,
+                    Math.min(currentPage - 2, totalPages - 4)
+                  );
+                  const pageNum = startPage + i;
+
+                  if (pageNum > totalPages) return null;
+
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => handlePageChange(pageNum)}
+                      disabled={allProductsLoading}
+                      className={styles.pageButton}
+                      style={{
+                        padding: "0.5rem 0.75rem",
+                        border: "1px solid #ddd",
+                        backgroundColor:
+                          pageNum === currentPage ? "#007bff" : "#fff",
+                        color: pageNum === currentPage ? "#fff" : "#007bff",
+                        cursor: "pointer",
+                        borderRadius: "4px",
+                        fontWeight: pageNum === currentPage ? "bold" : "normal",
+                      }}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+
+                {/* Last page */}
+                {currentPage < totalPages - 2 && (
+                  <>
+                    {currentPage < totalPages - 3 && (
+                      <span style={{ padding: "0.5rem", color: "#999" }}>
+                        ...
+                      </span>
+                    )}
+                    <button
+                      onClick={() => handlePageChange(totalPages)}
+                      className={styles.pageButton}
+                      style={{
+                        padding: "0.5rem 0.75rem",
+                        border: "1px solid #ddd",
+                        backgroundColor: "#fff",
+                        color: "#007bff",
+                        cursor: "pointer",
+                        borderRadius: "4px",
+                      }}
+                    >
+                      {totalPages}
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {/* Next Button */}
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={!hasNextPage || allProductsLoading}
+                className={styles.paginationButton}
+                style={{
+                  padding: "0.5rem 1rem",
+                  border: "1px solid #ddd",
+                  backgroundColor: hasNextPage ? "#fff" : "#f5f5f5",
+                  color: hasNextPage ? "#007bff" : "#999",
+                  cursor: hasNextPage ? "pointer" : "not-allowed",
+                  borderRadius: "4px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.25rem",
+                }}
+              >
+                Next
+                <FaChevronRight size={12} />
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

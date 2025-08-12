@@ -33,7 +33,7 @@ from rest_framework import generics
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.core.mail import send_mail
-from rest_framework.pagination import PageNumberPagination
+from . paginations import CustomPagination
 from django.db import transaction
 from rest_framework import generics, status
 from rest_framework.views import APIView
@@ -1806,15 +1806,12 @@ class CancelOrderView(APIView):
                 "message": f"An error occurred: {str(e)}"
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-class ProductPagination(PageNumberPagination):
-    page_size = 18
-    page_size_query_param = 'page_size'
-    max_page_size = 100
+
 
 import logging
 
 class AllProductsView(APIView):
-    pagination_class = ProductPagination
+    pagination_class = CustomPagination
 
     def get(self, request):
         try:

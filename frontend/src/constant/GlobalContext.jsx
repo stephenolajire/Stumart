@@ -150,25 +150,40 @@ export const useAllProducts = (
       }
 
       const response = await api.get(`/all-products/?${apiParams}`);
-      const productsData = response.data.results;
+      const responseData = response.data;
+      console.log("API Response:", responseData);
 
+      // Handle both paginated and non-paginated responses
+      const productsArray = responseData.results || responseData;
+
+      // Extract unique categories from the products
       const uniqueCategories = [
-        ...new Set(productsData.map((product) => product.vendor_category)),
+        ...new Set(productsArray.map((product) => product.vendor_category)),
       ]
         .filter(Boolean)
         .sort();
 
+      // Extract unique vendors from the products
       const uniqueVendors = [
-        ...new Set(
-          productsData.map((product) => ({
-            id: product.vendor_id,
-            name: product.vendor_name,
-          }))
-        ),
-      ].filter((vendor) => vendor.name);
+        ...new Map(
+          productsArray
+            .filter((product) => product.vendor_name && product.vendor_id)
+            .map((product) => [
+              product.vendor_id,
+              {
+                id: product.vendor_id,
+                name: product.vendor_name,
+              },
+            ])
+        ).values(),
+      ];
 
+      // Return the complete response structure
       return {
-        products: productsData,
+        // For paginated responses, preserve the pagination structure
+        ...responseData,
+        // Ensure products is always available for backward compatibility
+        products: productsArray,
         categories: uniqueCategories,
         vendors: uniqueVendors,
       };
@@ -203,7 +218,13 @@ export const useCart = () => {
     },
     staleTime: 2 * 60 * 1000, // 2 minutes for cart (more dynamic)
     gcTime: 5 * 60 * 1000,
-    retry: 2,
+    retry: (failureCount, error) => {
+      // Don't retry on 404 errors (cart not found)
+      if (error?.response?.status === 404) {
+        return false;
+      }
+      return failureCount < 2;
+    },
     refetchOnWindowFocus: true, // Refetch cart on focus
   });
 };
