@@ -22,7 +22,7 @@ const Navigation = () => {
     localStorage.removeItem("refresh");
     localStorage.removeItem("user_type");
     localStorage.removeItem("institution");
-    localStorage.removeItem("cart_code"); // Also clear cart code on logout
+    localStorage.removeItem("cart_code"); 
 
     // Clear all cached data on logout
     clearCache("all");

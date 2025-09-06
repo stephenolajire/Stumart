@@ -3,11 +3,11 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { GlobalContext } from "../constant/GlobalContext";
 import ServiceGrid from "../components/ServiceGrid";
 import api from "../constant/api";
-import styles from "../css/OtherService.module.css";
 import Swal from "sweetalert2";
 import { nigeriaInstitutions } from "../constant/data";
 import Header from "../components/Header";
 import SEO from "../components/Metadata";
+import { Search, Filter, MapPin, Building, Tag, RefreshCw } from "lucide-react";
 
 // Other service specific categories
 const otherServiceCategories = [
@@ -97,7 +97,6 @@ const OtherService = () => {
   };
 
   // Handle service search
-  // Handle service search
   const handleServiceSearch = async (e) => {
     e.preventDefault();
     setIsSearching(true);
@@ -133,6 +132,7 @@ const OtherService = () => {
                   (c) => c.value === selectedServiceCategory
                 )?.label
           } found in the selected location.`,
+          confirmButtonColor: "#eab308",
         });
       }
     } catch (error) {
@@ -141,6 +141,7 @@ const OtherService = () => {
         icon: "error",
         title: "Search Failed",
         text: "Failed to search for services. Please try again.",
+        confirmButtonColor: "#ef4444",
       });
     } finally {
       setIsSearching(false);
@@ -154,29 +155,149 @@ const OtherService = () => {
   };
 
   return (
-    <div className={styles.otherServiceContainer}>
+    <div className="min-h-screen bg-gray-50">
       <SEO
         title="Other Services - Campus Marketplace | StuMart"
         description="Discover diverse campus services including laundry, tutoring, printing, barbing, hair styling, computer repairs, phone repairs, photography, graphic design, tailoring, cleaning, event planning and more at your university through StuMart"
         keywords="campus services, student services, university services, universuty laundry services, university tutoring, university printing services, university barbing services, university hair styling, university computer repairs, university phone repairs, university photography services, university graphic design, university tailoring services, university cleaning services, university event planning, university assignment help, university note writing, university campus marketplace, university student marketplace, university marketplace, campus business, student entrepreneurs, campus delivery, Nigeria universities, student life services, campus convenience"
         url="/other-services"
       />
-      <div className={styles.header}>
+
+      {/* Header Section */}
+      <div className="bg-gradient-to-r from-yellow-500 to-yellow-600 shadow-lg">
         <Header
           title={`Other Services ${schoolParam ? `in ${schoolParam}` : ""}`}
         />
       </div>
 
-      <div className={styles.searchSection}>
-        <form onSubmit={handleServiceSearch} className={styles.searchForm}>
-          <div className={styles.formGrid}>
-            <div className={styles.formGroup}>
-              <label htmlFor="service-category">Service Type:</label>
+      <div className="w-full mx-auto py-8">
+        {/* Search Section */}
+        <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
+          <div className="flex items-center mb-6">
+            <Search className="w-6 h-6 text-yellow-600 mr-3" />
+            <h2 className="text-2xl font-bold text-gray-900">Find Services</h2>
+          </div>
+
+          <form onSubmit={handleServiceSearch}>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              {/* Service Type */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="service-category"
+                  className="flex items-center text-sm font-medium text-gray-700"
+                >
+                  <Tag className="w-4 h-4 mr-2" />
+                  Service Type
+                </label>
+                <select
+                  id="service-category"
+                  value={selectedServiceCategory}
+                  onChange={(e) => setSelectedServiceCategory(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors"
+                >
+                  {otherServiceCategories.map((category) => (
+                    <option key={category.value} value={category.value}>
+                      {category.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* State Selection */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="state-select"
+                  className="flex items-center text-sm font-medium text-gray-700"
+                >
+                  <MapPin className="w-4 h-4 mr-2" />
+                  Select State
+                </label>
+                <select
+                  id="state-select"
+                  value={selectedState}
+                  onChange={(e) => setSelectedState(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors"
+                >
+                  <option value="">-- Select State --</option>
+                  {Object.keys(nigeriaInstitutions).map((state) => (
+                    <option key={state} value={state}>
+                      {state.replace("_", " ")}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* School Selection */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="school-select"
+                  className="flex items-center text-sm font-medium text-gray-700"
+                >
+                  <Building className="w-4 h-4 mr-2" />
+                  Select School
+                </label>
+                <select
+                  id="school-select"
+                  value={selectedSchool}
+                  onChange={(e) => setSelectedSchool(e.target.value)}
+                  className={`w-full px-4 py-3 border border-gray-300 rounded-lg transition-colors ${
+                    !selectedState
+                      ? "bg-gray-100 cursor-not-allowed"
+                      : "focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                  }`}
+                  disabled={!selectedState}
+                >
+                  <option value="">-- Select School --</option>
+                  {availableSchools.map((school, index) => (
+                    <option key={index} value={school}>
+                      {school}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Search Button */}
+            <div className="flex justify-center">
+              <button
+                type="submit"
+                disabled={isSearching}
+                className="inline-flex items-center px-8 py-3 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 active:scale-95"
+              >
+                {isSearching ? (
+                  <>
+                    <RefreshCw className="w-5 h-5 mr-2 animate-spin" />
+                    Searching...
+                  </>
+                ) : (
+                  <>
+                    <Search className="w-5 h-5 mr-2" />
+                    Search Services
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* Filter Section */}
+        <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center">
+              <Filter className="w-5 h-5 text-gray-600 mr-3" />
+              <label
+                htmlFor="filter-category"
+                className="text-sm font-medium text-gray-700 mr-4"
+              >
+                Filter by Service Type:
+              </label>
+            </div>
+            <div className="flex-1 max-w-xs">
               <select
-                id="service-category"
+                id="filter-category"
                 value={selectedServiceCategory}
-                onChange={(e) => setSelectedServiceCategory(e.target.value)}
-                className={styles.selectInput}
+                onChange={handleServiceCategoryChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors"
               >
                 {otherServiceCategories.map((category) => (
                   <option key={category.value} value={category.value}>
@@ -185,89 +306,67 @@ const OtherService = () => {
                 ))}
               </select>
             </div>
-
-            <div className={styles.formGroup}>
-              <label htmlFor="state-select">Select State:</label>
-              <select
-                id="state-select"
-                value={selectedState}
-                onChange={(e) => setSelectedState(e.target.value)}
-                className={styles.selectInput}
-              >
-                <option value="">-- Select State --</option>
-                {Object.keys(nigeriaInstitutions).map((state) => (
-                  <option key={state} value={state}>
-                    {state.replace("_", " ")}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className={styles.formGroup}>
-              <label htmlFor="school-select">Select School:</label>
-              <select
-                id="school-select"
-                value={selectedSchool}
-                onChange={(e) => setSelectedSchool(e.target.value)}
-                className={styles.selectInput}
-                disabled={!selectedState}
-              >
-                <option value="">-- Select School --</option>
-                {availableSchools.map((school, index) => (
-                  <option key={index} value={school}>
-                    {school}
-                  </option>
-                ))}
-              </select>
-            </div>
           </div>
+        </div>
 
-          <div className={styles.buttonGroup}>
-            <button
-              type="submit"
-              className={styles.searchButton}
-              disabled={isSearching}
-            >
-              {isSearching ? "Searching..." : "Search Services"}
-            </button>
-          </div>
-        </form>
-      </div>
-
-      <div className={styles.filterContainer}>
-        <label htmlFor="service-category">Filter by Service Type:</label>
-        <select
-          id="service-category"
-          value={selectedServiceCategory}
-          onChange={handleServiceCategoryChange}
-          className={styles.selectInput}
-        >
-          {otherServiceCategories.map((category) => (
-            <option key={category.value} value={category.value}>
-              {category.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className={styles.shopsContainer}>
-        {isLoading || loading ? (
-          <p className={styles.loadingMessage}>Loading services...</p>
-        ) : services && services.length > 0 ? (
-          <ServiceGrid services={services} />
-        ) : (
-          <p className={styles.noShopsMessage}>
-            {selectedServiceCategory === "all"
-              ? `No other services found${
-                  schoolParam ? ` in ${schoolParam}` : ""
-                }`
-              : `No ${
-                  otherServiceCategories.find(
-                    (c) => c.value === selectedServiceCategory
-                  )?.label || selectedServiceCategory
-                } found${schoolParam ? ` in ${schoolParam}` : ""}`}
-          </p>
-        )}
+        {/* Results Section */}
+        <div className="bg-white rounded-xl shadow-md overflow-hidden">
+          {isLoading || loading ? (
+            <div className="flex flex-col items-center justify-center py-16">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-600 mb-4"></div>
+              <p className="text-lg text-gray-600 font-medium">
+                Loading services...
+              </p>
+              <p className="text-sm text-gray-500 mt-2">
+                Please wait while we fetch the latest services
+              </p>
+            </div>
+          ) : services && services.length > 0 ? (
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-gray-900">
+                  {services.length} Service{services.length !== 1 ? "s" : ""}{" "}
+                  Found
+                </h3>
+                <div className="text-sm text-gray-500">
+                  {selectedServiceCategory !== "all" && (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                      {
+                        otherServiceCategories.find(
+                          (c) => c.value === selectedServiceCategory
+                        )?.label
+                      }
+                    </span>
+                  )}
+                </div>
+              </div>
+              <ServiceGrid services={services} />
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-16 px-8">
+              <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6">
+                <Search className="w-12 h-12 text-gray-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                No Services Found
+              </h3>
+              <p className="text-gray-600 text-center max-w-md">
+                {selectedServiceCategory === "all"
+                  ? `No other services found${
+                      schoolParam ? ` in ${schoolParam}` : ""
+                    }`
+                  : `No ${
+                      otherServiceCategories.find(
+                        (c) => c.value === selectedServiceCategory
+                      )?.label || selectedServiceCategory
+                    } found${schoolParam ? ` in ${schoolParam}` : ""}`}
+              </p>
+              <p className="text-sm text-gray-500 mt-2">
+                Try adjusting your search criteria or browse other categories
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

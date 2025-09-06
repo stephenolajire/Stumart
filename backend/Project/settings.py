@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     'Chatbot',
     'Chat',
     'Utilities',
+    'Home',
 ]
 
 MIDDLEWARE = [
@@ -174,6 +175,7 @@ else:
     ALLOWED_HOSTS = [
         'stumart-server.onrender.com',
         'server-stumart.onrender.com',
+        'stumart-fe1z.onrender.com',
         'stumart.com.ng',
         'localhost',
         '127.0.0.1',
@@ -184,13 +186,15 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "https://stumart.com.ng",
     "https://stumart-server.onrender.com",
-    "https://server-stumart.onrender.com"
+    "https://server-stumart.onrender.com",
+    "https://stumart-fe1z.onrender.com",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     "https://stumart.com.ng",
     "https://stumart-server.onrender.com",
-    "https://server-stumart.onrender.com"
+    "https://server-stumart.onrender.com",
+    "https://stumart-fe1z.onrender.com",
 ]
 
 # Update CORS headers
@@ -245,7 +249,7 @@ DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 # Email Configuration
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend' # For development
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend' # For production
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend' # For production
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_USE_TLS = True
 EMAIL_PORT = 587

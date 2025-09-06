@@ -1,6 +1,5 @@
 import React, { useContext, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import styles from "../css/Checkout.module.css";
 import { GlobalContext } from "../constant/GlobalContext";
 import { useNavigate } from "react-router-dom";
 import api from "../constant/api";
@@ -225,10 +224,13 @@ const Checkout = () => {
   // Show loading if cart is still loading
   if (cartLoading) {
     return (
-      <div className={styles.checkoutContainer}>
+      <div className="min-h-screen bg-gray-50">
         <Header title="Checkout" />
-        <div className={styles.loadingContainer}>
-          <p>Loading cart...</p>
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading cart...</p>
+          </div>
         </div>
       </div>
     );
@@ -237,11 +239,20 @@ const Checkout = () => {
   // Show error if cart failed to load
   if (cartError) {
     return (
-      <div className={styles.checkoutContainer}>
+      <div className="min-h-screen bg-gray-50">
         <Header title="Checkout" />
-        <div className={styles.errorContainer}>
-          <p>Failed to load cart. Please try again.</p>
-          <button onClick={() => navigate(-1)}>Go Back</button>
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <p className="text-gray-600 mb-4">
+              Failed to load cart. Please try again.
+            </p>
+            <button
+              onClick={() => navigate(-1)}
+              className="bg-amber-500 hover:bg-amber-600 text-white px-6 py-2 rounded-lg transition-colors"
+            >
+              Go Back
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -250,183 +261,268 @@ const Checkout = () => {
   // Show empty cart message
   if (!cartItems.length) {
     return (
-      <div className={styles.checkoutContainer}>
+      <div className="min-h-screen bg-gray-50">
         <Header title="Checkout" />
-        <div className={styles.emptyCartContainer}>
-          <p>Your cart is empty.</p>
-          <button onClick={() => navigate("/")}>Continue Shopping</button>
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <p className="text-gray-600 mb-4">Your cart is empty.</p>
+            <button
+              onClick={() => navigate("/")}
+              className="bg-amber-500 hover:bg-amber-600 text-white px-6 py-2 rounded-lg transition-colors"
+            >
+              Continue Shopping
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={styles.checkoutContainer}>
+    <div className="min-h-screen bg-gray-50">
       <Header title="Checkout" />
 
-      <div className={styles.checkoutContent}>
-        {/* Checkout form */}
-        <div className={styles.checkoutFormContainer}>
-          <form className={styles.checkoutForm} onSubmit={handleSubmit}>
-            <div className={styles.formSection}>
-              <h3 className={styles.sectionTitle}>Contact Information</h3>
-              <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label htmlFor="firstName">First Name</label>
-                  <input
-                    type="text"
-                    id="firstName"
-                    name="firstName"
-                    value={formData.firstName}
-                    onChange={handleInputChange}
-                    required
-                    disabled={isLoading}
-                  />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Checkout form */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-2xl shadow-lg p-8">
+              <form onSubmit={handleSubmit} className="space-y-8">
+                {/* Contact Information Section */}
+                <div className="border-b border-gray-200 pb-8">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-6">
+                    Contact Information
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label
+                        htmlFor="firstName"
+                        className="block text-sm font-medium text-gray-700 mb-2"
+                      >
+                        First Name
+                      </label>
+                      <input
+                        type="text"
+                        id="firstName"
+                        name="firstName"
+                        value={formData.firstName}
+                        onChange={handleInputChange}
+                        required
+                        disabled={isLoading}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      />
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="lastName"
+                        className="block text-sm font-medium text-gray-700 mb-2"
+                      >
+                        Last Name
+                      </label>
+                      <input
+                        type="text"
+                        id="lastName"
+                        name="lastName"
+                        value={formData.lastName}
+                        onChange={handleInputChange}
+                        required
+                        disabled={isLoading}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                    <div>
+                      <label
+                        htmlFor="email"
+                        className="block text-sm font-medium text-gray-700 mb-2"
+                      >
+                        Email Address
+                      </label>
+                      <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        required
+                        disabled={isLoading}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      />
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="phone"
+                        className="block text-sm font-medium text-gray-700 mb-2"
+                      >
+                        Phone Number
+                      </label>
+                      <input
+                        type="tel"
+                        id="phone"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleInputChange}
+                        required
+                        disabled={isLoading}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div className={styles.formGroup}>
-                  <label htmlFor="lastName">Last Name</label>
-                  <input
-                    type="text"
-                    id="lastName"
-                    name="lastName"
-                    value={formData.lastName}
-                    onChange={handleInputChange}
-                    required
-                    disabled={isLoading}
-                  />
-                </div>
-              </div>
 
-              <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label htmlFor="email">Email Address</label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    required
-                    disabled={isLoading}
-                  />
-                </div>
-                <div className={styles.formGroup}>
-                  <label htmlFor="phone">Phone Number</label>
-                  <input
-                    type="tel"
-                    id="phone"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    required
-                    disabled={isLoading}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className={styles.formSection}>
-              <h3 className={styles.sectionTitle}>Shipping Address</h3>
-              <div className={styles.formGroup}>
-                <label htmlFor="address">Hostel Address</label>
-                <input
-                  type="text"
-                  id="address"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleInputChange}
-                  required
-                  disabled={isLoading}
-                />
-              </div>
-
-              <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label htmlFor="room">Room Number</label>
-                  <input
-                    type="text"
-                    id="room"
-                    name="room"
-                    value={formData.room}
-                    onChange={handleInputChange}
-                    required
-                    disabled={isLoading}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className={styles.formActions}>
-              <button
-                type="button"
-                className={styles.backButton}
-                onClick={goback}
-                disabled={isLoading}
-              >
-                Back to Cart
-              </button>
-              <button
-                type="submit"
-                className={styles.placeOrderButton}
-                disabled={isLoading}
-              >
-                {isLoading ? "Processing..." : "Place Order & Pay"}
-              </button>
-            </div>
-          </form>
-        </div>
-
-        {/* Order summary */}
-        <div className={styles.orderSummary}>
-          <h3 className={styles.summaryTitle}>Order Summary</h3>
-
-          <div className={styles.orderItems}>
-            {cartItems.map((item) => (
-              <div key={item.id}>
-                <div className={styles.orderItem}>
-                  <div className={styles.itemImage}>
-                    <img
-                      src={item.product_image}
-                      alt={item.product_name}
-                      onError={(e) => {
-                        e.target.src = "/placeholder-image.png"; // Add fallback image
-                      }}
+                {/* Shipping Address Section */}
+                <div className="space-y-6">
+                  <h3 className="text-2xl font-bold text-gray-900">
+                    Shipping Address
+                  </h3>
+                  <div>
+                    <label
+                      htmlFor="address"
+                      className="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Hostel Address
+                    </label>
+                    <input
+                      type="text"
+                      id="address"
+                      name="address"
+                      value={formData.address}
+                      onChange={handleInputChange}
+                      required
+                      disabled={isLoading}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
                     />
-                    <span className={styles.itemQuantity}>{item.quantity}</span>
                   </div>
-                  <div className={styles.itemDetails}>
-                    <h4 className={styles.itemName}>{item.product_name}</h4>
-                    <span className={styles.itemPrice}>
-                      {formatCurrency(Number(item.product_price))}
-                    </span>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label
+                        htmlFor="room"
+                        className="block text-sm font-medium text-gray-700 mb-2"
+                      >
+                        Room Number
+                      </label>
+                      <input
+                        type="text"
+                        id="room"
+                        name="room"
+                        value={formData.room}
+                        onChange={handleInputChange}
+                        required
+                        disabled={isLoading}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      />
+                    </div>
                   </div>
                 </div>
-                {item.delivery_day && (
-                  <div className={styles.summaryRow}>
-                    <span>Delivery Day</span>
-                    <span>{item.delivery_day}</span>
-                  </div>
-                )}
-              </div>
-            ))}
+
+                {/* Form Actions */}
+                <div className="flex flex-col sm:flex-row gap-4 pt-6">
+                  <button
+                    type="button"
+                    onClick={goback}
+                    disabled={isLoading}
+                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Back to Cart
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    {isLoading ? (
+                      <span className="flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                        Processing...
+                      </span>
+                    ) : (
+                      "Place Order & Pay"
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
 
-          <div className={styles.summaryDetails}>
-            <div className={styles.summaryRow}>
-              <span>Subtotal</span>
-              <span>{formatCurrency(cartSummary.subTotal)}</span>
-            </div>
-            <div className={styles.summaryRow}>
-              <span>Shipping</span>
-              <span>{formatCurrency(cartSummary.shippingFee)}</span>
-            </div>
-            <div className={styles.summaryRow}>
-              <span>Tax</span>
-              <span>{formatCurrency(cartSummary.tax)}</span>
-            </div>
-            <div className={`${styles.summaryRow} ${styles.totalRow}`}>
-              <span>Total</span>
-              <span>{formatCurrency(cartSummary.total)}</span>
+          {/* Order summary */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-2xl shadow-lg p-8 sticky top-8">
+              <h3 className="text-2xl font-bold text-gray-900 mb-6">
+                Order Summary
+              </h3>
+
+              <div className="space-y-4 mb-8">
+                {cartItems.map((item) => (
+                  <div
+                    key={item.id}
+                    className="border-b border-gray-100 pb-4 last:border-b-0 last:pb-0"
+                  >
+                    <div className="flex items-start space-x-4">
+                      <div className="relative flex-shrink-0">
+                        <img
+                          src={item.product_image}
+                          alt={item.product_name}
+                          className="w-16 h-16 object-cover rounded-lg"
+                          onError={(e) => {
+                            e.target.src = "/placeholder-image.png"; // Add fallback image
+                          }}
+                        />
+                        <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-medium">
+                          {item.quantity}
+                        </span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm font-medium text-gray-900 truncate">
+                          {item.product_name}
+                        </h4>
+                        <span className="text-lg font-bold text-amber-600">
+                          {formatCurrency(Number(item.product_price))}
+                        </span>
+                      </div>
+                    </div>
+                    {item.delivery_day && (
+                      <div className="mt-3 pt-3 border-t border-gray-100">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">Delivery Day</span>
+                          <span className="font-medium text-gray-900">
+                            {item.delivery_day}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <div className="space-y-3 pt-6 border-t border-gray-200">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Subtotal</span>
+                  <span className="font-medium text-gray-900">
+                    {formatCurrency(cartSummary.subTotal)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Shipping</span>
+                  <span className="font-medium text-gray-900">
+                    {formatCurrency(cartSummary.shippingFee)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Tax</span>
+                  <span className="font-medium text-gray-900">
+                    {formatCurrency(cartSummary.tax)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-lg font-bold text-gray-900 pt-3 border-t border-gray-200">
+                  <span>Total</span>
+                  <span className="text-amber-600">
+                    {formatCurrency(cartSummary.total)}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>

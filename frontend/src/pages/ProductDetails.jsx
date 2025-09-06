@@ -1,7 +1,6 @@
 import { useState, useEffect, useContext } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import styles from "../css/ProductDetails.module.css";
 import { GlobalContext } from "../constant/GlobalContext";
 import api from "../constant/api";
 import Swal from "sweetalert2";
@@ -11,6 +10,8 @@ import {
   FaStarHalfAlt,
   FaRegStar,
   FaTimes,
+  FaChevronLeft,
+  FaChevronRight,
 } from "react-icons/fa";
 import Spinner from "../components/Spinner";
 import Header from "../components/Header";
@@ -95,7 +96,6 @@ const ProductDetails = () => {
     refetchOnWindowFocus: false,
   });
 
-
   const { data: userReviewStatus, isLoading: userReviewStatusLoading } =
     useQuery({
       queryKey: ["userReviewStatus", productId],
@@ -124,8 +124,8 @@ const ProductDetails = () => {
         }
       },
       enabled: !!productId && isAuthenticated, // Only run if authenticated
-      // ...
     });
+
   // Review submission mutation
   const reviewSubmitMutation = useMutation({
     mutationFn: async (reviewData) => {
@@ -212,20 +212,26 @@ const ProductDetails = () => {
 
     // Full stars
     for (let i = 0; i < fullStars; i++) {
-      stars.push(<FaStar key={`full-${i}`} color="#daa520" size={size} />);
+      stars.push(
+        <FaStar key={`full-${i}`} className="text-amber-500" size={size} />
+      );
     }
 
     // Half star
     if (hasHalfStar) {
-      stars.push(<FaStarHalfAlt key="half" color="#daa520" size={size} />);
+      stars.push(
+        <FaStarHalfAlt key="half" className="text-amber-500" size={size} />
+      );
     }
 
     // Empty stars
     for (let i = 0; i < emptyStars; i++) {
-      stars.push(<FaRegStar key={`empty-${i}`} color="#d1d5db" size={size} />);
+      stars.push(
+        <FaRegStar key={`empty-${i}`} className="text-gray-300" size={size} />
+      );
     }
 
-    return <div className={styles.starRating}>{stars}</div>;
+    return <div className="flex items-center gap-1">{stars}</div>;
   };
 
   // Interactive Star Rating Component for modal
@@ -233,13 +239,16 @@ const ProductDetails = () => {
     const [hoverRating, setHoverRating] = useState(0);
 
     return (
-      <div className={styles.interactiveStarRating}>
+      <div className="flex items-center gap-1">
         {[1, 2, 3, 4, 5].map((star) => (
           <FaStar
             key={star}
             size={size}
-            color={star <= (hoverRating || rating) ? "#daa520" : "#d1d5db"}
-            style={{ cursor: "pointer", marginRight: "4px" }}
+            className={`cursor-pointer transition-colors duration-200 ${
+              star <= (hoverRating || rating)
+                ? "text-amber-500"
+                : "text-gray-300"
+            }`}
             onClick={() => onRatingChange(star)}
             onMouseEnter={() => setHoverRating(star)}
             onMouseLeave={() => setHoverRating(0)}
@@ -347,7 +356,7 @@ const ProductDetails = () => {
   // Loading state
   if (productLoading || reviewsLoading || userReviewStatusLoading) {
     return (
-      <div style={{ marginTop: "10rem" }}>
+      <div className="flex justify-center items-center min-h-screen pt-40">
         <Spinner />
       </div>
     );
@@ -356,8 +365,12 @@ const ProductDetails = () => {
   // Error state
   if (productError) {
     return (
-      <div className={styles.errorContainer}>
-        <p>Error loading product details. Please try again.</p>
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-center p-8">
+          <p className="text-red-600 text-lg">
+            Error loading product details. Please try again.
+          </p>
+        </div>
       </div>
     );
   }
@@ -365,8 +378,10 @@ const ProductDetails = () => {
   // No product found
   if (!product) {
     return (
-      <div className={styles.errorContainer}>
-        <p>Product not found.</p>
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-center p-8">
+          <p className="text-gray-600 text-lg">Product not found.</p>
+        </div>
       </div>
     );
   }
@@ -423,7 +438,7 @@ const ProductDetails = () => {
   };
 
   return (
-    <div className={styles.productDetails}>
+    <div className="min-h-screen bg-gray-50 mt-31 lg:mt-0">
       <SEO
         title={
           product
@@ -452,257 +467,340 @@ const ProductDetails = () => {
         url={`/products/${productId}`}
       />
       <Header title="Product Details" />
-      <div className={styles.container}>
-        <div className={styles.productGrid}>
-          <div className={styles.imageSection}>
-            {/* Image carousel */}
-            <div className={styles.carousel}>
-              <img src={getCurrentImageUrl()} alt={product.name} />
+
+      <div className="max-w-7xl mx-auto px-4 pb-6 -mt-7">
+        <div className="grid lg:grid-cols-2 gap-8 mb-12">
+          {/* Image Section */}
+          <div className="space-y-4">
+            {/* Main Image Carousel */}
+            <div className="relative bg-white rounded-2xl shadow-lg overflow-hidden">
+              <div className="aspect-square">
+                <img
+                  src={getCurrentImageUrl()}
+                  alt={product.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
 
               {hasCarousel && (
-                <div className={styles.carouselControls}>
-                  <button onClick={prevImage} className={styles.carouselButton}>
-                    ❮
+                <>
+                  <button
+                    onClick={prevImage}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 p-2 rounded-full shadow-md transition-all duration-200 hover:scale-105"
+                  >
+                    <FaChevronLeft size={20} />
                   </button>
-                  <div className={styles.carouselIndicators}>
+                  <button
+                    onClick={nextImage}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 p-2 rounded-full shadow-md transition-all duration-200 hover:scale-105"
+                  >
+                    <FaChevronRight size={20} />
+                  </button>
+
+                  {/* Image Indicators */}
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
                     {[
                       product.image_url,
                       ...(product.additional_images || []).map(
                         (img) => img.url
                       ),
                     ].map((_, index) => (
-                      <span
+                      <button
                         key={index}
-                        className={`${styles.indicator} ${
+                        className={`w-2 h-2 rounded-full transition-all duration-200 ${
                           currentImageIndex === index
-                            ? styles.activeIndicator
-                            : ""
+                            ? "bg-amber-500"
+                            : "bg-white/60"
                         }`}
                         onClick={() => setCurrentImageIndex(index)}
                       />
                     ))}
                   </div>
-                  <button onClick={nextImage} className={styles.carouselButton}>
-                    ❯
-                  </button>
-                </div>
+                </>
               )}
             </div>
 
-            {/* Thumbnail gallery */}
+            {/* Thumbnail Gallery */}
             {hasCarousel && (
-              <div className={styles.thumbnailGallery}>
-                <div
-                  className={`${styles.thumbnail} ${
-                    currentImageIndex === 0 ? styles.activeThumbnail : ""
+              <div className="flex gap-3 overflow-x-auto pb-2">
+                <button
+                  className={`flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 transition-all duration-200 ${
+                    currentImageIndex === 0
+                      ? "border-amber-500"
+                      : "border-gray-200"
                   }`}
                   onClick={() => setCurrentImageIndex(0)}
                 >
-                  <img src={product.image_url} alt={`${product.name} - main`} />
-                </div>
+                  <img
+                    src={product.image_url}
+                    alt={`${product.name} - main`}
+                    className="w-full h-full object-cover"
+                  />
+                </button>
 
                 {product.additional_images?.map((img, index) => (
-                  <div
+                  <button
                     key={index}
-                    className={`${styles.thumbnail} ${
+                    className={`flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 transition-all duration-200 ${
                       currentImageIndex === index + 1
-                        ? styles.activeThumbnail
-                        : ""
+                        ? "border-amber-500"
+                        : "border-gray-200"
                     }`}
                     onClick={() => setCurrentImageIndex(index + 1)}
                   >
                     <img
                       src={img.image_url}
                       alt={`${product.name} - ${index + 1}`}
+                      className="w-full h-full object-cover"
                     />
-                  </div>
+                  </button>
                 ))}
               </div>
             )}
           </div>
 
-          <div className={styles.infoSection}>
-            <h1>{product.name}</h1>
-            <div className={styles.priceSection}>
-              {product.promotion_price &&
-              product.promotion_price > 0 &&
-              product.promotion_price < product.price ? (
-                <>
-                  <span className={styles.promotionPrice}>
-                    ₦{Number(product.promotion_price).toLocaleString()}
-                  </span>
-                  <span className={styles.originalPrice}>
+          {/* Product Info Section */}
+          <div className="bg-white rounded-2xl shadow-lg p-6 space-y-6">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-4 uppercase">
+                {product.name}
+              </h1>
+
+              {/* Price Section */}
+              <div className="flex items-center gap-3 mb-4">
+                {product.promotion_price &&
+                product.promotion_price > 0 &&
+                product.promotion_price < product.price ? (
+                  <>
+                    <span className="text-3xl font-bold text-amber-600">
+                      ₦{Number(product.promotion_price).toLocaleString()}
+                    </span>
+                    <span className="text-xl text-gray-500 line-through">
+                      ₦{Number(product.price).toLocaleString()}
+                    </span>
+                    <span className="bg-red-100 text-red-600 px-2 py-1 rounded-full text-sm font-medium">
+                      {Math.round(
+                        ((product.price - product.promotion_price) /
+                          product.price) *
+                          100
+                      )}
+                      % OFF
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-3xl font-bold text-amber-600">
                     ₦{Number(product.price).toLocaleString()}
                   </span>
-                </>
-              ) : (
-                <span className={styles.price}>
-                  ₦{Number(product.price).toLocaleString()}
-                </span>
-              )}
-            </div>
-            <p className={styles.description}>{product.description}</p>
+                )}
+              </div>
 
-            <div className={styles.shopInfo}>
-              <h3>Sold by: {product.vendor_name}</h3>
-              <div className={styles.rating}>⭐ {product.vendor_rating}</div>
+              <p className="text-gray-600 leading-relaxed mb-6">
+                {product.description}
+              </p>
             </div>
 
-            {/* Only show stock info for fashion products */}
+            {/* Vendor Info */}
+            <div className="bg-gray-50 rounded-xl p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold text-gray-900">
+                    Sold by: {product.vendor_name}
+                  </h3>
+                  <div className="flex items-center gap-1 mt-1">
+                    <div className="flex items-center">
+                      <FaStar className="text-amber-500" size={16} />
+                      <span className="ml-1 text-sm text-gray-600">
+                        {product.vendor_rating}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Stock Info for Fashion Products */}
             {isFashionProduct && (
-              <div className={styles.shopInfo}>
-                {product.in_stock > 0 && <h3>In Stock: {product.in_stock}</h3>}
-                {product.in_stock <= 0 && (
-                  <h3 className={styles.outOfStock}>Out of Stock</h3>
+              <div className="bg-blue-50 rounded-xl p-4">
+                {product.in_stock > 0 ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <span className="font-medium text-gray-900">
+                      In Stock: {product.in_stock}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                    <span className="font-medium text-red-600">
+                      Out of Stock
+                    </span>
+                  </div>
                 )}
               </div>
             )}
 
-            {/* Colors section - only for fashion products with colors */}
+            {/* Colors Section */}
             {isFashionProduct &&
               product.colors &&
               product.colors.length > 0 && (
-                <div className={styles.colorsSection}>
-                  <h3>Colors:</h3>
-                  <div className={styles.colorOptions}>
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-3">Colors:</h3>
+                  <div className="flex flex-wrap gap-3">
                     {product.colors
-                      .filter((color) => color.quantity > 0) // Only show colors with stock
+                      .filter((color) => color.quantity > 0)
                       .map((color) => (
-                        <div
+                        <button
                           key={color.id}
-                          className={`${styles.colorOption} ${
+                          className={`flex items-center gap-2 px-3 py-2 rounded-lg border-2 transition-all duration-200 ${
                             selectedColor === color.color
-                              ? styles.selectedColor
-                              : ""
+                              ? "border-amber-500 bg-amber-50"
+                              : "border-gray-200 hover:border-amber-300"
                           }`}
                           onClick={() => setSelectedColor(color.color)}
                         >
                           <span
-                            className={styles.colorSwatch}
+                            className="w-4 h-4 rounded-full border border-gray-300"
                             style={{ backgroundColor: color.color }}
                           ></span>
-                          <span>
+                          <span className="text-sm">
                             {color.color} ({color.quantity})
                           </span>
-                        </div>
+                        </button>
                       ))}
                   </div>
                 </div>
               )}
 
-            {/* Sizes section - only for fashion products with sizes */}
+            {/* Sizes Section */}
             {isFashionProduct && product.sizes && product.sizes.length > 0 && (
-              <div className={styles.sizesSection}>
-                <h3>Sizes:</h3>
-                <div className={styles.sizeOptions}>
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-3">Sizes:</h3>
+                <div className="flex flex-wrap gap-3">
                   {product.sizes
-                    .filter((size) => size.quantity > 0) // Only show sizes with stock
+                    .filter((size) => size.quantity > 0)
                     .map((size) => (
-                      <div
+                      <button
                         key={size.id}
-                        className={`${styles.sizeOption} ${
-                          selectedSize === size.size ? styles.selectedSize : ""
+                        className={`px-4 py-2 rounded-lg border-2 transition-all duration-200 font-medium ${
+                          selectedSize === size.size
+                            ? "border-amber-500 bg-amber-50 text-amber-700"
+                            : "border-gray-200 hover:border-amber-300 text-gray-700"
                         }`}
                         onClick={() => setSelectedSize(size.size)}
                       >
-                        <span>
-                          {size.size} ({size.quantity})
-                        </span>
-                      </div>
+                        {size.size} ({size.quantity})
+                      </button>
                     ))}
                 </div>
               </div>
             )}
 
-            <div className={styles.addToCart}>
-              <div className={styles.quantity}>
+            {/* Add to Cart Section */}
+            <div className="border-t pt-6">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="flex items-center bg-gray-100 rounded-lg">
+                  <button
+                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                    disabled={
+                      quantity === 1 || (isFashionProduct && isOutOfStock)
+                    }
+                    className="px-4 py-2 text-gray-600 hover:text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    -
+                  </button>
+                  <span className="px-4 py-2 font-medium text-gray-900">
+                    {quantity}
+                  </span>
+                  <button
+                    onClick={() => setQuantity((q) => q + 1)}
+                    disabled={
+                      (isFashionProduct && isOutOfStock) ||
+                      (isFashionProduct && quantity >= product.in_stock)
+                    }
+                    className="px-4 py-2 text-gray-600 hover:text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    +
+                  </button>
+                </div>
+
                 <button
-                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                  disabled={
-                    quantity === 1 || (isFashionProduct && isOutOfStock)
-                  }
-                >
-                  -
-                </button>
-                <span>{quantity}</span>
-                <button
-                  onClick={() => setQuantity((q) => q + 1)}
+                  className={`flex-1 px-6 py-3 rounded-lg font-semibold text-white transition-all duration-200 ${
+                    isFashionProduct && isOutOfStock
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-amber-500 hover:bg-amber-600 hover:shadow-lg transform hover:scale-[1.02]"
+                  } disabled:opacity-50`}
                   disabled={
                     (isFashionProduct && isOutOfStock) ||
-                    (isFashionProduct && quantity >= product.in_stock)
+                    addToCartMutation.isPending
                   }
+                  onClick={handleAddToCart}
                 >
-                  +
+                  {addToCartMutation.isPending
+                    ? "Adding..."
+                    : isFashionProduct && isOutOfStock
+                    ? "Out of Stock"
+                    : "Add to Cart"}
                 </button>
               </div>
-              <button
-                className={`${styles.addButton} ${
-                  isFashionProduct && isOutOfStock ? styles.disabledButton : ""
-                }`}
-                disabled={
-                  (isFashionProduct && isOutOfStock) ||
-                  addToCartMutation.isPending
-                }
-                onClick={handleAddToCart}
-              >
-                {addToCartMutation.isPending
-                  ? "Adding..."
-                  : isFashionProduct && isOutOfStock
-                  ? "Out of Stock"
-                  : "Add to Cart"}
-              </button>
             </div>
           </div>
         </div>
 
         {/* Reviews Section */}
-        <div className={styles.reviewsSection}>
-          <div className={styles.reviewsHeader}>
-            <div className={styles.reviewsHeaderTop}>
-              <h2>Customer Reviews</h2>
+        <div className="bg-white rounded-2xl shadow-lg p-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4 md:mb-0">
+              Customer Reviews
+            </h2>
 
-              {/* User Review Action Buttons */}
-              {!userReviewStatusLoading && userReviewStatus?.hasBought && (
-                <div className={styles.userReviewActions}>
-                  {userReviewStatus.hasReviewed ? (
-                    <button
-                      className={styles.editReviewButton}
-                      onClick={handleOpenReviewModal}
-                    >
-                      Edit Your Review
-                    </button>
-                  ) : (
-                    <button
-                      className={styles.addReviewButton}
-                      onClick={handleOpenReviewModal}
-                    >
-                      Write a Review
-                    </button>
-                  )}
+            {/* User Review Actions */}
+            {!userReviewStatusLoading && userReviewStatus?.hasBought && (
+              <div>
+                {userReviewStatus.hasReviewed ? (
+                  <button
+                    className="bg-amber-100 text-amber-700 px-4 py-2 rounded-lg font-medium hover:bg-amber-200 transition-colors duration-200"
+                    onClick={handleOpenReviewModal}
+                  >
+                    Edit Your Review
+                  </button>
+                ) : (
+                  <button
+                    className="bg-amber-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-amber-600 transition-colors duration-200"
+                    onClick={handleOpenReviewModal}
+                  >
+                    Write a Review
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {reviewStats.total_reviews > 0 && (
+            <div className="border-b pb-6 mb-6">
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="flex items-center gap-4">
+                  <div className="text-4xl font-bold text-amber-600">
+                    {reviewStats.average_rating.toFixed(1)}
+                  </div>
+                  <div>
+                    <StarRating rating={reviewStats.average_rating} size={20} />
+                    <p className="text-sm text-gray-600 mt-1">
+                      ({reviewStats.total_reviews} review
+                      {reviewStats.total_reviews !== 1 ? "s" : ""})
+                    </p>
+                  </div>
                 </div>
-              )}
-            </div>
 
-            {reviewStats.total_reviews > 0 && (
-              <div className={styles.reviewsSummary}>
-                <div className={styles.averageRating}>
-                  <StarRating rating={reviewStats.average_rating} size={20} />
-                  <span className={styles.ratingNumber}>
-                    {reviewStats.average_rating} out of 5
-                  </span>
-                  <span className={styles.totalReviews}>
-                    ({reviewStats.total_reviews} review
-                    {reviewStats.total_reviews !== 1 ? "s" : ""})
-                  </span>
-                </div>
-
-                <div className={styles.ratingBreakdown}>
+                <div className="space-y-2">
                   {[5, 4, 3, 2, 1].map((rating) => (
-                    <div key={rating} className={styles.ratingBar}>
-                      <span className={styles.ratingLabel}>{rating} star</span>
-                      <div className={styles.barContainer}>
+                    <div
+                      key={rating}
+                      className="flex items-center gap-3 text-sm"
+                    >
+                      <span className="w-12 text-gray-600">{rating} star</span>
+                      <div className="flex-1 bg-gray-200 rounded-full h-2">
                         <div
-                          className={styles.barFill}
+                          className="bg-amber-500 h-2 rounded-full transition-all duration-300"
                           style={{
                             width:
                               reviewStats.total_reviews > 0
@@ -715,46 +813,59 @@ const ProductDetails = () => {
                           }}
                         ></div>
                       </div>
-                      <span className={styles.ratingCount}>
+                      <span className="w-8 text-gray-600 text-right">
                         {reviewStats.rating_breakdown[rating]}
                       </span>
                     </div>
                   ))}
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
-          <div className={styles.reviewsList}>
+          {/* Reviews List */}
+          <div>
             {reviews.length === 0 ? (
-              <div className={styles.noReviews}>
-                <p>No reviews yet for this vendor's products.</p>
-                <p>Be the first to leave a review after your purchase!</p>
+              <div className="text-center py-12">
+                <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                  <FaStar className="text-gray-400" size={24} />
+                </div>
+                <p className="text-gray-600 mb-2">
+                  No reviews yet for this vendor's products.
+                </p>
+                <p className="text-gray-500 text-sm">
+                  Be the first to leave a review after your purchase!
+                </p>
               </div>
             ) : (
-              <>
+              <div className="space-y-6">
                 {displayedReviews.map((review) => (
-                  <div key={review.id} className={styles.reviewItem}>
-                    <div className={styles.reviewHeader}>
-                      <div className={styles.reviewerInfo}>
-                        <span className={styles.reviewerName}>
+                  <div
+                    key={review.id}
+                    className="border-b border-gray-100 last:border-0 pb-6 last:pb-0"
+                  >
+                    <div className="flex flex-col md:flex-row md:items-start md:justify-between mb-3">
+                      <div>
+                        <h4 className="font-semibold text-gray-900">
                           {review.reviewer_name}
-                        </span>
-                        <span className={styles.reviewDate}>
+                        </h4>
+                        <p className="text-sm text-gray-500">
                           {review.created_at}
-                        </span>
+                        </p>
                       </div>
                       <StarRating rating={review.rating} size={16} />
                     </div>
                     {review.comment && (
-                      <p className={styles.reviewComment}>{review.comment}</p>
+                      <p className="text-gray-700 leading-relaxed">
+                        {review.comment}
+                      </p>
                     )}
                   </div>
                 ))}
 
                 {reviews.length > 3 && (
                   <button
-                    className={styles.showMoreButton}
+                    className="w-full py-3 text-amber-600 font-medium hover:bg-amber-50 rounded-lg transition-colors duration-200 border border-amber-200"
                     onClick={() => setShowAllReviews(!showAllReviews)}
                   >
                     {showAllReviews
@@ -762,7 +873,7 @@ const ProductDetails = () => {
                       : `Show All ${reviews.length} Reviews`}
                   </button>
                 )}
-              </>
+              </div>
             )}
           </div>
         </div>
@@ -770,25 +881,27 @@ const ProductDetails = () => {
 
       {/* Review Modal */}
       {showReviewModal && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modalContent}>
-            <div className={styles.modalHeader}>
-              <h3>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h3 className="text-xl font-bold text-gray-900">
                 {userReviewStatus?.hasReviewed
                   ? "Edit Your Review"
                   : "Write a Review"}
               </h3>
               <button
-                className={styles.modalClose}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
                 onClick={handleCloseReviewModal}
               >
-                <FaTimes />
+                <FaTimes className="text-gray-500" size={20} />
               </button>
             </div>
 
-            <form onSubmit={handleReviewSubmit} className={styles.reviewForm}>
-              <div className={styles.formGroup}>
-                <label>Rating *</label>
+            <form onSubmit={handleReviewSubmit} className="p-6 space-y-6">
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 mb-3">
+                  Rating *
+                </label>
                 <InteractiveStarRating
                   rating={reviewForm.rating}
                   onRatingChange={(rating) =>
@@ -797,8 +910,10 @@ const ProductDetails = () => {
                 />
               </div>
 
-              <div className={styles.formGroup}>
-                <label>Comment (Optional)</label>
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 mb-3">
+                  Comment (Optional)
+                </label>
                 <textarea
                   value={reviewForm.comment}
                   onChange={(e) =>
@@ -809,14 +924,14 @@ const ProductDetails = () => {
                   }
                   placeholder="Share your experience with this product..."
                   rows={4}
-                  className={styles.reviewTextarea}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-200 resize-none"
                 />
               </div>
 
-              <div className={styles.modalActions}>
+              <div className="flex gap-3 pt-4">
                 <button
                   type="button"
-                  className={styles.cancelButton}
+                  className="flex-1 px-4 py-3 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200 font-medium"
                   onClick={handleCloseReviewModal}
                   disabled={reviewSubmitMutation.isPending}
                 >
@@ -824,7 +939,7 @@ const ProductDetails = () => {
                 </button>
                 <button
                   type="submit"
-                  className={styles.submitButton}
+                  className="flex-1 px-4 py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={
                     reviewSubmitMutation.isPending || reviewForm.rating === 0
                   }

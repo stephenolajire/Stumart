@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import api from "../constant/api";
-import styles from "../css/VerifyEmail.module.css";
 import OtpInput from "react-otp-input";
 
 const VerifyOTPForm = () => {
@@ -35,7 +34,7 @@ const VerifyOTPForm = () => {
         icon: "error",
         title: "OTP Expired",
         text: "The verification code has expired. Please request a new one.",
-        confirmButtonColor: "var(--primary-500)",
+        confirmButtonColor: "#eab308", // yellow-500 hex value
       }).then(() => {
         navigate("/forgot-password");
       });
@@ -88,7 +87,7 @@ const VerifyOTPForm = () => {
         icon: "error",
         title: "Invalid OTP",
         text: "Please enter a complete 6-digit code",
-        confirmButtonColor: "var(--primary-500)",
+        confirmButtonColor: "#eab308", // yellow-500 hex value
       });
       return;
     }
@@ -101,15 +100,14 @@ const VerifyOTPForm = () => {
         code: otpString,
       });
 
-      
       await Swal.fire({
         icon: "success",
         title: "Email Verified!",
         text: "Your email has been verified successfully.",
-        confirmButtonColor: "var(--primary-500)",
+        confirmButtonColor: "#eab308", // yellow-500 hex value
       });
-      
-      localStorage.removeItem("otpExpiration"); 
+
+      localStorage.removeItem("otpExpiration");
       // localStorage.removeItem("resetEmail")
 
       navigate("/reset-password");
@@ -119,7 +117,7 @@ const VerifyOTPForm = () => {
         icon: "error",
         title: "Verification Failed",
         text: error.response?.data?.error || "Please try again",
-        confirmButtonColor: "var(--primary-500)",
+        confirmButtonColor: "#eab308", // yellow-500 hex value
       });
     } finally {
       setIsLoading(false);
@@ -142,14 +140,14 @@ const VerifyOTPForm = () => {
         icon: "success",
         title: "OTP Resent",
         text: "A new verification code has been sent to your email.",
-        confirmButtonColor: "var(--primary-500)",
+        confirmButtonColor: "#eab308", // yellow-500 hex value
       });
     } catch (error) {
       Swal.fire({
         icon: "error",
         title: "Failed to Resend",
         text: error.response?.data?.error || "Failed to send new code",
-        confirmButtonColor: "var(--primary-500)",
+        confirmButtonColor: "#eab308", // yellow-500 hex value
       });
     } finally {
       setIsLoading(false);
@@ -166,7 +164,7 @@ const VerifyOTPForm = () => {
         icon: "info",
         title: "Please Wait",
         text: `You can request a new code in ${timeString}`,
-        confirmButtonColor: "var(--primary-500)",
+        confirmButtonColor: "#eab308", // yellow-500 hex value
       });
       return;
     }
@@ -174,59 +172,73 @@ const VerifyOTPForm = () => {
   };
 
   return (
-    <div className={styles.verifyContainer}>
-      <div className={styles.verifyBox}>
-        <h2>Verify Your Email</h2>
-        <p>Please enter the 6-digit code sent to your email</p>
-
-        <div className={styles.timerContainer}>
-          <span className={styles.timer}>
-            Time remaining: {formatTimeLeft()}
-          </span>
-        </div>
-
-        <form onSubmit={handleSubmit} className={styles.verifyForm}>
-          <div className={styles.otpInputs}>
-            {otp.map((digit, index) => (
-              <input
-                key={index}
-                type="text"
-                id={`otp-${index}`}
-                maxLength={1}
-                value={digit}
-                onChange={(e) => handleChange(index, e.target.value)}
-                onKeyDown={(e) => handleKeyDown(index, e)}
-                className={styles.otpInput}
-                required
-                onPaste={(e) => {
-                  e.preventDefault();
-                  const pastedValue = e.clipboardData.getData("text");
-                  if (/^\d{6}$/.test(pastedValue)) {
-                    setOtp(pastedValue.split(""));
-                    document.getElementById(`otp-6`).focus(); // Focus last input
-                  }
-                }}
-              />
-            ))}
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
+        <div className="bg-white shadow-lg rounded-lg px-8 pt-6 pb-8">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+              Verify Your Email
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Please enter the 6-digit code sent to your email
+            </p>
           </div>
 
-          <button
-            type="submit"
-            className={styles.verifyButton}
-            disabled={isLoading || timeLeft === 0}
-          >
-            {isLoading ? "Verifying..." : "Verify Email"}
-          </button>
+          <div className="text-center mb-6">
+            <span
+              className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+                timeLeft > 60
+                  ? "bg-green-100 text-green-700"
+                  : "bg-red-100 text-red-700"
+              }`}
+            >
+              Time remaining: {formatTimeLeft()}
+            </span>
+          </div>
 
-          <button
-            type="button"
-            className={styles.resendButton}
-            onClick={handleResendClick}
-            disabled={isLoading}
-          >
-            Resend Code
-          </button>
-        </form>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="flex justify-center space-x-2">
+              {otp.map((digit, index) => (
+                <input
+                  key={index}
+                  type="text"
+                  id={`otp-${index}`}
+                  maxLength={1}
+                  value={digit}
+                  onChange={(e) => handleChange(index, e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(index, e)}
+                  className="w-12 h-12 text-center text-lg font-bold border-2 border-gray-300 rounded-lg focus:border-yellow-500 focus:ring-2 focus:ring-yellow-500 focus:outline-none transition-colors duration-200"
+                  required
+                  onPaste={(e) => {
+                    e.preventDefault();
+                    const pastedValue = e.clipboardData.getData("text");
+                    if (/^\d{6}$/.test(pastedValue)) {
+                      setOtp(pastedValue.split(""));
+                      document.getElementById(`otp-6`).focus(); // Focus last input
+                    }
+                  }}
+                />
+              ))}
+            </div>
+
+            <button
+              type="submit"
+              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-yellow-500 hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              disabled={isLoading || timeLeft === 0}
+            >
+              {isLoading ? "Verifying..." : "Verify Email"}
+            </button>
+
+            <button
+              type="button"
+              className="w-full flex justify-center py-2 px-4 border border-yellow-500 rounded-md shadow-sm text-sm font-medium text-yellow-600 bg-white hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              onClick={handleResendClick}
+              disabled={isLoading}
+            >
+              Resend Code
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );

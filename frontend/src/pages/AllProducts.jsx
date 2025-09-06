@@ -1,8 +1,7 @@
 import { useState, useEffect, useContext, useCallback, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import ProductCard from "../components/ProductCard";
+import Card from "../pages/components/Card"
 import Spinner from "../components/Spinner";
-import styles from "../css/AllProducts.module.css";
 import SEO from "../components/Metadata";
 import Swal from "sweetalert2";
 import {
@@ -28,11 +27,24 @@ const AllProducts = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [toggleLoading, setToggleLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [favorites, setFavorites] = useState(new Set());
 
   // Get auth and hooks from global context
   const { isAuthenticated, useAllProducts } = useContext(GlobalContext);
 
   const navigate = useNavigate();
+
+  const toggleFavorite = (productId) => {
+    const newFavorites = new Set(favorites);
+    if (newFavorites.has(productId)) {
+      newFavorites.delete(productId);
+    } else {
+      newFavorites.add(productId);
+    }
+    setFavorites(newFavorites);
+  };
+
+  const favoriteCount = favorites.size;
 
   // Initialize filters from URL params
   const [filters, setFilters] = useState({
@@ -99,7 +111,7 @@ const AllProducts = () => {
   const previousPage = productsData?.previous;
 
   // console.log("Products Data:", productsData);
-  console.log("All Products:", allProducts);
+  // console.log("All Products:", allProducts);
 
   // Check if all products belong to the same vendor
   const singleVendorInfo = useMemo(() => {
@@ -354,7 +366,7 @@ const AllProducts = () => {
     if (hasActiveFilters) {
       return (
         <>
-          <FaSadTear className={styles.sadIcon} />
+          <FaSadTear className="text-4xl text-gray-400 mb-4" />
           No products match your current filters. Try adjusting your search
           criteria.
         </>
@@ -374,7 +386,7 @@ const AllProducts = () => {
     allProductsError?.message || "Failed to load products. Please try again.";
 
   return (
-    <div className={styles.productsPage}>
+    <div className="min-h-screen bg-gray-50 mt-31 lg:mt-0 py-4 px-4 sm:px-6 lg:px-8">
       <SEO
         title="All Products - StuMart | Campus Marketplace"
         description="Browse all products available on StuMart campus marketplace. Find textbooks, electronics, food, fashion, and more from students and vendors across Nigerian universities. Filter by school, category, price, and location."
@@ -382,419 +394,380 @@ const AllProducts = () => {
         url="/products"
       />
 
-      {isAuthenticated && (
-        <div className={styles.viewToggle}>
-          <select
-            value={viewMode}
-            onChange={(e) => handleViewModeChange(e.target.value)}
-            className={styles.viewSelect}
-            disabled={toggleLoading || allProductsLoading}
+      <div className="max-w-7xl mx-auto">
+        {/* View Mode Toggle */}
+        {isAuthenticated && (
+          <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+            <div className="flex items-center justify-center space-x-4">
+              <select
+                value={viewMode}
+                onChange={(e) => handleViewModeChange(e.target.value)}
+                className="px-4 py-2 bg-amber-500 text-white rounded-lg font-medium hover:bg-amber-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
+                disabled={toggleLoading || allProductsLoading}
+              >
+                <option value="school">My School Products</option>
+                <option value="other">Other Schools Products</option>
+              </select>
+              {toggleLoading && (
+                <div className="flex items-center text-gray-600">
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-amber-500 border-t-transparent mr-2"></div>
+                  <span className="text-sm">Loading...</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Header Section */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+          <Header title="All Products" />
+          <button
+            className="mt-4 sm:mt-0 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2"
+            onClick={() => setShowFilters(!showFilters)}
           >
-            <option value="school">My School Products</option>
-            <option value="other">Other Schools Products</option>
-          </select>
-          {toggleLoading && (
-            <div className={styles.toggleLoader}>
-              <span>Loading...</span>
+            {showFilters ? <FaTimes /> : <FaFilter />}
+            <span>Filters</span>
+          </button>
+        </div>
+
+        {/* School Information */}
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-6 text-center">
+          {isAuthenticated && !viewingOtherSchools ? (
+            <>
+              <h6 className="text-lg font-semibold text-gray-900 mb-2">
+                All products in {school}
+              </h6>
+              <p className="text-gray-600">
+                Use the filter option to see other school products
+              </p>
+            </>
+          ) : (
+            <>
+              <h6 className="text-lg font-semibold text-gray-900 mb-2">
+                All products in registered schools
+              </h6>
+              <p className="text-gray-600 mb-2">
+                Use the filter option to see products from a specific school
+              </p>
+              {!isAuthenticated && (
+                <p className="text-amber-600 font-medium">
+                  Register to see products from your school
+                </p>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Products Count and Pagination Info */}
+        {!allProductsLoading && productsCount > 0 && (
+          <div className="text-center text-gray-600 text-sm mb-4">
+            Showing {(currentPage - 1) * 18 + 1} -{" "}
+            {Math.min(currentPage * 18, totalProducts)} of {totalProducts}{" "}
+            products
+            {totalPages > 1 && ` (Page ${currentPage} of ${totalPages})`}
+          </div>
+        )}
+
+        {/* Single Vendor Display */}
+        {singleVendorInfo && productsCount > 0 && !allProductsLoading && (
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div className="flex items-center justify-center space-x-2">
+              <FaStore className="text-blue-600 text-lg" />
+              <span className="text-gray-700">
+                All products by:{" "}
+                <strong className="text-blue-600">
+                  {singleVendorInfo.name}
+                </strong>
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Filters Section */}
+        <div
+          className={`bg-white rounded-lg shadow-sm p-4 mb-6 transition-all duration-300 ${
+            showFilters ? "block" : "hidden"
+          }`}
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Search */}
+            <div className="lg:col-span-2">
+              <input
+                type="text"
+                placeholder="Search products..."
+                value={filters.search}
+                onChange={(e) => handleFilterChange("search", e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+              />
+            </div>
+
+            {/* Category */}
+            <div>
+              <select
+                value={filters.category}
+                onChange={(e) => handleFilterChange("category", e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+              >
+                <option value="">All Categories</option>
+                {allProductsCategories.map((category) => (
+                  <option key={category} value={category}>
+                    {category.replace(/_/g, " ")}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Sort */}
+            <div>
+              <select
+                value={filters.sort}
+                onChange={(e) => handleFilterChange("sort", e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+              >
+                <option value="newest">Newest</option>
+                <option value="price_low">Price: Low to High</option>
+                <option value="price_high">Price: High to Low</option>
+              </select>
+            </div>
+
+            {/* Price Range */}
+            <div className="flex space-x-2">
+              <input
+                type="number"
+                placeholder="Min Price"
+                value={filters.minPrice}
+                onChange={(e) => handleFilterChange("minPrice", e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+              />
+              <input
+                type="number"
+                placeholder="Max Price"
+                value={filters.maxPrice}
+                onChange={(e) => handleFilterChange("maxPrice", e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+              />
+            </div>
+
+            {/* State */}
+            <div>
+              <select
+                value={filters.state}
+                onChange={(e) => handleStateChange(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+              >
+                <option value="">All States</option>
+                {nigeriaStates.map((state) => (
+                  <option key={state} value={state}>
+                    {state.replace(/_/g, " ")}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* School */}
+            <div>
+              <select
+                value={filters.school}
+                onChange={(e) => handleFilterChange("school", e.target.value)}
+                disabled={!selectedState}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+              >
+                <option value="">All Schools</option>
+                {schools.map((school) => (
+                  <option key={school} value={school}>
+                    {school}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Vendor */}
+            <div>
+              <select
+                value={filters.vendor}
+                onChange={(e) => handleFilterChange("vendor", e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+              >
+                <option value="">All Vendors</option>
+                {Array.from(
+                  new Map(
+                    allProductsVendors.map((vendor) => [vendor.name, vendor])
+                  ).values()
+                ).map((vendor) => (
+                  <option key={vendor.id} value={vendor.id}>
+                    {vendor.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Clear Filters */}
+            <div className="flex items-end">
+              <button
+                onClick={clearFilters}
+                className="w-full bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200"
+              >
+                Clear Filters
+              </button>
+            </div>
+          </div>
+
+          {/* Mobile Clear Filters */}
+          {showFilters && (
+            <div className="mt-4 flex justify-center sm:hidden">
+              <button
+                onClick={clearFilters}
+                className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
+              >
+                Clear All Filters
+              </button>
             </div>
           )}
         </div>
-      )}
 
-      <div className={styles.header}>
-        <Header title="All Products" />
-        <button
-          className={styles.filterToggle}
-          onClick={() => setShowFilters(!showFilters)}
-        >
-          {showFilters ? <FaTimes /> : <FaFilter />}
-          Filters
-        </button>
-      </div>
-
-      <div style={{ marginBottom: "1.5rem" }}>
-        {isAuthenticated && !viewingOtherSchools ? (
-          <>
-            <h6 style={{ textAlign: "center", marginBottom: "0.5rem" }}>
-              All products in {school}
-            </h6>
-            <p
-              style={{
-                textAlign: "center",
-                marginBottom: "1rem",
-                fontSize: "1.3rem",
-              }}
+        {/* Content Area */}
+        {allProductsLoading || toggleLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <Spinner />
+          </div>
+        ) : allProductsError ? (
+          <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+            <div className="text-red-500 text-lg mb-4">
+              ⚠️ Error Loading Products
+            </div>
+            <p className="text-gray-600 mb-6">{errorMessage}</p>
+            <button
+              onClick={() => refetchProducts()}
+              className="bg-amber-500 hover:bg-amber-600 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200"
             >
-              Use the filter option to see other school products
-            </p>
-          </>
+              Try Again
+            </button>
+          </div>
+        ) : productsCount === 0 ? (
+          <div className="bg-white rounded-lg shadow-sm p-12 text-center">
+            <div className="mb-6">
+              <FaBox className="text-6xl text-gray-300 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                No Products Found
+              </h2>
+              <div className="text-gray-600">{noProductsMessage}</div>
+            </div>
+            <button
+              onClick={clearFilters}
+              className="bg-amber-500 hover:bg-amber-600 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200"
+            >
+              Clear All Filters
+            </button>
+          </div>
         ) : (
           <>
-            <h6 style={{ textAlign: "center", marginBottom: "0.5rem" }}>
-              All products in registered schools
-            </h6>
-            <p
-              style={{
-                textAlign: "center",
-                marginBottom: "1rem",
-                fontSize: "1.3rem",
-              }}
-            >
-              Use the filter option to see products from a specific school
-            </p>
-            {!isAuthenticated && (
-              <p
-                style={{
-                  textAlign: "center",
-                  marginBottom: "1rem",
-                  fontSize: "1.3rem",
-                }}
-              >
-                Register to see products from your school
-              </p>
+            {/* Products Grid */}
+            <div className=" md:px-0">
+              <Card products={allProducts}/>
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="flex flex-wrap justify-center items-center space-x-1 sm:space-x-2">
+                  {/* Previous Button */}
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={!hasPreviousPage || allProductsLoading}
+                    className={`flex items-center space-x-1 px-3 py-2 rounded-lg font-medium transition-colors duration-200 ${
+                      hasPreviousPage
+                        ? "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                        : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    }`}
+                  >
+                    <FaChevronLeft className="text-xs" />
+                    <span className="hidden sm:inline">Previous</span>
+                  </button>
+
+                  {/* Page Numbers */}
+                  <div className="flex space-x-1">
+                    {/* First page */}
+                    {currentPage > 3 && (
+                      <>
+                        <button
+                          onClick={() => handlePageChange(1)}
+                          className="px-3 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                        >
+                          1
+                        </button>
+                        {currentPage > 4 && (
+                          <span className="px-2 py-2 text-gray-500">...</span>
+                        )}
+                      </>
+                    )}
+
+                    {/* Current page and surrounding pages */}
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      const startPage = Math.max(
+                        1,
+                        Math.min(currentPage - 2, totalPages - 4)
+                      );
+                      const pageNum = startPage + i;
+
+                      if (pageNum > totalPages) return null;
+
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => handlePageChange(pageNum)}
+                          disabled={allProductsLoading}
+                          className={`px-3 py-2 rounded-lg font-medium transition-colors duration-200 ${
+                            pageNum === currentPage
+                              ? "bg-amber-500 text-white shadow-md"
+                              : "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+
+                    {/* Last page */}
+                    {currentPage < totalPages - 2 && (
+                      <>
+                        {currentPage < totalPages - 3 && (
+                          <span className="px-2 py-2 text-gray-500">...</span>
+                        )}
+                        <button
+                          onClick={() => handlePageChange(totalPages)}
+                          className="px-3 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                        >
+                          {totalPages}
+                        </button>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Next Button */}
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={!hasNextPage || allProductsLoading}
+                    className={`flex items-center space-x-1 px-3 py-2 rounded-lg font-medium transition-colors duration-200 ${
+                      hasNextPage
+                        ? "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                        : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    }`}
+                  >
+                    <span className="hidden sm:inline">Next</span>
+                    <FaChevronRight className="text-xs" />
+                  </button>
+                </div>
+
+                {/* Page Info */}
+                <div className="text-center text-sm text-gray-600 mt-4">
+                  Page {currentPage} of {totalPages} ({totalProducts} total
+                  products)
+                </div>
+              </div>
             )}
           </>
         )}
       </div>
-
-      {/* Products Count and Pagination Info */}
-      {!allProductsLoading && productsCount > 0 && (
-        <div
-          style={{
-            textAlign: "center",
-            marginBottom: "1rem",
-            color: "#666",
-            fontSize: "0.9rem",
-          }}
-        >
-          Showing {(currentPage - 1) * 18 + 1} -{" "}
-          {Math.min(currentPage * 18, totalProducts)} of {totalProducts}{" "}
-          products
-          {totalPages > 1 && ` (Page ${currentPage} of ${totalPages})`}
-        </div>
-      )}
-
-      {/* Single Vendor Display */}
-      {singleVendorInfo && productsCount > 0 && !allProductsLoading && (
-        <div
-          className={styles.singleVendorBanner}
-          style={{
-            backgroundColor: "#f8f9fa",
-            border: "1px solid #e9ecef",
-            borderRadius: "8px",
-            padding: "1rem",
-            marginBottom: "1.5rem",
-            textAlign: "center",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "0.5rem",
-          }}
-        >
-          <FaStore style={{ color: "#007bff", fontSize: "1.2rem" }} />
-          <span
-            style={{
-              fontSize: "1.1rem",
-              fontWeight: "600",
-              color: "#495057",
-            }}
-          >
-            All products by:{" "}
-            <strong style={{ color: "#007bff" }}>
-              {singleVendorInfo.name}
-            </strong>
-          </span>
-        </div>
-      )}
-
-      <div className={`${styles.filters} ${showFilters ? styles.show : ""}`}>
-        <div className={styles.filterGroup}>
-          <input
-            type="text"
-            placeholder="Search products..."
-            value={filters.search}
-            onChange={(e) => handleFilterChange("search", e.target.value)}
-          />
-        </div>
-
-        <div className={styles.filterGroup}>
-          <select
-            value={filters.category}
-            onChange={(e) => handleFilterChange("category", e.target.value)}
-          >
-            <option value="">All Categories</option>
-            {allProductsCategories.map((category) => (
-              <option key={category} value={category}>
-                {category.replace(/_/g, " ")}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className={styles.filterGroup}>
-          <input
-            type="number"
-            placeholder="Min Price"
-            value={filters.minPrice}
-            onChange={(e) => handleFilterChange("minPrice", e.target.value)}
-          />
-          <input
-            type="number"
-            placeholder="Max Price"
-            value={filters.maxPrice}
-            onChange={(e) => handleFilterChange("maxPrice", e.target.value)}
-          />
-        </div>
-
-        <div className={styles.filterGroup}>
-          <select
-            value={filters.sort}
-            onChange={(e) => handleFilterChange("sort", e.target.value)}
-          >
-            <option value="newest">Newest</option>
-            <option value="price_low">Price: Low to High</option>
-            <option value="price_high">Price: High to Low</option>
-          </select>
-        </div>
-
-        <div className={styles.filterGroup}>
-          <select
-            value={filters.state}
-            onChange={(e) => handleStateChange(e.target.value)}
-          >
-            <option value="">All States</option>
-            {nigeriaStates.map((state) => (
-              <option key={state} value={state}>
-                {state.replace(/_/g, " ")}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className={styles.filterGroup}>
-          <select
-            value={filters.school}
-            onChange={(e) => handleFilterChange("school", e.target.value)}
-            disabled={!selectedState}
-          >
-            <option value="">All Schools</option>
-            {schools.map((school) => (
-              <option key={school} value={school}>
-                {school}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className={styles.filterGroup}>
-          <select
-            value={filters.vendor}
-            onChange={(e) => handleFilterChange("vendor", e.target.value)}
-          >
-            <option value="">All Vendors</option>
-            {Array.from(
-              new Map(
-                allProductsVendors.map((vendor) => [vendor.name, vendor])
-              ).values()
-            ).map((vendor) => (
-              <option key={vendor.id} value={vendor.id}>
-                {vendor.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <button className={styles.clearFilters} onClick={clearFilters}>
-          Clear Filters
-        </button>
-      </div>
-
-      {showFilters && (
-        <div className={styles.sortBy}>
-          <button className={styles.clearFilterss} onClick={clearFilters}>
-            Clear Filters
-          </button>
-        </div>
-      )}
-
-      {allProductsLoading || toggleLoading ? (
-        <Spinner />
-      ) : allProductsError ? (
-        <div className={styles.error}>
-          <p>{errorMessage}</p>
-          <button
-            onClick={() => refetchProducts()}
-            className={styles.retryButton}
-            style={{
-              marginTop: "1rem",
-              padding: "0.5rem 1rem",
-              backgroundColor: "#007bff",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-            }}
-          >
-            Try Again
-          </button>
-        </div>
-      ) : productsCount === 0 ? (
-        <div className={styles.noProducts}>
-          <FaBox className={styles.noProductsIcon} />
-          <h2>No Products Found</h2>
-          <p>{noProductsMessage}</p>
-        </div>
-      ) : (
-        <>
-          <div className={styles.productsGrid}>
-            {allProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-
-          {/* Pagination Controls */}
-          {totalPages > 1 && (
-            <div
-              className={styles.pagination}
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                gap: "0.5rem",
-                margin: "2rem 0",
-                flexWrap: "wrap",
-              }}
-            >
-              {/* Previous Button */}
-              <button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={!hasPreviousPage || allProductsLoading}
-                className={styles.paginationButton}
-                style={{
-                  padding: "0.5rem 1rem",
-                  border: "1px solid #ddd",
-                  backgroundColor: hasPreviousPage ? "#fff" : "#f5f5f5",
-                  color: hasPreviousPage ? "#007bff" : "#999",
-                  cursor: hasPreviousPage ? "pointer" : "not-allowed",
-                  borderRadius: "4px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.25rem",
-                }}
-              >
-                <FaChevronLeft size={12} />
-                Previous
-              </button>
-
-              {/* Page Numbers */}
-              <div style={{ display: "flex", gap: "0.25rem" }}>
-                {/* First page */}
-                {currentPage > 3 && (
-                  <>
-                    <button
-                      onClick={() => handlePageChange(1)}
-                      className={styles.pageButton}
-                      style={{
-                        padding: "0.5rem 0.75rem",
-                        border: "1px solid #ddd",
-                        backgroundColor: "#fff",
-                        color: "#007bff",
-                        cursor: "pointer",
-                        borderRadius: "4px",
-                      }}
-                    >
-                      1
-                    </button>
-                    {currentPage > 4 && (
-                      <span style={{ padding: "0.5rem", color: "#999" }}>
-                        ...
-                      </span>
-                    )}
-                  </>
-                )}
-
-                {/* Current page and surrounding pages */}
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  const startPage = Math.max(
-                    1,
-                    Math.min(currentPage - 2, totalPages - 4)
-                  );
-                  const pageNum = startPage + i;
-
-                  if (pageNum > totalPages) return null;
-
-                  return (
-                    <button
-                      key={pageNum}
-                      onClick={() => handlePageChange(pageNum)}
-                      disabled={allProductsLoading}
-                      className={styles.pageButton}
-                      style={{
-                        padding: "0.5rem 0.75rem",
-                        border: "1px solid #ddd",
-                        backgroundColor:
-                          pageNum === currentPage ? "#007bff" : "#fff",
-                        color: pageNum === currentPage ? "#fff" : "#007bff",
-                        cursor: "pointer",
-                        borderRadius: "4px",
-                        fontWeight: pageNum === currentPage ? "bold" : "normal",
-                      }}
-                    >
-                      {pageNum}
-                    </button>
-                  );
-                })}
-
-                {/* Last page */}
-                {currentPage < totalPages - 2 && (
-                  <>
-                    {currentPage < totalPages - 3 && (
-                      <span style={{ padding: "0.5rem", color: "#999" }}>
-                        ...
-                      </span>
-                    )}
-                    <button
-                      onClick={() => handlePageChange(totalPages)}
-                      className={styles.pageButton}
-                      style={{
-                        padding: "0.5rem 0.75rem",
-                        border: "1px solid #ddd",
-                        backgroundColor: "#fff",
-                        color: "#007bff",
-                        cursor: "pointer",
-                        borderRadius: "4px",
-                      }}
-                    >
-                      {totalPages}
-                    </button>
-                  </>
-                )}
-              </div>
-
-              {/* Next Button */}
-              <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={!hasNextPage || allProductsLoading}
-                className={styles.paginationButton}
-                style={{
-                  padding: "0.5rem 1rem",
-                  border: "1px solid #ddd",
-                  backgroundColor: hasNextPage ? "#fff" : "#f5f5f5",
-                  color: hasNextPage ? "#007bff" : "#999",
-                  cursor: hasNextPage ? "pointer" : "not-allowed",
-                  borderRadius: "4px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.25rem",
-                }}
-              >
-                Next
-                <FaChevronRight size={12} />
-              </button>
-            </div>
-          )}
-        </>
-      )}
     </div>
   );
 };

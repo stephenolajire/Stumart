@@ -1,11 +1,16 @@
 import React from "react";
-import styles from '../css/SignUp.module.css'
 
-const CategoryDescriptionModal = ({ category, isOpen, onConfirm, onCancel }) => {
+const CategoryDescriptionModal = ({
+  category,
+  isOpen,
+  onConfirm,
+  onCancel,
+}) => {
   const categoryDescriptions = {
     Food: {
       title: "Food Category",
-      description: "This category includes all food and beverage items such as:",
+      description:
+        "This category includes all food and beverage items such as:",
       items: [
         "Cooked meals and ready-to-eat food",
         "Snacks, pastries, and baked goods",
@@ -13,12 +18,13 @@ const CategoryDescriptionModal = ({ category, isOpen, onConfirm, onCancel }) => 
         "Fresh fruits and vegetables",
         "Packaged food items",
         "Traditional and local delicacies",
-        "Fast food and restaurant meals"
-      ]
+        "Fast food and restaurant meals",
+      ],
     },
     Fashion: {
-      title: "Fashion Category", 
-      description: "This category is about fashion items where color and sizes are applicable, such as:",
+      title: "Fashion Category",
+      description:
+        "This category is about fashion items where color and sizes are applicable, such as:",
       items: [
         "Clothing (shirts, trousers, dresses, skirts)",
         "Footwear (shoes, sneakers, sandals, boots)",
@@ -26,12 +32,13 @@ const CategoryDescriptionModal = ({ category, isOpen, onConfirm, onCancel }) => 
         "Traditional and cultural attire",
         "Undergarments and sleepwear",
         "Seasonal clothing (jackets, coats)",
-        "Fashion items with size and color variations"
-      ]
+        "Fashion items with size and color variations",
+      ],
     },
     Technology: {
       title: "Technology Category",
-      description: "This category covers all technology and electronic devices including:",
+      description:
+        "This category covers all technology and electronic devices including:",
       items: [
         "Smartphones and tablets",
         "Laptops and desktop computers",
@@ -39,12 +46,13 @@ const CategoryDescriptionModal = ({ category, isOpen, onConfirm, onCancel }) => 
         "Smart home devices",
         "Audio equipment (speakers, headphones)",
         "Cameras and photography equipment",
-        "Software and digital products"
-      ]
+        "Software and digital products",
+      ],
     },
     Accessories: {
       title: "Accessories Category",
-      description: "This category includes accessories and complementary items such as:",
+      description:
+        "This category includes accessories and complementary items such as:",
       items: [
         "Phone accessories (cases, screen protectors, chargers)",
         "Audio accessories (earpiece, headset, earbuds)",
@@ -52,8 +60,8 @@ const CategoryDescriptionModal = ({ category, isOpen, onConfirm, onCancel }) => 
         "Fashion accessories (belts, watches, bags)",
         "Beauty items (perfume, cosmetics)",
         "Hair accessories and styling tools",
-        "Personal accessories that complement your style"
-      ]
+        "Personal accessories that complement your style",
+      ],
     },
     Home: {
       title: "Home Category",
@@ -65,12 +73,13 @@ const CategoryDescriptionModal = ({ category, isOpen, onConfirm, onCancel }) => 
         "Bedding and linens",
         "Cleaning supplies and tools",
         "Garden and outdoor items",
-        "Home improvement and maintenance tools"
-      ]
+        "Home improvement and maintenance tools",
+      ],
     },
     Books: {
       title: "Books Category",
-      description: "This category includes all reading and educational materials such as:",
+      description:
+        "This category includes all reading and educational materials such as:",
       items: [
         "Textbooks and academic materials",
         "Novels and fiction books",
@@ -78,12 +87,13 @@ const CategoryDescriptionModal = ({ category, isOpen, onConfirm, onCancel }) => 
         "Magazines and periodicals",
         "E-books and digital publications",
         "Children's books and comics",
-        "Professional and self-help books"
-      ]
+        "Professional and self-help books",
+      ],
     },
     Electronics: {
       title: "Electronics Category",
-      description: "This category covers electronic devices and components including:",
+      description:
+        "This category covers electronic devices and components including:",
       items: [
         "Consumer electronics (TVs, radios, players)",
         "Electronic components and parts",
@@ -91,12 +101,13 @@ const CategoryDescriptionModal = ({ category, isOpen, onConfirm, onCancel }) => 
         "Electronic tools and gadgets",
         "Home electronics and appliances",
         "Electronic accessories and cables",
-        "Repair parts and electronic supplies"
-      ]
+        "Repair parts and electronic supplies",
+      ],
     },
     Others: {
       title: "Other Services",
-      description: "This category includes various services and items not covered by other categories:",
+      description:
+        "This category includes various services and items not covered by other categories:",
       items: [
         "Personal services (laundry, cleaning)",
         "Educational services (tutoring, note writing)",
@@ -104,9 +115,9 @@ const CategoryDescriptionModal = ({ category, isOpen, onConfirm, onCancel }) => 
         "Technical services (repairs, printing)",
         "Creative services (photography, graphic design)",
         "Professional services (tailoring, event planning)",
-        "Any other products or services you offer"
-      ]
-    }
+        "Any other products or services you offer",
+      ],
+    },
   };
 
   if (!isOpen || !category) return null;
@@ -114,35 +125,50 @@ const CategoryDescriptionModal = ({ category, isOpen, onConfirm, onCancel }) => 
   const categoryInfo = categoryDescriptions[category];
 
   return (
-    <div className={`${styles.modalOverlay}`}>
-      <div className={`${styles.modalContent}`}>
-        <div className={`${styles.modalHeader}`}>
-          <h3>{categoryInfo?.title}</h3>
-          <button onClick={onCancel} className={`${styles.closeButton}`}>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-auto max-h-[90vh] overflow-y-auto">
+        {/* Modal Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <h3 className="text-xl font-bold text-gray-900">
+            {categoryInfo?.title}
+          </h3>
+          <button
+            onClick={onCancel}
+            className="text-gray-400 hover:text-gray-600 transition-colors text-2xl font-light"
+          >
             ×
           </button>
         </div>
-        
-        <div className={`${styles.modalBody}`}>
-          <p>{categoryInfo?.description}</p>
-          
-          <ul className={`${styles.categoryList}`}>
-            {categoryInfo?.items.map((item, index) => (
-              <li key={index}>• {item}</li>
-            ))}
-          </ul>
+
+        {/* Modal Body */}
+        <div className="p-6">
+          <p className="text-gray-700 mb-6 leading-relaxed">
+            {categoryInfo?.description}
+          </p>
+
+          <div className="bg-gray-50 rounded-lg p-4">
+            <ul className="space-y-3">
+              {categoryInfo?.items.map((item, index) => (
+                <li key={index} className="flex items-start text-gray-700">
+                  <span className="text-yellow-500 mr-3 mt-1 font-bold">•</span>
+                  <span className="leading-relaxed">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
-        
-        <div className={`${styles.modalFooter}`}>
+
+        {/* Modal Footer */}
+        <div className="flex items-center justify-end space-x-3 p-6 border-t border-gray-200 bg-gray-50">
           <button
             onClick={onCancel}
-            className={`${styles.cancelButton}`}
+            className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
-            className={`${styles.confirmButton}`}
+            className="px-6 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors font-medium"
           >
             OK, Select This Category
           </button>
@@ -152,4 +178,4 @@ const CategoryDescriptionModal = ({ category, isOpen, onConfirm, onCancel }) => 
   );
 };
 
-export default CategoryDescriptionModal
+export default CategoryDescriptionModal;

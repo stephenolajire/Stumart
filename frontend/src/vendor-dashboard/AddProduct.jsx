@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
-import styles from "./css/AddProduct.module.css";
+// import axios from "axios";
 import api from "../constant/api";
 import Swal from "sweetalert2";
 import Header from "./Header";
@@ -106,7 +105,7 @@ const AddProduct = () => {
 
     if (businessCategory !== "food") {
       if (product.delivery_day.trim() === "") {
-        newErrors.delivery_day = "Product delivery day is required"; 
+        newErrors.delivery_day = "Product delivery day is required";
       } else if (product.delivery_day.length > 100) {
         newErrors.delivery_day = "Product delivery day should be specific";
       }
@@ -537,419 +536,466 @@ const AddProduct = () => {
   };
 
   if (loadingCategory) {
-    return <div className={styles.loading}>Loading product form...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading product form...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className={styles.container}>
-      <Header/>
+    <div className="max-w-4xl mx-auto p-6 bg-gray-50 min-h-screen">
+      <Header />
+
       {businessCategory && (
-        <div className={styles.categoryInfo}>
-          Category: <strong>{businessCategory}</strong>
+        <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <p className="text-yellow-800">
+            Category:{" "}
+            <strong className="text-yellow-900">{businessCategory}</strong>
+          </p>
         </div>
       )}
 
-      <form
-        className={styles.form}
-        onSubmit={handleSubmit}
-        noValidate
-        encType="multipart/form-data"
-      >
-        {/* Include CSRF token if using Django's CSRF protection */}
-        {document.querySelector("[name=csrfmiddlewaretoken]") && (
-          <input
-            type="hidden"
-            name="csrfmiddlewaretoken"
-            value={document.querySelector("[name=csrfmiddlewaretoken]")?.value}
-          />
-        )}
-
-        <div className={styles.formGroup}>
-          <label htmlFor="name" className={styles.label}>
-            Product Name*
-          </label>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            value={product.name}
-            onChange={handleChange}
-            className={`${styles.input} ${
-              errors.name ? styles.inputError : ""
-            }`}
-            placeholder="Enter product name"
-          />
-          {errors.name && (
-            <span className={styles.errorText}>{errors.name}</span>
-          )}
-        </div>
-
-        <div className={styles.formGroup}>
-          <label htmlFor="description" className={styles.label}>
-            Description*
-          </label>
-          <textarea
-            id="description"
-            name="description"
-            value={product.description}
-            onChange={handleChange}
-            className={`${styles.textarea} ${
-              errors.description ? styles.inputError : ""
-            }`}
-            rows="4"
-            placeholder="Describe your product"
-          />
-          {errors.description && (
-            <span className={styles.errorText}>{errors.description}</span>
-          )}
-        </div>
-
-        <div className={styles.formRow}>
-          <div className={styles.formGroup}>
-            <label htmlFor="price" className={styles.label}>
-              Price (₦)*
-            </label>
+      <div className="bg-white rounded-lg shadow-lg p-8">
+        <form
+          onSubmit={handleSubmit}
+          noValidate
+          encType="multipart/form-data"
+          className="space-y-6"
+        >
+          {/* Include CSRF token if using Django's CSRF protection */}
+          {document.querySelector("[name=csrfmiddlewaretoken]") && (
             <input
-              type="number"
-              id="price"
-              name="price"
-              value={product.price}
-              onChange={handleChange}
-              className={`${styles.input} ${
-                errors.price ? styles.inputError : ""
-              }`}
-              step="0.01"
-              min="0"
-              placeholder="0.00"
+              type="hidden"
+              name="csrfmiddlewaretoken"
+              value={
+                document.querySelector("[name=csrfmiddlewaretoken]")?.value
+              }
             />
-            {errors.price && (
-              <span className={styles.errorText}>{errors.price}</span>
-            )}
-          </div>
-
-          {/* Show in_stock only for non-food categories */}
-          {businessCategory !== "food" && (
-            <div className={styles.formGroup}>
-              <label htmlFor="in_stock" className={styles.label}>
-                Quantity in Stock*
-              </label>
-              <input
-                type="number"
-                id="in_stock"
-                name="in_stock"
-                value={product.in_stock}
-                onChange={handleChange}
-                className={`${styles.input} ${
-                  errors.in_stock ? styles.inputError : ""
-                }`}
-                min="0"
-                placeholder="0"
-              />
-              {errors.in_stock && (
-                <span className={styles.errorText}>{errors.in_stock}</span>
-              )}
-            </div>
           )}
-        </div>
 
-        {businessCategory !== "food" && (
-          <div className={styles.formGroup}>
-            <label htmlFor="delivery_day" className={styles.label}>
-              Delivery Day*
+          {/* Product Name */}
+          <div>
+            <label
+              htmlFor="name"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Product Name*
             </label>
             <input
               type="text"
-              id="delivery_day"
-              name="delivery_day"
-              value={product.delivery_day}
+              id="name"
+              name="name"
+              value={product.name}
               onChange={handleChange}
-              className={`${styles.input} ${
-                errors.delivery_day ? styles.inputError : "" 
+              className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 ${
+                errors.name ? "border-red-500 bg-red-50" : "border-gray-300"
               }`}
-              placeholder="eg: 1 day, 2 days etc."
+              placeholder="Enter product name"
             />
-            {errors.delivery_day && (
-              <span className={styles.errorText}>{errors.delivery_day}</span>
+            {errors.name && (
+              <p className="mt-1 text-sm text-red-600">{errors.name}</p>
             )}
           </div>
-        )}
 
-        {/* Main product image */}
-        <div className={styles.formGroup}>
-          <label htmlFor="product-image" className={styles.label}>
-            Product Image
-          </label>
-          <input
-            type="file"
-            id="product-image"
-            name="image"
-            onChange={handleImageChange}
-            className={`${styles.fileInput} ${
-              errors.image ? styles.inputError : ""
-            }`}
-            accept="image/jpeg,image/png,image/gif,image/webp"
-          />
-          <p className={styles.helpText}>
-            Upload a high-quality image of your product (JPG, PNG, GIF, WEBP
-            formats)
-          </p>
-          {errors.image && (
-            <span className={styles.errorText}>{errors.image}</span>
-          )}
-
-          {imagePreview && (
-            <div className={styles.imagePreview}>
-              <img src={imagePreview} alt="Product preview" />
-            </div>
-          )}
-        </div>
-
-        {/* Additional images section */}
-        <div className={styles.formGroup}>
-          <label className={styles.label}>Additional Images</label>
-
-          {additionalImages.map((item, index) => (
-            <div
-              key={`additional-image-${index}`}
-              className={styles.additionalImageItem}
+          {/* Description */}
+          <div>
+            <label
+              htmlFor="description"
+              className="block text-sm font-medium text-gray-700 mb-2"
             >
+              Description*
+            </label>
+            <textarea
+              id="description"
+              name="description"
+              value={product.description}
+              onChange={handleChange}
+              className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 ${
+                errors.description
+                  ? "border-red-500 bg-red-50"
+                  : "border-gray-300"
+              }`}
+              rows="4"
+              placeholder="Describe your product"
+            />
+            {errors.description && (
+              <p className="mt-1 text-sm text-red-600">{errors.description}</p>
+            )}
+          </div>
+
+          {/* Price and Stock Row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label
+                htmlFor="price"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Price (₦)*
+              </label>
               <input
-                type="file"
-                id={`additional-image-${index}`}
-                onChange={(e) => handleAdditionalImageChange(e, index)}
-                className={`${styles.fileInput} ${
-                  errors.additionalImages && errors.additionalImages[index]
-                    ? styles.inputError
-                    : ""
+                type="number"
+                id="price"
+                name="price"
+                value={product.price}
+                onChange={handleChange}
+                className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 ${
+                  errors.price ? "border-red-500 bg-red-50" : "border-gray-300"
                 }`}
-                accept="image/jpeg,image/png,image/gif,image/webp"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
               />
-              {errors.additionalImages && errors.additionalImages[index] && (
-                <span className={styles.errorText}>
-                  {errors.additionalImages[index]}
-                </span>
-              )}
-
-              {item.preview && (
-                <div className={styles.imagePreview}>
-                  <img
-                    src={item.preview}
-                    alt={`Additional image ${index + 1}`}
-                  />
-                </div>
+              {errors.price && (
+                <p className="mt-1 text-sm text-red-600">{errors.price}</p>
               )}
             </div>
-          ))}
 
-          <button
-            type="button"
-            className={styles.addButton}
-            onClick={addImageField}
-          >
-            + Add Another Image
-          </button>
-        </div>
-
-        {/* Fashion specific fields */}
-        {businessCategory === "fashion" && (
-          <>
-            {/* Gender selection */}
-            <div className={styles.formGroup}>
-              <label className={styles.label}>Gender Category*</label>
-              <div className={styles.radioGroup}>
-                <label className={styles.radioLabel}>
-                  <input
-                    type="radio"
-                    name="gender"
-                    value="men"
-                    checked={gender === "men"}
-                    onChange={handleGenderChange}
-                  />
-                  Men
+            {/* Show in_stock only for non-food categories */}
+            {businessCategory !== "food" && (
+              <div>
+                <label
+                  htmlFor="in_stock"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  Quantity in Stock*
                 </label>
-                <label className={styles.radioLabel}>
-                  <input
-                    type="radio"
-                    name="gender"
-                    value="women"
-                    checked={gender === "women"}
-                    onChange={handleGenderChange}
-                  />
-                  Women
-                </label>
-                <label className={styles.radioLabel}>
-                  <input
-                    type="radio"
-                    name="gender"
-                    value="unisex"
-                    checked={gender === "unisex"}
-                    onChange={handleGenderChange}
-                  />
-                  Unisex
-                </label>
-                <label className={styles.radioLabel}>
-                  <input
-                    type="radio"
-                    name="gender"
-                    value="kids"
-                    checked={gender === "kids"}
-                    onChange={handleGenderChange}
-                  />
-                  Kids
-                </label>
+                <input
+                  type="number"
+                  id="in_stock"
+                  name="in_stock"
+                  value={product.in_stock}
+                  onChange={handleChange}
+                  className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 ${
+                    errors.in_stock
+                      ? "border-red-500 bg-red-50"
+                      : "border-gray-300"
+                  }`}
+                  min="0"
+                  placeholder="0"
+                />
+                {errors.in_stock && (
+                  <p className="mt-1 text-sm text-red-600">{errors.in_stock}</p>
+                )}
               </div>
-              {errors.gender && (
-                <span className={styles.errorText}>{errors.gender}</span>
-              )}
-            </div>
+            )}
+          </div>
 
-            {/* Size section */}
-            <div className={styles.formGroup}>
-              <label className={styles.label}>Available Sizes*</label>
-
-              {sizes.map((item, index) => (
-                <div key={`size-${index}`} className={styles.variationRow}>
-                  <input
-                    type="text"
-                    value={item.size}
-                    onChange={(e) =>
-                      handleSizeChange(index, "size", e.target.value)
-                    }
-                    className={`${styles.input} ${styles.sizeInput} ${
-                      errors.sizes && errors.sizes[index]
-                        ? styles.inputError
-                        : ""
-                    }`}
-                    placeholder="Size (e.g., S, M, L, XL, 42, 44)"
-                  />
-                  <input
-                    type="number"
-                    value={item.quantity}
-                    onChange={(e) =>
-                      handleSizeChange(index, "quantity", e.target.value)
-                    }
-                    className={`${styles.input} ${styles.quantityInput}`}
-                    min="0"
-                    placeholder="Quantity"
-                  />
-                  {errors.sizes && errors.sizes[index] && (
-                    <span className={styles.errorText}>
-                      {errors.sizes[index]}
-                    </span>
-                  )}
-                </div>
-              ))}
-
-              <button
-                type="button"
-                className={styles.addButton}
-                onClick={addSizeField}
+          {/* Delivery Day */}
+          {businessCategory !== "food" && (
+            <div>
+              <label
+                htmlFor="delivery_day"
+                className="block text-sm font-medium text-gray-700 mb-2"
               >
-                + Add Another Size
-              </button>
+                Delivery Day*
+              </label>
+              <input
+                type="text"
+                id="delivery_day"
+                name="delivery_day"
+                value={product.delivery_day}
+                onChange={handleChange}
+                className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 ${
+                  errors.delivery_day
+                    ? "border-red-500 bg-red-50"
+                    : "border-gray-300"
+                }`}
+                placeholder="e.g., 1 day, 2 days etc."
+              />
+              {errors.delivery_day && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.delivery_day}
+                </p>
+              )}
             </div>
-
-            {/* Color section - Modified to match size section structure */}
-            <div className={styles.formGroup}>
-              <label className={styles.label}>Available Colors*</label>
-
-              {colors.map((item, index) => (
-                <div key={`color-${index}`} className={styles.variationRow}>
-                  <input
-                    type="text"
-                    value={item.color}
-                    onChange={(e) =>
-                      handleColorChange(index, "color", e.target.value)
-                    }
-                    className={`${styles.input} ${styles.sizeInput} ${
-                      errors.colors && errors.colors[index]
-                        ? styles.inputError
-                        : ""
-                    }`}
-                    placeholder="Color name (e.g., Red, Blue, Green)"
-                  />
-                  <input
-                    type="number"
-                    value={item.quantity}
-                    onChange={(e) =>
-                      handleColorChange(index, "quantity", e.target.value)
-                    }
-                    className={`${styles.input} ${styles.quantityInput}`}
-                    min="0"
-                    placeholder="Quantity"
-                  />
-                  {errors.colors && errors.colors[index] && (
-                    <span className={styles.errorText}>
-                      {errors.colors[index]}
-                    </span>
-                  )}
-                </div>
-              ))}
-
-              <button
-                type="button"
-                className={styles.addButton}
-                onClick={addColorField}
-              >
-                + Add Another Color
-              </button>
-            </div>
-
-            {/* Variations summary */}
-            <div className={styles.variationsSummary}>
-              <div className={styles.summaryItem}>
-                <span>Total Variations:</span>
-                <strong>{getTotalVariations()}</strong>
-              </div>
-              <div className={styles.summaryItem}>
-                <span>Total Inventory:</span>
-                <strong>{getTotalInventory()}</strong>
-              </div>
-            </div>
-          </>
-        )}
-
-        <div className={styles.formGroup}>
-          <label htmlFor="keyword" className={styles.label}>
-            Keywords*
-          </label>
-          <input
-            type="text"
-            id="keyword"
-            name="keyword" // Change from keywords to keyword
-            value={product.keyword}
-            onChange={handleChange}
-            className={`${styles.input} ${
-              errors.keyword ? styles.inputError : ""
-            }`}
-            placeholder="eg: shoes, jeans, shirts"
-          />
-          <p className={styles.helpText}>
-            Add keywords separated by commas to help customers find your product
-          </p>
-          {errors.keyword && (
-            <span className={styles.errorText}>{errors.keyword}</span>
           )}
-        </div>
 
-        <div className={styles.formActions}>
-          <button
-            type="button"
-            className={styles.resetButton}
-            onClick={resetForm}
-          >
-            Reset Form
-          </button>
+          {/* Main Product Image */}
+          <div>
+            <label
+              htmlFor="product-image"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Product Image
+            </label>
+            <input
+              type="file"
+              id="product-image"
+              name="image"
+              onChange={handleImageChange}
+              className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 ${
+                errors.image ? "border-red-500 bg-red-50" : "border-gray-300"
+              }`}
+              accept="image/jpeg,image/png,image/gif,image/webp"
+            />
+            <p className="mt-1 text-sm text-gray-500">
+              Upload a high-quality image of your product (JPG, PNG, GIF, WEBP
+              formats)
+            </p>
+            {errors.image && (
+              <p className="mt-1 text-sm text-red-600">{errors.image}</p>
+            )}
 
-          <button
-            type="submit"
-            className={styles.submitButton}
-            disabled={isLoading}
-          >
-            {isLoading ? "Adding Product..." : "Add Product"}
-          </button>
-        </div>
-      </form>
+            {imagePreview && (
+              <div className="mt-4">
+                <img
+                  src={imagePreview}
+                  alt="Product preview"
+                  className="w-32 h-32 object-cover rounded-lg border border-gray-300"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Additional Images */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Additional Images
+            </label>
+            <div className="space-y-4">
+              {additionalImages.map((item, index) => (
+                <div key={`additional-image-${index}`} className="space-y-2">
+                  <input
+                    type="file"
+                    id={`additional-image-${index}`}
+                    onChange={(e) => handleAdditionalImageChange(e, index)}
+                    className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 ${
+                      errors.additionalImages && errors.additionalImages[index]
+                        ? "border-red-500 bg-red-50"
+                        : "border-gray-300"
+                    }`}
+                    accept="image/jpeg,image/png,image/gif,image/webp"
+                  />
+                  {errors.additionalImages &&
+                    errors.additionalImages[index] && (
+                      <p className="text-sm text-red-600">
+                        {errors.additionalImages[index]}
+                      </p>
+                    )}
+
+                  {item.preview && (
+                    <img
+                      src={item.preview}
+                      alt={`Additional image ${index + 1}`}
+                      className="w-32 h-32 object-cover rounded-lg border border-gray-300"
+                    />
+                  )}
+                </div>
+              ))}
+
+              <button
+                type="button"
+                onClick={addImageField}
+                className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+              >
+                + Add Another Image
+              </button>
+            </div>
+          </div>
+
+          {/* Fashion Specific Fields */}
+          {businessCategory === "fashion" && (
+            <>
+              {/* Gender Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Gender Category*
+                </label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {["men", "women", "unisex", "kids"].map((genderOption) => (
+                    <label key={genderOption} className="flex items-center">
+                      <input
+                        type="radio"
+                        name="gender"
+                        value={genderOption}
+                        checked={gender === genderOption}
+                        onChange={handleGenderChange}
+                        className="h-4 w-4 text-yellow-600 focus:ring-yellow-500 border-gray-300"
+                      />
+                      <span className="ml-2 text-sm text-gray-700 capitalize">
+                        {genderOption}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+                {errors.gender && (
+                  <p className="mt-1 text-sm text-red-600">{errors.gender}</p>
+                )}
+              </div>
+
+              {/* Sizes Section */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Available Sizes*
+                </label>
+                <div className="space-y-3">
+                  {sizes.map((item, index) => (
+                    <div key={`size-${index}`} className="flex space-x-3">
+                      <input
+                        type="text"
+                        value={item.size}
+                        onChange={(e) =>
+                          handleSizeChange(index, "size", e.target.value)
+                        }
+                        className={`flex-1 px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 ${
+                          errors.sizes && errors.sizes[index]
+                            ? "border-red-500 bg-red-50"
+                            : "border-gray-300"
+                        }`}
+                        placeholder="Size (e.g., S, M, L, XL, 42, 44)"
+                      />
+                      <input
+                        type="number"
+                        value={item.quantity}
+                        onChange={(e) =>
+                          handleSizeChange(index, "quantity", e.target.value)
+                        }
+                        className="w-24 px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                        min="0"
+                        placeholder="Qty"
+                      />
+                    </div>
+                  ))}
+                  {errors.sizes && errors.sizes.some((error) => error) && (
+                    <p className="text-sm text-red-600">
+                      Please fix size errors above
+                    </p>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={addSizeField}
+                  className="mt-3 inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                >
+                  + Add Another Size
+                </button>
+              </div>
+
+              {/* Colors Section */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Available Colors*
+                </label>
+                <div className="space-y-3">
+                  {colors.map((item, index) => (
+                    <div key={`color-${index}`} className="flex space-x-3">
+                      <input
+                        type="text"
+                        value={item.color}
+                        onChange={(e) =>
+                          handleColorChange(index, "color", e.target.value)
+                        }
+                        className={`flex-1 px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 ${
+                          errors.colors && errors.colors[index]
+                            ? "border-red-500 bg-red-50"
+                            : "border-gray-300"
+                        }`}
+                        placeholder="Color name (e.g., Red, Blue, Green)"
+                      />
+                      <input
+                        type="number"
+                        value={item.quantity}
+                        onChange={(e) =>
+                          handleColorChange(index, "quantity", e.target.value)
+                        }
+                        className="w-24 px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                        min="0"
+                        placeholder="Qty"
+                      />
+                    </div>
+                  ))}
+                  {errors.colors && errors.colors.some((error) => error) && (
+                    <p className="text-sm text-red-600">
+                      Please fix color errors above
+                    </p>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={addColorField}
+                  className="mt-3 inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                >
+                  + Add Another Color
+                </button>
+              </div>
+
+              {/* Variations Summary */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h4 className="text-sm font-medium text-gray-700 mb-2">
+                  Summary
+                </h4>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-gray-600">Total Variations:</span>
+                    <span className="ml-2 font-semibold text-gray-900">
+                      {getTotalVariations()}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Total Inventory:</span>
+                    <span className="ml-2 font-semibold text-gray-900">
+                      {getTotalInventory()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Keywords */}
+          <div>
+            <label
+              htmlFor="keyword"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Keywords*
+            </label>
+            <input
+              type="text"
+              id="keyword"
+              name="keyword"
+              value={product.keyword}
+              onChange={handleChange}
+              className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 ${
+                errors.keyword ? "border-red-500 bg-red-50" : "border-gray-300"
+              }`}
+              placeholder="e.g., shoes, jeans, shirts"
+            />
+            <p className="mt-1 text-sm text-gray-500">
+              Add keywords separated by commas to help customers find your
+              product
+            </p>
+            {errors.keyword && (
+              <p className="mt-1 text-sm text-red-600">{errors.keyword}</p>
+            )}
+          </div>
+
+          {/* Form Actions */}
+          <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
+            <button
+              type="button"
+              onClick={resetForm}
+              className="w-full sm:w-auto px-6 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors duration-200"
+            >
+              Reset Form
+            </button>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full sm:w-auto px-6 py-2 bg-yellow-500 hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 transition-colors duration-200"
+            >
+              {isLoading ? "Adding Product..." : "Add Product"}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };

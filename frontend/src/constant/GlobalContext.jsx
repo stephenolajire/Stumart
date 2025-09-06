@@ -1,5 +1,5 @@
-import { createContext, useState, useEffect, useCallback } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { createContext, useState, useEffect, useCallback, use } from "react";
+import { useQuery, useMutation, useQueryClient, Query } from "@tanstack/react-query";
 import api from "./api";
 import { jwtDecode } from "jwt-decode";
 
@@ -19,6 +19,8 @@ const queryKeys = {
   orders: ["orders"],
   search: (params) => ["search", params],
   videos: ["videos"],
+  category:["category"],
+  allfive:["allfive"],
 };
 
 // Custom hooks for each data type
@@ -216,15 +218,9 @@ export const useCart = () => {
         count: response.data.count || 0,
       };
     },
-    staleTime: 2 * 60 * 1000, // 2 minutes for cart (more dynamic)
+    staleTime: 10 * 60 * 1000, // 2 minutes for cart (more dynamic)
     gcTime: 5 * 60 * 1000,
-    retry: (failureCount, error) => {
-      // Don't retry on 404 errors (cart not found)
-      if (error?.response?.status === 404) {
-        return false;
-      }
-      return failureCount < 2;
-    },
+    retry: false,
     refetchOnWindowFocus: true, // Refetch cart on focus
   });
 };
@@ -355,6 +351,103 @@ export const useCartMutations = () => {
   };
 };
 
+export const useProductCategory = (filters) => {
+  const { category, vendor, state, school, search, minPrice, maxPrice, sort } =
+    filters || {};
+
+  return useQuery({
+    queryKey: [
+      "products",
+      "category",
+      category,
+      vendor,
+      state,
+      school,
+      search,
+      minPrice,
+      maxPrice,
+      sort,
+    ],
+    queryFn: async () => {
+      // Build query parameters
+      const params = new URLSearchParams();
+
+      // Category is required
+      if (category) {
+        params.append("category", category);
+      }
+
+      // Add optional filters
+      if (vendor) {
+        params.append("vendor", vendor);
+      }
+
+      if (state) {
+        params.append("state", state);
+      }
+
+      if (school) {
+        params.append("school", school);
+      }
+
+      if (search) {
+        params.append("search", search);
+      }
+
+      if (minPrice) {
+        params.append("minPrice", minPrice);
+      }
+
+      if (maxPrice) {
+        params.append("maxPrice", maxPrice);
+      }
+
+      if (sort && sort !== "newest") {
+        params.append("sort", sort);
+      }
+
+      const queryString = params.toString();
+      const url = `/product-category/${queryString ? `?${queryString}` : ""}`;
+
+      console.log("Fetching category products with URL:", url);
+      console.log("Applied filters:", filters);
+
+      const response = await api.get(url);
+      return response;
+    },
+    enabled: !!category, // Only run if category is provided
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    onError: (error) => {
+      console.error("Error fetching category products:", error);
+    },
+    onSuccess: (data) => {
+      console.log(
+        "Category products fetched successfully:",
+        data?.data?.results?.length || 0,
+        "products"
+      );
+    },
+  });
+};
+
+export const useAllCategoryFive = () => {
+  return useQuery({
+    queryKey: queryKeys.allfive,
+    queryFn: async () => {
+      const response = await api.get("category-last-five/");
+      return response.data;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    retry: 2,
+    refetchOnWindowFocus: false,
+  });
+};
+
 export const GlobalProvider = ({ children }) => {
   const queryClient = useQueryClient();
   const auth = useAuth();
@@ -410,6 +503,8 @@ export const GlobalProvider = ({ children }) => {
     useProductSearch,
     useCartMutations,
     useVideos,
+    useProductCategory,
+    useAllCategoryFive,
   };
 
   return (

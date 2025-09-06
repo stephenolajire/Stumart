@@ -7,8 +7,7 @@ import {
   FaChevronRight,
 } from "react-icons/fa";
 import Swal from "sweetalert2";
-import vendorApi from "../services/vendorApi";
-import styles from "./css/Payment.module.css";
+import vendorApi from "../user/services/vendorApi";
 
 const Payments = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -194,21 +193,21 @@ const Payments = () => {
     if (totalPages <= 1) return null;
 
     return (
-      <div className={styles.pagination}>
+      <div className="flex items-center justify-center space-x-4 mt-6">
         <button
           onClick={() => paginate(currentPage - 1)}
           disabled={currentPage === 1}
-          className={styles.paginationButton}
+          className="flex items-center px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-yellow-500 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-100 disabled:hover:text-gray-700 transition-colors"
         >
           <FaChevronLeft />
         </button>
-        <span className={styles.pageInfo}>
+        <span className="text-gray-600 font-medium">
           Page {currentPage} of {totalPages}
         </span>
         <button
           onClick={() => paginate(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className={styles.paginationButton}
+          className="flex items-center px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-yellow-500 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-100 disabled:hover:text-gray-700 transition-colors"
         >
           <FaChevronRight />
         </button>
@@ -221,15 +220,15 @@ const Payments = () => {
 
     switch (status.toLowerCase()) {
       case "paid":
-        return styles.statusDelivered;
+        return "bg-green-100 text-green-800";
       case "processing":
-        return styles.statusProcessing;
+        return "bg-blue-100 text-blue-800";
       case "pending":
-        return styles.statusPending;
+        return "bg-yellow-100 text-yellow-800";
       case "failed":
-        return styles.statusFailed;
+        return "bg-red-100 text-red-800";
       default:
-        return "";
+        return "bg-gray-100 text-gray-800";
     }
   };
 
@@ -247,7 +246,11 @@ const Payments = () => {
   };
 
   if (isLoading) {
-    return <div className={styles.loading}>Loading payments data...</div>;
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg text-gray-600">Loading payments data...</div>
+      </div>
+    );
   }
 
   const filteredPayments = filterPayments();
@@ -255,13 +258,12 @@ const Payments = () => {
   const paginatedWithdrawals = paginateWithdrawals(withdrawalHistory);
 
   return (
-    <div className={styles.paymentsSection}>
-      <div className={styles.sectionHeader}>
-        {/* <h2 style={{ marginBottom: "2rem" }}>Payment Management</h2> */}
-        <div className={styles.actionPayments}>
+    <div className="p-6 bg-gray-50 min-h-screen">
+      {/* Header Section */}
+      <div className="flex justify-between items-center mb-8">
+        <div className="flex space-x-4">
           <button
-            style={{ backgroundColor: "black" }}
-            className={styles.addButton}
+            className="flex items-center px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
             onClick={() =>
               Swal.fire(
                 "Export",
@@ -270,121 +272,154 @@ const Payments = () => {
               )
             }
           >
-            <FaDownload /> Export Payments
+            <FaDownload className="mr-2" /> Export Payments
           </button>
           <button
-            style={{ marginLeft: "1rem" }}
-            className={styles.addButton}
+            className="flex items-center px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors"
             onClick={handleWithdraw}
           >
-            <FaDownload /> Withdraw
+            <FaDownload className="mr-2" /> Withdraw
           </button>
         </div>
       </div>
 
-      <div className={styles.paymentSummary}>
-        <div className={styles.summaryCard}>
-          <h5>Total Payments</h5>
-          <p className={styles.summaryValue}>
+      {/* Payment Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-yellow-500">
+          <h5 className="text-sm font-medium text-gray-600 mb-2">
+            Total Payments
+          </h5>
+          <p className="text-3xl font-bold text-gray-900">
             {paymentStats.total_transactions}
           </p>
         </div>
-        {/* <div className={styles.summaryCard}>
-          <h5>Total Revenue</h5>
-          <p className={styles.summaryValue}>
-            {formatAmount(paymentStats.total_amount)}
-          </p>
-        </div> */}
-        <div className={styles.summaryCard}>
-          <h5>Wallet Balance</h5>
-          <p className={styles.summaryValue}>
+        <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-green-500">
+          <h5 className="text-sm font-medium text-gray-600 mb-2">
+            Wallet Balance
+          </h5>
+          <p className="text-3xl font-bold text-gray-900">
             {formatAmount(paymentStats.paid_amount)}
           </p>
         </div>
-        <div className={styles.summaryCard}>
-          <h5>Pending Amount</h5>
-          <p className={styles.summaryValue}>
+        <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-orange-500">
+          <h5 className="text-sm font-medium text-gray-600 mb-2">
+            Pending Amount
+          </h5>
+          <p className="text-3xl font-bold text-gray-900">
             {formatAmount(paymentStats.pending_amount)}
           </p>
         </div>
       </div>
 
-      <div className={styles.filters}>
-        <div className={styles.filterGroup}>
-          <select
-            value={periodFilter}
-            onChange={(e) => setPeriodFilter(e.target.value)}
-            className={styles.filterSelect}
-          >
-            <option value="all">All Time</option>
-            <option value="last7days">Last 7 Days</option>
-            <option value="last30days">Last 30 Days</option>
-          </select>
+      {/* Filters */}
+      <div className="bg-white p-6 rounded-lg shadow-md mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
+          <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+            <select
+              value={periodFilter}
+              onChange={(e) => setPeriodFilter(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+            >
+              <option value="all">All Time</option>
+              <option value="last7days">Last 7 Days</option>
+              <option value="last30days">Last 30 Days</option>
+            </select>
 
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className={styles.filterSelect}
-          >
-            <option value="all">All Status</option>
-            <option value="paid">Paid</option>
-            <option value="pending">Pending</option>
-            <option value="processing">Processing</option>
-            <option value="failed">Failed</option>
-          </select>
-        </div>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+            >
+              <option value="all">All Status</option>
+              <option value="paid">Paid</option>
+              <option value="pending">Pending</option>
+              <option value="processing">Processing</option>
+              <option value="failed">Failed</option>
+            </select>
+          </div>
 
-        <div className={styles.searchContainer}>
-          <FaSearch className={styles.searchIcon} />
-          <input
-            type="search"
-            placeholder="Search payments..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className={styles.searchInput}
-          />
+          <div className="relative">
+            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <input
+              type="search"
+              placeholder="Search payments..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent w-full md:w-64"
+            />
+          </div>
         </div>
       </div>
 
-      <div className={styles.tableContainer}>
-        <table className={styles.dataTable}>
-          <thead>
-            <tr>
-              <th>Payment ID</th>
-              <th>Date</th>
-              <th>Customer</th>
-              <th>Invoice</th>
-              <th>Amount</th>
-              <th>Source</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {paginatedPayments.length > 0 ? (
-              paginatedPayments.map((payment) => (
-                <tr key={payment.id}>
-                  <td>{payment.id}</td>
-                  <td>{new Date(payment.date).toLocaleDateString()}</td>
-                  <td>{payment.customer}</td>
-                  <td>{payment.invoice}</td>
-                  <td className={styles.amountCell}>
-                    {formatAmount(payment.amount)}
-                  </td>
-                  <td>{payment.source}</td>
-                  <td>
-                    <span
-                      className={`${styles.status} ${getStatusClass(
-                        payment.status
-                      )}`}
-                    >
-                      {payment.status ? payment.status.toUpperCase() : "N/A"}
-                    </span>
-                  </td>
-                  <td>
-                    <div className={styles.actions}>
+      {/* Payments Table */}
+      <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Payment ID
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Date
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Customer
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Invoice
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Amount
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Source
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {paginatedPayments.length > 0 ? (
+                paginatedPayments.map((payment) => (
+                  <tr
+                    key={payment.id}
+                    className="hover:bg-gray-50 transition-colors"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {payment.id}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {new Date(payment.date).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {payment.customer}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {payment.invoice}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {formatAmount(payment.amount)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {payment.source}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusClass(
+                          payment.status
+                        )}`}
+                      >
+                        {payment.status ? payment.status.toUpperCase() : "N/A"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <button
-                        className={styles.viewButton}
+                        className="flex items-center px-3 py-1 bg-yellow-500 text-white text-sm rounded hover:bg-yellow-600 transition-colors"
                         onClick={() =>
                           Swal.fire({
                             title: `Payment Details: ${payment.id}`,
@@ -416,21 +451,24 @@ const Payments = () => {
                           })
                         }
                       >
-                        <FaEye /> View
+                        <FaEye className="mr-1" /> View
                       </button>
-                    </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan="8"
+                    className="px-6 py-8 text-center text-gray-500"
+                  >
+                    No payment data found
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="8" className={styles.noData}>
-                  No payment data found
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              )}
+            </tbody>
+          </table>
+        </div>
 
         <Pagination
           currentPage={paymentsCurrentPage}
@@ -439,50 +477,73 @@ const Payments = () => {
         />
       </div>
 
-      {/* Withdrawal History Table */}
-      <div className={styles.sectionHeader} style={{ marginTop: "2rem" }}>
-        <h2>Withdrawal History</h2>
+      {/* Withdrawal History Section */}
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-gray-900">Withdrawal History</h2>
         {withdrawalError && (
-          <div className={styles.errorNotice}>
+          <div className="bg-red-100 text-red-700 px-4 py-2 rounded-lg text-sm">
             Data may not be up to date due to a connection issue.
           </div>
         )}
       </div>
-      <div className={styles.tableContainer}>
-        <table className={styles.dataTable}>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Reference</th>
-              <th>Amount</th>
-              <th>Payment Reference</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {paginatedWithdrawals.length > 0 ? (
-              paginatedWithdrawals.map((withdrawal) => (
-                <tr key={withdrawal.id}>
-                  <td>{withdrawal.id}</td>
-                  <td>{withdrawal.reference}</td>
-                  <td className={styles.amountCell}>
-                    {formatAmount(withdrawal.amount)}
-                  </td>
-                  <td>{withdrawal.payment_reference || "N/A"}</td>
-                  <td>
-                    <span
-                      className={`${styles.status} ${getStatusClass(
-                        withdrawal.status
-                      )}`}
-                    >
-                      {withdrawal.status}
-                    </span>
-                  </td>
-                  <td>
-                    <div className={styles.actions}>
+
+      {/* Withdrawal History Table */}
+      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  ID
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Reference
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Amount
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Payment Reference
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {paginatedWithdrawals.length > 0 ? (
+                paginatedWithdrawals.map((withdrawal) => (
+                  <tr
+                    key={withdrawal.id}
+                    className="hover:bg-gray-50 transition-colors"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {withdrawal.id}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {withdrawal.reference}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {formatAmount(withdrawal.amount)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {withdrawal.payment_reference || "N/A"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusClass(
+                          withdrawal.status
+                        )}`}
+                      >
+                        {withdrawal.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <button
-                        className={styles.viewButton}
+                        className="flex items-center px-3 py-1 bg-yellow-500 text-white text-sm rounded hover:bg-yellow-600 transition-colors"
                         onClick={() =>
                           Swal.fire({
                             title: `Withdrawal Details: ${withdrawal.reference}`,
@@ -507,21 +568,24 @@ const Payments = () => {
                           })
                         }
                       >
-                        <FaEye /> View
+                        <FaEye className="mr-1" /> View
                       </button>
-                    </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan="6"
+                    className="px-6 py-8 text-center text-gray-500"
+                  >
+                    No withdrawal history found
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="6" className={styles.noData}>
-                  No withdrawal history found
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              )}
+            </tbody>
+          </table>
+        </div>
 
         <Pagination
           currentPage={withdrawalCurrentPage}

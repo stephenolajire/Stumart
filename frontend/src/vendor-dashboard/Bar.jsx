@@ -9,10 +9,10 @@ import {
   FaCog,
   FaUser,
 } from "react-icons/fa";
-import styles from "./css/VendorDashboard.module.css"
+import { Menu, X } from "lucide-react";
 import api from "../constant/api";
 
-const Bar = ({ activeTab }) => {
+const Bar = ({ activeTab, isOpen, toggleMenu }) => {
   const [details, setDetails] = useState({});
 
   const sidebarItems = [
@@ -45,11 +45,36 @@ const Bar = ({ activeTab }) => {
   }, []);
 
   return (
-    <div className={styles.topBar}>
-      <h1>{getTabLabel(activeTab)}</h1>
-      <div className={styles.vendorProfile}>
-        <img src={details.image} alt="Vendor" />
-        <span>{details.name || "Vendor Name"}</span>
+    <div className="bg-white shadow-md border-b border-gray-200 px-6 py-4 fixed top-0 right-0 lg:left-64 left-0 z-20">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-gray-800">
+          {getTabLabel(activeTab)}
+        </h1>
+        <div className="flex items-center space-x-3">
+          <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 border-2 border-yellow-400">
+            {details.image ? (
+              <img
+                src={details.image}
+                alt="Vendor"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-yellow-100">
+                <FaUser className="text-yellow-600 text-lg" />
+              </div>
+            )}
+          </div>
+          <span className="text-gray-700 font-medium hidden md:flex">
+            {details.name || "Vendor Name"}
+          </span>
+          <div className="flex lg:hidden">
+            {isOpen ? (
+              <X onClick={()=> {toggleMenu()}}/>
+            ): (
+              <Menu onClick={()=> {toggleMenu()}}/>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

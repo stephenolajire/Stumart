@@ -8,7 +8,6 @@ import {
   FaSchool,
   FaGraduationCap,
 } from "react-icons/fa";
-import styles from "../css/StudentProfile.module.css";
 import api from "../constant/api";
 
 const StudentProfile = () => {
@@ -134,8 +133,15 @@ const StudentProfile = () => {
   // Handle loading state
   if (isLoading) {
     return (
-      <div style={{ marginTop: "10rem" }} className={styles.loading}>
-        Loading profile...
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50 flex items-center justify-center">
+        <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+          <div className="flex items-center justify-center space-x-3">
+            <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+            <span className="text-xl font-medium text-gray-700">
+              Loading profile...
+            </span>
+          </div>
+        </div>
       </div>
     );
   }
@@ -143,17 +149,39 @@ const StudentProfile = () => {
   // Handle error state
   if (isError) {
     return (
-      <div className={styles.profileContainer}>
-        <div className={styles.errorAlert}>
-          {queryError?.message ||
-            "Failed to load profile data. Please try again."}
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full">
+          <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100 text-center">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg
+                className="w-8 h-8 text-red-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                ></path>
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              Error Loading Profile
+            </h3>
+            <p className="text-gray-600 mb-6">
+              {queryError?.message ||
+                "Failed to load profile data. Please try again."}
+            </p>
+            <button
+              onClick={() => queryClient.refetchQueries(["studentProfile"])}
+              className="w-full py-3 px-4 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white font-semibold rounded-xl transition-all duration-300 transform hover:scale-[1.02] focus:ring-4 focus:ring-amber-200 focus:outline-none"
+            >
+              Try Again
+            </button>
+          </div>
         </div>
-        <button
-          onClick={() => queryClient.refetchQueries(["studentProfile"])}
-          className={styles.retryButton}
-        >
-          Retry
-        </button>
       </div>
     );
   }
@@ -164,234 +192,403 @@ const StudentProfile = () => {
   }
 
   return (
-    <div className={styles.profileContainer}>
-      <h2 className={styles.profileTitle}>
-        <FaUser className={styles.titleIcon} />
-        Student Profile
-      </h2>
-
-      {/* Show mutation error */}
-      {updateProfileMutation.isError && (
-        <div className={styles.errorAlert}>
-          {updateProfileMutation.error?.message ||
-            "Failed to update profile. Please try again."}
-        </div>
-      )}
-
-      {/* Show success message */}
-      {updateProfileMutation.isSuccess && !editMode && (
-        <div className={styles.successAlert}>Profile updated successfully!</div>
-      )}
-
-      <div className={styles.profileCard}>
-        <div className={styles.profileHeader}>
-          <div className={styles.profileImageContainer}>
-            {editMode ? (
-              <div className={styles.imageUploadContainer}>
-                <div className={styles.currentImage}>
-                  {newProfilePic ? (
-                    <img
-                      src={URL.createObjectURL(newProfilePic)}
-                      alt="New profile"
-                      className={styles.profileImage}
-                    />
-                  ) : (
-                    <img
-                      src={profile.user.image_url || "/default-avatar.png"}
-                      alt="Profile"
-                      className={styles.profileImage}
-                    />
-                  )}
-                </div>
-                <label className={styles.uploadButton}>
-                  Change Image
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleProfilePicChange}
-                    style={{ display: "none" }}
-                  />
-                </label>
-              </div>
-            ) : (
-              <img
-                src={profile.user.image_url || "/default-avatar.png"}
-                alt="Profile"
-                className={styles.profileImage}
-              />
-            )}
-          </div>
-
-          <div className={styles.profileInfo}>
-            <h3 className={styles.studentName}>
-              {profile.user.first_name} {profile.user.last_name}
-            </h3>
-            <p className={styles.studentEmail}>{profile.user.email}</p>
-
-            {!editMode && (
-              <button className={styles.editButton} onClick={handleEdit}>
-                <FaEdit /> Edit Profile
-              </button>
-            )}
-          </div>
+    <div className="min-h-screen bg-gradient-to-br mt-5 md:mt-0 from-amber-50 via-orange-50 to-yellow-50 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h2 className="text-4xl font-bold text-gray-900 mb-2 flex items-center justify-center">
+            <FaUser className="mr-3 text-amber-500" />
+            Student Profile
+          </h2>
+          <div className="w-24 h-1 bg-gradient-to-r from-amber-500 to-yellow-500 mx-auto rounded-full"></div>
         </div>
 
-        {editMode ? (
-          <form onSubmit={handleSubmit} className={styles.profileForm}>
-            <div className={styles.formRow}>
-              <div className={styles.formGroup}>
-                <label>First Name</label>
-                <input
-                  type="text"
-                  name="first_name"
-                  value={formData.first_name || ""}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label>Last Name</label>
-                <input
-                  type="text"
-                  name="last_name"
-                  value={formData.last_name || ""}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className={styles.formRow}>
-              <div className={styles.formGroup}>
-                <label>Phone Number</label>
-                <input
-                  type="tel"
-                  name="phone_number"
-                  value={formData.phone_number || ""}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label>State</label>
-                <input
-                  type="text"
-                  name="state"
-                  value={formData.state || ""}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className={styles.formRow}>
-              <div className={styles.formGroup}>
-                <label>Institution</label>
-                <input
-                  type="text"
-                  name="institution"
-                  value={formData.institution || ""}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label>Matric Number</label>
-                <input
-                  type="text"
-                  name="matric_number"
-                  value={formData.matric_number || ""}
-                  onChange={handleChange}
-                />
-              </div>
-            </div>
-
-            <div className={styles.formGroup}>
-              <label>Department</label>
-              <input
-                type="text"
-                name="department"
-                value={formData.department || ""}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <div className={styles.formButtons}>
-              <button
-                type="submit"
-                className={styles.saveButton}
-                disabled={updateProfileMutation.isLoading}
+        {/* Alert Messages */}
+        {updateProfileMutation.isError && (
+          <div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4">
+            <div className="flex items-center">
+              <svg
+                className="w-5 h-5 text-red-500 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
               >
-                {updateProfileMutation.isLoading ? (
-                  "Saving..."
-                ) : (
-                  <>
-                    <FaSave /> Save Changes
-                  </>
-                )}
-              </button>
-              <button
-                type="button"
-                className={styles.cancelButton}
-                onClick={handleCancel}
-                disabled={updateProfileMutation.isLoading}
-              >
-                <FaTimesCircle /> Cancel
-              </button>
-            </div>
-          </form>
-        ) : (
-          <div className={styles.profileDetails}>
-            <div className={styles.detailsSection}>
-              <h4 className={styles.sectionTitle}>
-                <FaUser className={styles.sectionIcon} /> Personal Information
-              </h4>
-              <div className={styles.detailRow}>
-                <div className={styles.detailItem}>
-                  <span className={styles.detailLabel}>Phone:</span>
-                  <span className={styles.detailValue}>
-                    {profile.user.phone_number}
-                  </span>
-                </div>
-                <div className={styles.detailItem}>
-                  <span className={styles.detailLabel}>State:</span>
-                  <span className={styles.detailValue}>
-                    {profile.user.state}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className={styles.detailsSection}>
-              <h4 className={styles.sectionTitle}>
-                <FaSchool className={styles.sectionIcon} /> Academic Information
-              </h4>
-              <div className={styles.detailRow}>
-                <div className={styles.detailItem}>
-                  <span className={styles.detailLabel}>Institution:</span>
-                  <span className={styles.detailValue}>
-                    {profile.user.institution}
-                  </span>
-                </div>
-                <div className={styles.detailItem}>
-                  <span className={styles.detailLabel}>Department:</span>
-                  <span className={styles.detailValue}>
-                    {profile.department}
-                  </span>
-                </div>
-              </div>
-              <div className={styles.detailRow}>
-                <div className={styles.detailItem}>
-                  <span className={styles.detailLabel}>Matric Number:</span>
-                  <span className={styles.detailValue}>
-                    {profile.matric_number || "Not provided"}
-                  </span>
-                </div>
-              </div>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                ></path>
+              </svg>
+              <p className="text-red-700 font-medium">
+                {updateProfileMutation.error?.message ||
+                  "Failed to update profile. Please try again."}
+              </p>
             </div>
           </div>
         )}
+
+        {updateProfileMutation.isSuccess && !editMode && (
+          <div className="mb-6 bg-green-50 border border-green-200 rounded-xl p-4">
+            <div className="flex items-center">
+              <svg
+                className="w-5 h-5 text-green-500 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M5 13l4 4L19 7"
+                ></path>
+              </svg>
+              <p className="text-green-700 font-medium">
+                Profile updated successfully!
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Main Profile Card */}
+        <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden">
+          {/* Profile Header */}
+          <div className="bg-gradient-to-r from-amber-500 to-yellow-500 px-8 pt-8 pb-4">
+            <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-6">
+              {/* Profile Image */}
+              <div className="relative">
+                {editMode ? (
+                  <div className="text-center">
+                    <div className="relative">
+                      {newProfilePic ? (
+                        <img
+                          src={URL.createObjectURL(newProfilePic)}
+                          alt="New profile"
+                          className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-xl"
+                        />
+                      ) : (
+                        <img
+                          src={profile.user.image_url || "/default-avatar.png"}
+                          alt="Profile"
+                          className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-xl"
+                        />
+                      )}
+                    </div>
+                    <label className="mt-3 inline-block bg-white text-amber-600 font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg cursor-pointer transition-all duration-200 transform hover:scale-105">
+                      Change Image
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleProfilePicChange}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                ) : (
+                  <img
+                    src={profile.user.image_url || "/default-avatar.png"}
+                    alt="Profile"
+                    className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-xl"
+                  />
+                )}
+              </div>
+
+              {/* Profile Info */}
+              <div className="text-center md:text-left text-white">
+                <h3 className="text-3xl font-bold mb-1">
+                  {profile.user.first_name} {profile.user.last_name}
+                </h3>
+                <p className="text-amber-100 text-lg mb-4">
+                  {profile.user.email}
+                </p>
+
+                {!editMode && (
+                  <button
+                    onClick={handleEdit}
+                    className="inline-flex items-center space-x-2 bg-white text-amber-600 font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 focus:ring-4 focus:ring-white focus:ring-opacity-50"
+                  >
+                    <FaEdit className="text-lg" />
+                    <span>Edit Profile</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Profile Content */}
+          <div className="p-8">
+            {editMode ? (
+              /* Edit Form */
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Personal Information Section */}
+                <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200">
+                  <h4 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+                    <FaUser className="mr-3 text-amber-500" />
+                    Personal Information
+                  </h4>
+
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        First Name
+                      </label>
+                      <input
+                        type="text"
+                        name="first_name"
+                        value={formData.first_name || ""}
+                        onChange={handleChange}
+                        required
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-4 focus:ring-amber-100 focus:border-amber-500 transition-all duration-200 bg-white shadow-sm"
+                        placeholder="Enter your first name"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Last Name
+                      </label>
+                      <input
+                        type="text"
+                        name="last_name"
+                        value={formData.last_name || ""}
+                        onChange={handleChange}
+                        required
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-4 focus:ring-amber-100 focus:border-amber-500 transition-all duration-200 bg-white shadow-sm"
+                        placeholder="Enter your last name"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Phone Number
+                      </label>
+                      <input
+                        type="tel"
+                        name="phone_number"
+                        value={formData.phone_number || ""}
+                        onChange={handleChange}
+                        required
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-4 focus:ring-amber-100 focus:border-amber-500 transition-all duration-200 bg-white shadow-sm"
+                        placeholder="Enter your phone number"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        State
+                      </label>
+                      <input
+                        type="text"
+                        name="state"
+                        value={formData.state || ""}
+                        onChange={handleChange}
+                        required
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-4 focus:ring-amber-100 focus:border-amber-500 transition-all duration-200 bg-white shadow-sm"
+                        placeholder="Enter your state"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Academic Information Section */}
+                <div className="bg-amber-50 rounded-2xl p-6 border border-amber-200">
+                  <h4 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+                    <FaGraduationCap className="mr-3 text-amber-500" />
+                    Academic Information
+                  </h4>
+
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Institution
+                      </label>
+                      <input
+                        type="text"
+                        name="institution"
+                        value={formData.institution || ""}
+                        onChange={handleChange}
+                        required
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-4 focus:ring-amber-100 focus:border-amber-500 transition-all duration-200 bg-white shadow-sm"
+                        placeholder="Enter your institution"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Matric Number
+                      </label>
+                      <input
+                        type="text"
+                        readOnly
+                        name="matric_number"
+                        value={formData.matric_number || ""}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-4 focus:ring-amber-100 focus:border-amber-500 transition-all duration-200 bg-white shadow-sm"
+                        placeholder="Enter your matric number"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Department
+                      </label>
+                      <input
+                        type="text"
+                        name="department"
+                        value={formData.department || ""}
+                        onChange={handleChange}
+                        required
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-4 focus:ring-amber-100 focus:border-amber-500 transition-all duration-200 bg-white shadow-sm"
+                        placeholder="Enter your department"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Form Buttons */}
+                <div className="flex flex-col sm:flex-row gap-4 pt-6">
+                  <button
+                    type="submit"
+                    disabled={updateProfileMutation.isLoading}
+                    className={`flex-1 py-4 px-6 rounded-xl font-semibold text-white transition-all duration-300 shadow-lg ${
+                      updateProfileMutation.isLoading
+                        ? "bg-gray-400 cursor-not-allowed shadow-none"
+                        : "bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 active:from-amber-700 active:to-yellow-700 focus:ring-4 focus:ring-amber-200 focus:outline-none hover:shadow-xl"
+                    } transform hover:scale-[1.02] active:scale-[0.98]`}
+                  >
+                    {updateProfileMutation.isLoading ? (
+                      <div className="flex items-center justify-center space-x-2">
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <span>Saving...</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center space-x-2">
+                        <FaSave />
+                        <span>Save Changes</span>
+                      </div>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCancel}
+                    disabled={updateProfileMutation.isLoading}
+                    className="flex-1 py-4 px-6 rounded-xl font-semibold border-2 border-gray-300 text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] focus:ring-4 focus:ring-gray-200 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <div className="flex items-center justify-center space-x-2">
+                      <FaTimesCircle />
+                      <span>Cancel</span>
+                    </div>
+                  </button>
+                </div>
+              </form>
+            ) : (
+              /* Profile Details View */
+              <div className="space-y-8">
+                {/* Personal Information Section */}
+                <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200">
+                  <h4 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+                    <FaUser className="mr-3 text-amber-500" />
+                    Personal Information
+                  </h4>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
+                        <div>
+                          <span className="block text-sm font-medium text-gray-500">
+                            Phone
+                          </span>
+                          <span className="text-lg font-semibold text-gray-900">
+                            {profile.user.phone_number}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
+                        <div>
+                          <span className="block text-sm font-medium text-gray-500">
+                            State
+                          </span>
+                          <span className="text-lg font-semibold text-gray-900">
+                            {profile.user.state}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Academic Information Section */}
+                <div className="bg-amber-50 rounded-2xl p-6 border border-amber-200">
+                  <h4 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+                    <FaSchool className="mr-3 text-amber-500" />
+                    Academic Information
+                  </h4>
+                  <div className="grid gap-6">
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className="bg-white rounded-xl p-4 border border-amber-100 shadow-sm">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
+                          <div>
+                            <span className="block text-sm font-medium text-gray-500">
+                              Institution
+                            </span>
+                            <span className="text-lg font-semibold text-gray-900">
+                              {profile.user.institution}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="bg-white rounded-xl p-4 border border-amber-100 shadow-sm">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
+                          <div>
+                            <span className="block text-sm font-medium text-gray-500">
+                              Department
+                            </span>
+                            <span className="text-lg font-semibold text-gray-900">
+                              {profile.department}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="bg-white rounded-xl p-4 border border-amber-100 shadow-sm">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
+                        <div>
+                          <span className="block text-sm font-medium text-gray-500">
+                            Matric Number
+                          </span>
+                          <span className="text-lg font-semibold text-gray-900">
+                            {profile.matric_number || "Not provided"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Profile Stats */}
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-200">
+                  <h4 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                    <FaGraduationCap className="mr-3 text-blue-500" />
+                    Account Status
+                  </h4>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-4 h-4 bg-green-500 rounded-full"></div>
+                      <span className="text-lg font-medium text-gray-900">
+                        Verified Student
+                      </span>
+                    </div>
+                    <span className="bg-green-100 text-green-800 text-sm font-semibold px-3 py-1 rounded-full border border-green-200">
+                      Active
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

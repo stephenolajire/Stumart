@@ -9,7 +9,6 @@ import {
   FaBell,
   FaSpinner,
 } from "react-icons/fa";
-import styles from "./css/VendorDashboard.module.css";
 import api from "../constant/api";
 
 const Settings = () => {
@@ -250,9 +249,9 @@ const Settings = () => {
   const renderSettingsContent = () => {
     if (initialLoading) {
       return (
-        <div className={styles.loadingContainer}>
-          <FaSpinner className={styles.spinner} />
-          <p>Loading settings...</p>
+        <div className="flex flex-col items-center justify-center h-64">
+          <FaSpinner className="animate-spin text-yellow-500 text-3xl mb-4" />
+          <p className="text-gray-600">Loading settings...</p>
         </div>
       );
     }
@@ -260,74 +259,104 @@ const Settings = () => {
     switch (activeSettingsTab) {
       case "account":
         return (
-          <form onSubmit={handleAccountSubmit} className={styles.settingsForm}>
-            <div className={styles.formGroup}>
-              <label htmlFor="firstName">First Name</label>
-              <input
-                type="text"
-                id="firstName"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleInputChange}
-                className={styles.formInput}
-                required
-              />
+          <form onSubmit={handleAccountSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label
+                  htmlFor="firstName"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  First Name
+                </label>
+                <input
+                  type="text"
+                  id="firstName"
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                  required
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="lastName"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  Last Name
+                </label>
+                <input
+                  type="text"
+                  id="lastName"
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                  required
+                />
+              </div>
             </div>
 
-            <div className={styles.formGroup}>
-              <label htmlFor="lastName">Last Name</label>
-              <input
-                type="text"
-                id="lastName"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleInputChange}
-                className={styles.formInput}
-                required
-              />
-            </div>
-
-            <div className={styles.formGroup}>
-              <label htmlFor="email">Email Address</label>
+            <div>
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Email Address
+              </label>
               <input
                 type="email"
                 id="email"
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                className={styles.formInput}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500"
                 disabled
               />
-              <small className={styles.formHelper}>
+              <small className="text-gray-500 text-sm mt-1 block">
                 Email cannot be changed
               </small>
             </div>
 
-            <div className={styles.formGroup}>
-              <label htmlFor="phone">Phone Number</label>
+            <div>
+              <label
+                htmlFor="phone"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Phone Number
+              </label>
               <input
                 type="tel"
                 id="phone"
                 name="phone"
                 value={formData.phone}
                 onChange={handleInputChange}
-                className={styles.formInput}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
                 required
               />
             </div>
 
-            <div className={styles.formGroup}>
-              <label htmlFor="logo">Profile Picture</label>
-              <div className={styles.fileUpload}>
+            <div>
+              <label
+                htmlFor="logo"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Profile Picture
+              </label>
+              <div className="relative">
                 <input
                   type="file"
                   id="logo"
                   name="logo"
                   onChange={handleFileChange}
-                  className={styles.fileInput}
+                  className="hidden"
                   accept="image/*"
                 />
-                <label htmlFor="logo" className={styles.fileLabel}>
+                <label
+                  htmlFor="logo"
+                  className="flex items-center justify-center w-full px-4 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                >
                   {formData.logo ? formData.logo.name : "Choose a file"}
                 </label>
               </div>
@@ -335,10 +364,14 @@ const Settings = () => {
 
             <button
               type="submit"
-              className={styles.saveButton}
+              className="flex items-center px-6 py-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors disabled:opacity-50"
               disabled={loading}
             >
-              {loading ? <FaSpinner className={styles.spinner} /> : <FaSave />}
+              {loading ? (
+                <FaSpinner className="animate-spin mr-2" />
+              ) : (
+                <FaSave className="mr-2" />
+              )}
               {loading ? "Saving..." : "Save Changes"}
             </button>
           </form>
@@ -346,44 +379,62 @@ const Settings = () => {
 
       case "store":
         return (
-          <form onSubmit={handleStoreSubmit} className={styles.settingsForm}>
-            <div className={styles.formGroup}>
-              <label htmlFor="storeName">Store Name</label>
+          <form onSubmit={handleStoreSubmit} className="space-y-6">
+            <div>
+              <label
+                htmlFor="storeName"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Store Name
+              </label>
               <input
                 type="text"
                 id="storeName"
                 name="storeName"
                 value={formData.storeName}
                 onChange={handleInputChange}
-                className={styles.formInput}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
                 required
               />
             </div>
 
-            <div className={styles.formGroup}>
-              <label htmlFor="storeDescription">Store Description</label>
+            <div>
+              <label
+                htmlFor="storeDescription"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Store Description
+              </label>
               <textarea
                 id="storeDescription"
                 name="storeDescription"
                 value={formData.storeDescription}
                 onChange={handleInputChange}
-                className={styles.formTextarea}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent resize-none"
                 rows="4"
               />
             </div>
 
-            <div className={styles.formGroup}>
-              <label htmlFor="banner">Store Image</label>
-              <div className={styles.fileUpload}>
+            <div>
+              <label
+                htmlFor="banner"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Store Image
+              </label>
+              <div className="relative">
                 <input
                   type="file"
                   id="banner"
                   name="banner"
                   onChange={handleFileChange}
-                  className={styles.fileInput}
+                  className="hidden"
                   accept="image/*"
                 />
-                <label htmlFor="banner" className={styles.fileLabel}>
+                <label
+                  htmlFor="banner"
+                  className="flex items-center justify-center w-full px-4 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                >
                   {formData.banner ? formData.banner.name : "Choose a file"}
                 </label>
               </div>
@@ -391,10 +442,14 @@ const Settings = () => {
 
             <button
               type="submit"
-              className={styles.saveButton}
+              className="flex items-center px-6 py-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors disabled:opacity-50"
               disabled={loading}
             >
-              {loading ? <FaSpinner className={styles.spinner} /> : <FaSave />}
+              {loading ? (
+                <FaSpinner className="animate-spin mr-2" />
+              ) : (
+                <FaSave className="mr-2" />
+              )}
               {loading ? "Saving..." : "Save Changes"}
             </button>
           </form>
@@ -402,55 +457,74 @@ const Settings = () => {
 
       case "payment":
         return (
-          <form onSubmit={handlePaymentSubmit} className={styles.settingsForm}>
-            <div className={styles.formGroup}>
-              <label htmlFor="bankName">Bank Name</label>
+          <form onSubmit={handlePaymentSubmit} className="space-y-6">
+            <div>
+              <label
+                htmlFor="bankName"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Bank Name
+              </label>
               <input
                 type="text"
                 id="bankName"
                 name="bankName"
                 value={formData.bankName}
                 onChange={handleInputChange}
-                className={styles.formInput}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
                 required
               />
             </div>
 
-            <div className={styles.formGroup}>
-              <label htmlFor="accountNumber">Account Number</label>
+            <div>
+              <label
+                htmlFor="accountNumber"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Account Number
+              </label>
               <input
                 type="text"
                 id="accountNumber"
                 name="accountNumber"
                 value={formData.accountNumber}
                 onChange={handleInputChange}
-                className={styles.formInput}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500"
                 disabled
               />
-              <small className={styles.formHelper}>
+              <small className="text-gray-500 text-sm mt-1 block">
                 Contact support to update your account number
               </small>
             </div>
 
-            <div className={styles.formGroup}>
-              <label htmlFor="accountHolder">Account Holder Name</label>
+            <div>
+              <label
+                htmlFor="accountHolder"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Account Holder Name
+              </label>
               <input
                 type="text"
                 id="accountHolder"
                 name="accountHolder"
                 value={formData.accountHolder}
                 onChange={handleInputChange}
-                className={styles.formInput}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
                 required
               />
             </div>
 
             <button
               type="submit"
-              className={styles.saveButton}
+              className="flex items-center px-6 py-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors disabled:opacity-50"
               disabled={loading}
             >
-              {loading ? <FaSpinner className={styles.spinner} /> : <FaSave />}
+              {loading ? (
+                <FaSpinner className="animate-spin mr-2" />
+              ) : (
+                <FaSave className="mr-2" />
+              )}
               {loading ? "Saving..." : "Save Changes"}
             </button>
           </form>
@@ -458,86 +532,149 @@ const Settings = () => {
 
       case "password":
         return (
-          <form onSubmit={handlePasswordSubmit} className={styles.settingsForm}>
-            <div className={styles.formGroup}>
-              <label htmlFor="currentPassword">Current Password</label>
+          <form onSubmit={handlePasswordSubmit} className="space-y-6">
+            <div>
+              <label
+                htmlFor="currentPassword"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Current Password
+              </label>
               <input
                 type="password"
                 id="currentPassword"
                 name="currentPassword"
                 value={formData.currentPassword}
                 onChange={handleInputChange}
-                className={styles.formInput}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
                 required
               />
             </div>
 
-            <div className={styles.formGroup}>
-              <label htmlFor="newPassword">New Password</label>
+            <div>
+              <label
+                htmlFor="newPassword"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                New Password
+              </label>
               <input
                 type="password"
                 id="newPassword"
                 name="newPassword"
                 value={formData.newPassword}
                 onChange={handleInputChange}
-                className={styles.formInput}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
                 required
               />
-              <small className={styles.formHelper}>
+              <small className="text-gray-500 text-sm mt-1 block">
                 Password must be at least 8 characters
               </small>
             </div>
 
-            <div className={styles.formGroup}>
-              <label htmlFor="confirmPassword">Confirm New Password</label>
+            <div>
+              <label
+                htmlFor="confirmPassword"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Confirm New Password
+              </label>
               <input
                 type="password"
                 id="confirmPassword"
                 name="confirmPassword"
                 value={formData.confirmPassword}
                 onChange={handleInputChange}
-                className={styles.formInput}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
                 required
               />
             </div>
 
             <button
               type="submit"
-              className={styles.saveButton}
+              className="flex items-center px-6 py-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors disabled:opacity-50"
               disabled={loading}
             >
-              {loading ? <FaSpinner className={styles.spinner} /> : <FaSave />}
+              {loading ? (
+                <FaSpinner className="animate-spin mr-2" />
+              ) : (
+                <FaSave className="mr-2" />
+              )}
               {loading ? "Saving..." : "Save Changes"}
             </button>
           </form>
         );
 
       default:
-        return <div>Select a settings category</div>;
+        return (
+          <div className="text-center text-gray-500 py-8">
+            Select a settings category
+          </div>
+        );
     }
   };
 
   return (
-    <div className={styles.settingsContainer}>
-      <div className={styles.settingsLayout}>
-        <div className={styles.settingsSidebar}>
-          <ul className={styles.settingsTabs}>
-            {settingsTabs.map((tab) => (
-              <li
-                key={tab.id}
-                className={`${styles.settingsTab} ${
-                  activeSettingsTab === tab.id ? styles.activeTab : ""
-                }`}
-                onClick={() => setActiveSettingsTab(tab.id)}
-              >
-                <span className={styles.tabIcon}>{tab.icon}</span>
-                <span className={styles.tabLabel}>{tab.label}</span>
-              </li>
-            ))}
-          </ul>
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
+          <p className="text-gray-600 mt-2">
+            Manage your account and store preferences
+          </p>
         </div>
 
-        <div className={styles.settingsContent}>{renderSettingsContent()}</div>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Settings Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-lg shadow-md overflow-hidden">
+              <ul className="divide-y divide-gray-200">
+                {settingsTabs.map((tab) => (
+                  <li key={tab.id}>
+                    <button
+                      className={`w-full text-left px-6 py-4 hover:bg-gray-50 transition-colors ${
+                        activeSettingsTab === tab.id
+                          ? "bg-yellow-50 border-r-4 border-yellow-500 text-yellow-700"
+                          : "text-gray-700"
+                      }`}
+                      onClick={() => setActiveSettingsTab(tab.id)}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <span
+                          className={`text-lg ${
+                            activeSettingsTab === tab.id
+                              ? "text-yellow-500"
+                              : "text-gray-400"
+                          }`}
+                        >
+                          {tab.icon}
+                        </span>
+                        <span className="font-medium">{tab.label}</span>
+                      </div>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          {/* Settings Content */}
+          <div className="lg:col-span-3">
+            <div className="bg-white rounded-lg shadow-md p-8">
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">
+                  {
+                    settingsTabs.find((tab) => tab.id === activeSettingsTab)
+                      ?.label
+                  }
+                </h2>
+                <div className="mt-2 h-1 w-20 bg-yellow-500 rounded"></div>
+              </div>
+
+              {renderSettingsContent()}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

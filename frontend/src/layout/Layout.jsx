@@ -1,11 +1,14 @@
 import React, { useState, useContext, useMemo } from "react";
-import Navigation from "../components/nav/Navigation";
+// import Navigation from "../components/nav/Navigation";
 import Footer from "../components/nav/Footer";
 import { Outlet } from "react-router-dom";
 import { FaPlayCircle, FaTimes, FaComments } from "react-icons/fa";
 import Chatbot from "../chatbot/Chatbot";
 import styles from "../css/Layout.module.css";
 import { GlobalContext } from "../constant/GlobalContext";
+import Navigation from "../pages/components/DesktopNav";
+import Sidebar from "../pages/components/Sidebar";
+import MobileNav from "../pages/components/MobileNav";
 
 const Layout = () => {
   const [showModal, setShowModal] = useState(false);
@@ -62,31 +65,45 @@ const Layout = () => {
   }, [videos]);
 
   return (
-    <div className={styles.layoutWrapper}>
-      <Navigation />
-      <Outlet />
-      <Footer />
+    <div className="hide-scrollbar">
+      <div className="flex flex-row gap-10 bg-gray-100">
+        <div className="w-[250px] hidden lg:flex max-h-screen fixed">
+          <Sidebar />
+        </div>
+        <div className="flex-1 lg:ml-[250px]">
+          <div className="fixed z-1000 flex-1 w-full bg-white">
+            <Navigation />
+            <MobileNav />
+          </div>
+          <div className="lg:mt-29">
+            <Outlet />
+          </div>
+        </div>
+      </div>
+      <div className="flex-1 lg:ml-[250px] ">
+        <Footer />
+      </div>
 
       <Chatbot />
 
       {/* Learn More Button */}
       <button
-        className={styles.learnMoreBtn}
+        className="bg-amber-500 fixed bottom-0 right-[1.5rem] w-[4rem] h-[4rem] rounded-full flex items-center justify-center "
         onClick={toggleModal}
         aria-label="Learn how to use platform"
       >
-        <FaPlayCircle size={24} />
+        <FaPlayCircle size={24} className="text-white"/>
       </button>
 
       {/* Selection Modal */}
       {showModal && (
-        <div className={styles.modalOverlay} onClick={toggleModal}>
+        <div className="fixed inset-0 flex items-center justify-center p-[1.5rem] z-100000" onClick={toggleModal}>
           <div
-            className={styles.modalContent}
+            className='bg-white rounded-[1.1rem] relative w-full max-w-[75rem] shadow-sm shadow-gray-500'
             onClick={(e) => e.stopPropagation()}
           >
             <button
-              className={styles.closeBtn}
+              className='absolute top-[1.1rem] right-[1.1rem] text-amber-700 text-lg cursor-pointer padding-[0.3rem]'
               onClick={toggleModal}
               aria-label="Close selection"
             >

@@ -14,7 +14,6 @@ import {
   Loader2,
 } from "lucide-react";
 import Swal from "sweetalert2";
-import styles from "./css/Utilities.module.css";
 import api from "../constant/api";
 
 const Utilities = () => {
@@ -48,14 +47,14 @@ const Utilities = () => {
         title: "Success!",
         text: "Users list has been downloaded successfully",
         icon: "success",
-        confirmButtonColor: "var(--primary-500)",
+        confirmButtonColor: "#eab308",
       });
     } catch (error) {
       Swal.fire({
         title: "Error!",
         text: "Failed to download users list",
         icon: "error",
-        confirmButtonColor: "var(--error)",
+        confirmButtonColor: "#ef4444",
       });
     } finally {
       setActionLoading("users", false);
@@ -81,14 +80,14 @@ const Utilities = () => {
         title: "Success!",
         text: "Vendors list has been downloaded successfully",
         icon: "success",
-        confirmButtonColor: "var(--primary-500)",
+        confirmButtonColor: "#eab308",
       });
     } catch (error) {
       Swal.fire({
         title: "Error!",
         text: "Failed to download users list",
         icon: "error",
-        confirmButtonColor: "var(--error)",
+        confirmButtonColor: "#ef4444",
       });
     } finally {
       setActionLoading("vendors", false);
@@ -114,14 +113,14 @@ const Utilities = () => {
         title: "Success!",
         text: "Pickers list has been downloaded successfully",
         icon: "success",
-        confirmButtonColor: "var(--primary-500)",
+        confirmButtonColor: "#eab308",
       });
     } catch (error) {
       Swal.fire({
         title: "Error!",
         text: "Failed to download users list",
         icon: "error",
-        confirmButtonColor: "var(--error)",
+        confirmButtonColor: "#ef4444",
       });
     } finally {
       setActionLoading("pickers", false);
@@ -135,14 +134,14 @@ const Utilities = () => {
         title: "Success!",
         text: "Transaction history has been downloaded successfully",
         icon: "success",
-        confirmButtonColor: "var(--primary-500)",
+        confirmButtonColor: "#eab308",
       });
     } catch (error) {
       Swal.fire({
         title: "Error!",
         text: "Failed to download transaction history",
         icon: "error",
-        confirmButtonColor: "var(--error)",
+        confirmButtonColor: "#ef4444",
       });
     } finally {
       setActionLoading("transactions", false);
@@ -160,7 +159,7 @@ const Utilities = () => {
       focusConfirm: false,
       showCancelButton: true,
       confirmButtonText: "Send Newsletter",
-      confirmButtonColor: "var(--primary-500)",
+      confirmButtonColor: "#eab308",
       preConfirm: () => {
         const subject = document.getElementById("subject").value;
         const message = document.getElementById("message").value;
@@ -185,7 +184,7 @@ const Utilities = () => {
             title: "Success!",
             text: "Newsletter sent to all pickers successfully",
             icon: "success",
-            confirmButtonColor: "var(--primary-500)",
+            confirmButtonColor: "#eab308",
           });
         }
       } catch (error) {
@@ -193,7 +192,7 @@ const Utilities = () => {
           title: "Error!",
           text: "Failed to send newsletter to pickers",
           icon: "error",
-          confirmButtonColor: "var(--error)",
+          confirmButtonColor: "#ef4444",
         });
       } finally {
         setActionLoading("newsletterPickers", false);
@@ -211,7 +210,7 @@ const Utilities = () => {
       focusConfirm: false,
       showCancelButton: true,
       confirmButtonText: "Send Newsletter",
-      confirmButtonColor: "var(--primary-500)",
+      confirmButtonColor: "#eab308",
       preConfirm: () => {
         const subject = document.getElementById("subject").value;
         const message = document.getElementById("message").value;
@@ -236,7 +235,7 @@ const Utilities = () => {
             title: "Success!",
             text: "Newsletter sent to all vendors successfully",
             icon: "success",
-            confirmButtonColor: "var(--primary-500)",
+            confirmButtonColor: "#eab308",
           });
         }
       } catch (error) {
@@ -244,7 +243,7 @@ const Utilities = () => {
           title: "Error!",
           text: "Failed to send newsletter to vendors",
           icon: "error",
-          confirmButtonColor: "var(--error)",
+          confirmButtonColor: "#ef4444",
         });
       } finally {
         setActionLoading("newsletterVendors", false);
@@ -262,7 +261,7 @@ const Utilities = () => {
       focusConfirm: false,
       showCancelButton: true,
       confirmButtonText: "Send Newsletter",
-      confirmButtonColor: "var(--primary-500)",
+      confirmButtonColor: "#eab308",
       preConfirm: () => {
         const subject = document.getElementById("subject").value;
         const message = document.getElementById("message").value;
@@ -287,7 +286,7 @@ const Utilities = () => {
             title: "Success!",
             text: "Newsletter sent to all users successfully",
             icon: "success",
-            confirmButtonColor: "var(--primary-500)",
+            confirmButtonColor: "#eab308",
           });
         }
       } catch (error) {
@@ -295,7 +294,7 @@ const Utilities = () => {
           title: "Error!",
           text: "Failed to send newsletter to all users",
           icon: "error",
-          confirmButtonColor: "var(--error)",
+          confirmButtonColor: "#ef4444",
         });
       } finally {
         setActionLoading("newsletterAll", false);
@@ -310,8 +309,8 @@ const Utilities = () => {
       icon: "question",
       showCancelButton: true,
       confirmButtonText: "Send Reminder",
-      confirmButtonColor: "var(--primary-500)",
-      cancelButtonColor: "var(--text-secondary)",
+      confirmButtonColor: "#eab308",
+      cancelButtonColor: "#64748b",
     });
 
     if (result.isConfirmed) {
@@ -323,7 +322,7 @@ const Utilities = () => {
             title: "Success!",
             text: "KYC reminder sent to all unverified users",
             icon: "success",
-            confirmButtonColor: "var(--primary-500)",
+            confirmButtonColor: "#eab308",
           });
         }
       } catch (error) {
@@ -331,7 +330,7 @@ const Utilities = () => {
           title: "Error!",
           text: "Failed to send KYC reminder",
           icon: "error",
-          confirmButtonColor: "var(--error)",
+          confirmButtonColor: "#ef4444",
         });
       } finally {
         setActionLoading("kycReminder", false);
@@ -346,8 +345,8 @@ const Utilities = () => {
       icon: "question",
       showCancelButton: true,
       confirmButtonText: "Send Reminder",
-      confirmButtonColor: "var(--primary-500)",
-      cancelButtonColor: "var(--text-secondary)",
+      confirmButtonColor: "#eab308",
+      cancelButtonColor: "#64748b",
     });
 
     if (result.isConfirmed) {
@@ -359,16 +358,15 @@ const Utilities = () => {
             title: "Success!",
             text: "Product reminder sent to vendors without products",
             icon: "success",
-            confirmButtonColor: "var(--primary-500)",
+            confirmButtonColor: "#eab308",
           });
         }
-          
       } catch (error) {
         Swal.fire({
           title: "Error!",
           text: "Failed to send product reminder",
           icon: "error",
-          confirmButtonColor: "var(--error)",
+          confirmButtonColor: "#ef4444",
         });
       } finally {
         setActionLoading("productReminder", false);
@@ -383,142 +381,191 @@ const Utilities = () => {
     description,
     loadingKey,
     variant = "primary",
-  }) => (
-    <button
-      className={`${styles.actionButton} ${styles[variant]}`}
-      onClick={onClick}
-      disabled={loading[loadingKey]}
-    >
-      <div className={styles.buttonIcon}>
-        {loading[loadingKey] ? (
-          <Loader2 className={styles.spinIcon} />
-        ) : (
-          <Icon />
-        )}
-      </div>
-      <div className={styles.buttonContent}>
-        <h3 className={styles.buttonTitle}>{title}</h3>
-        <p className={styles.buttonDescription}>{description}</p>
-      </div>
-    </button>
-  );
+  }) => {
+    const baseClasses =
+      "w-full p-6 rounded-xl border-2 transition-all duration-200 flex items-center space-x-4 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98]";
+
+    const variantClasses = {
+      download:
+        "bg-blue-50 border-blue-200 hover:border-blue-300 hover:bg-blue-100 text-blue-800",
+      newsletter:
+        "bg-green-50 border-green-200 hover:border-green-300 hover:bg-green-100 text-green-800",
+      reminder:
+        "bg-orange-50 border-orange-200 hover:border-orange-300 hover:bg-orange-100 text-orange-800",
+      primary:
+        "bg-yellow-50 border-yellow-200 hover:border-yellow-300 hover:bg-yellow-100 text-yellow-800",
+    };
+
+    return (
+      <button
+        className={`${baseClasses} ${variantClasses[variant]}`}
+        onClick={onClick}
+        disabled={loading[loadingKey]}
+      >
+        <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-full bg-white shadow-sm">
+          {loading[loadingKey] ? (
+            <Loader2 className="w-6 h-6 animate-spin text-gray-600" />
+          ) : (
+            <Icon className="w-6 h-6 text-gray-600" />
+          )}
+        </div>
+        <div className="flex-1 text-left">
+          <h3 className="text-lg font-semibold mb-1">{title}</h3>
+          <p className="text-sm opacity-80">{description}</p>
+        </div>
+      </button>
+    );
+  };
 
   return (
-    <div className={styles.utilitiesContainer}>
-      <div className={styles.utilitiesHeader}>
-        <h1>Utilities</h1>
-        <p>Download reports and send communications to users</p>
-      </div>
-
-      <div className={styles.utilitiesGrid}>
-        {/* Download Section */}
-        <div className={styles.section}>
-          <div className={styles.sectionHeader}>
-            <Download className={styles.sectionIcon} />
-            <h2>Download Reports</h2>
-          </div>
-
-          <div className={styles.sectionGrid}>
-            <ActionButton
-              onClick={handleDownloadUsers}
-              icon={Users}
-              title="Download Users"
-              description="Export complete list of registered users"
-              loadingKey="users"
-              variant="download"
-            />
-
-            <ActionButton
-              onClick={handleDownloadVendors}
-              icon={Store}
-              title="Download Vendors"
-              description="Export complete list of registered vendors"
-              loadingKey="vendors"
-              variant="download"
-            />
-
-            <ActionButton
-              onClick={handleDownloadPickers}
-              icon={Truck}
-              title="Download Pickers"
-              description="Export complete list of registered pickers"
-              loadingKey="pickers"
-              variant="download"
-            />
-
-            <ActionButton
-              onClick={handleDownloadTransactions}
-              icon={CreditCard}
-              title="Download Transactions"
-              description="Export complete transaction history"
-              loadingKey="transactions"
-              variant="download"
-            />
-          </div>
+    <div className="min-h-screen bg-gray-50 py-6">
+      <div className="w-full mx-auto">
+        {/* Header */}
+        <div className="mb-8 text-center">
+          <h1 className="text-4xl font-bold text-gray-900 mb-3">Utilities</h1>
+          <p className="text-xl text-gray-600">
+            Download reports and send communications to users
+          </p>
         </div>
 
-        {/* Newsletter Section */}
-        <div className={styles.section}>
-          <div className={styles.sectionHeader}>
-            <Send className={styles.sectionIcon} />
-            <h2>Send Newsletters</h2>
+        {/* Main Grid */}
+        <div className="grid gap-8">
+          {/* Download Section */}
+          <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+            <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-8 py-6 flex items-center space-x-4">
+              <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                <Download className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-white">
+                  Download Reports
+                </h2>
+                <p className="text-blue-100">
+                  Export data for analysis and record keeping
+                </p>
+              </div>
+            </div>
+
+            <div className="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <ActionButton
+                onClick={handleDownloadUsers}
+                icon={Users}
+                title="Download Users"
+                description="Export complete list of registered users"
+                loadingKey="users"
+                variant="download"
+              />
+
+              <ActionButton
+                onClick={handleDownloadVendors}
+                icon={Store}
+                title="Download Vendors"
+                description="Export complete list of registered vendors"
+                loadingKey="vendors"
+                variant="download"
+              />
+
+              <ActionButton
+                onClick={handleDownloadPickers}
+                icon={Truck}
+                title="Download Pickers"
+                description="Export complete list of registered pickers"
+                loadingKey="pickers"
+                variant="download"
+              />
+
+              <ActionButton
+                onClick={handleDownloadTransactions}
+                icon={CreditCard}
+                title="Download Transactions"
+                description="Export complete transaction history"
+                loadingKey="transactions"
+                variant="download"
+              />
+            </div>
           </div>
 
-          <div className={styles.sectionGrid}>
-            <ActionButton
-              onClick={handleSendNewsletterToPickers}
-              icon={Truck}
-              title="Newsletter to Pickers"
-              description="Send newsletter to all registered pickers"
-              loadingKey="newsletterPickers"
-              variant="newsletter"
-            />
+          {/* Newsletter Section */}
+          <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+            <div className="bg-gradient-to-r from-green-500 to-green-600 px-8 py-6 flex items-center space-x-4">
+              <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                <Send className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-white">
+                  Send Newsletters
+                </h2>
+                <p className="text-green-100">
+                  Communicate with your user base through newsletters
+                </p>
+              </div>
+            </div>
 
-            <ActionButton
-              onClick={handleSendNewsletterToVendors}
-              icon={Store}
-              title="Newsletter to Vendors"
-              description="Send newsletter to all registered vendors"
-              loadingKey="newsletterVendors"
-              variant="newsletter"
-            />
+            <div className="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <ActionButton
+                onClick={handleSendNewsletterToPickers}
+                icon={Truck}
+                title="Newsletter to Pickers"
+                description="Send newsletter to all registered pickers"
+                loadingKey="newsletterPickers"
+                variant="newsletter"
+              />
 
-            <ActionButton
-              onClick={handleSendNewsletterToAllUsers}
-              icon={Users}
-              title="Newsletter to All Users"
-              description="Send newsletter to all registered users"
-              loadingKey="newsletterAll"
-              variant="newsletter"
-            />
+              <ActionButton
+                onClick={handleSendNewsletterToVendors}
+                icon={Store}
+                title="Newsletter to Vendors"
+                description="Send newsletter to all registered vendors"
+                loadingKey="newsletterVendors"
+                variant="newsletter"
+              />
+
+              <ActionButton
+                onClick={handleSendNewsletterToAllUsers}
+                icon={Users}
+                title="Newsletter to All Users"
+                description="Send newsletter to all registered users"
+                loadingKey="newsletterAll"
+                variant="newsletter"
+              />
+            </div>
           </div>
-        </div>
 
-        {/* Reminder Section */}
-        <div className={styles.section}>
-          <div className={styles.sectionHeader}>
-            <AlertCircle className={styles.sectionIcon} />
-            <h2>Send Reminders</h2>
-          </div>
+          {/* Reminder Section */}
+          <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+            <div className="bg-gradient-to-r from-orange-500 to-orange-600 px-8 py-6 flex items-center space-x-4">
+              <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                <AlertCircle className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-white">
+                  Send Reminders
+                </h2>
+                <p className="text-orange-100">
+                  Send targeted reminders to improve compliance
+                </p>
+              </div>
+            </div>
 
-          <div className={styles.sectionGrid}>
-            <ActionButton
-              onClick={handleSendKYCReminder}
-              icon={UserCheck}
-              title="KYC Reminder"
-              description="Remind users without KYC to complete verification"
-              loadingKey="kycReminder"
-              variant="reminder"
-            />
+            <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <ActionButton
+                onClick={handleSendKYCReminder}
+                icon={UserCheck}
+                title="KYC Reminder"
+                description="Remind users without KYC to complete verification"
+                loadingKey="kycReminder"
+                variant="reminder"
+              />
 
-            <ActionButton
-              onClick={handleSendProductReminder}
-              icon={Package}
-              title="Product Reminder"
-              description="Remind vendors without products to add listings"
-              loadingKey="productReminder"
-              variant="reminder"
-            />
+              <ActionButton
+                onClick={handleSendProductReminder}
+                icon={Package}
+                title="Product Reminder"
+                description="Remind vendors without products to add listings"
+                loadingKey="productReminder"
+                variant="reminder"
+              />
+            </div>
           </div>
         </div>
       </div>

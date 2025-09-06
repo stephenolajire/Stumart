@@ -1,6 +1,12 @@
 import React, { useState } from "react";
-import { FaEye } from "react-icons/fa";
-import styles from "./css/Order.module.css";
+import {
+  FaEye,
+  FaSearch,
+  FaBox,
+  FaShippingFast,
+  FaClock,
+  FaCheckCircle,
+} from "react-icons/fa";
 import api from "../constant/api";
 import Swal from "sweetalert2";
 import PickerDetailsModal from "./PickerDetailsModal";
@@ -67,21 +73,40 @@ const Orders = ({ orders, onOrderUpdate }) => {
   };
 
   const getOrderStatusClass = (status) => {
-    if (!status) return "";
+    if (!status) return "bg-gray-100 text-gray-800";
 
     switch (status.toLowerCase()) {
       case "delivered":
-        return styles.statusDelivered;
+        return "bg-green-100 text-green-800";
       case "paid":
-        return styles.statusPaid;
+        return "bg-blue-100 text-blue-800";
       case "processing":
-        return styles.statusProcessing;
+        return "bg-yellow-100 text-yellow-800";
       case "shipped":
-        return styles.statusShipped;
+        return "bg-purple-100 text-purple-800";
       case "pending":
-        return styles.statusPending;
+        return "bg-orange-100 text-orange-800";
       default:
-        return "";
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const getStatusIcon = (status) => {
+    if (!status) return <FaClock />;
+
+    switch (status.toLowerCase()) {
+      case "delivered":
+        return <FaCheckCircle />;
+      case "paid":
+        return <FaCheckCircle />;
+      case "processing":
+        return <FaBox />;
+      case "shipped":
+        return <FaShippingFast />;
+      case "pending":
+        return <FaClock />;
+      default:
+        return <FaClock />;
     }
   };
 
@@ -114,9 +139,10 @@ const Orders = ({ orders, onOrderUpdate }) => {
     if (order.packed) {
       return (
         <button
-          className={`${styles.shipButton} ${styles.shipButton}`}
+          className="px-3 py-1.5 bg-green-100 text-green-800 text-sm font-medium rounded-md cursor-not-allowed"
           disabled
         >
+          <FaShippingFast className="inline mr-1" size={12} />
           Shipped
         </button>
       );
@@ -124,16 +150,33 @@ const Orders = ({ orders, onOrderUpdate }) => {
 
     return (
       <button
-        className={`${styles.updateButton} ${isPending ? styles.disabled : ""}`}
+        className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors duration-200 ${
+          isPending
+            ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+            : isLoading
+            ? "bg-yellow-300 text-yellow-800 cursor-wait"
+            : "bg-yellow-500 hover:bg-yellow-600 text-white"
+        }`}
         onClick={() => packedOrders(order.id)}
         disabled={isLoading || isPending}
         title={isPending ? "Cannot pack pending orders" : ""}
       >
-        {isLoading
-          ? "Packing..."
-          : isPending
-          ? "Pending Payment"
-          : "Pack Order"}
+        {isLoading ? (
+          <>
+            <div className="inline-block animate-spin rounded-full h-3 w-3 border-b-2 border-yellow-800 mr-1"></div>
+            Packing...
+          </>
+        ) : isPending ? (
+          <>
+            <FaClock className="inline mr-1" size={12} />
+            Pending Payment
+          </>
+        ) : (
+          <>
+            <FaBox className="inline mr-1" size={12} />
+            Pack Order
+          </>
+        )}
       </button>
     );
   };
@@ -171,12 +214,13 @@ const Orders = ({ orders, onOrderUpdate }) => {
   };
 
   return (
-    <div className={styles.ordersSection}>
-      <div className={styles.sectionHeader}>
-        {/* <h2 style={{ marginBottom: "2rem" }}>Order Management</h2> */}
-        <div className={styles.orderFilters}>
+    <div className="space-y-6">
+      {/* Header with Filters */}
+      <div className="bg-white rounded-lg shadow-lg p-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          {/* Filter Dropdown */}
           <select
-            className={styles.filterSelect}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 bg-white text-gray-700"
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
           >
@@ -187,87 +231,139 @@ const Orders = ({ orders, onOrderUpdate }) => {
             <option value="shipped">Shipped</option>
             <option value="delivered">Delivered</option>
           </select>
-          <input
-            type="search"
-            placeholder="Search by customer name or order number..."
-            className={styles.searchInput}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+
+          {/* Search Input */}
+          <div className="relative flex-1 md:max-w-md">
+            <FaSearch
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              size={14}
+            />
+            <input
+              type="search"
+              placeholder="Search by customer name or order number..."
+              className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
         </div>
       </div>
 
-      <div className={styles.tableContainer}>
+      {/* Orders Table */}
+      <div className="bg-white rounded-lg shadow-lg overflow-hidden">
         {filteredOrders.length === 0 ? (
-          <div className={styles.noData}>
-            <p>No orders found matching your criteria.</p>
+          <div className="p-12 text-center">
+            <div className="text-gray-400 mb-4">
+              <FaBox size={48} className="mx-auto" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              No Orders Found
+            </h3>
+            <p className="text-gray-500">
+              No orders found matching your criteria.
+            </p>
           </div>
         ) : (
-          <table className={styles.dataTable}>
-            <thead>
-              <tr>
-                <th>Order #</th>
-                <th>Customer</th>
-                <th>Date</th>
-                <th>Total</th>
-                <th>Items</th>
-                <th>Status</th>
-                <th>Actions</th>
-                <th>Picker</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredOrders.map((order) => (
-                <tr key={order.id}>
-                  <td className={styles.orderId}>{order.order_number}</td>
-                  <td>{getCustomerName(order)}</td>
-                  <td>{new Date(order.created_at).toLocaleDateString()}</td>
-                  <td>₦{Number(order.subtotal || 0).toLocaleString()}</td>
-                  <td>{order.order_items?.length || 0}</td>
-                  <td>
-                    <span
-                      className={`${styles.status} ${getOrderStatusClass(
-                        order.order_status
-                      )}`}
-                    >
-                      {order.order_status || "N/A"}
-                    </span>
-                  </td>
-                  <td>
-                    <div className={styles.actions}>
-                      {getActionButton(order)}
-                    </div>
-                  </td>
-                  <td>
-                    {order.picker ? (
-                      <button
-                        className={styles.pickerDetailsButton}
-                        onClick={() => handlePickerDetailsClick(order.id)}
-                        disabled={loadingPickerDetails.has(order.id)}
-                      >
-                        {loadingPickerDetails.has(order.id) ? (
-                          "Loading..."
-                        ) : (
-                          <>
-                            <FaEye
-                              color="white"
-                              size={16}
-                              className={styles.viewPicker}
-                            />
-                            Details
-                          </>
-                        )}
-                      </button>
-                    ) : (
-                      <span className={styles.noPicker}>
-                        No Picker Assigned
-                      </span>
-                    )}
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Order #
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Customer
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Date
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Total
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Items
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Picker
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredOrders.map((order) => (
+                  <tr
+                    key={order.id}
+                    className="hover:bg-gray-50 transition-colors duration-150"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">
+                        {order.order_number}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {getCustomerName(order)}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                      {new Date(order.created_at).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                      ₦{Number(order.subtotal || 0).toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                      {order.order_items?.length || 0}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getOrderStatusClass(
+                          order.order_status
+                        )}`}
+                      >
+                        <span className="mr-1">
+                          {getStatusIcon(order.order_status)}
+                        </span>
+                        {order.order_status || "N/A"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {getActionButton(order)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {order.picker ? (
+                        <button
+                          className="inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white text-sm font-medium rounded-md transition-colors duration-200"
+                          onClick={() => handlePickerDetailsClick(order.id)}
+                          disabled={loadingPickerDetails.has(order.id)}
+                        >
+                          {loadingPickerDetails.has(order.id) ? (
+                            <>
+                              <div className="inline-block animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
+                              Loading...
+                            </>
+                          ) : (
+                            <>
+                              <FaEye className="mr-2" size={14} />
+                              Details
+                            </>
+                          )}
+                        </button>
+                      ) : (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                          No Picker Assigned
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 

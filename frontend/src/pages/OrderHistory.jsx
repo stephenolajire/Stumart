@@ -3,7 +3,6 @@ import React, { useState, useRef, useContext } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useReactToPrint } from "react-to-print";
 import api from "../constant/api";
-import style from "../css/OrderHistory.module.css";
 import Swal from "sweetalert2";
 import { Link } from "react-router-dom";
 import { GlobalContext } from "../constant/GlobalContext";
@@ -221,19 +220,19 @@ const OrderHistory = () => {
   const getStatusClass = (status) => {
     switch (status.toUpperCase()) {
       case "PENDING":
-        return style.statusPending;
+        return "bg-yellow-100 text-yellow-800";
       case "PROCESSING":
-        return style.statusProcessing;
+        return "bg-blue-100 text-blue-800";
       case "SHIPPED":
-        return style.statusShipped;
+        return "bg-indigo-100 text-indigo-800";
       case "DELIVERED":
-        return style.statusDelivered;
+        return "bg-green-100 text-green-800";
       case "CANCELLED":
-        return style.statusCancelled;
+        return "bg-red-100 text-red-800";
       case "COMPLETED":
-        return style.statusCompleted;
+        return "bg-purple-100 text-purple-800";
       default:
-        return "";
+        return "bg-gray-100 text-gray-800";
     }
   };
 
@@ -264,10 +263,7 @@ const OrderHistory = () => {
 
   if (loading) {
     return (
-      <div
-        className={style.orderHistoryContainer}
-        style={{ marginTop: "10rem" }}
-      >
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center pt-40">
         <Spinner />
       </div>
     );
@@ -275,9 +271,10 @@ const OrderHistory = () => {
 
   if (error) {
     return (
-      <div className={style.orderHistoryContainer}>
-        <div className={style.errorMessage}>
-          {error.message || "An error occurred while fetching orders"}
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-lg shadow-md">
+          <h2 className="text-lg font-semibold mb-2">Error</h2>
+          <p>{error.message || "An error occurred while fetching orders"}</p>
         </div>
       </div>
     );
@@ -285,148 +282,294 @@ const OrderHistory = () => {
 
   if (orders.length === 0) {
     return (
-      <div className={style.orderHistoryContainer}>
-        <div className={style.emptyOrders}>
-          <h2>No Orders Yet</h2>
-          <p>
-            You haven't placed any orders yet. Start shopping to see your orders
-            here!
-          </p>
-          <Link to="/products" className={style.shopNowBtn}>
-            Shop Now
-          </Link>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center bg-white rounded-lg shadow-lg p-8 max-w-md mx-4">
+          <div className="mb-6">
+            <div className="w-24 h-24 mx-auto mb-4 bg-amber-100 rounded-full flex items-center justify-center">
+              <svg
+                className="w-12 h-12 text-amber-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+                />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">
+              No Orders Yet
+            </h2>
+            <p className="text-gray-600 mb-6">
+              You haven't placed any orders yet. Start shopping to see your
+              orders here!
+            </p>
+            <Link
+              to="/products"
+              className="inline-block bg-amber-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-amber-600 transition-colors duration-200 shadow-md"
+            >
+              Shop Now
+            </Link>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={style.orderHistoryContainer}>
+    <div className="min-h-screen bg-gray-50 py-6 px-4">
       <Header title="Order History" />
 
-      <div className={style.ordersList}>
+      <div className="w-full mx-auto space-y-6">
         {currentOrders.map((order) => (
-          <div className={style.orderCard} key={order.order_number}>
+          <div
+            key={order.order_number}
+            className="bg-white rounded-lg shadow-md overflow-hidden"
+          >
             <div
-              className={style.orderHeader}
+              className="p-6 cursor-pointer hover:bg-gray-50 transition-colors duration-200"
               onClick={() => toggleOrderDetails(order.order_number)}
             >
-              <div className={style.orderSummary}>
-                <div className={style.orderNumber}>
-                  <span>Order #:</span> {order.order_number}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="font-medium text-gray-700">Order #:</span>
+                    <span className="text-amber-600 font-semibold">
+                      {order.order_number}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="font-medium text-gray-700">Date:</span>
+                    <span className="text-gray-600">
+                      {formatDate(order.created_at)}
+                    </span>
+                  </div>
                 </div>
-                <div className={style.orderDate}>
-                  <span>Date:</span> {formatDate(order.created_at)}
-                </div>
-              </div>
 
-              <div className={style.orderStatusPrice}>
-                <div
-                  className={`${style.orderStatus} ${getStatusClass(
-                    order.order_status
-                  )}`}
-                >
-                  {order.order_status}
+                <div className="flex flex-col md:flex-row md:items-center gap-4">
+                  <div
+                    className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${getStatusClass(
+                      order.order_status
+                    )}`}
+                  >
+                    {order.order_status}
+                  </div>
+                  <div className="text-right">
+                    <span className="text-sm font-medium text-gray-700">
+                      Total:{" "}
+                    </span>
+                    <span className="text-lg font-bold text-amber-600">
+                      ₦{order.total.toFixed(2)}
+                    </span>
+                  </div>
                 </div>
-                <div className={style.orderTotal}>
-                  <span>Total:</span> ₦{order.total.toFixed(2)}
-                </div>
-              </div>
 
-              <div className={style.expandIcon}>
-                {expandedOrder === order.order_number ? "−" : "+"}
+                <div className="flex justify-center md:justify-end">
+                  <div className="w-8 h-8 flex items-center justify-center bg-amber-100 rounded-full text-amber-600 font-bold text-lg">
+                    {expandedOrder === order.order_number ? "−" : "+"}
+                  </div>
+                </div>
               </div>
             </div>
 
             {expandedOrder === order.order_number && (
               <div
-                className={style.orderDetails}
+                className="border-t border-gray-200 p-6 bg-gray-50"
                 ref={(el) => (printRefs.current[order.order_number] = el)}
               >
-                <div className={style.shippingDetails}>
-                  <h3>Shipping Details</h3>
-                  <p>
-                    <strong>Name:</strong> {order.shipping.first_name}{" "}
-                    {order.shipping.last_name}
-                  </p>
-                  <p>
-                    <strong>Email:</strong> {order.shipping.email}
-                  </p>
-                  <p>
-                    <strong>Phone:</strong> {order.shipping.phone}
-                  </p>
-                  <p>
-                    <strong>Address:</strong> {order.shipping.address}
-                  </p>
-                  {order.shipping.room_number && (
-                    <p>
-                      <strong>Room/Apt:</strong> {order.shipping.room_number}
-                    </p>
-                  )}
+                {/* Shipping Details */}
+                <div className="bg-white rounded-lg p-4 mb-6">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                    <svg
+                      className="w-5 h-5 mr-2 text-amber-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                    </svg>
+                    Shipping Details
+                  </h3>
+                  <div className="grid md:grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <span className="font-medium text-gray-700">Name: </span>
+                      <span className="text-gray-600">
+                        {order.shipping.first_name} {order.shipping.last_name}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-700">Email: </span>
+                      <span className="text-gray-600">
+                        {order.shipping.email}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-700">Phone: </span>
+                      <span className="text-gray-600">
+                        {order.shipping.phone}
+                      </span>
+                    </div>
+                    <div className="md:col-span-2">
+                      <span className="font-medium text-gray-700">
+                        Address:{" "}
+                      </span>
+                      <span className="text-gray-600">
+                        {order.shipping.address}
+                      </span>
+                    </div>
+                    {order.shipping.room_number && (
+                      <div>
+                        <span className="font-medium text-gray-700">
+                          Room/Apt:{" "}
+                        </span>
+                        <span className="text-gray-600">
+                          {order.shipping.room_number}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                <div className={style.orderItemsContainer}>
-                  <h3>Order Items</h3>
-                  {order.order_items &&
-                    order.order_items.map((item) => (
-                      <div className={style.orderItem} key={item.id}>
-                        <div className={style.itemImage}>
-                          {item.product.image ? (
-                            <img
-                              src={item.product.image}
-                              alt={item.product.name}
-                            />
-                          ) : (
-                            <div className={style.noImage}>No Image</div>
-                          )}
-                        </div>
+                {/* Order Items */}
+                <div className="bg-white rounded-lg p-4 mb-6">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                    <svg
+                      className="w-5 h-5 mr-2 text-amber-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                      />
+                    </svg>
+                    Order Items
+                  </h3>
+                  <div className="space-y-4">
+                    {order.order_items &&
+                      order.order_items.map((item) => (
+                        <div
+                          key={item.id}
+                          className="flex gap-4 p-3 border rounded-lg bg-gray-50"
+                        >
+                          <div className="flex-shrink-0">
+                            {item.product.image ? (
+                              <img
+                                src={item.product.image}
+                                alt={item.product.name}
+                                className="w-16 h-16 object-cover rounded-md"
+                              />
+                            ) : (
+                              <div className="w-16 h-16 bg-gray-200 rounded-md flex items-center justify-center text-xs text-gray-500">
+                                No Image
+                              </div>
+                            )}
+                          </div>
 
-                        <div className={style.itemDetails}>
-                          <h4>{item.product.name}</h4>
-                          <p className={style.itemVendor}>
-                            Sold by: {item.vendor}
-                          </p>
-                          {item.size && <p>Size: {item.size}</p>}
-                          {item.color && <p>Color: {item.color}</p>}
-                          <div className={style.itemPriceQty}>
-                            <p className={style.itemPrice}>
-                              ₦{item.price.toFixed(2)}
+                          <div className="flex-grow">
+                            <h4 className="font-semibold text-gray-800 mb-1">
+                              {item.product.name}
+                            </h4>
+                            <p className="text-sm text-amber-600 mb-2">
+                              Sold by: {item.vendor}
                             </p>
-                            <p className={style.itemQty}>
-                              Qty: {item.quantity}
-                            </p>
+                            {item.size && (
+                              <p className="text-sm text-gray-600">
+                                Size: {item.size}
+                              </p>
+                            )}
+                            {item.color && (
+                              <p className="text-sm text-gray-600">
+                                Color: {item.color}
+                              </p>
+                            )}
+                            <div className="flex justify-between items-center mt-2">
+                              <p className="font-semibold text-amber-600">
+                                ₦{item.price.toFixed(2)}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                Qty: {item.quantity}
+                              </p>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                </div>
-
-                <div className={style.orderSummaryTotals}>
-                  <div className={style.summaryLine}>
-                    <span>Subtotal:</span>
-                    <span>₦{order.subtotal.toFixed(2)}</span>
-                  </div>
-                  <div className={style.summaryLine}>
-                    <span>Shipping:</span>
-                    <span>₦{order.shipping_fee.toFixed(2)}</span>
-                  </div>
-                  <div className={style.summaryLine}>
-                    <span>Tax:</span>
-                    <span>₦{order.tax.toFixed(2)}</span>
-                  </div>
-                  <div className={`${style.summaryLine} ${style.total}`}>
-                    <span>Total:</span>
-                    <span>₦{order.total.toFixed(2)}</span>
+                      ))}
                   </div>
                 </div>
 
-                <div className={style.orderActions}>
+                {/* Order Summary */}
+                <div className="bg-white rounded-lg p-4 mb-6">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                    Order Summary
+                  </h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Subtotal:</span>
+                      <span className="text-gray-800">
+                        ₦{order.subtotal.toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Shipping:</span>
+                      <span className="text-gray-800">
+                        ₦{order.shipping_fee.toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Tax:</span>
+                      <span className="text-gray-800">
+                        ₦{order.tax.toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between border-t pt-2 mt-2">
+                      <span className="font-semibold text-gray-800">
+                        Total:
+                      </span>
+                      <span className="font-bold text-amber-600 text-lg">
+                        ₦{order.total.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Order Actions */}
+                <div className="flex flex-wrap gap-3">
                   {order.order_status.toUpperCase() === "COMPLETED" &&
                     (order.reviewed ? (
-                      <span className={style.reviewedBadge}>Reviewed</span>
+                      <span className="inline-flex items-center px-4 py-2 bg-green-100 text-green-800 text-sm font-medium rounded-lg">
+                        <svg
+                          className="w-4 h-4 mr-2"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        Reviewed
+                      </span>
                     ) : (
                       <button
-                        className={style.reviewButton}
+                        className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                         onClick={() => setReviewOrder(order)}
                         disabled={submitReviewMutation.isPending}
                       >
@@ -435,10 +578,11 @@ const OrderHistory = () => {
                           : "Write Review"}
                       </button>
                     ))}
+
                   {order.order_status.toUpperCase() === "DELIVERED" &&
                     !order.confirm && (
                       <button
-                        className={style.confirmOrderBtn}
+                        className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                         onClick={() => handleMarkAsDelivered(order.id)}
                         disabled={markAsDeliveredMutation.isPending}
                       >
@@ -447,9 +591,10 @@ const OrderHistory = () => {
                           : "Confirm"}
                       </button>
                     )}
+
                   {order.order_status.toUpperCase() === "PENDING" && (
                     <button
-                      className={style.cancelOrderBtn}
+                      className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                       onClick={() => handleCancelOrder(order.id)}
                       disabled={cancelOrderMutation.isPending}
                     >
@@ -458,14 +603,6 @@ const OrderHistory = () => {
                         : "Cancel Order"}
                     </button>
                   )}
-                  {/* {order.order_status.toUpperCase() !== "PENDING" && (
-                    <button
-                      className={style.cancelOrderBtn}
-                      onClick={() => handlePrint(order.order_number)}
-                    >
-                      Print Receipt
-                    </button>
-                  )} */}
                 </div>
               </div>
             )}
@@ -475,23 +612,25 @@ const OrderHistory = () => {
 
       {/* Pagination Component */}
       {totalPages > 1 && (
-        <div className={style.pagination}>
+        <div className="flex items-center justify-center mt-8 space-x-2">
           <button
             onClick={() => paginate(currentPage - 1)}
             disabled={currentPage === 1}
-            className={style.paginationButton}
+            className="px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
           >
             &laquo; Prev
           </button>
 
-          <div className={style.pageNumbers}>
+          <div className="flex space-x-1">
             {Array.from({ length: totalPages }, (_, i) => i + 1).map(
               (number) => (
                 <button
                   key={number}
                   onClick={() => paginate(number)}
-                  className={`${style.pageNumber} ${
-                    currentPage === number ? style.activePage : ""
+                  className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
+                    currentPage === number
+                      ? "bg-amber-500 text-white"
+                      : "bg-white text-gray-700 border border-gray-300 hover:bg-amber-50 hover:text-amber-600"
                   }`}
                 >
                   {number}
@@ -503,7 +642,7 @@ const OrderHistory = () => {
           <button
             onClick={() => paginate(currentPage + 1)}
             disabled={currentPage === totalPages}
-            className={style.paginationButton}
+            className="px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
           >
             Next &raquo;
           </button>

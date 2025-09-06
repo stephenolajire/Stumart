@@ -5,7 +5,7 @@ import { GlobalContext } from "../constant/GlobalContext";
 import styles from "../css/ShopDetails.module.css";
 import Spinner from "../components/Spinner";
 import Header from "../components/Header";
-import ProductCard from "../components/ProductCard";
+// import ProductCard from "../components/ProductCard";
 
 const ShopDetails = () => {
   const { shopId } = useParams();

@@ -1,10 +1,8 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { FaArrowLeft, FaFilter } from "react-icons/fa";
 import { useState, useEffect, useMemo } from "react";
-import styles from "../css/SearchPage.module.css";
-import ProductCard from "../components/ProductCard";
-import Spinner from "../components/Spinner";
 import Header from "../components/Header";
+import Card from "./components/Card";
 
 const SearchPage = () => {
   const location = useLocation();
@@ -85,14 +83,23 @@ const SearchPage = () => {
 
   if (!initialProducts || initialProducts.length === 0) {
     return (
-      <div className={styles.searchPage}>
-        <div className={styles.container}>
-          <div className={styles.noResults}>
-            <h2>No Products Found</h2>
-            <p>We couldn't find any products matching your search criteria.</p>
-            <button className={styles.backButton} onClick={() => navigate("/")}>
-              <FaArrowLeft /> Back to Home
-            </button>
+      <div className="min-h-screen bg-gray-50 pt-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center py-12">
+            <div className="bg-white rounded-lg shadow-lg p-8 max-w-md mx-auto">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                No Products Found
+              </h2>
+              <p className="text-gray-600 mb-6">
+                We couldn't find any products matching your search criteria.
+              </p>
+              <button
+                className="inline-flex items-center px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-lg transition-colors duration-200"
+                onClick={() => navigate("/")}
+              >
+                <FaArrowLeft className="mr-2" /> Back to Home
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -100,25 +107,28 @@ const SearchPage = () => {
   }
 
   return (
-    <div className={styles.searchPage} style={{marginTop: "3rem"}}>
-      <div className={styles.container}>
-        <div className={styles.searchHeader}>
-          <Header title="Search Results"/>
-          <p>
+    <div className="min-h-screen bg-gray-50" style={{ marginTop: "3rem" }}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mb-8">
+          <Header title="Search Results" />
+          <p className="text-gray-600 mt-2 text-lg">
             Showing results for "{searchParams.productName}"
             {searchParams.school && ` in ${searchParams.school}`}
             {searchParams.state && ` (${searchParams.state})`}
           </p>
         </div>
 
-        <div className={styles.filterSection}>
-          <div className={styles.filterControls}>
-            <div className={styles.shopFilter}>
-              <h3>Filter by Shop</h3>
+        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                <FaFilter className="mr-2 text-amber-500" />
+                Filter by Shop
+              </h3>
               <select
                 value={selectedShop}
                 onChange={(e) => handleShopFilter(e.target.value)}
-                className={styles.shopSelect}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white text-gray-900 shadow-sm transition-colors duration-200"
               >
                 {shopNames.map((shop) => (
                   <option key={shop.id} value={shop.name}>
@@ -128,28 +138,39 @@ const SearchPage = () => {
               </select>
             </div>
 
-            <div className={styles.priceFilter}>
-              <h3>Price Range Filter</h3>
-              <div className={styles.rangeContainer}>
-                <div className={styles.rangeLabels}>
-                  <span>{formatPrice(priceRange[0])}</span>
-                  <span>{formatPrice(priceRange[1])}</span>
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Price Range Filter
+              </h3>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center text-sm font-medium text-gray-700">
+                  <span className="px-3 py-1 bg-amber-100 text-amber-800 rounded-full">
+                    {formatPrice(priceRange[0])}
+                  </span>
+                  <span className="px-3 py-1 bg-amber-100 text-amber-800 rounded-full">
+                    {formatPrice(priceRange[1])}
+                  </span>
                 </div>
                 <div
-                  className={styles.rangeSlider}
+                  className="relative h-6 range-progress range-progress-start"
                   style={{
                     "--range-progress": `${progress.end}%`,
                     "--range-progress-start": `${progress.start}%`,
                   }}
                 >
-                  <div className={styles.track} />
+                  {/* Track */}
+                  <div className="absolute top-1/2 left-0 right-0 h-2 bg-gray-200 rounded-full transform -translate-y-1/2"></div>
+
+                  {/* Active range */}
                   <div
-                    className={styles.range}
+                    className="absolute top-1/2 h-2 bg-amber-500 rounded-full transform -translate-y-1/2"
                     style={{
                       left: `${progress.start}%`,
                       width: `${progress.end - progress.start}%`,
                     }}
-                  />
+                  ></div>
+
+                  {/* Min slider */}
                   <input
                     type="range"
                     min={initialMin}
@@ -158,8 +179,10 @@ const SearchPage = () => {
                     onChange={(e) =>
                       handlePriceChange([Number(e.target.value), priceRange[1]])
                     }
-                    className={`${styles.slider} ${styles.minSlider}`}
+                    className="absolute top-1/2 left-0 right-0 w-full h-2 bg-transparent appearance-none cursor-pointer transform -translate-y-1/2 range-slider range-slider-min"
                   />
+
+                  {/* Max slider */}
                   <input
                     type="range"
                     min={initialMin}
@@ -168,7 +191,7 @@ const SearchPage = () => {
                     onChange={(e) =>
                       handlePriceChange([priceRange[0], Number(e.target.value)])
                     }
-                    className={`${styles.slider} ${styles.maxSlider}`}
+                    className="absolute top-1/2 left-0 right-0 w-full h-2 bg-transparent appearance-none cursor-pointer transform -translate-y-1/2 range-slider range-slider-max"
                   />
                 </div>
               </div>
@@ -176,10 +199,8 @@ const SearchPage = () => {
           </div>
         </div>
 
-        <div className={styles.productsGrid}>
-          {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
+        <div className="pb-12">
+          <Card products={products} />
         </div>
       </div>
     </div>

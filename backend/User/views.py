@@ -609,6 +609,7 @@ class UpdateStudentProfileView(APIView):
             'department': request.data.get('department', student.department)
         }
         
+        
         # Handle profile picture update
         if 'profile_pic' in request.FILES:
             user.profile_pic = request.FILES['profile_pic']

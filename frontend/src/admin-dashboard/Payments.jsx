@@ -1,7 +1,6 @@
 // Payments.jsx
 import React, { useState, useMemo } from "react";
 import { useDebouncedCallback } from "use-debounce";
-import styles from "./css/Payments.module.css";
 import LoadingSpinner from "./LoadingSpinner";
 import { usePaymentTransactions } from "./hooks/usePayments";
 
@@ -60,13 +59,13 @@ const Payments = () => {
   const getStatusClass = (status) => {
     switch (status?.toLowerCase()) {
       case "success":
-        return styles.statusSuccess;
+        return "bg-green-100 text-green-800";
       case "pending":
-        return styles.statusPending;
+        return "bg-yellow-100 text-yellow-800";
       case "failed":
-        return styles.statusFailed;
+        return "bg-red-100 text-red-800";
       default:
-        return "";
+        return "bg-gray-100 text-gray-800";
     }
   };
 
@@ -74,55 +73,74 @@ const Payments = () => {
 
   if (isError) {
     return (
-      <div className={styles.error}>
-        <p>Failed to load payment transactions</p>
-        <button onClick={() => refetch()} className={styles.retryButton}>
-          Try Again
-        </button>
+      <div className="p-6 bg-gray-50 min-h-screen">
+        <div className="flex flex-col items-center justify-center h-64">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-lg mb-4">
+            <p className="font-medium">Failed to load payment transactions</p>
+          </div>
+          <button
+            onClick={() => refetch()}
+            className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className={styles.container}>
-      <div className={styles.headerSection}>
-        <div className={styles.titleSection}>
-          <h2 className={styles.sectionTitle}>
-            Payment Transactions
+    <div className="py-6 bg-gray-50 min-h-screen">
+      {/* Header Section */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-3">
+            <h2 className="text-3xl font-bold text-gray-900">
+              Payment Transactions
+            </h2>
             {transactions.length > 0 && (
-              <span className={styles.transactionCount}>
-                ({transactions.length})
+              <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium">
+                {transactions.length}
               </span>
             )}
-          </h2>
+          </div>
           <button
             onClick={() => refetch()}
-            className={styles.refreshButton}
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50"
             disabled={isFetching}
           >
             {isRefetching ? "Refreshing..." : "Refresh"}
           </button>
         </div>
 
-        <div className={styles.filterSection}>
-          <form onSubmit={handleSearch} className={styles.searchForm}>
-            <input
-              type="text"
-              placeholder="Search by transaction ID or order number..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className={styles.searchInput}
-            />
-            <button type="submit" className={styles.searchButton}>
-              Search
-            </button>
-          </form>
+        {/* Filter Section */}
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:space-x-4 space-y-4 lg:space-y-0 mb-4">
+            <div className="flex-1 max-w-lg">
+              <div className="flex">
+                <input
+                  type="text"
+                  placeholder="Search by transaction ID or order number..."
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                />
+                <button
+                  type="submit"
+                  onClick={handleSearch}
+                  className="px-4 py-2 bg-yellow-500 text-white rounded-r-lg hover:bg-yellow-600 transition-colors"
+                >
+                  Search
+                </button>
+              </div>
+            </div>
+          </div>
 
-          <div className={styles.filterControls}>
+          <div className="flex flex-col md:flex-row md:items-center md:space-x-4 space-y-4 md:space-y-0">
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className={styles.filterSelect}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
             >
               <option value="">All Statuses</option>
               <option value="success">Success</option>
@@ -130,62 +148,103 @@ const Payments = () => {
               <option value="failed">Failed</option>
             </select>
 
-            <button onClick={clearFilters} className={styles.clearButton}>
+            <button
+              onClick={clearFilters}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
+            >
               Clear Filters
             </button>
           </div>
         </div>
       </div>
 
+      {/* Loading Overlay */}
       {isFetching && !isRefetching && (
-        <div className={styles.loadingOverlay}>
-          <span>Searching...</span>
+        <div className="fixed inset-0 bg-black bg-opacity-25 flex items-center justify-center z-40">
+          <div className="bg-white px-6 py-4 rounded-lg shadow-lg">
+            <span className="text-gray-700">Searching...</span>
+          </div>
         </div>
       )}
 
-      <div className={styles.tableContainer}>
-        <table className={styles.transactionsTable}>
-          <thead>
-            <tr>
-              <th>Transaction ID</th>
-              <th>Order Number</th>
-              <th>Customer</th>
-              <th>Amount</th>
-              <th>Payment Method</th>
-              <th>Date</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {transactions.length === 0 ? (
+      {/* Transactions Table */}
+      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b">
               <tr>
-                <td colSpan="7" className={styles.noData}>
-                  {isFetching ? "Searching..." : "No transactions found"}
-                </td>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Transaction ID
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Order Number
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Customer
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Amount
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Payment Method
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Date
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
               </tr>
-            ) : (
-              transactions.map((transaction) => (
-                <tr key={transaction.id}>
-                  <td>{transaction.transaction_id}</td>
-                  <td>{transaction.order_number}</td>
-                  <td>{transaction.customer_name}</td>
-                  <td>₦{transaction.amount?.toLocaleString() || 0}</td>
-                  <td>{transaction.payment_method}</td>
-                  <td>{formatDate(transaction.created_at)}</td>
-                  <td>
-                    <span
-                      className={`${styles.statusBadge} ${getStatusClass(
-                        transaction.status
-                      )}`}
-                    >
-                      {transaction.status}
-                    </span>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {transactions.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan="7"
+                    className="px-6 py-8 text-center text-gray-500"
+                  >
+                    {isFetching ? "Searching..." : "No transactions found"}
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                transactions.map((transaction) => (
+                  <tr
+                    key={transaction.id}
+                    className="hover:bg-gray-50 transition-colors"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {transaction.transaction_id}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {transaction.order_number}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {transaction.customer_name}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      ₦{transaction.amount?.toLocaleString() || 0}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {transaction.payment_method}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {formatDate(transaction.created_at)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusClass(
+                          transaction.status
+                        )}`}
+                      >
+                        {transaction.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { FaSearch, FaStar, FaFilter, FaSpinner } from "react-icons/fa";
-import styles from "./css/Review.module.css";
 import api from "../constant/api";
 
 const Reviews = () => {
@@ -101,7 +100,9 @@ const Reviews = () => {
       .map((_, index) => (
         <FaStar
           key={index}
-          className={index < rating ? styles.starFilled : styles.starEmpty}
+          className={`${
+            index < rating ? "text-yellow-500" : "text-gray-300"
+          } text-sm`}
         />
       ));
   };
@@ -123,13 +124,12 @@ const Reviews = () => {
     return review || "Anonymous";
   };
 
-
   if (loading) {
     return (
-      <div className={styles.reviewsSection}>
-        <div className={styles.loadingContainer}>
-          <FaSpinner className={styles.spinner} />
-          <p>Loading reviews...</p>
+      <div className="p-6 bg-gray-50 min-h-screen">
+        <div className="flex flex-col items-center justify-center h-64">
+          <FaSpinner className="animate-spin text-yellow-500 text-3xl mb-4" />
+          <p className="text-gray-600">Loading reviews...</p>
         </div>
       </div>
     );
@@ -137,12 +137,14 @@ const Reviews = () => {
 
   if (error) {
     return (
-      <div className={styles.reviewsSection}>
-        <div className={styles.errorContainer}>
-          <p>Error loading reviews: {error}</p>
+      <div className="p-6 bg-gray-50 min-h-screen">
+        <div className="flex flex-col items-center justify-center h-64">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            <p>Error loading reviews: {error}</p>
+          </div>
           <button
             onClick={() => window.location.reload()}
-            className={styles.retryButton}
+            className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition-colors"
           >
             Retry
           </button>
@@ -152,121 +154,172 @@ const Reviews = () => {
   }
 
   return (
-    <div className={styles.reviewsSection}>
-      {/* <div className={styles.sectionHeader}>
-        {vendorInfo.business_name && (
-          <p className={styles.businessName}>{vendorInfo.business_name}</p>
-        )}
-      </div> */}
+    <div className="p-6 bg-gray-50 min-h-screen">
+      {/* Business Name Header */}
+      {vendorInfo.business_name && (
+        <div className="mb-6">
+          <p className="text-lg font-medium text-gray-700">
+            {vendorInfo.business_name}
+          </p>
+        </div>
+      )}
 
-      <div className={styles.reviewsSummary}>
-        <div className={styles.summaryCard}>
-          <h3>Average Rating</h3>
-          <div className={styles.ratingDisplay}>
-            <span className={styles.ratingNumber}>
+      {/* Reviews Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-yellow-500">
+          <h3 className="text-sm font-medium text-gray-600 mb-3">
+            Average Rating
+          </h3>
+          <div className="flex items-center space-x-3">
+            <span className="text-3xl font-bold text-gray-900">
               {stats.average_rating.toFixed(1)}
             </span>
-            <div className={styles.starsContainer}>
+            <div className="flex space-x-1">
               {renderStars(Math.round(stats.average_rating))}
             </div>
           </div>
         </div>
-        <div className={styles.summaryCard}>
-          <h3>5-Star Reviews</h3>
-          <p className={styles.summaryValue}>
+
+        <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-green-500">
+          <h3 className="text-sm font-medium text-gray-600 mb-3">
+            5-Star Reviews
+          </h3>
+          <p className="text-3xl font-bold text-gray-900">
             {fiveStarPercentage.toFixed(0)}%
           </p>
         </div>
-        <div className={styles.summaryCard}>
-          <h3>Total Reviews</h3>
-          <p className={styles.summaryValue}>{stats.total_reviews}</p>
+
+        <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-500">
+          <h3 className="text-sm font-medium text-gray-600 mb-3">
+            Total Reviews
+          </h3>
+          <p className="text-3xl font-bold text-gray-900">
+            {stats.total_reviews}
+          </p>
         </div>
-        <div className={styles.summaryCard}>
-          <h3>Rating Breakdown</h3>
-          <div className={styles.ratingBreakdown}>
+
+        <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-purple-500">
+          <h3 className="text-sm font-medium text-gray-600 mb-3">
+            Rating Breakdown
+          </h3>
+          <div className="space-y-1">
             {[5, 4, 3, 2, 1].map((rating) => (
-              <div key={rating} className={styles.ratingRow}>
-                <span>{rating}★</span>
-                <span>{stats.rating_breakdown[rating] || 0}</span>
+              <div
+                key={rating}
+                className="flex justify-between items-center text-sm"
+              >
+                <span className="text-gray-600">{rating}★</span>
+                <span className="font-medium text-gray-900">
+                  {stats.rating_breakdown[rating] || 0}
+                </span>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      <div className={styles.filters}>
-        <div className={styles.filterGroup}>
-          <select
-            value={filterRating}
-            onChange={(e) => setFilterRating(e.target.value)}
-            className={styles.filterSelect}
-          >
-            <option value="all">All Ratings</option>
-            <option value="5star">5 Star</option>
-            <option value="4star">4 Star</option>
-            <option value="3star">3 Star</option>
-            <option value="2star">2 Star</option>
-            <option value="1star">1 Star</option>
-            <option value="negative">Negative Reviews</option>
-          </select>
+      {/* Filters */}
+      <div className="bg-white p-6 rounded-lg shadow-md mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
+          <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+            <select
+              value={filterRating}
+              onChange={(e) => setFilterRating(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+            >
+              <option value="all">All Ratings</option>
+              <option value="5star">5 Star</option>
+              <option value="4star">4 Star</option>
+              <option value="3star">3 Star</option>
+              <option value="2star">2 Star</option>
+              <option value="1star">1 Star</option>
+              <option value="negative">Negative Reviews</option>
+            </select>
 
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className={styles.filterSelect}
-          >
-            <option value="date">Most Recent</option>
-            <option value="rating-high">Highest Rating</option>
-            <option value="rating-low">Lowest Rating</option>
-          </select>
-        </div>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+            >
+              <option value="date">Most Recent</option>
+              <option value="rating-high">Highest Rating</option>
+              <option value="rating-low">Lowest Rating</option>
+            </select>
+          </div>
 
-        <div className={styles.searchContainer}>
-          <FaSearch className={styles.searchIcon} />
-          <input
-            type="search"
-            placeholder="Search reviews..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className={styles.searchInput}
-          />
+          <div className="relative">
+            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <input
+              type="search"
+              placeholder="Search reviews..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent w-full md:w-64"
+            />
+          </div>
         </div>
       </div>
 
-      <div className={styles.reviewsList}>
+      {/* Reviews List */}
+      <div className="space-y-6">
         {filterReviews().length === 0 ? (
-          <div className={styles.noReviews}>
-            <p>No reviews found matching your criteria.</p>
+          <div className="bg-white p-12 rounded-lg shadow-md text-center">
+            <div className="text-gray-400 mb-4">
+              <FaSearch className="mx-auto text-4xl" />
+            </div>
+            <p className="text-gray-600 text-lg">
+              No reviews found matching your criteria.
+            </p>
           </div>
         ) : (
           filterReviews().map((review) => (
-            <div className={styles.reviewCard} key={review.id}>
-              <div className={styles.reviewHeader}>
-                <div className={styles.reviewInfo}>
-                  <div className={styles.starsContainer}>
-                    {renderStars(review.rating)}
+            <div
+              key={review.id}
+              className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+            >
+              <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-4">
+                <div className="flex items-start space-x-4 mb-4 md:mb-0">
+                  <div className="flex-shrink-0">
+                    <div className="w-12 h-12 bg-yellow-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                      {getCustomerName(review.reviewer_name)
+                        .charAt(0)
+                        .toUpperCase()}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex space-x-1 mb-2">
+                      {renderStars(review.rating)}
+                    </div>
+                    <p className="font-medium text-gray-900 mb-1">
+                      {getCustomerName(review.reviewer_name)}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {formatDate(review.created_at)}
+                    </p>
                   </div>
                 </div>
-                <div className={styles.reviewMeta}>
-                  <p className={styles.customerName}>
-                    {getCustomerName(review.reviewer_name)}
-                  </p>
-                  <p className={styles.reviewDate}>
-                    {formatDate(review.created_at)}
-                  </p>
-                  {/* {review.order && (
-                    <p className={styles.orderId}>Order #{review.order.id}</p>
-                  )} */}
+
+                <div className="flex items-center space-x-2">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                    {review.rating} Star{review.rating !== 1 ? "s" : ""}
+                  </span>
                 </div>
               </div>
 
               <div
-                className={`${styles.reviewContent} ${
-                  expandedReview === review.id ? styles.expanded : ""
+                className={`text-gray-700 leading-relaxed cursor-pointer transition-all duration-200 ${
+                  expandedReview === review.id
+                    ? ""
+                    : "line-clamp-3 hover:text-gray-900"
                 }`}
                 onClick={() => toggleExpandReview(review.id)}
               >
                 <p>{review.comment || "No comment provided"}</p>
+                {review.comment && review.comment.length > 200 && (
+                  <button className="text-yellow-500 hover:text-yellow-600 text-sm mt-2 font-medium">
+                    {expandedReview === review.id ? "Show less" : "Read more"}
+                  </button>
+                )}
               </div>
             </div>
           ))

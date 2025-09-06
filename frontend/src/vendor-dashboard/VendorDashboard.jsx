@@ -8,11 +8,10 @@ import Products from "./Products";
 import Orders from "./Orders";
 import Reviews from "./Review";
 import Payments from "./Payments";
-import styles from "./css/VendorDashboard.module.css";
 import Swal from "sweetalert2";
 import Inventory from "./Inventory";
 import Settings from "./Settings";
-import vendorApi from "../services/vendorApi";
+import vendorApi from "../user/services/vendorApi";
 import ThemeToggle from "../components/ThemeToggle";
 
 const VendorDashboard = () => {
@@ -31,6 +30,11 @@ const VendorDashboard = () => {
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [withdrawHistory, setWithrawalHistory] = useState([]);
+  const [isOpen, setIsOpen] = useState(false)
+
+  const toggleMenu = () => {
+    setIsOpen(!isOpen)
+  }
 
   const navigate = useNavigate();
   const { auth } = useContext(GlobalContext);
@@ -84,29 +88,45 @@ const VendorDashboard = () => {
         console.error("Response Data:", error.response.data);
       }
 
-      Swal.fire("Error", "Failed to fetch dashboard data", "error");
+      Swal.fire({
+        title: "Error",
+        text: "Failed to fetch dashboard data",
+        icon: "error",
+        confirmButtonColor: "#eab308",
+      });
     } finally {
       setIsLoading(false);
     }
   };
+
   const handleDeleteProduct = async (id) => {
     Swal.fire({
       title: "Are you sure?",
       text: "You won't be able to revert this!",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "var(--error)",
-      cancelButtonColor: "var(--neutral-gray-400)",
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#9ca3af",
       confirmButtonText: "Yes, delete it!",
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
           await vendorApi.deleteProduct(id);
           setProducts(products.filter((product) => product.id !== id));
-          Swal.fire("Deleted!", "Your product has been deleted.", "success");
+          Swal.fire({
+            title: "Deleted!",
+            text: "Your product has been deleted.",
+            icon: "success",
+            confirmButtonColor: "#eab308",
+          });
         } catch (error) {
           console.error("Delete Error:", error);
-          Swal.fire("Error", "Failed to delete product", "error");
+          Swal.fire({
+            title: "Error",
+            text: "Failed to delete product",
+            icon: "error",
+            confirmButtonColor: "#eab308",
+          });
         }
       }
     });
@@ -120,10 +140,20 @@ const VendorDashboard = () => {
           product.id === productId ? { ...product, stock: newStock } : product
         )
       );
-      Swal.fire("Updated!", "Stock has been updated.", "success");
+      Swal.fire({
+        title: "Updated!",
+        text: "Stock has been updated.",
+        icon: "success",
+        confirmButtonColor: "#eab308",
+      });
     } catch (error) {
       console.error("Update Stock Error:", error);
-      Swal.fire("Error", "Failed to update stock", "error");
+      Swal.fire({
+        title: "Error",
+        text: "Failed to update stock",
+        icon: "error",
+        confirmButtonColor: "#eab308",
+      });
     }
   };
 
@@ -131,16 +161,33 @@ const VendorDashboard = () => {
     try {
       await vendorApi.respondToReview(reviewId, response);
       // You would need to update the Reviews component to reflect this change
-      Swal.fire("Success", "Response submitted", "success");
+      Swal.fire({
+        title: "Success",
+        text: "Response submitted",
+        icon: "success",
+        confirmButtonColor: "#eab308",
+      });
     } catch (error) {
       console.error("Review Response Error:", error);
-      Swal.fire("Error", "Failed to submit response", "error");
+      Swal.fire({
+        title: "Error",
+        text: "Failed to submit response",
+        icon: "error",
+        confirmButtonColor: "#eab308",
+      });
     }
   };
 
   const renderContent = () => {
     if (isLoading) {
-      return <div className={styles.loading}>Loading...</div>;
+      return (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading dashboard...</p>
+          </div>
+        </div>
+      );
     }
 
     switch (activeTab) {
@@ -175,14 +222,20 @@ const VendorDashboard = () => {
   }, [activeTab]);
 
   return (
-    <div className={styles.dashboardContainer}>
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
-      <div style={{position:"fixed", bottom:"2rem", right:"2rem"}}>
-        <ThemeToggle/>
+    <div className="min-h-screen bg-gray-50">
+      <div className="hidden lg:flex">
+        <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
       </div>
-      <div className={styles.mainContent}>
-        <Bar activeTab={activeTab} />
-        {renderContent()}
+      <div className="lg:hidden flex absolute top-0 left-0">
+        {isOpen && (
+          <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} toggleMenu={toggleMenu}/>
+        )}
+      </div>
+      <div className="lg:ml-64 ml-0">
+        <Bar activeTab={activeTab} toggleMenu={toggleMenu} isOpen={isOpen} />
+        <div className="pt-20 pb-6">
+          <div className="w-full mx-auto">{renderContent()}</div>
+        </div>
       </div>
     </div>
   );

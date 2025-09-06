@@ -5,10 +5,11 @@ import {
   FaCheck,
   FaEdit,
   FaTrash,
+  FaChevronUp,
+  FaChevronDown,
 } from "react-icons/fa";
 import Swal from "sweetalert2";
 import UpdateStockModal from "./UpdateStockModal";
-import styles from "./css/Inventory.module.css";
 import api from "../constant/api";
 import PromotionModal from "./PromotionalModal";
 import BulkDiscountModal from "./BulkDiscountModal";
@@ -29,6 +30,7 @@ const Inventory = ({
   const [selectedProductForPromotion, setSelectedProductForPromotion] =
     useState(null);
   const [isBulkDiscountModalOpen, setIsBulkDiscountModalOpen] = useState(false);
+
   const handlePromotionClick = (product) => {
     setSelectedProductForPromotion(product);
     setIsPromotionModalOpen(true);
@@ -49,6 +51,7 @@ const Inventory = ({
         text: "Promotion price updated successfully",
         timer: 2000,
         showConfirmButton: false,
+        confirmButtonColor: "#eab308",
       });
 
       // Update local state or trigger refresh
@@ -75,6 +78,7 @@ const Inventory = ({
         text: "Bulk discount applied successfully",
         timer: 2000,
         showConfirmButton: false,
+        confirmButtonColor: "#eab308",
       });
 
       // Update local state or trigger refresh
@@ -96,8 +100,8 @@ const Inventory = ({
         text: "This will remove promotional prices from all products. This action cannot be undone.",
         icon: "warning",
         showCancelButton: true,
-        confirmButtonColor: "var(--primary-500)",
-        cancelButtonColor: "var(--error)",
+        confirmButtonColor: "#eab308",
+        cancelButtonColor: "#ef4444",
         confirmButtonText: "Yes, clear all",
         cancelButtonText: "No, keep discounts",
       });
@@ -113,6 +117,7 @@ const Inventory = ({
           text: "All promotional prices have been removed",
           timer: 2000,
           showConfirmButton: false,
+          confirmButtonColor: "#eab308",
         });
 
         // Update local state or trigger refresh
@@ -128,6 +133,7 @@ const Inventory = ({
         icon: "error",
         title: "Error",
         text: error.response?.data?.message || "Failed to clear discounts",
+        confirmButtonColor: "#eab308",
       });
     }
   };
@@ -162,6 +168,7 @@ const Inventory = ({
         icon: "error",
         title: "Error",
         text: "No product selected for update",
+        confirmButtonColor: "#eab308",
       });
       return;
     }
@@ -172,6 +179,7 @@ const Inventory = ({
         icon: "error",
         title: "Error",
         text: "Product ID is missing",
+        confirmButtonColor: "#eab308",
       });
       return;
     }
@@ -184,6 +192,7 @@ const Inventory = ({
         icon: "error",
         title: "Error",
         text: "Invalid product ID",
+        confirmButtonColor: "#eab308",
       });
       return;
     }
@@ -290,6 +299,7 @@ const Inventory = ({
         text: "Stock updated successfully",
         timer: 2000,
         showConfirmButton: false,
+        confirmButtonColor: "#eab308",
       });
 
       // Close modal
@@ -319,6 +329,7 @@ const Inventory = ({
         icon: "error",
         title: "Update Failed",
         text: errorMessage,
+        confirmButtonColor: "#eab308",
       });
 
       throw error;
@@ -380,165 +391,259 @@ const Inventory = ({
 
   const getStockStatus = (stock) => {
     if (stock === 0) {
-      return { label: "OUT OF STOCK", className: styles.statusOutOfStock };
+      return { label: "OUT OF STOCK", className: "bg-red-100 text-red-800" };
     } else if (stock < 10) {
-      return { label: "LOW STOCK", className: styles.statusLowStock };
+      return { label: "LOW STOCK", className: "bg-orange-100 text-orange-800" };
     } else {
-      return { label: "IN STOCK", className: styles.statusInStock };
+      return { label: "IN STOCK", className: "bg-green-100 text-green-800" };
     }
   };
 
   return (
-    <div className={styles.inventorySection}>
-      <div className={styles.inventorySummary}>
-        <div className={styles.summaryCard}>
-          <h3>Total Products</h3>
-          <p className={styles.summaryValue}>{totalItems}</p>
+    <div className="space-y-6 px-4 lg:px-0">
+      {/* Inventory Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white rounded-lg shadow-lg p-6 border-l-4 border-blue-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-medium text-gray-600">
+                Total Products
+              </h3>
+              <p className="text-3xl font-bold text-gray-900 mt-1">
+                {totalItems}
+              </p>
+            </div>
+          </div>
         </div>
-        <div className={styles.summaryCard}>
-          <h3>Low Stock Items</h3>
-          <p className={styles.summaryValue}>{lowStockItems}</p>
+        <div className="bg-white rounded-lg shadow-lg p-6 border-l-4 border-orange-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-medium text-gray-600">
+                Low Stock Items
+              </h3>
+              <p className="text-3xl font-bold text-orange-600 mt-1">
+                {lowStockItems}
+              </p>
+            </div>
+            <FaExclamationTriangle className="text-orange-500 text-2xl" />
+          </div>
         </div>
-        <div className={styles.summaryCard}>
-          <h3>Out of Stock</h3>
-          <p className={styles.summaryValue}>{outOfStockItems}</p>
-        </div>
-      </div>
-
-      <div className={styles.filters}>
-        <select
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          className={styles.filterSelect}
-        >
-          <option value="all">All Items</option>
-          <option value="in-stock">In Stock</option>
-          <option value="low-stock">Low Stock</option>
-          <option value="out-of-stock">Out of Stock</option>
-        </select>
-        <div className={styles.searchContainer}>
-          <FaSearch className={styles.searchIcon} />
-          <input
-            type="search"
-            placeholder="Search inventory..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className={styles.searchInput}
-          />
-        </div>
-        <div className={styles.actions}>
-          <button
-            className={styles.updateStockButton}
-            onClick={() => setIsBulkDiscountModalOpen(true)}
-          >
-            <FaEdit /> All Products Discount
-          </button>
-        </div>
-        <div className={styles.actions} style={{ background: "red" }}>
-          <button
-            className={styles.updateStockButton}
-            style={{ background: "red" }}
-            onClick={handleClearAllDiscounts}
-          >
-            <FaTrash /> Clear All discounts
-          </button>
+        <div className="bg-white rounded-lg shadow-lg p-6 border-l-4 border-red-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-medium text-gray-600">
+                Out of Stock
+              </h3>
+              <p className="text-3xl font-bold text-red-600 mt-1">
+                {outOfStockItems}
+              </p>
+            </div>
+            <FaExclamationTriangle className="text-red-500 text-2xl" />
+          </div>
         </div>
       </div>
 
+      {/* Filters and Actions */}
+      <div className="bg-white rounded-lg shadow-lg p-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          {/* Filter and Search */}
+          <div className="flex flex-col sm:flex-row gap-4">
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 bg-white text-gray-700"
+            >
+              <option value="all">All Items</option>
+              <option value="in-stock">In Stock</option>
+              <option value="low-stock">Low Stock</option>
+              <option value="out-of-stock">Out of Stock</option>
+            </select>
+
+            <div className="relative">
+              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <input
+                type="search"
+                placeholder="Search inventory..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 w-full sm:w-64"
+              />
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={() => setIsBulkDiscountModalOpen(true)}
+              className="inline-flex items-center px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-medium rounded-lg shadow-sm transition-colors duration-200"
+            >
+              <FaEdit className="mr-2" size={14} />
+              All Products Discount
+            </button>
+            <button
+              onClick={handleClearAllDiscounts}
+              className="inline-flex items-center px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg shadow-sm transition-colors duration-200"
+            >
+              <FaTrash className="mr-2" size={14} />
+              Clear All Discounts
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Inventory Table */}
+      <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th
+                  onClick={() => handleSort("name")}
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-150"
+                >
+                  <div className="flex items-center space-x-1">
+                    <span>Product Name</span>
+                    {sortBy === "name" &&
+                      (sortDirection === "asc" ? (
+                        <FaChevronUp size={12} />
+                      ) : (
+                        <FaChevronDown size={12} />
+                      ))}
+                  </div>
+                </th>
+                <th
+                  onClick={() => handleSort("price")}
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-150"
+                >
+                  <div className="flex items-center space-x-1">
+                    <span>Price</span>
+                    {sortBy === "price" &&
+                      (sortDirection === "asc" ? (
+                        <FaChevronUp size={12} />
+                      ) : (
+                        <FaChevronDown size={12} />
+                      ))}
+                  </div>
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Discount Price
+                </th>
+                <th
+                  onClick={() => handleSort("stock")}
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-150"
+                >
+                  <div className="flex items-center space-x-1">
+                    <span>Stock Level</span>
+                    {sortBy === "stock" &&
+                      (sortDirection === "asc" ? (
+                        <FaChevronUp size={12} />
+                      ) : (
+                        <FaChevronDown size={12} />
+                      ))}
+                  </div>
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Discount
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {getSortedProducts().map((product) => {
+                const stockStatus = getStockStatus(product.stock);
+                return (
+                  <tr
+                    key={product.id}
+                    className="hover:bg-gray-50 transition-colors duration-150"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">
+                        {product.name}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                      ₦{product.price?.toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                      ₦{product.promotion_price?.toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        {product.stock === 0 ? (
+                          <span className="flex items-center text-red-600">
+                            <FaExclamationTriangle className="mr-1" size={14} />
+                            {product.stock}
+                          </span>
+                        ) : product.stock < 10 ? (
+                          <span className="flex items-center text-orange-600">
+                            <FaExclamationTriangle className="mr-1" size={14} />
+                            {product.stock}
+                          </span>
+                        ) : (
+                          <span className="flex items-center text-green-600">
+                            <FaCheck className="mr-1" size={14} />
+                            {product.stock}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span
+                        className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${stockStatus.className}`}
+                      >
+                        {stockStatus.label}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <button
+                        onClick={() => [
+                          handleUpdateStock(product),
+                          fetchDetails(product.id),
+                        ]}
+                        className="inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md transition-colors duration-200"
+                      >
+                        <FaEdit className="mr-1" size={12} />
+                        Update Stock
+                      </button>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <button
+                        onClick={() => handlePromotionClick(product)}
+                        className="p-2 text-yellow-600 hover:text-yellow-800 hover:bg-yellow-50 rounded-full transition-colors duration-200"
+                        title="Edit Discount"
+                      >
+                        <FaEdit size={14} />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+              {getSortedProducts().length === 0 && (
+                <tr>
+                  <td
+                    colSpan="7"
+                    className="px-6 py-8 text-center text-gray-500"
+                  >
+                    No products found matching your search criteria.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Modals */}
       <BulkDiscountModal
         isOpen={isBulkDiscountModalOpen}
         onClose={() => setIsBulkDiscountModalOpen(false)}
         onApplyDiscount={handleBulkDiscount}
       />
-
-      <div className={styles.tableContainer}>
-        <table className={styles.dataTable}>
-          <thead>
-            <tr>
-              <th
-                onClick={() => handleSort("name")}
-                className={styles.sortableHeader}
-              >
-                Product Name{" "}
-                {sortBy === "name" && (sortDirection === "asc" ? "▲" : "▼")}
-              </th>
-              <th
-                onClick={() => handleSort("price")}
-                className={styles.sortableHeader}
-              >
-                Price{" "}
-                {sortBy === "price" && (sortDirection === "asc" ? "▲" : "▼")}
-              </th>
-              <th>Discount Price</th>
-              <th
-                onClick={() => handleSort("stock")}
-                className={styles.sortableHeader}
-              >
-                Stock Level{" "}
-                {sortBy === "stock" && (sortDirection === "asc" ? "▲" : "▼")}
-              </th>
-              <th>Status</th>
-              <th>Actions</th>
-              <th>Discount</th>
-            </tr>
-          </thead>
-          <tbody>
-            {getSortedProducts().map((product) => {
-              const stockStatus = getStockStatus(product.stock);
-              return (
-                <tr key={product.id}>
-                  <td className={styles.productName}>{product.name}</td>
-                  <td>₦{product.price}</td>
-                  <td>₦{product.promotion_price}</td>
-                  <td>
-                    {product.stock === 0 ? (
-                      <span className={styles.outOfStock}>
-                        <FaExclamationTriangle /> {product.stock}
-                      </span>
-                    ) : product.stock < 10 ? (
-                      <span className={styles.lowStock}>
-                        <FaExclamationTriangle /> {product.stock}
-                      </span>
-                    ) : (
-                      <span className={styles.inStock}>
-                        <FaCheck /> {product.stock}
-                      </span>
-                    )}
-                  </td>
-                  <td>
-                    <span
-                      className={`${styles.status} ${stockStatus.className}`}
-                    >
-                      {stockStatus.label}
-                    </span>
-                  </td>
-                  <td>
-                    <div className={styles.actions}>
-                      <button
-                        className={styles.updateStockButton}
-                        onClick={() => [
-                          handleUpdateStock(product),
-                          fetchDetails(product.id),
-                        ]}
-                      >
-                        <FaEdit /> Update Stock
-                      </button>
-                    </div>
-                  </td>
-                  <td>
-                    <button
-                      className={styles.editButton}
-                      onClick={() => handlePromotionClick(product)}
-                    >
-                      <FaEdit />
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
 
       <PromotionModal
         isOpen={isPromotionModalOpen}
@@ -547,7 +652,6 @@ const Inventory = ({
         onUpdatePromotion={handleUpdatePromotion}
       />
 
-      {/* Update Stock Modal */}
       <UpdateStockModal
         isOpen={isModalOpen}
         onClose={handleModalClose}

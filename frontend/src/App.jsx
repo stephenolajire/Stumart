@@ -51,6 +51,8 @@ import Service from "./pages/Service";
 import Message from "./pages/Message";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import Landing from "./pages/landing/Landing";
+import Category from "./pages/Category";
 // import UnifiedMessages from "./components/UnifiedMessage";
 
 // Create a client
@@ -78,7 +80,7 @@ function App() {
             <ScrollToTop />
             <Routes>
               <Route path="/" element={<Layout />}>
-                <Route index element={<Home />} />
+                <Route index element={<Landing />} />
                 <Route path="about" element={<About />} />
                 <Route path="vendors" element={<Vendors />} />
                 <Route path="rider" element={<Rider />} />
@@ -87,7 +89,8 @@ function App() {
                 <Route path="product/:productId" element={<ProductDetails />} />
                 <Route path="other-services" element={<OtherService />} />
                 <Route path="shopping-cart" element={<ShoppingCart />} />
-                <Route path="search" element={<SearchPage />} />
+                <Route path="search-results" element={<SearchPage />} />
+                <Route path="category" element={<Category />} />
 
                 <Route
                   path="service"
@@ -235,7 +238,7 @@ function App() {
           </Router>
         </GlobalProvider>
       </ThemeProvider>
-      <ReactQueryDevtools initialIsOpen={false} />
+      {/* <ReactQueryDevtools initialIsOpen={false} /> */}
     </QueryClientProvider>
   );
 }

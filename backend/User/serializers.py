@@ -357,8 +357,8 @@ class StudentSerializer(BaseUserProfileMixin, serializers.ModelSerializer):
         cleaned_matric = value.strip().upper()
         
         # Check if matric number already exists
-        if Student.objects.filter(matric_number=cleaned_matric).exists():
-            raise InvalidMatricNumberError("A student with this matric number already exists.")
+        # if Student.objects.filter(matric_number=cleaned_matric).exists():
+        #     raise InvalidMatricNumberError("A student with this matric number already exists.")
         
         return cleaned_matric
 
