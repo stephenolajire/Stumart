@@ -407,7 +407,7 @@ const ShoppingCart = () => {
                   </div>
 
                   <div className="flex justify-between text-gray-600">
-                    <span>Tax</span>
+                    <span>Commission</span>
                     <span>₦{formatPrice(cartSummary.tax)}</span>
                   </div>
 

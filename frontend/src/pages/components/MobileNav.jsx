@@ -16,11 +16,13 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import { GlobalContext } from "../../constant/GlobalContext";
 import SidebarNavigation from "./MobileSidebar";
+import api from "../../constant/api";
 
 const MobileNav = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [accountDropdownOpen, setAccountDropdownOpen] = useState(false);
   const [openMenu, setOpenMenu] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
 
   const toggleMenu = () => {
     setOpenMenu(!openMenu);
@@ -44,6 +46,89 @@ const MobileNav = () => {
 
     navigate("/");
     window.location.reload();
+  };
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) {
+      alert("Please enter a search term");
+      return;
+    }
+
+    setIsSearching(true);
+
+    try {
+      // Make API call to search endpoint
+      const response = await api.get("/search-products/", {
+        params: {
+          product_name: searchQuery.trim(),
+          // You can add state and institution filters if needed
+          // state: userState,
+          // institution: userInstitution,
+        },
+      });
+
+      if (response.data.status === "success") {
+        // Navigate to search results page with the products data
+        navigate("/search-results", {
+          state: {
+            products: response.data.products,
+            searchParams: {
+              productName: searchQuery.trim(),
+              searchType: response.data.search_type,
+              count: response.data.count,
+            },
+          },
+        });
+        window.location.reload()
+      } else if (response.data.status === "not_found") {
+        // Handle no results found
+        navigate("/search-results", {
+          state: {
+            products: [],
+            searchParams: {
+              productName: searchQuery.trim(),
+              searchType: response.data.search_type,
+              count: 0,
+              message: response.data.message,
+            },
+          },
+        });
+      }
+    } catch (error) {
+      console.error("Search error:", error);
+
+      // Handle different error scenarios
+      if (error.response?.status === 404) {
+        // No products found
+        navigate("/search-results", {
+          state: {
+            products: [],
+            searchParams: {
+              productName: searchQuery.trim(),
+              count: 0,
+              message:
+                error.response.data.message ||
+                "No products found matching your search",
+            },
+          },
+        });
+      } else {
+        // Other errors
+        alert("Search failed. Please try again.");
+      }
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
+
+  const handleSearchIconClick = () => {
+    handleSearch();
   };
 
   return (
@@ -100,7 +185,7 @@ const MobileNav = () => {
                       My Profile
                     </Link>
                     <Link
-                      to="#"
+                      to="/order-history"
                       className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                     >
                       <Package className="w-4 h-4 mr-3" />
@@ -117,7 +202,6 @@ const MobileNav = () => {
                       <div>
                         <Link
                           to="/messages"
-                          
                           className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                         >
                           <MessageCircle className="w-4 h-4 mr-3" />
@@ -200,9 +284,27 @@ const MobileNav = () => {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="block w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:bg-white transition-all duration-200 text-sm placeholder-gray-500"
+              onKeyPress={handleKeyPress}
+              disabled={isSearching}
+              className={`block w-full pl-10 pr-16 py-2.5 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:bg-white transition-all duration-200 text-sm placeholder-gray-500 ${
+                isSearching ? "opacity-50 cursor-not-allowed" : ""
+              }`}
               placeholder="Search products, brands and categories"
             />
+            {/* Search Button */}
+            <div className="absolute inset-y-0 right-0 flex items-center">
+              <button
+                onClick={handleSearchIconClick}
+                disabled={isSearching}
+                className={`px-3 py-1 mr-1 text-sm font-medium rounded-md transition-colors ${
+                  isSearching
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-orange-500 text-white hover:bg-orange-600"
+                }`}
+              >
+                {isSearching ? "Searching..." : "Go"}
+              </button>
+            </div>
           </div>
         </div>
       </div>

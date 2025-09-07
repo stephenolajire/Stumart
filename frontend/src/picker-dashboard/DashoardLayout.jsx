@@ -1,6 +1,4 @@
-// src/components/PickerDashboard/PickerDashboard.jsx
 import React, { useState, useEffect } from "react";
-import styles from "./css/DashboardLayout.module.css";
 import Sidebar from "./Sidebar";
 import Dashboard from "./Dashboard";
 import AvailableOrders from "./AvailableOrders";
@@ -9,18 +7,22 @@ import Earnings from "./Earnings";
 import Reviews from "./Reviews";
 import Settings from "./Settings";
 import OrderDetail from "./DeliveryDetail";
-import { IoMenuOutline } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
+import { Menu, X } from "lucide-react";
 
 const DashboardLayout = () => {
   const [activeView, setActiveView] = useState("dashboard");
   const [selectedOrderId, setSelectedOrderId] = useState(null);
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
   const navigate = useNavigate();
+
   const handleViewChange = (view) => {
     setActiveView(view);
-    setIsMobileSidebarOpen(false);
   };
+
+  const toggleMenu = () => {
+    setIsMobileOpen(!isMobileOpen)
+  }
 
   // const handleOrderSelect = (orderId) => {
   //   setSelectedOrderId(orderId);
@@ -57,21 +59,46 @@ const DashboardLayout = () => {
   };
 
   return (
-    <div className={styles.dashboardContainer}>
-      <div
-        className={`${styles.sidebar} ${
-          isMobileSidebarOpen ? styles.sidebarOpen : ""
-        }`}
-      >
-        <Sidebar activeView={activeView} onViewChange={handleViewChange} />
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
+      {/* Sidebar Container - Hidden on mobile by default, shown when menu is open */}
+      <div className="hidden lg:flex">
+        <Sidebar toggleMenu={toggleMenu} activeView={activeView} onViewChange={handleViewChange} />
       </div>
-      {/* <div
-        className={styles.mobileMenuButton}
-        onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
-      >
-        <IoMenuOutline />
-      </div> */}
-      <div className={styles.content}>{renderContent()}</div>
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Mobile Header Bar - Only visible on mobile */}
+        <div className="md:hidden bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between shadow-sm">
+          <h1 className="text-lg font-semibold text-gray-900">
+            StuMart Picker
+          </h1>
+          <div className="hidden items-center space-x-2 lg:flex">
+            <span className="text-sm text-gray-500 capitalize">
+              {activeView.replace(/([A-Z])/g, " $1").trim()}
+            </span>
+          </div>
+
+          {isMobileOpen ? (
+            <X onClick={toggleMenu} />
+          ) : (
+            <Menu onClick={toggleMenu} />
+          )}
+        </div>
+
+        {/* Content Area */}
+        <main className="flex-1 overflow-y-auto bg-gray-50">
+          <div className="min-h-full">{renderContent()}</div>
+          <div className="absolute left-0 top-0 z-2000 bg-white">
+            {isMobileOpen && (
+              <Sidebar
+                activeView={activeView}
+                onViewChange={handleViewChange}
+                toggleMenu={toggleMenu}
+              />
+            )}
+          </div>
+        </main>
+      </div>
     </div>
   );
 };

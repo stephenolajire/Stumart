@@ -646,10 +646,10 @@ class CartItemsView(APIView):
             num_vendors = len(unique_vendors)
             
             # Calculate shipping fee (300 per vendor)
-            shipping_fee = Decimal('300') * num_vendors
+            shipping_fee = Decimal('400') * num_vendors
             
             # Calculate tax (3% of subtotal)
-            tax = sub_total * Decimal('0.030')  # 3% tax
+            tax = sub_total * Decimal('0.040')  # 3% tax
             
             # Calculate total
             total = sub_total + shipping_fee + tax

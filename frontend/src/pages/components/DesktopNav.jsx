@@ -19,12 +19,15 @@ import {
   LogIn,
   MessageCircle,
 } from "lucide-react";
-import { Link, Links, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { GlobalContext } from "../../constant/GlobalContext";
+import api from "../../constant/api";
 
 const Navigation = () => {
   const [accountDropdownOpen, setAccountDropdownOpen] = useState(false);
   const [quickLinksDropdownOpen, setQuickLinksDropdownOpen] = useState(false);
+  const [searchParams, setSearchParams] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
 
   const { isAuthenticated, useCart, clearCache } = useContext(GlobalContext);
 
@@ -45,6 +48,85 @@ const Navigation = () => {
 
     navigate("/");
     window.location.reload();
+  };
+
+  const handleSearch = async () => {
+    if (!searchParams.trim()) {
+      alert("Please enter a search term");
+      return;
+    }
+
+    setIsSearching(true);
+
+    try {
+      // Make API call to search endpoint
+      const response = await api.get("/search-products/", {
+        params: {
+          product_name: searchParams.trim(),
+          // You can add state and institution filters if needed
+          // state: userState,
+          // institution: userInstitution,
+        },
+      });
+
+      if (response.data.status === "success") {
+        // Navigate to search results page with the products data
+        navigate("/search-results", {
+          state: {
+            products: response.data.products,
+            searchParams: {
+              productName: searchParams.trim(),
+              searchType: response.data.search_type,
+              count: response.data.count,
+            },
+          },
+        });
+        window.location.reload()
+      } else if (response.data.status === "not_found") {
+        // Handle no results found
+        navigate("/search-results", {
+          state: {
+            products: [],
+            searchParams: {
+              productName: searchParams.trim(),
+              searchType: response.data.search_type,
+              count: 0,
+              message: response.data.message,
+            },
+          },
+        });
+      }
+    } catch (error) {
+      console.error("Search error:", error);
+
+      // Handle different error scenarios
+      if (error.response?.status === 404) {
+        // No products found
+        navigate("/search-results", {
+          state: {
+            products: [],
+            searchParams: {
+              productName: searchParams.trim(),
+              count: 0,
+              message:
+                error.response.data.message ||
+                "No products found matching your search",
+            },
+          },
+        });
+      } else {
+        // Other errors
+        alert("Search failed. Please try again.");
+      }
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
   };
 
   return (
@@ -101,9 +183,21 @@ const Navigation = () => {
                 type="text"
                 placeholder="Search products, brands and categories"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                value={searchParams}
+                onChange={(e) => setSearchParams(e.target.value)}
+                onKeyPress={handleKeyPress}
+                disabled={isSearching}
               />
-              <button className="absolute right-0 top-0 bg-yellow-500 text-white px-6 py-2 rounded-r-lg hover:bg-amber-600 transition-colors">
-                SEARCH
+              <button
+                className={`absolute right-0 top-0 px-6 py-2 rounded-r-lg text-white transition-colors ${
+                  isSearching
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-yellow-500 hover:bg-amber-600"
+                }`}
+                onClick={handleSearch}
+                disabled={isSearching}
+              >
+                {isSearching ? "SEARCHING..." : "SEARCH"}
               </button>
             </div>
           </div>
