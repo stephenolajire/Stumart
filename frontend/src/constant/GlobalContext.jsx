@@ -190,8 +190,8 @@ export const useAllProducts = (
         vendors: uniqueVendors,
       };
     },
-    staleTime: 10 * 60 * 1000,
-    gcTime: 15 * 60 * 1000,
+    staleTime: 60 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
     retry: 2,
     refetchOnWindowFocus: false,
   });
@@ -233,8 +233,8 @@ export const useOrders = (isAuthenticated) => {
       return response.data;
     },
     enabled: isAuthenticated,
-    staleTime: 10 * 60 * 1000,
-    gcTime: 15 * 60 * 1000,
+    staleTime: 60 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
     retry: 2,
     refetchOnWindowFocus: false,
   });
@@ -248,7 +248,7 @@ export const useVideos = () => {
       const response = await api.get("videos/both/");
       return response.data || {};
     },
-    staleTime: 30 * 60 * 1000, // 30 minutes (videos change infrequently)
+    staleTime: 60 * 60 * 1000, // 30 minutes (videos change infrequently)
     gcTime: 60 * 60 * 1000, // 1 hour
     retry: 2,
     refetchOnWindowFocus: false,
@@ -416,8 +416,8 @@ export const useProductCategory = (filters) => {
       return response;
     },
     enabled: !!category, // Only run if category is provided
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 60 * 60 * 1000, // 5 minutes
+    cacheTime: 60 * 60 * 1000, // 10 minutes
     refetchOnWindowFocus: false,
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
@@ -441,8 +441,8 @@ export const useAllCategoryFive = () => {
       const response = await api.get("category-last-five/");
       return response.data;
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 60 * 60 * 1000, // 5 minutes
+    gcTime: 60 * 60 * 1000, // 10 minutes
     retry: 2,
     refetchOnWindowFocus: false,
   });

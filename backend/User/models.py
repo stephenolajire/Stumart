@@ -40,6 +40,7 @@ class User(AbstractUser):
         ('vendor', 'Vendor'),
         ('picker', 'Picker'),
         ('student_picker', 'Student Picker'),
+        ('company', 'Company'),
     )
 
     RESIDENCE_CHOICES = (
@@ -92,6 +93,18 @@ class Student(models.Model):
 
     def __str__(self):
         return f"Student: {self.user.email}"
+    
+class Area(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.name
+    
+class Company(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='company_profile')
+    delivery_areas = models.ManyToManyField(Area, related_name='companies')
+    def __str__(self):
+        return f"Company: {self.user.email}"
 
 # Update your Vendor model
 

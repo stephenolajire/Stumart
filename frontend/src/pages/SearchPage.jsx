@@ -158,8 +158,8 @@ const SearchPage = () => {
     <div className="min-h-screen mt-31 lg:mt-0 bg-gray-50">
       <div className="w-full mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <Header title ="" />
-          <div className="space-y-2 -mt-8">
+          {/* <Header title ="" /> */}
+          <div className="space-y-2 pt-5">
             <p className="text-gray-600 lg:text-lg text-base">
               Showing results for "{searchParams?.productName || searchQuery}"
               {searchParams?.count !== undefined && (

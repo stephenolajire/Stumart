@@ -396,6 +396,56 @@ class StudentSerializer(BaseUserProfileMixin, serializers.ModelSerializer):
 
     def create(self, validated_data):
         return self.create_user_and_profile(validated_data, Student)
+    
+
+class AreaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Area
+        fields = ["id", "name"]
+
+
+class CompanySignupSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(required=True)
+    password = serializers.CharField(write_only=True)
+    delivery_areas = serializers.ListField(
+        child=serializers.CharField(max_length=100),
+        write_only=True
+    )
+
+    class Meta:
+        model = User
+        fields = [
+            "email", "password", "first_name", "last_name", "phone_number",
+            "state", "institution", "delivery_areas"
+        ]
+
+    def create(self, validated_data):
+        delivery_area_names = validated_data.pop("delivery_areas", [])
+        
+        # Create user
+        user = User.objects.create_user(
+            email=validated_data["email"],
+            password=validated_data["password"],
+            first_name=validated_data.get("first_name", ""),
+            last_name=validated_data.get("last_name", ""),
+            phone_number=validated_data.get("phone_number", ""),
+            state=validated_data.get("state", ""),
+            institution=validated_data.get("institution", ""),
+            user_type="company"
+        )
+
+        # Create related company profile
+        company = Company.objects.create(user=user)
+        
+        # Create or get areas by name and add them to delivery_areas
+        area_objects = []
+        for area_name in delivery_area_names:
+            area, created = Area.objects.get_or_create(name=area_name.strip())
+            area_objects.append(area)
+        
+        company.delivery_areas.set(area_objects)
+
+        return user
 
 class VendorSerializer(BaseUserProfileMixin, serializers.ModelSerializer):
     # Flatten user fields

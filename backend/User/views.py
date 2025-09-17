@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework.decorators import action
 from rest_framework_simplejwt.views import TokenObtainPairView
-from .models import User, Student, Vendor, Picker, StudentPicker, OTP, KYCVerification
+from .models import *
 from .serializers import *
 from django.core.mail import send_mail
 from django.conf import settings
@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 from django.template.loader import render_to_string
 from django.core.mail import send_mail
 from django.utils.html import strip_tags
+from rest_framework.generics import GenericAPIView
 
 class BaseAPIView(APIView):
     model = None
@@ -128,7 +129,6 @@ class StudentAPIView(BaseAPIView):
     serializer_class = StudentSerializer
     
     def post(self, request):
-        """Override the base post method with proper error handling"""
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             try:
@@ -188,7 +188,65 @@ class StudentAPIView(BaseAPIView):
         students = Student.objects.all()
         serializer = StudentSerializer(students, many=True)
         return Response(serializer.data)
+    
+class CompanySignupAPIView(GenericAPIView):
+    serializer_class = CompanySignupSerializer
 
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+
+        if serializer.is_valid():
+            try:
+                # Save user + company
+                user = serializer.save()
+
+                # Create OTP for verification
+                otp = OTP.objects.create(user=user)
+
+                # Prepare email with template
+                html_message = render_to_string('email/otp.html', {
+                    'user': user,
+                    'otp_code': otp.code,
+                })
+                plain_message = strip_tags(html_message)
+
+                send_mail(
+                    subject='Verify your Stumart account',
+                    message=plain_message,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[user.email],
+                    html_message=html_message,
+                    fail_silently=False,
+                )
+
+                return Response({
+                    'message': 'Company registration successful. Please check your email for verification code.',
+                    'user_id': user.id,
+                    'email': user.email
+                }, status=status.HTTP_201_CREATED)
+
+            except Exception as e:
+                logger.error(f"Company registration error: {str(e)}")
+                return Response({
+                    'error': 'Company registration failed. Please try again.',
+                    'detail': str(e)
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response({
+            'error': 'Validation failed',
+            'details': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    def get(self, request, pk=None, *args, **kwargs):
+        if pk:
+            company = get_object_or_404(Company, pk=pk)
+            serializer = self.serializer_class(company.user)  
+            return Response(serializer.data)
+
+        companies = Company.objects.all()
+        users = [company.user for company in companies]
+        serializer = self.serializer_class(users, many=True)
+        return Response(serializer.data)
 
 class VendorAPIView(BaseAPIView):
     model = Vendor

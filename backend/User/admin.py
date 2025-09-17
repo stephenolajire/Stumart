@@ -127,3 +127,24 @@ class SubscriptionAdmin(admin.ModelAdmin):
     search_fields = ('user__email', 'payment_reference')
     ordering = ('-start_date',)
     readonly_fields = ('start_date',)
+
+
+@admin.register(Area)
+class AreaAdmin(admin.ModelAdmin):
+    list_display = ("id", "name")
+    search_fields = ("name",)
+
+
+@admin.register(Company)
+class CompanyAdmin(admin.ModelAdmin):
+    list_display = ("id", "user", "get_delivery_areas")
+    search_fields = ("user__email",)
+    filter_horizontal = ("delivery_areas",)
+
+    def get_delivery_areas(self, obj):
+        return ", ".join([area.name for area in obj.delivery_areas.all()])
+    get_delivery_areas.short_description = "Delivery Areas"
+
+@admin.register(OTP)
+class OTPAdmin (admin.ModelAdmin):
+    list_display = ("code", "created_at", "expires_at")

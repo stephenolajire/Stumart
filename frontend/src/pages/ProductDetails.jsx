@@ -65,8 +65,8 @@ const ProductDetails = () => {
       return response.data;
     },
     enabled: !!productId,
-    staleTime: 10 * 60 * 1000,
-    gcTime: 15 * 60 * 1000,
+    staleTime: 60 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
     retry: 2,
     refetchOnWindowFocus: false,
   });
@@ -438,7 +438,7 @@ const ProductDetails = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 mt-31 lg:mt-0">
+    <div className="min-h-screen bg-gray-50 pt-41 lg:pt-21">
       <SEO
         title={
           product
@@ -466,7 +466,7 @@ const ProductDetails = () => {
         }
         url={`/products/${productId}`}
       />
-      <Header title="Product Details" />
+      {/* <Header title="Product Details" /> */}
 
       <div className="max-w-7xl mx-auto px-4 pb-6 -mt-7">
         <div className="grid lg:grid-cols-2 gap-8 mb-12">

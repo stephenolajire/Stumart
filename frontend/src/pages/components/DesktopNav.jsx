@@ -130,9 +130,9 @@ const Navigation = () => {
   };
 
   return (
-    <div className="hidden lg:block ">
+    <div className="hidden lg:block flex-1 w-full">
       {/* Top Banner */}
-      <div className="bg-gradient-to-r from-purple-600 to-orange-500 text-white text-sm py-2 px-10 max-w-[83rem] ">
+      <div className="bg-gradient-to-r from-purple-600 to-orange-500 text-white text-sm py-2 px-10 w-[calc(100%-250px)] ">
         <div className="flex justify-between items-center w-full mx-auto">
           <div className="flex items-center space-x-6">
             <div className="flex items-center space-x-2">
@@ -158,8 +158,8 @@ const Navigation = () => {
       </div>
 
       {/* Main Navigation */}
-      <div className="bg-white shadow-sm py-3 max-w-[83.5rem] px-10">
-        <div className="flex items-center justify-between w-full mx-auto">
+      <div className="bg-white shadow-sm py-3 w-full px-10">
+        <div className="flex items-center justify-between w-[calc(100%-250px)]">
           {/* Logo */}
           <Link to="/">
             <div className="flex items-center">

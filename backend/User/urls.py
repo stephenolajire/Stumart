@@ -49,5 +49,9 @@ urlpatterns = [
     path('subscriptions/subscribe/', SubscribeView.as_view(), name='subscription-subscribe'),
     path('vendor/profile/', VendorProfileView.as_view(), name='vendor-profile'),
     path('allplans', AllPlansView.as_view()),
+
+    path("company/signup/", CompanySignupAPIView.as_view(), name="company-signup"),
+    path("company/<int:pk>/", CompanySignupAPIView.as_view(), name="company-detail"),
+    path("companies/", CompanySignupAPIView.as_view(), name="company-list"),
 ]
 

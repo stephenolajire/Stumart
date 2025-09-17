@@ -88,7 +88,7 @@ const Layout = () => {
 
       {/* Learn More Button */}
       <button
-        className="bg-amber-500 fixed bottom-0 right-[1.5rem] w-[4rem] h-[4rem] rounded-full flex items-center justify-center "
+        className="bg-green-500 fixed bottom-22 lg:bottom-20 right-[1rem] lg:right-[1.5rem] w-[3.5rem] h-[3.5rem] rounded-full flex items-center justify-center "
         onClick={toggleModal}
         aria-label="Learn how to use platform"
       >

@@ -213,13 +213,13 @@ const Category = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
-          <div
+          {/* <div
             className="flex items-center text-gray-600 hover:text-amber-500 cursor-pointer mb-6 transition-colors duration-200"
             // onClick={goBack}
           >
             <FaArrowLeft className="mr-2" />
             <span className="font-medium">Back</span>
-          </div>
+          </div> */}
           <div>
             {isAuthenticated ? (
               <h1 className="text-2xl font-bold text-gray-900">

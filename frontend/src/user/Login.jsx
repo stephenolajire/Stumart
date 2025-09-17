@@ -86,8 +86,7 @@ const Login = () => {
         return;
       }
 
-      // If user is a student and verified, navigate to home
-      if (user_type === "admin" && is_admin == true) {
+      if (user_type === "admin" && is_admin === true) {
         navigate("/admin-dashboard");
         auth();
         return;
@@ -95,11 +94,17 @@ const Login = () => {
 
       if (user_type === "student") {
         auth();
-        navigate(from, { replace: true });
+        navigate("/");
         return;
       }
 
-      // If user is picker, student picker, or vendor, handle KYC status
+      if (user_type === "company") {
+        auth();
+        navigate("/company/");
+        return;
+      }
+
+      // Handle picker, student_picker, and vendor types with KYC checks
       if (["picker", "student_picker", "vendor"].includes(user_type)) {
         if (!kyc_status || kyc_status === "rejected" || kyc_status === "none") {
           Swal.fire({
@@ -136,13 +141,19 @@ const Login = () => {
             return;
           }
         }
+
         if (kyc_status === "approved" || kyc_status === "pending") {
           if (user_type === "picker" || user_type === "student_picker") {
             navigate("/picker");
+            auth();
+            return;
           }
         }
       }
 
+      // Fallback for any unhandled user types
+      auth();
+      navigate(from, { replace: true });
       // Default success message
       Swal.fire({
         icon: "success",
@@ -210,7 +221,7 @@ const Login = () => {
         <div className="text-center pt-8 pb-6 px-6">
           <div className="w-16 h-16 mx-auto mb-4 bg-black rounded-full flex items-center justify-center">
             <div className="text-white font-bold text-sm">
-              <img src="/stumart.jpeg" alt="logo" className="rounded-full"/>
+              <img src="/stumart.jpeg" alt="logo" className="rounded-full" />
             </div>
           </div>
           <h1 className="text-2xl font-bold text-gray-800 mb-2">
@@ -323,6 +334,5 @@ const Login = () => {
     </div>
   );
 };
-
 
 export default Login;

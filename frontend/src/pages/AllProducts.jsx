@@ -420,7 +420,7 @@ const AllProducts = () => {
 
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
-          <Header title="All Products" />
+          {/* <Header title="All Products" /> */}
           <button
             className="mt-4 sm:mt-0 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2"
             onClick={() => setShowFilters(!showFilters)}

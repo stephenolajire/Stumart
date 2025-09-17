@@ -53,6 +53,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import Landing from "./pages/landing/Landing";
 import Category from "./pages/Category";
+import DeliveryPartnerDashboard from "./company/CDashboard";
+import ManagePickersInterface from "./company/CPicker";
+import AnalyticsReportsInterface from "./company/CAnalytics";
+import OrderAssignmentInterface from "./company/COrder";
+import CompanyLayout from "./company/CompanyLayout";
+import CompanyRegistration from "./user/CompanyRegistration";
 // import UnifiedMessages from "./components/UnifiedMessage";
 
 // Create a client
@@ -152,6 +158,7 @@ function App() {
                 <Route path="/products" element={<AllProducts />} />
               </Route>
               <Route path="/login" element={<Login />} />
+              <Route path="/company-signup" element={<CompanyRegistration />} />
               <Route path="/register" element={<Signup />} />
               <Route path="/verify-email" element={<VerifyEmail />} />
               <Route
@@ -234,6 +241,16 @@ function App() {
               <Route path="/verify-otp" element={<VerifyOTPForm />} />
               <Route path="/reset-password" element={<SetNewPasswordForm />} />
               <Route path="/chatbot" element={<Chatbot />} />
+
+              <Route path="/company/" element={<CompanyLayout />}>
+                <Route index element={<DeliveryPartnerDashboard />} />
+                <Route path="picker" element={<ManagePickersInterface />} />
+                <Route
+                  path="analytics"
+                  element={<AnalyticsReportsInterface />}
+                />
+                <Route path="order" element={<OrderAssignmentInterface />} />
+              </Route>
             </Routes>
           </Router>
         </GlobalProvider>

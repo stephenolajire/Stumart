@@ -1,25 +1,24 @@
-import React, {useEffect} from 'react';
-import { Link } from 'react-router-dom';
-import AOS from "aos";
-import "aos/dist/aos.css";
+import React, { useEffect } from "react";
+import { Link } from "react-router-dom";
+// import AOS from "aos";
+// import "aos/dist/aos.css";
 
 const Footer = () => {
-
-  useEffect(() => {
-      AOS.init({
-        duration: 1000,
-        once: true,
-        easing: "ease-in-out",
-        offset: 100,
-      });
-    }, []);
+  // useEffect(() => {
+  //     AOS.init({
+  //       duration: 1000,
+  //       once: true,
+  //       easing: "ease-in-out",
+  //       offset: 100,
+  //     });
+  //   }, []);
 
   return (
-    <footer className='hide-scrollbar'>
+    <footer className="hide-scrollbar">
       <section className="py-16 bg-gray-900">
         <div className="w-full mx-auto px-6">
           <div className="grid md:grid-cols-4 gap-8">
-            <div className="md:col-span-2" data-aos="fade-right">
+            <div className="md:col-span-2">
               <div className="flex items-center space-x-3 mb-6">
                 <div className="w-10 h-10 bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl flex items-center justify-center">
                   <svg
@@ -52,8 +51,6 @@ const Footer = () => {
                   <div
                     key={index}
                     className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors cursor-pointer"
-                    data-aos="zoom-in"
-                    data-aos-delay={index * 100}
                   >
                     <svg
                       className="w-5 h-5 text-white"
@@ -67,49 +64,52 @@ const Footer = () => {
               </div>
             </div>
 
-            <div data-aos="fade-up" data-aos-delay="200">
+            <div>
               <h4 className="text-lg font-bold text-white mb-4">Quick Links</h4>
               <div className="space-y-2">
-                {["Home", "Products", "Become a Vendor", "Join as Picker"].map(
-                  (link, index) => (
-                    <Link
-                      key={index}
-                      to="#"
-                      className="block text-gray-400 hover:text-white transition-colors"
-                    >
-                      {link}
-                    </Link>
-                  )
-                )}
+                {[
+                  { name: "Home", path: "/" },
+                  { name: "Products", path: "/products" },
+                  { name: "Become a Vendor", path: "/vendors" },
+                  { name: "Join as Picker", path: "/picker" },
+                ].map((link, index) => (
+                  <Link
+                    key={index}
+                    to={link.path}
+                    className="block text-gray-400 hover:text-white transition-colors"
+                  >
+                    {link.name}
+                  </Link>
+                ))}
               </div>
             </div>
 
-            <div data-aos="fade-up" data-aos-delay="400">
-              <h4 className="text-lg font-bold text-white mb-4">Support</h4>
+            <div>
+              <h4 className="text-lg font-bold text-white mb-4">Quick Link</h4>
               <div className="space-y-2">
-                {["Help Center", "Contact Us", "FAQs", "Privacy Policy"].map(
-                  (link, index) => (
-                    <Link
-                      key={index}
-                      to=""
-                      className="block text-gray-400 hover:text-white transition-colors"
-                    >
-                      {link}
-                    </Link>
-                  )
-                )}
+                {[
+                  { name: "All Product", path: "/products" },
+                  { name: "Food", path: "/category/?category=Food" },
+                  { name: "Shirts", path: "/category/?category=Shirts" },
+                  { name: "Sneakers", path: "/category/?category=Sneakers" },
+                ].map((link, index) => (
+                  <Link
+                    key={index}
+                    to={link.path}
+                    className="block text-gray-400 hover:text-white transition-colors"
+                  >
+                    {link.name}
+                  </Link>
+                ))}
               </div>
             </div>
           </div>
 
-          <div
-            className="border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center"
-            data-aos="fade-up"
-          >
+          <div className="border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
             <p className="text-gray-400 text-sm mb-4 md:mb-0">
               © 2025 StuMart. All rights reserved.
             </p>
-            <div className="flex space-x-6 text-sm">
+            {/* <div className="flex space-x-6 text-sm">
               {["Terms of Service", "Privacy Policy", "Cookie Policy"].map(
                 (link, index) => (
                   <Link
@@ -121,7 +121,7 @@ const Footer = () => {
                   </Link>
                 )
               )}
-            </div>
+            </div> */}
           </div>
         </div>
       </section>

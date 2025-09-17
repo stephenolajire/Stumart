@@ -57,6 +57,7 @@ class ProductSerializer(serializers.ModelSerializer):
     vendor_name = serializers.SerializerMethodField()
     vendor_rating = serializers.SerializerMethodField()
     vendor_category = serializers.SerializerMethodField()
+    vendor_institution = serializers.SerializerMethodField()
     
     class Meta:
         model = Product
@@ -64,7 +65,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'id', 'name', 'description', 'price', 'in_stock',
             'gender', 'created_at', 'updated_at',
             'additional_images', 'sizes', 'colors', 'image_url',
-            'vendor_name', 'vendor_rating','vendor_category', 'keyword', 'promotion_price', 'delivery_day'
+            'vendor_name', 'vendor_rating','vendor_category', 'vendor_institution', 'keyword', 'promotion_price', 'delivery_day'
         ]
     
     def get_vendor_name(self, obj):
@@ -76,6 +77,12 @@ class ProductSerializer(serializers.ModelSerializer):
     def get_vendor_category(self, obj):
         try:
             return obj.vendor.vendor_profile.business_category if hasattr(obj.vendor, 'vendor_profile') else None
+        except AttributeError:
+            return None
+        
+    def get_vendor_institution(self, obj):
+        try:
+            return obj.vendor.institution if hasattr(obj.vendor, 'vendor_profile') else None
         except AttributeError:
             return None
     

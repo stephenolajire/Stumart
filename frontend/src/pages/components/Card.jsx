@@ -90,6 +90,7 @@ const Card = ({ products }) => {
                 <h3 className="font-semibold text-gray-900 text-sm line-clamp-2 group-hover:text-amber-600 transition-colors duration-300 uppercase">
                   {product.name}
                 </h3>
+                <h6 className="text-sm text-gray-600">{product.vendor_institution}</h6>
 
                 {/* Pricing */}
                 <div className="space-y-1">
@@ -99,7 +100,7 @@ const Card = ({ products }) => {
                     parseFloat(product.price) ? (
                     <div className="space-y-1">
                       <div className="flex items-center space-x-2">
-                        <span className="text-lg font-bold text-amber-600">
+                        <span className="text-lg font-bold text-yellow-500">
                           {formatPrice(parseFloat(product.promotion_price))}
                         </span>
                       </div>

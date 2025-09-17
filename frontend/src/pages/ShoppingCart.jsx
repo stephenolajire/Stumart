@@ -172,13 +172,13 @@ const ShoppingCart = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header Section */}
         <div className="mb-8">
-          <div
+          {/* <div
             className="flex items-center text-gray-600 hover:text-amber-500 cursor-pointer mb-6 transition-colors duration-200"
             onClick={goBack}
           >
             <FaArrowLeft className="mr-2" />
             <span className="font-medium">Back</span>
-          </div>
+          </div> */}
 
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
             Your Shopping Cart
