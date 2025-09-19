@@ -1,7 +1,7 @@
 import { useState } from "react";
 import CompanySidebar from "./CompanySidebar";
 import { Outlet } from "react-router-dom";
-import { Menu, Heart } from "lucide-react";
+import { Menu, Heart, Store } from "lucide-react";
 
 const CompanyLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -31,7 +31,7 @@ const CompanyLayout = () => {
             <Menu className="w-6 h-6" />
           </button>
           <div className="flex items-center">
-            <Heart className="w-8 h-8 text-green-600" />
+            <Store className="w-8 h-8 text-green-600" />
             <span className="ml-2 text-xl font-bold text-gray-900">
               Stumart
             </span>

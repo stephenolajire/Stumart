@@ -2,7 +2,6 @@ from django.urls import path
 from .views import *
 from .views import SearchProductsView
 from .views import SearchSpecificServiceView
-from .views import CancelOrderView
 
 urlpatterns = [
     path('vendor-products/<int:id>', SpecificVendorProductsView.as_view(), name='list-vendor-products'),
@@ -13,17 +12,6 @@ urlpatterns = [
     path('create-products/', GetVendorView.as_view()),
     path('vendor-products/', ProductListCreateAPIView.as_view(), name='product-list-create'),
     path('vendor-product/<str:pk>/', ProductDetailAPIView.as_view(), name='product-detail'),
-    path('add-to-cart/', AddToCartView.as_view(), name='add-to-cart'),
-    path('update-cart-item/<int:item_id>/', UpdateCartItemView.as_view(), name='update-cart-item'),
-    path('remove-cart-item/<int:item_id>/', RemoveCartItemView.as_view(), name='remove-cart-item'),
-    path('clear-cart/', ClearCartView.as_view(), name='clear-cart'),
-    path('cart/', CartItemsView.as_view(), name='cart-items'),
-    path('orders/create/', CreateOrderView.as_view(), name='order-create'),
-    path('payment/initialize/', PaystackPaymentInitializeView.as_view(), name='order-detail'),
-    path('payment/verify/', PaystackPaymentVerifyView.as_view(), name='order-detail'),
-    path('orders/<str:order_number>/', OrderDetailView.as_view(), name='order-detail'),
-    path('orders/', OrderHistoryView.as_view(), name='order-list'),
-    path('orders/<int:order_id>/cancel/', CancelOrderView.as_view(), name='cancel-order'),
     path('all-products/', AllProductsView.as_view(), name='all-products'),
     # Service specific endpoints
     path('service-detail/<int:pk>/', ServiceDetailAPIView.as_view(), name='service-detail'),
@@ -34,7 +22,6 @@ urlpatterns = [
     path('search-services/', SearchServicesAPIView.as_view(), name='search-services'),
     path('search-products/', SearchProductsView.as_view(), name='search-products'),
     path('search-specific-services/', SearchSpecificServiceView.as_view(), name='search-specific-services'),
-    path('pack-order/', PackOrderView.as_view(), name='pack-order'),
 
     # review
     path('vendor-review/', CreateVendorReviewView.as_view(), name='create_vendor_review'),

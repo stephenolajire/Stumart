@@ -61,6 +61,9 @@ INSTALLED_APPS = [
     'Chat',
     'Utilities',
     'Home',
+    'company',
+    'django_filters',
+    'order',
 ]
 
 MIDDLEWARE = [

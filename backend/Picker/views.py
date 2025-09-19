@@ -36,7 +36,7 @@ class PickerDashboardView(APIView):
         user = request.user
 
         # Check if the user is a picker or student picker
-        if user.user_type not in ['picker', 'student_picker']:
+        if user.user_type not in ['picker', 'student_picker', 'company']:
             return Response({"error": "Only pickers can access this dashboard"}, 
                             status=status.HTTP_403_FORBIDDEN)
 
@@ -44,6 +44,8 @@ class PickerDashboardView(APIView):
         try:
             if user.user_type == 'picker':
                 picker_profile = user.picker_profile
+            elif user.user_type == 'company':
+                picker_profile = user.company_profile
             else:  # student_picker
                 picker_profile = user.student_picker_profile
         except (User.picker_profile.RelatedObjectDoesNotExist, 
@@ -137,15 +139,26 @@ class PickerDashboardView(APIView):
         recent_orders = sorted(recent_orders, key=lambda x: x['id'], reverse=True)[:5]
 
         # ✅ Final Response
-        response_data = {
-            'stats': {
-                'availableOrders': available_orders,
-                'activeDeliveries': active_deliveries,
-                'earnings': total_earnings,
-                'rating': picker_profile.rating,
-            },
-            'recent_orders': recent_orders
-        }
+        if user.user_type in ['picker', 'student_picker']:
+            response_data = {
+                'stats': {
+                    'availableOrders': available_orders,
+                    'activeDeliveries': active_deliveries,
+                    'earnings': total_earnings,
+                    'rating': picker_profile.rating,
+                },
+                'recent_orders': recent_orders
+            }
+        else:  # company
+            response_data = {
+                'stats': {
+                    'availableOrders': available_orders,
+                    'activeDeliveries': active_deliveries,
+                    'earnings': total_earnings,
+                    'rating': 4.8,
+                },
+                'recent_orders': recent_orders
+            }
 
         return Response(response_data)
 
@@ -161,7 +174,7 @@ class AvailableOrdersView(APIView):
         user = request.user
         filter_param = request.query_params.get('filter', 'all')
         
-        if user.user_type not in ['picker', 'student_picker']:
+        if user.user_type not in ['picker', 'student_picker', 'company']:
             return Response({"error": "Only pickers can access this page"}, 
                            status=status.HTTP_403_FORBIDDEN)
         
@@ -281,7 +294,7 @@ class MyDeliveriesView(APIView):
         delivery_status = request.query_params.get('status', 'active')
         
         # Check if the user is a picker or student picker
-        if user.user_type not in ['picker', 'student_picker']:
+        if user.user_type not in ['picker', 'student_picker', 'company']:
             return Response({"error": "Only pickers can access this page"}, 
                            status=status.HTTP_403_FORBIDDEN)
         

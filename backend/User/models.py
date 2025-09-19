@@ -106,7 +106,58 @@ class Company(models.Model):
     def __str__(self):
         return f"Company: {self.user.email}"
 
-# Update your Vendor model
+class CompanyRider(models.Model):
+    STATUS_CHOICES = [
+        ("active", "Active"),
+        ("inactive", "Inactive"),
+        ("suspended", "Suspended"),
+        ("busy", "Busy"),
+        ("offline", "Offline"),
+    ]
+
+    name = models.CharField(max_length=150)
+    email = models.EmailField(unique=True)
+    phone = models.CharField(max_length=20, unique=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="active")
+    location = models.CharField(max_length=255, blank=True, null=True)
+    rating = models.DecimalField(max_digits=3, decimal_places=1, default=0.0)
+    completed_deliveries = models.PositiveIntegerField(default=0)
+    join_date = models.DateField()
+    last_active = models.DateTimeField(auto_now=True)
+    company = models.ForeignKey('Company', on_delete=models.CASCADE, related_name='riders')
+    total_earnings = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
+
+    def __str__(self):
+        return f"{self.name} ({self.status})"
+
+    def get_monthly_earnings(self):
+        """Calculate earnings for current month"""
+        from django.db.models import Sum
+        current_month = timezone.now().month
+        current_year = timezone.now().year
+        
+        # Assuming you have a DeliveryEarning model or similar
+        # Replace this with your actual earnings calculation logic
+        monthly_earnings = getattr(self, '_monthly_earnings', 0)
+        return monthly_earnings
+
+    def get_last_active_display(self):
+        """Format last active time for display"""
+        if self.last_active:
+            now = timezone.now()
+            diff = now - self.last_active
+            
+            if diff.days > 0:
+                return f"{diff.days} days ago"
+            elif diff.seconds > 3600:
+                hours = diff.seconds // 3600
+                return f"{hours} hours ago"
+            elif diff.seconds > 60:
+                minutes = diff.seconds // 60
+                return f"{minutes} minutes ago"
+            else:
+                return "Just now"
+        return "Never"
 
 class Vendor(models.Model):
     BUSINESS_CATEGORIES = [

@@ -12,6 +12,7 @@ import {
   TrendingUp,
   Package,
   LassoSelect,
+  Truck,
 } from "lucide-react";
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
@@ -19,9 +20,10 @@ import { NavLink, useNavigate } from "react-router-dom";
 const CompanySidebar = ({ sidebarOpen, closeSidebar }) => {
   const navigationItems = [
     { name: "Dashboard", href: "/company/", icon: Home },
-    { name: "Analytics", href: "/company/analytics", icon: TrendingUp },
-    { name: "Order", href: "/company/order", icon: Package },
-    { name: "Picker", href: "/company/picker", icon: LassoSelect },
+    // { name: "Analytics", href: "/company/analytics", icon: TrendingUp },
+    { name: "Orders", href: "/company/order", icon: Package },
+    { name: "Pickers", href: "/company/picker", icon: LassoSelect },
+    { name: "Deliveries", href: "/company/deliveries", icon: Truck },
   ];
 
   const [isActive, setIsActive] = useState(false);
@@ -33,9 +35,9 @@ const CompanySidebar = ({ sidebarOpen, closeSidebar }) => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("accessToken");
-    navigate("/");
+    localStorage.removeItem("refresh");
+    localStorage.removeItem("access");
+    navigate("/login");
   };
 
   return (

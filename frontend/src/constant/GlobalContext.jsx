@@ -21,6 +21,10 @@ const queryKeys = {
   videos: ["videos"],
   category:["category"],
   allfive:["allfive"],
+  allriders:["allriders"],
+  pickerDashboard:["pickerDashboard"],
+  allAvailableDeliveries:["allAvailableDeliveries"],
+  allMyDeliveries: (activeTab) => ["allMyDeliveries", activeTab],
 };
 
 // Custom hooks for each data type
@@ -445,6 +449,79 @@ export const useAllCategoryFive = () => {
     gcTime: 60 * 60 * 1000, // 10 minutes
     retry: 2,
     refetchOnWindowFocus: false,
+  });
+};
+
+export const useArea = () => {
+  return useQuery({
+    queryKey: queryKeys.allfive,
+    queryFn: async () => {
+      const response = await api.get("company/areas/");
+      return response.data;
+    },
+    staleTime: 60 * 60 * 1000, // 5 minutes
+    gcTime: 60 * 60 * 1000, // 10 minutes
+    retry: 2,
+    refetchOnWindowFocus: false,
+  });
+};
+
+export const useAllRiders = () => {
+  return useQuery({
+    queryKey: queryKeys.allriders,
+    queryFn: async () => {
+      const response = await api.get("riders/");
+      return response.data;
+    },
+    staleTime: 60 * 60 * 1000, // 5 minutes
+    gcTime: 60 * 60 * 1000, // 10 minutes
+    retry: 2,
+    refetchOnWindowFocus: false,
+  });
+};
+
+export const useAllAvailableDeliveries = () => {
+  return useQuery({
+    queryKey: queryKeys.allAvailableDeliveries,
+    queryFn: async () => {
+      const response = await api.get("available-deliveries/");
+      return response.data;
+    },
+    staleTime: 60 * 60 * 1000, // 5 minutes
+    gcTime: 60 * 60 * 1000, // 10 minutes
+    retry: 2,
+    refetchOnWindowFocus: false,
+  });
+};
+
+export const usePickerDashboard = () => {
+  return useQuery({
+    queryKey: queryKeys.pickerDashboard,
+    queryFn: async () => {
+      const response = await api.get("picker/dashboard");
+      return response.data;
+    },
+    staleTime: 60 * 60 * 1000, // 5 minutes
+    gcTime: 60 * 60 * 1000, // 10 minutes
+    retry: 2,
+    refetchOnWindowFocus: false,
+  });
+};
+
+
+export const useAllMyDeliveries = (activeTab) => {
+  // console.log("Active Tab for Deliveries:", activeTab);
+  return useQuery({
+    queryKey: queryKeys.allMyDeliveries(),
+    queryFn: async (activeTab) => {
+      const response = await api.get(`my-deliveries/?status=${activeTab}`);
+      return response.data;
+    },
+    staleTime: 60 * 60 * 1000, // 5 minutes
+    gcTime: 60 * 60 * 1000, // 10 minutes
+    retry: 2,
+    refetchOnWindowFocus: false,
+    enabled: !!activeTab,
   });
 };
 

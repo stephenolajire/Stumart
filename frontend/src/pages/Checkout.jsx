@@ -1,6 +1,6 @@
 import React, { useContext, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { GlobalContext } from "../constant/GlobalContext";
+import { GlobalContext, useArea } from "../constant/GlobalContext";
 import { useNavigate } from "react-router-dom";
 import api from "../constant/api";
 import Header from "../components/Header";
@@ -18,9 +18,16 @@ const Checkout = () => {
     saveInfo: false,
   });
 
+  // Area selection states
+  const [selectedAreaId, setSelectedAreaId] = useState("");
+  const [showManualAddress, setShowManualAddress] = useState(false);
+
   const { useCart } = useContext(GlobalContext);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  const { data: areaData, isLoading: areaLoading } = useArea();
+  console.log("Area Data:", areaData);
 
   // Get cart data using the hook from context
   const {
@@ -112,6 +119,40 @@ const Checkout = () => {
     });
   };
 
+  // Handle area selection
+  const handleAreaSelection = (e) => {
+    const areaId = e.target.value;
+    setSelectedAreaId(areaId);
+
+    if (areaId) {
+      // Find selected area and set address
+      const selectedArea = areaData.find(
+        (area) => area.id.toString() === areaId
+      );
+      if (selectedArea) {
+        setFormData({
+          ...formData,
+          address: selectedArea.name, // Assuming area has a 'name' field
+        });
+      }
+    } else {
+      setFormData({
+        ...formData,
+        address: "",
+      });
+    }
+  };
+
+  // Toggle manual address input
+  const toggleManualAddress = () => {
+    setShowManualAddress(true);
+    setSelectedAreaId("");
+    setFormData({
+      ...formData,
+      address: "",
+    });
+  };
+
   // Initialize payment helper
   const initializePayment = (paymentData) => {
     initializePaymentMutation.mutate(paymentData);
@@ -194,6 +235,22 @@ const Checkout = () => {
       return;
     }
 
+    // Validate address selection
+    if (
+      areaData &&
+      areaData.length > 0 &&
+      !selectedAreaId &&
+      !showManualAddress
+    ) {
+      Swal.fire({
+        icon: "warning",
+        title: "Address Required",
+        text: "Please select an area or enter your address manually.",
+        confirmButtonColor: "#3085d6",
+      });
+      return;
+    }
+
     // Prepare order data
     const orderData = {
       first_name: formData.firstName,
@@ -207,6 +264,8 @@ const Checkout = () => {
       shipping_fee: cartSummary.shippingFee,
       tax: cartSummary.tax,
       total: cartSummary.total,
+      // Add area_id if selected
+      ...(selectedAreaId && { area_id: selectedAreaId }),
       // Add vendors information if available
       ...(cartData?.vendors && { vendors: cartData.vendors }),
     };
@@ -222,7 +281,7 @@ const Checkout = () => {
     cartLoading;
 
   // Show loading if cart is still loading
-  if (cartLoading) {
+  if (cartLoading || areaLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header title="Checkout" />
@@ -279,10 +338,10 @@ const Checkout = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header title="Checkout" />
+    <div className="h-auto bg-gray-50 py-4">
+      {/* <Header title="Checkout" /> */}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="w-full mx-auto px-4 md:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Checkout form */}
           <div className="lg:col-span-2">
@@ -377,24 +436,97 @@ const Checkout = () => {
                   <h3 className="text-2xl font-bold text-gray-900">
                     Shipping Address
                   </h3>
-                  <div>
-                    <label
-                      htmlFor="address"
-                      className="block text-sm font-medium text-gray-700 mb-2"
-                    >
-                      Hostel Address
-                    </label>
-                    <input
-                      type="text"
-                      id="address"
-                      name="address"
-                      value={formData.address}
-                      onChange={handleInputChange}
-                      required
-                      disabled={isLoading}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    />
-                  </div>
+
+                  {/* Area Selection */}
+                  {areaData && areaData.length > 0 && !showManualAddress && (
+                    <div>
+                      <label
+                        htmlFor="area"
+                        className="block text-sm font-medium text-gray-700 mb-2"
+                      >
+                        Select Your Area
+                      </label>
+                      <select
+                        id="area"
+                        name="area"
+                        value={selectedAreaId}
+                        onChange={handleAreaSelection}
+                        required={!showManualAddress}
+                        disabled={isLoading}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      >
+                        <option value="">Select an area</option>
+                        {areaData.map((area) => (
+                          <option key={area.id} value={area.id}>
+                            {area.name}
+                          </option>
+                        ))}
+                      </select>
+
+                      <div className="mt-4">
+                        <button
+                          type="button"
+                          onClick={toggleManualAddress}
+                          disabled={isLoading}
+                          className="text-amber-600 hover:text-amber-700 font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Don't see your area? Enter address manually
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Manual Address Input */}
+                  {(showManualAddress ||
+                    (areaData && areaData.length === 0)) && (
+                    <div>
+                      <label
+                        htmlFor="address"
+                        className="block text-sm font-medium text-gray-700 mb-2"
+                      >
+                        Hostel Address
+                      </label>
+                      <input
+                        type="text"
+                        id="address"
+                        name="address"
+                        value={formData.address}
+                        onChange={handleInputChange}
+                        required
+                        disabled={isLoading}
+                        placeholder="Enter your hostel address"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      />
+
+                      {areaData && areaData.length > 0 && showManualAddress && (
+                        <div className="mt-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowManualAddress(false);
+                              setFormData({ ...formData, address: "" });
+                            }}
+                            disabled={isLoading}
+                            className="text-amber-600 hover:text-amber-700 font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            ← Back to area selection
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Address Display (when area is selected) */}
+                  {selectedAreaId && !showManualAddress && formData.address && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Selected Address
+                      </label>
+                      <div className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900">
+                        {formData.address}
+                      </div>
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>

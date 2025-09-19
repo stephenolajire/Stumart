@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Package,
   User,
@@ -12,115 +12,63 @@ import {
   Timer,
   Phone,
   Navigation,
+  Loader2,
+  DollarSign,
+  Calendar,
+  Truck,
 } from "lucide-react";
+import api from "../constant/api";
+import Swal from "sweetalert2";
+import {
+  useAllAvailableDeliveries,
+  useAllRiders,
+} from "../constant/GlobalContext";
+
+// Create toast mixin configuration
+const Toast = Swal.mixin({
+  toast: true,
+  position: "top-right",
+  showConfirmButton: false,
+  timer: 3000,
+  timerProgressBar: true,
+  didOpen: (toast) => {
+    toast.addEventListener("mouseenter", Swal.stopTimer);
+    toast.addEventListener("mouseleave", Swal.resumeTimer);
+  },
+});
 
 export default function OrderAssignmentInterface() {
   const [selectedOrders, setSelectedOrders] = useState([]);
   const [selectedRider, setSelectedRider] = useState("");
   const [filterStatus, setFilterStatus] = useState("pending");
   const [showAssignModal, setShowAssignModal] = useState(false);
+  const [pendingOrders, setPendingOrders] = useState([]);
 
-  // Mock data - replace with real API data
-  const pendingOrders = [
-    {
-      id: "ORD001",
-      customer: "John Doe",
-      address: "Block A, Room 205",
-      phone: "+234 801 234 5678",
-      items: 3,
-      value: 4500,
-      priority: "high",
-      timeCreated: "2 mins ago",
-      vendor: "Campus Eats",
-      estimatedTime: "25 mins",
-      distance: "0.8 km",
-    },
-    {
-      id: "ORD002",
-      customer: "Sarah Smith",
-      address: "Block B, Room 118",
-      phone: "+234 802 345 6789",
-      items: 1,
-      value: 2200,
-      priority: "medium",
-      timeCreated: "8 mins ago",
-      vendor: "Quick Mart",
-      estimatedTime: "30 mins",
-      distance: "1.2 km",
-    },
-    {
-      id: "ORD003",
-      customer: "Alex Brown",
-      address: "Block C, Room 302",
-      phone: "+234 803 456 7890",
-      items: 2,
-      value: 3800,
-      priority: "high",
-      timeCreated: "12 mins ago",
-      vendor: "Campus Books",
-      estimatedTime: "20 mins",
-      distance: "0.5 km",
-    },
-    {
-      id: "ORD004",
-      customer: "Emma Davis",
-      address: "Block D, Room 156",
-      phone: "+234 804 567 8901",
-      items: 4,
-      value: 6200,
-      priority: "medium",
-      timeCreated: "15 mins ago",
-      vendor: "Student Store",
-      estimatedTime: "35 mins",
-      distance: "1.5 km",
-    },
-    {
-      id: "ORD005",
-      customer: "Michael Johnson",
-      address: "Block E, Room 221",
-      phone: "+234 805 678 9012",
-      items: 1,
-      value: 1800,
-      priority: "low",
-      timeCreated: "22 mins ago",
-      vendor: "Tech Hub",
-      estimatedTime: "40 mins",
-      distance: "2.1 km",
-    },
-  ];
+  const {
+    data: ordersData,
+    isLoading: isLoadingOrders,
+    error: ordersError,
+  } = useAllAvailableDeliveries();
 
-  const availableRiders = [
-    {
-      id: 1,
-      name: "Mike Johnson",
-      currentLocation: "Block A Area",
-      status: "available",
-      rating: 4.8,
-      completedToday: 12,
-      estimatedArrival: "5 mins",
-      phone: "+234 801 234 5678",
-    },
-    {
-      id: 2,
-      name: "David Wilson",
-      currentLocation: "Block B Area",
-      status: "available",
-      rating: 4.6,
-      completedToday: 8,
-      estimatedArrival: "8 mins",
-      phone: "+234 802 345 6789",
-    },
-    {
-      id: 3,
-      name: "James Lee",
-      currentLocation: "Block C Area",
-      status: "available",
-      rating: 4.9,
-      completedToday: 15,
-      estimatedArrival: "3 mins",
-      phone: "+234 803 456 7890",
-    },
-  ];
+  // Fetch available riders
+  const {
+    data: ridersData,
+    isLoading: isLoadingRiders,
+    error: ridersError,
+  } = useAllRiders();
+  const availableRiders = Array.isArray(ridersData)
+    ? ridersData
+    : ridersData?.results || [];
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
   const getPriorityColor = (priority) => {
     switch (priority) {
@@ -151,41 +99,30 @@ export default function OrderAssignmentInterface() {
     );
   };
 
-  const handleRandomAssign = () => {
-    if (selectedOrders.length === 0) {
-      alert("Please select orders to assign");
-      return;
+  const getTimeAgo = (dateString) => {
+    const now = new Date();
+    const createdAt = new Date(dateString);
+    const diffInMinutes = Math.floor((now - createdAt) / (1000 * 60));
+
+    if (diffInMinutes < 60) {
+      return `${diffInMinutes} mins ago`;
+    } else if (diffInMinutes < 1440) {
+      return `${Math.floor(diffInMinutes / 60)} hours ago`;
+    } else {
+      return `${Math.floor(diffInMinutes / 1440)} days ago`;
     }
-
-    // Simulate random assignment
-    const assignments = selectedOrders.map((orderId) => {
-      const randomRider =
-        availableRiders[Math.floor(Math.random() * availableRiders.length)];
-      return { orderId, riderId: randomRider.id, riderName: randomRider.name };
-    });
-
-    console.log("Random assignments:", assignments);
-    alert(
-      `Randomly assigned ${selectedOrders.length} orders to available riders`
-    );
-    setSelectedOrders([]);
   };
 
-  const handleManualAssign = () => {
-    if (selectedOrders.length === 0 || !selectedRider) {
-      alert("Please select orders and a rider");
-      return;
-    }
-
-    const rider = availableRiders.find(
-      (r) => r.id.toString() === selectedRider
+  if (isLoadingOrders) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="flex flex-col items-center">
+          <Loader2 className="w-12 h-12 text-yellow-600 animate-spin mb-4" />
+          <p className="text-lg text-gray-600 font-medium">Loading orders...</p>
+        </div>
+      </div>
     );
-    console.log(`Assigned ${selectedOrders.length} orders to ${rider?.name}`);
-    alert(`Assigned ${selectedOrders.length} orders to ${rider?.name}`);
-    setSelectedOrders([]);
-    setSelectedRider("");
-    setShowAssignModal(false);
-  };
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-2">
@@ -251,7 +188,7 @@ export default function OrderAssignmentInterface() {
                 <p className="text-2xl font-bold text-gray-900">
                   ₦
                   {pendingOrders
-                    .reduce((sum, order) => sum + order.value, 0)
+                    .reduce((sum, order) => sum + (order.total || 0), 0)
                     .toLocaleString()}
                 </p>
               </div>
@@ -270,122 +207,105 @@ export default function OrderAssignmentInterface() {
                 <h2 className="text-xl font-bold text-gray-900">
                   Pending Orders
                 </h2>
-                <div className="flex items-center space-x-3">
-                  {selectedOrders.length > 0 && (
-                    <span className="text-sm text-gray-600">
-                      {selectedOrders.length} selected
-                    </span>
-                  )}
-                  <button
-                    onClick={handleRandomAssign}
-                    disabled={selectedOrders.length === 0}
-                    className="bg-purple-500 hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm transition-colors flex items-center space-x-2"
-                  >
-                    <Shuffle className="w-4 h-4" />
-                    <span>Random Assign</span>
-                  </button>
-                  <button
-                    onClick={() => setShowAssignModal(true)}
-                    disabled={selectedOrders.length === 0}
-                    className="bg-yellow-500 hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm transition-colors flex items-center space-x-2"
-                  >
-                    <UserCheck className="w-4 h-4" />
-                    <span>Assign to Rider</span>
-                  </button>
-                </div>
-              </div>
-
-              <div className="mb-4">
-                <input
-                  type="checkbox"
-                  checked={selectedOrders.length === pendingOrders.length}
-                  onChange={handleSelectAll}
-                  className="w-4 h-4 text-yellow-500 border-gray-300 rounded focus:ring-yellow-500 mr-2"
-                />
-                <label className="text-sm text-gray-700">
-                  Select All Orders
-                </label>
               </div>
             </div>
 
             <div className="max-h-96 overflow-y-auto">
-              <div className="space-y-4 p-6">
-                {pendingOrders.map((order) => (
-                  <div
-                    key={order.id}
-                    className={`border rounded-xl p-4 transition-all cursor-pointer ${
-                      selectedOrders.includes(order.id)
-                        ? "border-yellow-500 bg-yellow-50"
-                        : "border-gray-200 hover:border-gray-300"
-                    }`}
-                    onClick={() => handleSelectOrder(order.id)}
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center space-x-3">
-                        <input
-                          type="checkbox"
-                          checked={selectedOrders.includes(order.id)}
-                          onChange={() => handleSelectOrder(order.id)}
-                          className="w-4 h-4 text-yellow-500 border-gray-300 rounded focus:ring-yellow-500"
-                        />
-                        <div>
-                          <h3 className="font-semibold text-gray-900">
-                            {order.id}
-                          </h3>
-                          <p className="text-sm text-gray-600">
-                            {order.customer}
+              {ordersData.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16">
+                  <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6">
+                    <AlertCircle className="w-12 h-12 text-gray-400" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    No Pending Orders
+                  </h3>
+                  <p className="text-gray-600 text-center max-w-md">
+                    There are no pending orders to assign at the moment. New
+                    orders will appear here.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4 p-6">
+                  {ordersData.map((order) => (
+                    <div
+                      key={order.id}
+                      className={`border rounded-xl p-4 transition-all cursor-pointer ${
+                        selectedOrders.includes(order.id)
+                          ? "border-yellow-500 bg-yellow-50"
+                          : "border-gray-200 hover:border-gray-300"
+                      }`}
+                      onClick={() => handleSelectOrder(order.id)}
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center space-x-3">
+                          <input
+                            type="checkbox"
+                            checked={selectedOrders.includes(order.id)}
+                            onChange={() => handleSelectOrder(order.id)}
+                            className="w-4 h-4 text-yellow-500 border-gray-300 rounded focus:ring-yellow-500"
+                          />
+                          <div>
+                            <h3 className="font-semibold text-gray-900">
+                              {order.order_number || `ORD${order.id}`}
+                            </h3>
+                            <p className="text-sm text-gray-600">
+                              {order.customer_name}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span
+                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getPriorityColor(
+                              order.priority || "medium"
+                            )}`}
+                          >
+                            {order.priority || "medium"}
+                          </span>
+                          <span className="text-sm text-gray-500">
+                            {getTimeAgo(order.created_at)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div className="space-y-2">
+                          <p className="flex items-center text-gray-600">
+                            <MapPin className="w-4 h-4 mr-2" />
+                            {order.delivery_location}
+                          </p>
+                          <p className="flex items-center text-gray-600">
+                            <Phone className="w-4 h-4 mr-2" />
+                            {order.customer_phone || "N/A"}
+                          </p>
+                        </div>
+                        <div className="space-y-2">
+                          <p className="text-gray-600">
+                            <span className="font-medium">
+                              {order.items_count || 1}
+                            </span>{" "}
+                            items •
+                            <span className="font-medium text-green-600">
+                              {" "}
+                              ₦{(order.total || 0).toLocaleString()}
+                            </span>
+                          </p>
+                          <p className="flex items-center text-gray-600">
+                            <Clock className="w-4 h-4 mr-2" />
+                            {order.estimated_time || "30 mins"} •{" "}
+                            {order.distance || "1.0 km"}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <span
-                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getPriorityColor(
-                            order.priority
-                          )}`}
-                        >
-                          {order.priority}
-                        </span>
-                        <span className="text-sm text-gray-500">
-                          {order.timeCreated}
-                        </span>
-                      </div>
-                    </div>
 
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div className="space-y-2">
-                        <p className="flex items-center text-gray-600">
-                          <MapPin className="w-4 h-4 mr-2" />
-                          {order.address}
-                        </p>
-                        <p className="flex items-center text-gray-600">
-                          <Phone className="w-4 h-4 mr-2" />
-                          {order.phone}
-                        </p>
-                      </div>
-                      <div className="space-y-2">
-                        <p className="text-gray-600">
-                          <span className="font-medium">{order.items}</span>{" "}
-                          items •
-                          <span className="font-medium text-green-600">
-                            {" "}
-                            ₦{order.value.toLocaleString()}
-                          </span>
-                        </p>
-                        <p className="flex items-center text-gray-600">
-                          <Clock className="w-4 h-4 mr-2" />
-                          {order.estimatedTime} • {order.distance}
+                      <div className="mt-3 pt-3 border-t border-gray-200">
+                        <p className="text-xs text-gray-500">
+                          Created: {formatDate(order.created_at)}
                         </p>
                       </div>
                     </div>
-
-                    <div className="mt-3 pt-3 border-t border-gray-200">
-                      <p className="text-xs text-gray-500">
-                        Vendor: {order.vendor}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -397,46 +317,68 @@ export default function OrderAssignmentInterface() {
               </h2>
             </div>
 
-            <div className="p-6 space-y-4">
-              {availableRiders.map((rider) => (
-                <div
-                  key={rider.id}
-                  className="border border-gray-200 rounded-xl p-4"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-                      <div>
-                        <h3 className="font-semibold text-gray-900">
-                          {rider.name}
-                        </h3>
-                        <p className="text-sm text-gray-600 flex items-center">
-                          <MapPin className="w-3 h-3 mr-1" />
-                          {rider.currentLocation}
+            <div className="p-6">
+              {isLoadingRiders ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-8 h-8 text-yellow-600 animate-spin" />
+                </div>
+              ) : availableRiders.length === 0 ? (
+                <div className="text-center py-8">
+                  <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600">No riders available</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {availableRiders.map((rider) => (
+                    <div
+                      key={rider.id}
+                      className="border border-gray-200 rounded-xl p-4"
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-3 h-3 bg-green-400 rounded-full"></div>
+                          <div>
+                            <h3 className="font-semibold text-gray-900">
+                              {rider.name}
+                            </h3>
+                            <p className="text-sm text-gray-600 flex items-center">
+                              <MapPin className="w-3 h-3 mr-1" />
+                              {rider.current_location || rider.currentLocation}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-medium text-gray-900">
+                            ★ {rider.rating}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {rider.completed_today || rider.completedToday}{" "}
+                            today
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between text-sm">
+                        <p className="text-gray-600 flex items-center">
+                          <Navigation className="w-3 h-3 mr-1" />
+                          {rider.estimated_arrival ||
+                            rider.estimatedArrival}{" "}
+                          away
                         </p>
+                        <button
+                          onClick={() => {
+                            setSelectedRider(rider.id.toString());
+                            setShowAssignModal(true);
+                          }}
+                          className="text-yellow-600 hover:text-yellow-700 font-medium"
+                        >
+                          Assign Orders
+                        </button>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium text-gray-900">
-                        ★ {rider.rating}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {rider.completedToday} today
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between text-sm">
-                    <p className="text-gray-600 flex items-center">
-                      <Navigation className="w-3 h-3 mr-1" />
-                      {rider.estimatedArrival} away
-                    </p>
-                    <button className="text-yellow-600 hover:text-yellow-700 font-medium">
-                      Assign Orders
-                    </button>
-                  </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>
@@ -465,7 +407,9 @@ export default function OrderAssignmentInterface() {
                   <option value="">Choose a rider...</option>
                   {availableRiders.map((rider) => (
                     <option key={rider.id} value={rider.id}>
-                      {rider.name} - {rider.currentLocation} (★ {rider.rating})
+                      {rider.name} -{" "}
+                      {rider.current_location || rider.currentLocation} (★{" "}
+                      {rider.rating})
                     </option>
                   ))}
                 </select>
