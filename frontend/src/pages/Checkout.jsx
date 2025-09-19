@@ -27,7 +27,7 @@ const Checkout = () => {
   const queryClient = useQueryClient();
 
   const { data: areaData, isLoading: areaLoading } = useArea();
-  console.log("Area Data:", areaData);
+  // console.log("Area Data:", areaData);
 
   // Get cart data using the hook from context
   const {
@@ -338,7 +338,7 @@ const Checkout = () => {
   }
 
   return (
-    <div className="h-auto bg-gray-50 py-4">
+    <div className="h-auto bg-gray-50 py-4 mt-31 lg:mt-0">
       {/* <Header title="Checkout" /> */}
 
       <div className="w-full mx-auto px-4 md:px-8">
