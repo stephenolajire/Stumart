@@ -9,6 +9,7 @@ import Settings from "./Settings";
 import OrderDetail from "./DeliveryDetail";
 import { useNavigate } from "react-router-dom";
 import { Menu, X } from "lucide-react";
+import WithdrawalDashboard from "../withdrawal/WithdrawalDashboard";
 
 const DashboardLayout = () => {
   const [activeView, setActiveView] = useState("dashboard");
@@ -44,7 +45,7 @@ const DashboardLayout = () => {
       case "myDeliveries":
         return <MyDeliveries />;
       case "earnings":
-        return <Earnings />;
+        return <WithdrawalDashboard />;
       case "reviews":
         return <Reviews />;
       case "settings":

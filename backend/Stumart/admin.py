@@ -58,7 +58,7 @@ class CartItemAdmin(admin.ModelAdmin):
 
 
 from django.contrib import admin
-from .models import Order, OrderItem, Transaction, Wallet
+from .models import Order, OrderItem, Transaction
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
@@ -82,11 +82,6 @@ class TransactionAdmin(admin.ModelAdmin):
     search_fields = ['transaction_id', 'order__order_number']
     readonly_fields = ['transaction_id', 'created_at']
 
-
-@admin.register(Wallet)
-class WalletAdmin(admin.ModelAdmin):
-    list_display = ['vendor', 'balance']
-    search_fields = ['vendor__name']
     
 @admin.register(ServiceApplication)
 class ServiceApplicationAdmin(admin.ModelAdmin):

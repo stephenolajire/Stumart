@@ -7,7 +7,8 @@ from django.db.models import Count, Sum, Avg, Q
 from django.utils import timezone
 from datetime import timedelta
 from User.models import User, Vendor, Picker, StudentPicker, KYCVerification
-from Stumart.models import Product, Order, OrderItem, Transaction, Wallet
+from Stumart.models import Product, Order, OrderItem, Transaction
+from order.models import VendorWallets
 from .serializers import*
 from django.conf import settings
 from django.core.mail import send_mail
@@ -567,7 +568,7 @@ class PaymentsAPIView(APIView):
     
     def get_vendor_wallets(self, request):
         """Get all vendor wallets for payouts"""
-        wallets = Wallet.objects.all().select_related('vendor__user')
+        wallets = VendorWallets.objects.all().select_related('vendor__user')
         
         wallet_data = []
         for wallet in wallets:

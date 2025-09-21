@@ -8,6 +8,7 @@ import {
 } from "react-icons/fa";
 import Swal from "sweetalert2";
 import vendorApi from "../user/services/vendorApi";
+import { useNavigate } from "react-router-dom";
 
 const Payments = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -160,6 +161,12 @@ const Payments = () => {
     });
   };
 
+  const navigate = useNavigate();
+
+  const withdraw = () => {
+    navigate("/withdrawal");
+  }
+
   // Pagination functions
   const paginatePayments = (data) => {
     if (!Array.isArray(data)) return [];
@@ -276,7 +283,7 @@ const Payments = () => {
           </button>
           <button
             className="flex items-center px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors"
-            onClick={handleWithdraw}
+            onClick={withdraw}
           >
             <FaDownload className="mr-2" /> Withdraw
           </button>

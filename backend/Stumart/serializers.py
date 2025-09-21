@@ -389,12 +389,6 @@ class TransactionSerializer(serializers.ModelSerializer):
         fields = ['order', 'transaction_id', 'amount', 'status', 'payment_method']
 
 
-class WalletSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Wallet
-        fields = ['vendor', 'balance']
-
-
 class OrderDetailSerializer(serializers.ModelSerializer):
     order_items = OrderItemSerializer(many=True, read_only=True)
     transaction = serializers.SerializerMethodField()

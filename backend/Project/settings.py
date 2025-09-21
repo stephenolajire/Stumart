@@ -39,7 +39,7 @@ ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost').split(',')
 # Application definition
 
 INSTALLED_APPS = [
-    # 'jazzmin',
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -64,11 +64,13 @@ INSTALLED_APPS = [
     'company',
     'django_filters',
     'order',
+    'payment',
 ]
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware'
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -159,6 +161,8 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -365,17 +369,17 @@ LOGGING = {
 }
 
 
-# JAZZMIN_SETTINGS = {
-#     'site_title': 'Stumart Admin',
-#     'site_header': 'Stumart Admin Page',
-#     'welcome_sign': 'Welcome to My Stumart Admin',
-#     "site_logo": "../stumart.jpeg",
-#     "login_logo": "../stumart.jpeg",
-#     "site_logo_classes": "img-circle",
-#     "copyright": "stumart 2025",
-#     'show_sidebar': True,
-#     'related_modal_active': True,
-#     'changeform_format': 'stacked',
-#     'show_ui_builder': True,
-#     'navigation_expanded': False,
-# }
+JAZZMIN_SETTINGS = {
+    'site_title': 'Stumart Admin',
+    'site_header': 'Stumart Admin Page',
+    'welcome_sign': 'Welcome to My Stumart Admin',
+    "site_logo": "../stumart.jpeg",
+    "login_logo": "../stumart.jpeg",
+    "site_logo_classes": "img-circle",
+    "copyright": "stumart 2025",
+    'show_sidebar': True,
+    'related_modal_active': True,
+    'changeform_format': 'stacked',
+    'show_ui_builder': True,
+    'navigation_expanded': False,
+}

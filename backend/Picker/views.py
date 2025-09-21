@@ -9,16 +9,15 @@ import random
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from datetime import timedelta
-from Stumart.models import Order, OrderItem, Transaction, Wallet
+from Stumart.models import Order, OrderItem, Transaction
 from User.models import User, Picker, StudentPicker, KYCVerification, Vendor
 from .serializers import *
-from .models import*
+from order .models import PickerWallet, VendorWallets
 from django.conf import settings
 from django.core.mail import send_mail
 from decimal import Decimal
 import logging
 from User.models import Vendor
-# from Stumart.models import PickerWallet
 from django.db import transaction
 from Stumart.models import PickerReview
 from Stumart.serializers import PickerReviewSerializer
@@ -775,7 +774,7 @@ class ConfirmDeliveryView(APIView):
                 for vendor_id, amount in vendor_totals.items():
                     try:
                         vendor = Vendor.objects.get(id=vendor_id)
-                        wallet, created = Wallet.objects.get_or_create(
+                        wallet, created = VendorWallets.objects.get_or_create(
                             vendor=vendor,
                             defaults={'balance': 0}
                         )

@@ -76,6 +76,11 @@ import { GlobalProvider } from "./constant/GlobalContext";
 import { ThemeProvider } from "./constant/ThemeContext";
 import ServiceApplication from "./pages/ServiceApplication";
 import CDeliveries from "./company/CDeliveries";
+import DeliveryDetails from "./pages/DeliveryDetails";
+import AcceptDelivery from "./pages/AcceptDelivery";
+import DeliveryConfirmation from "./pages/DeliveryConfirmation";
+import CustomerOrderConfirmation from "./pages/CustomerOrderConfirmation";
+import WithdrawalDashboard from "./withdrawal/WithdrawalDashboard";
 
 // Create React Query client
 const queryClient = new QueryClient({
@@ -103,10 +108,31 @@ function App() {
             {/* =================== PUBLIC ROUTES =================== */}
 
             {/* Authentication Routes */}
+
+            <Route
+              path="/delivery-details/:uniqueCode"
+              element={<DeliveryDetails />}
+            />
+            <Route
+              path="/confirm-delivery/:deliveryCode"
+              element={<DeliveryConfirmation />}
+            />
+            <Route
+              path="/accept-delivery/:uniqueCode"
+              element={<AcceptDelivery />}
+            />
+
+            <Route
+              path="/confirm-order-received/:customerConfirmationCode"
+              element={<CustomerOrderConfirmation />}
+            />
+
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Signup />} />
             <Route path="/company-signup" element={<CompanyRegistration />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
+
+            <Route path="/withdrawal" element={<WithdrawalDashboard />} />
 
             {/* Forgot Password Flow */}
             <Route path="/forgot-password" element={<RequestOTPForm />} />
@@ -308,6 +334,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
+
 
             {/* =================== COMPANY PROTECTED ROUTES =================== */}
             <Route

@@ -14,4 +14,10 @@ urlpatterns = [
     path('orders/<str:order_number>/', OrderDetailView.as_view(), name='order-detail'),
     path('orders/', OrderHistoryView.as_view(), name='order-list'),
     path('pack-order/', PackOrderView.as_view(), name='pack-order'),
+    path('accept-delivery/', AcceptDeliveryView.as_view(), name='accept-delivery'),
+    path('delivery-details/<str:unique_code>/', AcceptDeliveryView.as_view(), name='delivery-details'),
+    path('delivery/confirm/', ConfirmDeliveryView.as_view(), name='confirm-delivery'),
+    path('delivery/confirm/<str:delivery_confirmation_code>/', ConfirmDeliveryView.as_view(), name='delivery-details'),
+    path('customer/confirm-order/', CustomerConfirmationView.as_view(), name='confirm-delivery'),
+    path('customer/confirm-order/<str:customer_confirmation_code>/', CustomerConfirmationView.as_view(), name='delivery-details'),
 ]

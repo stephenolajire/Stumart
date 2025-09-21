@@ -9,7 +9,9 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 from User.models import Vendor
 from rest_framework.views import APIView
-from Stumart.models import Product, Order, OrderItem, Transaction, Wallet
+from Stumart.models import Product, Order, OrderItem, Transaction
+from order.models import VendorWallets
+
 from .models import VendorStats, VendorRevenueData, VendorSalesData, Withdrawal
 from .serializers import *
 from Stumart.models import *
@@ -33,6 +35,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.contrib.auth import logout
 from django.contrib.auth import get_user_model
+from User.models import CompanyRider
 
 User = get_user_model()
 
@@ -65,9 +68,9 @@ class DashboardStatsView(views.APIView):
         
         # Get real-time wallet balance
         try:
-            wallet = Wallet.objects.get(vendor=vendor)
+            wallet = VendorWallets.objects.get(vendor=vendor)
             wallet_balance = float(wallet.balance)
-        except Wallet.DoesNotExist:
+        except VendorWallets.DoesNotExist:
             wallet_balance = 0.0
         
         # Prepare response data - use wallet balance for real-time revenue
@@ -104,9 +107,9 @@ class DashboardStatsView(views.APIView):
         
         # Get wallet balance for real-time revenue
         try:
-            wallet = Wallet.objects.get(vendor=vendor)
+            wallet = VendorWallets.objects.get(vendor=vendor)
             total_sales = wallet.balance
-        except Wallet.DoesNotExist:
+        except VendorWallets.DoesNotExist:
             total_sales = 0
         
         # Update the stats object
@@ -133,10 +136,10 @@ class DashboardStatsView(views.APIView):
         
         # Get actual wallet balance instead of calculating from order items
         try:
-            wallet = Wallet.objects.get(vendor=vendor)
+            wallet = VendorWallets.objects.get(vendor=vendor)
             total_sales = wallet.balance
-            
-        except Wallet.DoesNotExist:
+
+        except VendorWallets.DoesNotExist:
             # Fallback to calculation if no wallet exists
             total_sales = order_items.aggregate(Sum('price'))['price__sum'] or 0
             
@@ -293,6 +296,64 @@ class OrderView(APIView):
             # Check if all vendor items are packed
             all_vendor_items_packed = all(item.is_packed for item in vendor_items)
             
+            # Handle picker information - check for company picker first
+            picker_info = None
+            
+            if order.picker:
+                # Regular user picker
+                picker_info = {
+                    'id': order.picker.id,
+                    'name': f"{order.picker.first_name} {order.picker.last_name}",
+                    'email': order.picker.email,
+                    'phone': order.picker.phone_number,
+                    'type': 'user_picker',
+                    'status': getattr(order.picker, 'status', 'active')
+                }
+            elif order.company_picker_email:
+                # Company picker - fetch from CompanyRider model
+                try:
+                    company_rider = CompanyRider.objects.select_related('company').get(
+                        email=order.company_picker_email
+                    )
+                    picker_info = {
+                        'id': f"company_rider_{company_rider.id}",
+                        'name': company_rider.name,
+                        'email': company_rider.email,
+                        'phone': company_rider.phone,
+                        'type': 'company_rider',
+                        'status': company_rider.status,
+                        'company_name': company_rider.company.user.first_name + " " + company_rider.company.user.last_name,
+                        'company_email': company_rider.company.user.email,
+                        'company_phone': company_rider.company.user.phone_number,
+                        'rating': float(company_rider.rating),
+                        'completed_deliveries': company_rider.completed_deliveries,
+                        'last_active': company_rider.get_last_active_display(),
+                        'location': company_rider.location
+                    }
+                except CompanyRider.DoesNotExist:
+                    # Company rider not found, but email exists
+                    picker_info = {
+                        'id': None,
+                        'name': 'Company Rider (Details Not Found)',
+                        'email': order.company_picker_email,
+                        'phone': None,
+                        'type': 'company_rider',
+                        'status': 'unknown',
+                        'company_name': 'Unknown Company',
+                        'error': 'Company rider details not found'
+                    }
+                except Exception as e:
+                    # Handle any other exceptions
+                    picker_info = {
+                        'id': None,
+                        'name': 'Company Rider (Error Loading)',
+                        'email': order.company_picker_email,
+                        'phone': None,
+                        'type': 'company_rider',
+                        'status': 'error',
+                        'error': str(e)
+                    }
+            
             order_data = {
                 'id': order.id,
                 'order_number': order.order_number,
@@ -309,12 +370,9 @@ class OrderView(APIView):
                 'order_items': processed_items,
                 'packed': all_vendor_items_packed,
                 'confirm': order.confirm,
-                'picker': {
-                    'id': order.picker.id if order.picker else None,
-                    'name': f"{order.picker.first_name} {order.picker.last_name}" if order.picker else None,
-                    'email': order.picker.email if order.picker else None,
-                    'phone': order.picker.phone_number if order.picker else None
-                } if order.picker else None
+                'company_picker': order.company_picker,
+                'company_picker_email': order.company_picker_email,
+                'picker': picker_info
             }
             
             processed_orders.append(order_data)
@@ -619,9 +677,9 @@ class PaymentViewSet(viewsets.ReadOnlyModelViewSet):
         
         # Get wallet balance with fallback to 0
         try:
-            wallet_balance = Wallet.objects.get(vendor=vendor).balance
-        except Wallet.DoesNotExist:
-            wallet = Wallet.objects.create(vendor=vendor, balance=0)
+            wallet_balance = VendorWallets.objects.get(vendor=vendor).balance
+        except VendorWallets.DoesNotExist:
+            wallet = VendorWallets.objects.create(vendor=vendor, balance=0)
             wallet_balance = wallet.balance
         
         # Calculate stats from paid orders only
@@ -659,8 +717,8 @@ class PaymentViewSet(viewsets.ReadOnlyModelViewSet):
         amount = Decimal(str(request.data.get('amount')))
         
         try:
-            wallet = Wallet.objects.get(vendor=vendor)
-        except Wallet.DoesNotExist:
+            wallet = VendorWallets.objects.get(vendor=vendor)
+        except VendorWallets.DoesNotExist:
             logger.error(f"Wallet not found for vendor {vendor.id}")
             return Response(
                 {"error": "Wallet not found"}, 
@@ -698,7 +756,7 @@ class PaymentViewSet(viewsets.ReadOnlyModelViewSet):
         # Use database transaction for atomic operations
         with transaction.atomic():
             # Lock the wallet to prevent concurrent modifications
-            wallet = Wallet.objects.select_for_update().get(vendor=vendor)
+            wallet = VendorWallets.objects.select_for_update().get(vendor=vendor)
             
             if wallet.balance < amount:
                 return Response(
@@ -1075,7 +1133,7 @@ def paystack_webhook(request):
             withdrawal.save()
             
             # Refund the amount back to wallet
-            wallet = Wallet.objects.get(vendor=withdrawal.vendor)
+            wallet = VendorWallets.objects.get(vendor=withdrawal.vendor)
             wallet.balance += withdrawal.amount
             wallet.save()
         except Withdrawal.DoesNotExist:
@@ -1187,52 +1245,138 @@ class VendorReviewsAPIView(APIView):
 
 class PickerDetailsView(APIView):
     permission_classes = [IsAuthenticated]
-
+    
     def get(self, request):
         try:
             # Get order_id from query parameters
             order_id = request.query_params.get('order_id')
             if not order_id:
                 return Response(
-                    {'error': 'Order ID is required'}, 
+                    {'error': 'Order ID is required'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-
+            
             # Get the order and ensure it belongs to the vendor
             order = get_object_or_404(
-                Order.objects.select_related('picker'), 
+                Order.objects.select_related('picker'),
                 id=order_id,
                 order_items__vendor=request.user.vendor_profile
             )
-
-            if not order.picker:
+            
+            # Check for picker - first try regular user picker
+            if order.picker:
+                # Regular user picker
+                picker = order.picker
+                profile_pic = picker.profile_pic.url if picker.profile_pic else None
+                
+                # If profile pic exists, make it an absolute URI
+                if profile_pic:
+                    profile_pic = request.build_absolute_uri(profile_pic)
+                
+                picker_details = {
+                    'id': picker.id,
+                    'first_name': picker.first_name,
+                    'last_name': picker.last_name,
+                    'full_name': f"{picker.first_name} {picker.last_name}",
+                    'email': picker.email,
+                    'phone_number': picker.phone_number,
+                    'profile_picture': profile_pic,
+                    'picker_type': 'user_picker'
+                }
+                
+                return Response(picker_details, status=status.HTTP_200_OK)
+            
+            elif order.company_picker_email:
+                # Company picker - fetch from CompanyRider model
+                try:
+                    company_rider = CompanyRider.objects.select_related('company').get(
+                        email=order.company_picker_email
+                    )
+                    
+                    # Get company profile picture if available
+                    company_profile_pic = None
+                    if hasattr(company_rider.company.user, 'profile_pic') and company_rider.company.user.profile_pic:
+                        company_profile_pic = request.build_absolute_uri(company_rider.company.user.profile_pic.url)
+                    
+                    picker_details = {
+                        'id': f"company_rider_{company_rider.id}",
+                        'first_name': company_rider.name.split(' ')[0] if ' ' in company_rider.name else company_rider.name,
+                        'last_name': ' '.join(company_rider.name.split(' ')[1:]) if ' ' in company_rider.name else '',
+                        'full_name': company_rider.name,
+                        'email': company_rider.email,
+                        'phone_number': company_rider.phone,
+                        'profile_picture': company_profile_pic,
+                        'picker_type': 'company_rider',
+                        'company_details': {
+                            'id': company_rider.company.id,
+                            'name': f"{company_rider.company.user.first_name} {company_rider.company.user.last_name}",
+                            'email': company_rider.company.user.email,
+                            'phone': company_rider.company.user.phone_number,
+                            'profile_picture': company_profile_pic
+                        },
+                        'rider_details': {
+                            'status': company_rider.status,
+                            'rating': float(company_rider.rating),
+                            'completed_deliveries': company_rider.completed_deliveries,
+                            'total_earnings': float(company_rider.total_earnings),
+                            'join_date': company_rider.join_date,
+                            'last_active': company_rider.last_active,
+                            'last_active_display': company_rider.get_last_active_display(),
+                            'location': company_rider.location
+                        }
+                    }
+                    
+                    return Response(picker_details, status=status.HTTP_200_OK)
+                
+                except CompanyRider.DoesNotExist:
+                    return Response(
+                        {
+                            'error': 'Company rider not found',
+                            'message': f'No company rider found with email: {order.company_picker_email}',
+                            'picker_email': order.company_picker_email,
+                            'picker_type': 'company_rider'
+                        },
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+                
+                except Exception as e:
+                    return Response(
+                        {
+                            'error': 'Error fetching company rider details',
+                            'message': str(e),
+                            'picker_email': order.company_picker_email,
+                            'picker_type': 'company_rider'
+                        },
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                    )
+            
+            else:
+                # No picker assigned at all
                 return Response(
-                    {'error': 'No picker assigned to this order'}, 
+                    {
+                        'error': 'No picker assigned to this order',
+                        'message': 'This order has not been assigned to any picker yet.',
+                        'order_id': order_id,
+                        'order_number': order.order_number
+                    },
                     status=status.HTTP_404_NOT_FOUND
                 )
-
-            # Get picker details
-            picker = order.picker
-            profile_pic = picker.profile_pic.url if picker.profile_pic else None
-
-            # If profile pic exists, make it an absolute URI
-            if profile_pic:
-                profile_pic = request.build_absolute_uri(profile_pic)
-
-            picker_details = {
-                'id': picker.id,
-                'first_name': picker.first_name,
-                'last_name': picker.last_name,
-                'email': picker.email,
-                'phone_number': picker.phone_number,
-                'profile_picture': profile_pic
-            }
-
-            return Response(picker_details, status=status.HTTP_200_OK)
-
+        
+        except Order.DoesNotExist:
+            return Response(
+                {
+                    'error': 'Order not found',
+                    'message': 'Order not found or you do not have permission to view this order.'
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
         except Exception as e:
             return Response(
-                {'error': str(e)}, 
+                {
+                    'error': 'Internal server error',
+                    'message': str(e)
+                },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 

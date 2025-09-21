@@ -13,6 +13,7 @@ import Inventory from "./Inventory";
 import Settings from "./Settings";
 import vendorApi from "../user/services/vendorApi";
 import ThemeToggle from "../components/ThemeToggle";
+import WithdrawalDashboard from "../withdrawal/WithdrawalDashboard";
 
 const VendorDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -204,7 +205,7 @@ const VendorDashboard = () => {
           <Inventory products={products} onUpdateStock={handleUpdateStock} />
         );
       case "payments":
-        return <Payments />;
+        return <WithdrawalDashboard />;
       case "reviews":
         return <Reviews onRespondToReview={handleRespondToReview} />;
       case "settings":
