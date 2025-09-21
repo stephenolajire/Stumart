@@ -1,4 +1,3 @@
-# views.py for picker dashboard
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -10,7 +9,7 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from datetime import timedelta
 from Stumart.models import Order, OrderItem, Transaction
-from User.models import User, Picker, StudentPicker, KYCVerification, Vendor
+from User.models import User, Picker, StudentPicker, KYCVerification, Vendor, Company, CompanyRider
 from .serializers import *
 from order .models import PickerWallet, VendorWallets
 from django.conf import settings
@@ -28,23 +27,31 @@ logger = logging.getLogger(__name__)
 class PickerDashboardView(APIView):
     """
     API view for picker dashboard home page, showing overview statistics
+    Support for picker, student_picker, and company user types
     """
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
         user = request.user
 
-        # Check if the user is a picker or student picker
+        # Check if the user is a picker, student picker, or company
         if user.user_type not in ['picker', 'student_picker', 'company']:
-            return Response({"error": "Only pickers can access this dashboard"}, 
+            return Response({"error": "Only pickers and companies can access this dashboard"}, 
                             status=status.HTTP_403_FORBIDDEN)
 
+        # Handle company user type
+        if user.user_type == 'company':
+            return self.get_company_dashboard_data(user)
+        
+        # Handle picker and student_picker user types (existing logic)
+        return self.get_picker_dashboard_data(user)
+
+    def get_picker_dashboard_data(self, user):
+        """Get dashboard data for picker and student_picker user types"""
         # Get picker model based on user type with proper error handling
         try:
             if user.user_type == 'picker':
                 picker_profile = user.picker_profile
-            elif user.user_type == 'company':
-                picker_profile = user.company_profile
             else:  # student_picker
                 picker_profile = user.student_picker_profile
         except (User.picker_profile.RelatedObjectDoesNotExist, 
@@ -73,12 +80,6 @@ class PickerDashboardView(APIView):
         active_deliveries = Order.objects.filter(id__in=active_delivery_ids).count()
 
         # ✅ Total earnings (shipping fees for completed deliveries)
-        completed_order_items = OrderItem.objects.filter(
-            order__order_status='DELIVERED',
-            order__picker=user,
-            vendor__user__institution=user.institution
-        )
-
         try:
             wallet = PickerWallet.objects.get(picker=user)
             total_earnings = wallet.amount if wallet.amount else 0
@@ -86,18 +87,128 @@ class PickerDashboardView(APIView):
             # No wallet exists for this user yet
             total_earnings = 0
 
-        completed_order_ids = completed_order_items.values_list('order_id', flat=True).distinct()
-
         # ✅ Recent Orders
+        recent_orders = self.get_recent_orders_for_picker(user)
+
+        # ✅ Final Response for picker/student_picker
+        response_data = {
+            'stats': {
+                'availableOrders': available_orders,
+                'activeDeliveries': active_deliveries,
+                'earnings': total_earnings,
+                'rating': picker_profile.rating,
+            },
+            'recent_orders': recent_orders
+        }
+
+        return Response(response_data)
+
+    def get_company_dashboard_data(self, user):
+        """Get dashboard data for company user type using CompanyRider statistics"""
+        try:
+            company_profile = user.company_profile
+        except User.company_profile.RelatedObjectDoesNotExist:
+            return Response(
+                {"error": "No company profile found for this user"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Get all riders belonging to this company
+        company_riders = CompanyRider.objects.filter(company=company_profile)
+
+        # ✅ Available orders count (orders in company's delivery areas)
+        # Get areas that this company serves
+        company_areas = company_profile.delivery_areas.all()
+        
+        # Find orders in company's delivery areas that are packed and ready
+        available_orders = Order.objects.filter(
+            id__in=OrderItem.objects.filter(
+                vendor__user__institution=user.institution,
+                order__packed=True,
+                order__order_status='PAID'
+            ).values_list('order_id', flat=True).distinct(),
+            # You might need to add area filtering based on your address structure
+            # For now, using institution as proxy
+        ).count()
+
+        # ✅ Active deliveries (orders assigned to company riders)
+        active_delivery_ids = OrderItem.objects.filter(
+            order__order_status='IN_TRANSIT',
+            order__company_picker=True,  # Orders assigned to company
+            vendor__user__institution=user.institution
+        ).values_list('order_id', flat=True).distinct()
+
+        active_deliveries = Order.objects.filter(id__in=active_delivery_ids).count()
+
+        # ✅ Total earnings (sum of all riders' earnings)
+        total_earnings = company_riders.aggregate(
+            total=Sum('total_earnings')
+        )['total'] or 0
+
+        # ✅ Company rating (average of all riders' ratings)
+        avg_rating = company_riders.aggregate(
+            avg_rating=Avg('rating')
+        )['avg_rating'] or 0
+
+        # ✅ Recent Orders for company
+        recent_orders = self.get_recent_orders_for_company(user, company_profile)
+
+        # ✅ Additional company-specific stats
+        rider_stats = {
+            'total_riders': company_riders.count(),
+            'active_riders': company_riders.filter(status='active').count(),
+            'busy_riders': company_riders.filter(status='busy').count(),
+            'offline_riders': company_riders.filter(status='offline').count(),
+            'total_completed_deliveries': company_riders.aggregate(
+                total=Sum('completed_deliveries')
+            )['total'] or 0
+        }
+
+        # Top performing rider
+        top_rider = company_riders.filter(
+            completed_deliveries__gt=0
+        ).order_by('-rating', '-completed_deliveries').first()
+
+        top_rider_info = None
+        if top_rider:
+            top_rider_info = {
+                'name': top_rider.name,
+                'rating': float(top_rider.rating),
+                'completed_deliveries': top_rider.completed_deliveries,
+                'total_earnings': float(top_rider.total_earnings)
+            }
+
+        # ✅ Final Response for company
+        response_data = {
+            'stats': {
+                'availableOrders': available_orders,
+                'activeDeliveries': active_deliveries,
+                'earnings': float(total_earnings),
+                'rating': float(avg_rating),
+            },
+            'recent_orders': recent_orders,
+            'company_stats': {
+                'rider_stats': rider_stats,
+                'top_rider': top_rider_info,
+                'delivery_areas': [area.name for area in company_areas],
+                'company_name': company_profile.user.first_name + " " + company_profile.user.last_name,
+            }
+        }
+
+        return Response(response_data)
+
+    def get_recent_orders_for_picker(self, user):
+        """Get recent orders for individual pickers"""
         recent_orders = []
 
         # Available Orders (packed and ready for pickup)
         available_order_ids = OrderItem.objects.filter(
             order__packed=True,
-            vendor__user__institution=user.institution
+            vendor__user__institution=user.institution,
+            order__order_status='PAID'
         ).values_list('order_id', flat=True).distinct()
 
-        available_orders_qs = Order.objects.filter(id__in=available_order_ids).order_by('-created_at')[:2]
+        available_orders_qs = Order.objects.filter(id__in=available_order_ids).order_by('-created_at')[:3]
 
         for order in available_orders_qs:
             vendor_name = (
@@ -109,17 +220,49 @@ class PickerDashboardView(APIView):
                 'order_number': order.order_number,
                 'vendor_name': vendor_name,
                 'delivery_location': f"{order.address}, Room: {order.room_number}" if order.room_number else order.address,
-                'status': 'Packed'
+                'status': 'Available',
+                'type': 'available'
             })
 
-        # Active Orders (IN_TRANSIT)
+        # Active Orders (IN_TRANSIT) for this picker
         active_order_ids = OrderItem.objects.filter(
             order__order_status='IN_TRANSIT',
             order__picker=user,
             vendor__user__institution=user.institution
         ).values_list('order_id', flat=True).distinct()
 
-        active_orders_qs = Order.objects.filter(id__in=active_order_ids).order_by('-created_at')[:5]
+        active_orders_qs = Order.objects.filter(id__in=active_order_ids).order_by('-created_at')[:2]
+
+        for order in active_orders_qs:
+            vendor_name = (
+                order.order_items.first().vendor.business_name
+                if order.order_items.exists() else "Unknown"
+            )
+            recent_orders.append({
+                'id': order.id,
+                'order_number': order.order_number,
+                'vendor_name': vendor_name,
+                'delivery_location': f"{order.address}, Room: {order.room_number}" if order.room_number else order.address,
+                'status': 'In Transit',
+                'type': 'active'
+            })
+
+        # Sort by most recent and limit to 5
+        recent_orders = sorted(recent_orders, key=lambda x: x['id'], reverse=True)[:5]
+        return recent_orders
+
+    def get_recent_orders_for_company(self, user, company_profile):
+        """Get recent orders for company (orders in their delivery areas)"""
+        recent_orders = []
+
+        # Available Orders in company's delivery areas
+        available_order_ids = OrderItem.objects.filter(
+            order__packed=True,
+            vendor__user__institution=user.institution,
+            order__order_status='PAID'
+        ).values_list('order_id', flat=True).distinct()
+
+        available_orders_qs = Order.objects.filter(id__in=available_order_ids).order_by('-created_at')[:3]
 
         for order in available_orders_qs:
             vendor_name = (
@@ -131,42 +274,55 @@ class PickerDashboardView(APIView):
                 'order_number': order.order_number,
                 'vendor_name': vendor_name,
                 'delivery_location': f"{order.address}, Room: {order.room_number}" if order.room_number else order.address,
-                'status': 'Packed'
+                'status': 'Available',
+                'type': 'available',
+                'assigned_rider': None
             })
 
-        # Sort by most recent
+        # Active Orders assigned to company riders
+        active_order_ids = OrderItem.objects.filter(
+            order__order_status='IN_TRANSIT',
+            order__company_picker=True,
+            vendor__user__institution=user.institution
+        ).values_list('order_id', flat=True).distinct()
+
+        active_orders_qs = Order.objects.filter(id__in=active_order_ids).order_by('-created_at')[:2]
+
+        for order in active_orders_qs:
+            vendor_name = (
+                order.order_items.first().vendor.business_name
+                if order.order_items.exists() else "Unknown"
+            )
+            
+            # Try to find the assigned rider (you might need to add a field to track this)
+            assigned_rider = None
+            if order.company_picker_email:
+                try:
+                    rider = CompanyRider.objects.get(
+                        email=order.company_picker_email,
+                        company=company_profile
+                    )
+                    assigned_rider = rider.name
+                except CompanyRider.DoesNotExist:
+                    assigned_rider = "Unknown Rider"
+
+            recent_orders.append({
+                'id': order.id,
+                'order_number': order.order_number,
+                'vendor_name': vendor_name,
+                'delivery_location': f"{order.address}, Room: {order.room_number}" if order.room_number else order.address,
+                'status': 'In Transit',
+                'type': 'active',
+                'assigned_rider': assigned_rider
+            })
+
+        # Sort by most recent and limit to 5
         recent_orders = sorted(recent_orders, key=lambda x: x['id'], reverse=True)[:5]
-
-        # ✅ Final Response
-        if user.user_type in ['picker', 'student_picker']:
-            response_data = {
-                'stats': {
-                    'availableOrders': available_orders,
-                    'activeDeliveries': active_deliveries,
-                    'earnings': total_earnings,
-                    'rating': picker_profile.rating,
-                },
-                'recent_orders': recent_orders
-            }
-        else:  # company
-            response_data = {
-                'stats': {
-                    'availableOrders': available_orders,
-                    'activeDeliveries': active_deliveries,
-                    'earnings': total_earnings,
-                    'rating': 4.8,
-                },
-                'recent_orders': recent_orders
-            }
-
-        return Response(response_data)
+        return recent_orders
 
 
 
 class AvailableOrdersView(APIView):
-    """
-    API view for listing available orders that the picker can accept
-    """
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
@@ -233,9 +389,6 @@ class AvailableOrdersView(APIView):
         return Response(orders_data)
     
     def post(self, request, order_id):
-        """
-        Accept an order for delivery
-        """
         user = request.user
         
         # Check if the user is a picker or student picker
@@ -283,9 +436,6 @@ class AvailableOrdersView(APIView):
 
 
 class MyDeliveriesView(APIView):
-    """
-    API view for listing the picker's active and completed deliveries
-    """
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
