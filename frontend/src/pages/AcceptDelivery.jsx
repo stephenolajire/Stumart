@@ -168,7 +168,7 @@ const AcceptDelivery = () => {
           allowOutsideClick: false,
         }).then((result) => {
           if (result.isConfirmed) {
-            navigate("/my-deliveries");
+            navigate("/");
           }
         });
       } else {
