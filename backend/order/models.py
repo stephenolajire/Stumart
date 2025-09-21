@@ -96,7 +96,7 @@ class StuMartWallet(models.Model):
         self.balance += amount
         self.total_commission_collected += amount
         self.save()
-
+    
 class CompanyWallet(models.Model):
     company = models.OneToOneField(Company, on_delete=models.CASCADE, related_name='wallet')
     balance = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
