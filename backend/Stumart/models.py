@@ -60,7 +60,9 @@ class Product(models.Model):
     delivery_day = models.CharField(
         max_length=50, 
         default=" ",
-        help_text="Estimated delivery time for the product"
+        help_text="Estimated delivery time for the product",
+        null=True,
+        blank=True
     )
 
     class Meta:

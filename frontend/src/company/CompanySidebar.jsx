@@ -13,6 +13,7 @@ import {
   Package,
   LassoSelect,
   Truck,
+  CreditCard,
 } from "lucide-react";
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
@@ -24,6 +25,7 @@ const CompanySidebar = ({ sidebarOpen, closeSidebar }) => {
     { name: "Orders", href: "/company/order", icon: Package },
     { name: "Pickers", href: "/company/picker", icon: LassoSelect },
     { name: "Deliveries", href: "/company/deliveries", icon: Truck },
+    { name: "Payment", href: "/company/withdrawal", icon: CreditCard },
   ];
 
   const [isActive, setIsActive] = useState(false);

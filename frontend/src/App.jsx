@@ -132,8 +132,6 @@ function App() {
             <Route path="/company-signup" element={<CompanyRegistration />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
 
-            <Route path="/withdrawal" element={<WithdrawalDashboard />} />
-
             {/* Forgot Password Flow */}
             <Route path="/forgot-password" element={<RequestOTPForm />} />
             <Route path="/verify-otp" element={<VerifyOTPForm />} />
@@ -335,7 +333,6 @@ function App() {
               }
             />
 
-
             {/* =================== COMPANY PROTECTED ROUTES =================== */}
             <Route
               path="/company/"
@@ -350,6 +347,7 @@ function App() {
               <Route path="analytics" element={<AnalyticsReportsInterface />} />
               <Route path="order" element={<OrderAssignmentInterface />} />
               <Route path="deliveries" element={<CDeliveries />} />
+              <Route path="withdrawal" element={<WithdrawalDashboard />} />
             </Route>
           </Routes>
         </Router>
