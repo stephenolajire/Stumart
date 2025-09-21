@@ -15,7 +15,7 @@ import hmac
 
 logger = logging.getLogger(__name__)
 from .models import WithdrawalRequest
-from order.models import WalletTransaction
+from wallet.models import WalletTransactionAccount
 from User.models import User
 
 # Create your views here.
@@ -648,7 +648,7 @@ class WithdrawalView(APIView):
                 wallet.save()
                 
             # Create transaction record
-            WalletTransaction.objects.create(
+            WalletTransactionAccount.objects.create(
                 transaction_type='withdrawal',
                 amount=-amount,  # Negative for deduction
                 user=user,
@@ -782,7 +782,7 @@ class WithdrawalStatusView(APIView):
                 wallet.save()
             
             # Create refund transaction record
-            WalletTransaction.objects.create(
+            WalletTransactionAccount.objects.create(
                 transaction_type='refund',
                 amount=amount,
                 user=user,
@@ -1095,7 +1095,7 @@ class PaystackWebhookView(APIView):
                 wallet.save()
             
             # Create refund transaction record
-            WalletTransaction.objects.create(
+            WalletTransactionAccount.objects.create(
                 transaction_type='refund',
                 amount=amount,
                 user=user,

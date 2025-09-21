@@ -2,7 +2,7 @@
 from rest_framework import serializers
 from User.models import Vendor
 from Stumart.models import Product, Order, OrderItem, Transaction
-from order.models import VendorWallets
+from wallet.models import VendorWallets
 from .models import VendorStats, VendorRevenueData, VendorSalesData, Withdrawal
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password

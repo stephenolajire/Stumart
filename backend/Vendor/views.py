@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from User.models import Vendor
 from rest_framework.views import APIView
 from Stumart.models import Product, Order, OrderItem, Transaction
-from order.models import VendorWallets
+from wallet.models import VendorWallets
 
 from .models import VendorStats, VendorRevenueData, VendorSalesData, Withdrawal
 from .serializers import *

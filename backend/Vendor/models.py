@@ -3,7 +3,7 @@ from django.db.models import Sum, Count
 from User.models import Vendor, User
 from Stumart.models import Product, Order, OrderItem, Transaction
 from django.utils import timezone
-from order.models import VendorWallets
+from wallet.models import VendorWallets
 
 class VendorStats(models.Model):
     """Model to cache vendor dashboard statistics"""

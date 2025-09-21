@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     'django_filters',
     'order',
     'payment',
+    'wallet',
 ]
 
 MIDDLEWARE = [

@@ -11,7 +11,7 @@ from datetime import timedelta
 from Stumart.models import Order, OrderItem, Transaction
 from User.models import User, Picker, StudentPicker, KYCVerification, Vendor, Company, CompanyRider
 from .serializers import *
-from order .models import PickerWallet, VendorWallets
+from wallet.models import PickerWalletAccount, VendorWallets, CompanyWallet
 from django.conf import settings
 from django.core.mail import send_mail
 from decimal import Decimal
@@ -81,9 +81,9 @@ class PickerDashboardView(APIView):
 
         # ✅ Total earnings (shipping fees for completed deliveries)
         try:
-            wallet = PickerWallet.objects.get(picker=user)
+            wallet = PickerWalletAccount.objects.get(picker=user)
             total_earnings = wallet.amount if wallet.amount else 0
-        except PickerWallet.DoesNotExist:
+        except PickerWalletAccount.DoesNotExist:
             # No wallet exists for this user yet
             total_earnings = 0
 
@@ -528,7 +528,7 @@ class MyDeliveriesView(APIView):
         # Fixed: Check for correct user type (was checking 'student' instead of picker types)
         # if user.user_type in ['picker', 'student_picker']:
         #     try:
-        #         wallet, created = PickerWallet.objects.get_or_create(
+        #         wallet, created = PickerWalletAccount.objects.get_or_create(
         #             picker=user,
         #             defaults={'amount': 0}
         #         )
@@ -591,7 +591,7 @@ class EarningsView(APIView):
         )
 
         # Wallet balance
-        wallet = PickerWallet.objects.get(picker=user)
+        wallet = PickerWalletAccount.objects.get(picker=user)
         amount = wallet.amount
 
         # Daily earnings breakdown
@@ -893,7 +893,7 @@ class ConfirmDeliveryView(APIView):
                 order.save()
                 
                 # Update picker wallet
-                wallet, created = PickerWallet.objects.get_or_create(picker=picker)
+                wallet, created = PickerWalletAccount.objects.get_or_create(picker=picker)
                 
                 if not created:
                     # Convert both values to Decimal for consistent arithmetic
