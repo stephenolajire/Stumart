@@ -202,7 +202,7 @@ else:
 # Update CORS settings to match ALLOWED_HOSTS
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
-    "https://stumart.com.ng",
+    "https://www.stumart.com.ng",
     "https://stumart-server.onrender.com",
     "https://server-stumart.onrender.com",
     "https://stumart-fe1z.onrender.com",
