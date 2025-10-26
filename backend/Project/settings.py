@@ -192,7 +192,6 @@ if DEBUG:
 else:
     ALLOWED_HOSTS = [
     'stumart-server.onrender.com',
-    'server-stumart.onrender.com',
     'stumart-fe1z.onrender.com',
     'stumart.com.ng',
     'www.stumart.com.ng',  # Add this
@@ -204,7 +203,6 @@ else:
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "https://www.stumart.com.ng",
-    "https://stumart-server.onrender.com",
     "https://server-stumart.onrender.com",
     "https://stumart-fe1z.onrender.com",
 ]
@@ -213,7 +211,6 @@ CSRF_TRUSTED_ORIGINS = [
     "https://stumart.com.ng",
     "https://www.stumart.com.ng",  # Add this
     "https://stumart-server.onrender.com",
-    "https://server-stumart.onrender.com",
     "https://stumart-fe1z.onrender.com",
 ]
 
