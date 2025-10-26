@@ -53,6 +53,11 @@ const Login = () => {
     e.preventDefault();
     setIsLoading(true);
     setThrottleError(null);
+    console.log("🔍 API Base URL:", api.defaults.baseURL);
+    console.log("🔍 Full URL:", api.defaults.baseURL + "/token/");
+    console.log("🔍 Environment:", import.meta.env.MODE);
+    console.log("🔍 VITE_API_URL_PROD:", import.meta.env.VITE_API_URL_PROD);
+    console.log("🔍 VITE_API_URL_DEV:", import.meta.env.VITE_API_URL_DEV);
 
     try {
       const response = await api.post("/token/", formData);

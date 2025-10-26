@@ -181,8 +181,6 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-# ...existing code...
-
 # Update ALLOWED_HOSTS configuration
 if DEBUG:
     ALLOWED_HOSTS = [
@@ -199,34 +197,50 @@ else:
     '127.0.0.1',
 ]
 
-# Update CORS settings to match ALLOWED_HOSTS
+# CORS Configuration
+CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "https://www.stumart.com.ng",
+    "https://stumart.com.ng",
+    "https://stumart-server.onrender.com",
     "https://server-stumart.onrender.com",
     "https://stumart-fe1z.onrender.com",
 ]
 
-CSRF_TRUSTED_ORIGINS = [
-    "https://stumart.com.ng",
-    "https://www.stumart.com.ng",  # Add this
-    "https://stumart-server.onrender.com",
-    "https://stumart-fe1z.onrender.com",
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
 ]
 
-# Update CORS headers
 CORS_ALLOW_HEADERS = [
-    "accept",
-    "accept-encoding",
-    "authorization",
-    "content-type",
-    "dnt",
-    "origin",
-    "user-agent",
-    "x-csrftoken",
-    "x-requested-with",
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
 ]
-  
+
+# Important: Add this
+CORS_PREFLIGHT_MAX_AGE = 86400
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://stumart.com.ng",
+    "https://www.stumart.com.ng",  # ← Make sure this is here
+    "https://stumart-server.onrender.com",
+    "https://server-stumart.onrender.com",
+    "https://stumart-fe1z.onrender.com",
+]
 
 
 REST_FRAMEWORK = {
