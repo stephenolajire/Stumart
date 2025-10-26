@@ -10,7 +10,7 @@ import OrderDetail from "./OrderDetail";
 import Payments from "./Payments";
 import VendorWallets from "./VendorWallets";
 import KYCVerification from "./KYCVerification";
-import ThemeToggle from "../components/ThemeToggle";
+// import ThemeToggle from "../components/ThemeToggle";
 import Utilities from "./Utilities";
 
 const AdminDashboard = () => {
@@ -133,9 +133,9 @@ const AdminDashboard = () => {
         </div>
 
         {/* Theme Toggle */}
-        <div className="fixed right-8 bottom-8 z-50">
+        {/* <div className="fixed right-8 bottom-8 z-50">
           <ThemeToggle />
-        </div>
+        </div> */}
       </div>
     </div>
   );
