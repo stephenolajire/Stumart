@@ -78,9 +78,9 @@ const Orders = ({ onSelectOrder }) => {
         };
       case "PENDING":
         return {
-          color: "bg-amber-500 text-white",
-          bgColor: "bg-amber-50",
-          textColor: "text-amber-700",
+          color: "bg-yellow-500 text-white",
+          bgColor: "bg-yellow-50",
+          textColor: "text-yellow-700",
           icon: <FaClock className="w-3 h-3" />,
         };
       case "IN_TRANSIT":
@@ -196,15 +196,15 @@ const Orders = ({ onSelectOrder }) => {
             <FaCheck className="w-8 h-8 text-emerald-200" />
           </div>
         </div>
-        <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-6 text-white">
+        <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl p-6 text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-amber-100 text-sm font-medium">Pending</p>
+              <p className="text-yellow-100 text-sm font-medium">Pending</p>
               <p className="text-3xl font-bold">
                 {orders.filter((o) => o.status === "PENDING").length}
               </p>
             </div>
-            <FaClock className="w-8 h-8 text-amber-200" />
+            <FaClock className="w-8 h-8 text-yellow-200" />
           </div>
         </div>
         <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white">

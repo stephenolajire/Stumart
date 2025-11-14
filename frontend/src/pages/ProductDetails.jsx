@@ -213,14 +213,14 @@ const ProductDetails = () => {
     // Full stars
     for (let i = 0; i < fullStars; i++) {
       stars.push(
-        <FaStar key={`full-${i}`} className="text-amber-500" size={size} />
+        <FaStar key={`full-${i}`} className="text-yellow-500" size={size} />
       );
     }
 
     // Half star
     if (hasHalfStar) {
       stars.push(
-        <FaStarHalfAlt key="half" className="text-amber-500" size={size} />
+        <FaStarHalfAlt key="half" className="text-yellow-500" size={size} />
       );
     }
 
@@ -246,7 +246,7 @@ const ProductDetails = () => {
             size={size}
             className={`cursor-pointer transition-colors duration-200 ${
               star <= (hoverRating || rating)
-                ? "text-amber-500"
+                ? "text-yellow-500"
                 : "text-gray-300"
             }`}
             onClick={() => onRatingChange(star)}
@@ -468,7 +468,7 @@ const ProductDetails = () => {
       />
       {/* <Header title="Product Details" /> */}
 
-      <div className="max-w-7xl mx-auto px-4 pb-6 -mt-7">
+      <div className="w-full mx-auto px-4 pb-6 -mt-18">
         <div className="grid lg:grid-cols-2 gap-8 mb-12">
           {/* Image Section */}
           <div className="space-y-4">
@@ -509,7 +509,7 @@ const ProductDetails = () => {
                         key={index}
                         className={`w-2 h-2 rounded-full transition-all duration-200 ${
                           currentImageIndex === index
-                            ? "bg-amber-500"
+                            ? "bg-yellow-500"
                             : "bg-white/60"
                         }`}
                         onClick={() => setCurrentImageIndex(index)}
@@ -526,7 +526,7 @@ const ProductDetails = () => {
                 <button
                   className={`flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 transition-all duration-200 ${
                     currentImageIndex === 0
-                      ? "border-amber-500"
+                      ? "border-yellow-500"
                       : "border-gray-200"
                   }`}
                   onClick={() => setCurrentImageIndex(0)}
@@ -543,7 +543,7 @@ const ProductDetails = () => {
                     key={index}
                     className={`flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 transition-all duration-200 ${
                       currentImageIndex === index + 1
-                        ? "border-amber-500"
+                        ? "border-yellow-500"
                         : "border-gray-200"
                     }`}
                     onClick={() => setCurrentImageIndex(index + 1)}
@@ -572,7 +572,7 @@ const ProductDetails = () => {
                 product.promotion_price > 0 &&
                 product.promotion_price < product.price ? (
                   <>
-                    <span className="text-3xl font-bold text-amber-600">
+                    <span className="text-3xl font-bold text-yellow-600">
                       ₦{Number(product.promotion_price).toLocaleString()}
                     </span>
                     <span className="text-xl text-gray-500 line-through">
@@ -588,7 +588,7 @@ const ProductDetails = () => {
                     </span>
                   </>
                 ) : (
-                  <span className="text-3xl font-bold text-amber-600">
+                  <span className="text-3xl font-bold text-yellow-600">
                     ₦{Number(product.price).toLocaleString()}
                   </span>
                 )}
@@ -608,7 +608,7 @@ const ProductDetails = () => {
                   </h3>
                   <div className="flex items-center gap-1 mt-1">
                     <div className="flex items-center">
-                      <FaStar className="text-amber-500" size={16} />
+                      <FaStar className="text-yellow-500" size={16} />
                       <span className="ml-1 text-sm text-gray-600">
                         {product.vendor_rating}
                       </span>
@@ -653,8 +653,8 @@ const ProductDetails = () => {
                           key={color.id}
                           className={`flex items-center gap-2 px-3 py-2 rounded-lg border-2 transition-all duration-200 ${
                             selectedColor === color.color
-                              ? "border-amber-500 bg-amber-50"
-                              : "border-gray-200 hover:border-amber-300"
+                              ? "border-yellow-500 bg-yellow-50"
+                              : "border-gray-200 hover:border-yellow-300"
                           }`}
                           onClick={() => setSelectedColor(color.color)}
                         >
@@ -683,8 +683,8 @@ const ProductDetails = () => {
                         key={size.id}
                         className={`px-4 py-2 rounded-lg border-2 transition-all duration-200 font-medium ${
                           selectedSize === size.size
-                            ? "border-amber-500 bg-amber-50 text-amber-700"
-                            : "border-gray-200 hover:border-amber-300 text-gray-700"
+                            ? "border-yellow-500 bg-yellow-50 text-yellow-700"
+                            : "border-gray-200 hover:border-yellow-300 text-gray-700"
                         }`}
                         onClick={() => setSelectedSize(size.size)}
                       >
@@ -727,7 +727,7 @@ const ProductDetails = () => {
                   className={`flex-1 px-6 py-3 rounded-lg font-semibold text-white transition-all duration-200 ${
                     isFashionProduct && isOutOfStock
                       ? "bg-gray-400 cursor-not-allowed"
-                      : "bg-amber-500 hover:bg-amber-600 hover:shadow-lg transform hover:scale-[1.02]"
+                      : "bg-yellow-500 hover:bg-yellow-600 hover:shadow-lg transform hover:scale-[1.02]"
                   } disabled:opacity-50`}
                   disabled={
                     (isFashionProduct && isOutOfStock) ||
@@ -758,14 +758,14 @@ const ProductDetails = () => {
               <div>
                 {userReviewStatus.hasReviewed ? (
                   <button
-                    className="bg-amber-100 text-amber-700 px-4 py-2 rounded-lg font-medium hover:bg-amber-200 transition-colors duration-200"
+                    className="bg-yellow-100 text-yellow-700 px-4 py-2 rounded-lg font-medium hover:bg-yellow-200 transition-colors duration-200"
                     onClick={handleOpenReviewModal}
                   >
                     Edit Your Review
                   </button>
                 ) : (
                   <button
-                    className="bg-amber-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-amber-600 transition-colors duration-200"
+                    className="bg-yellow-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-yellow-600 transition-colors duration-200"
                     onClick={handleOpenReviewModal}
                   >
                     Write a Review
@@ -779,7 +779,7 @@ const ProductDetails = () => {
             <div className="border-b pb-6 mb-6">
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="flex items-center gap-4">
-                  <div className="text-4xl font-bold text-amber-600">
+                  <div className="text-4xl font-bold text-yellow-600">
                     {reviewStats.average_rating.toFixed(1)}
                   </div>
                   <div>
@@ -800,7 +800,7 @@ const ProductDetails = () => {
                       <span className="w-12 text-gray-600">{rating} star</span>
                       <div className="flex-1 bg-gray-200 rounded-full h-2">
                         <div
-                          className="bg-amber-500 h-2 rounded-full transition-all duration-300"
+                          className="bg-yellow-500 h-2 rounded-full transition-all duration-300"
                           style={{
                             width:
                               reviewStats.total_reviews > 0
@@ -865,7 +865,7 @@ const ProductDetails = () => {
 
                 {reviews.length > 3 && (
                   <button
-                    className="w-full py-3 text-amber-600 font-medium hover:bg-amber-50 rounded-lg transition-colors duration-200 border border-amber-200"
+                    className="w-full py-3 text-yellow-600 font-medium hover:bg-yellow-50 rounded-lg transition-colors duration-200 border border-yellow-200"
                     onClick={() => setShowAllReviews(!showAllReviews)}
                   >
                     {showAllReviews
@@ -924,7 +924,7 @@ const ProductDetails = () => {
                   }
                   placeholder="Share your experience with this product..."
                   rows={4}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-200 resize-none"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-all duration-200 resize-none"
                 />
               </div>
 
@@ -939,7 +939,7 @@ const ProductDetails = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={
                     reviewSubmitMutation.isPending || reviewForm.rating === 0
                   }

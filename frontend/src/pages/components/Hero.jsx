@@ -55,7 +55,7 @@ const Hero = () => {
 
   if (isLoading) {
     return (
-      <div className="relative w-full h-auto lg:h-100 mt-31 lg:mt-0 pb-2 bg-gradient-to-r from-[#713a1f] via-amber[#753a1d] to-[#713a1f] overflow-hidden">
+      <div className="relative w-full h-auto lg:h-100 mt-31 lg:mt-0 pb-2 bg-gradient-to-r from-[#713a1f] via-yellow[#753a1d] to-[#713a1f] overflow-hidden">
         <div className="flex items-center justify-center h-96">
           <div className="text-white text-xl">Loading products...</div>
         </div>
@@ -65,7 +65,7 @@ const Hero = () => {
 
   if (error || products.length === 0) {
     return (
-      <div className="relative w-full h-auto lg:h-100 mt-31 lg:mt-0 pb-2 bg-gradient-to-r from-[#713a1f] via-amber[#753a1d] to-[#713a1f] overflow-hidden">
+      <div className="relative w-full h-auto lg:h-100 mt-31 lg:mt-0 pb-2 bg-gradient-to-r from-[#713a1f] via-yellow[#753a1d] to-[#713a1f] overflow-hidden">
         <div className="flex items-center justify-center h-96">
           <div className="text-white text-xl">No products available</div>
         </div>
@@ -76,7 +76,7 @@ const Hero = () => {
   const currentProduct = products[currentSlide];
 
   return (
-    <div className="relative w-full h-auto lg:h-150 pt-37 lg:pt-0 lg:pb-2 pb-5 bg-gradient-to-r from-[#713a1f] via-amber[#753a1d] to-[#713a1f] overflow-hidden">
+    <div className="relative w-full h-auto lg:h-150 pt-37 lg:pt-0 lg:pb-2 pb-5 bg-gradient-to-r from-[#713a1f] via-yellow[#753a1d] to-[#713a1f] overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute top-10 left-10 w-20 h-20 border-2 border-white rounded-full"></div>
@@ -140,11 +140,11 @@ const Hero = () => {
               {/* <div className="flex space-x-4">
                 <button
                   onClick={() => handleProductClick(currentProduct.id)}
-                  className="bg-white text-orange-600 px-8 py-3 rounded-xl font-semibold hover:bg-gray-100 transition-colors duration-300 shadow-lg"
+                  className="bg-white text-yellow-600 px-8 py-3 rounded-xl font-semibold hover:bg-gray-100 transition-colors duration-300 shadow-lg"
                 >
                   VIEW PRODUCT
                 </button>
-                <button className="border-2 border-white text-white px-8 py-3 rounded-xl font-semibold hover:bg-white hover:text-orange-600 transition-all duration-300">
+                <button className="border-2 border-white text-white px-8 py-3 rounded-xl font-semibold hover:bg-white hover:text-yellow-600 transition-all duration-300">
                   BROWSE MORE
                 </button>
               </div> */}
@@ -178,7 +178,7 @@ const Hero = () => {
                       {currentProduct.vendor_institution}
                     </p>
                     <div className="flex items-center justify-between">
-                      <span className="text-orange-600 font-bold text-lg">
+                      <span className="text-yellow-600 font-bold text-lg">
                         ₦{parseInt(currentProduct.price).toLocaleString()}
                       </span>
                       <div className="flex items-center space-x-1">
@@ -208,7 +208,7 @@ const Hero = () => {
                         <Star className="w-3 h-3 text-yellow-400 fill-current" />
                         <span>{currentProduct.vendor_rating} rating</span>
                       </span>
-                      <span className="text-orange-600 font-bold text-lg">
+                      <span className="text-yellow-500 font-bold text-lg">
                         ₦{parseInt(currentProduct.price).toLocaleString()}
                       </span>
                     </div>

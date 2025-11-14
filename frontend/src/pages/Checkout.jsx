@@ -287,7 +287,7 @@ const Checkout = () => {
         <Header title="Checkout" />
         <div className="flex items-center justify-center py-20">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mx-auto mb-4"></div>
             <p className="text-gray-600">Loading cart...</p>
           </div>
         </div>
@@ -307,7 +307,7 @@ const Checkout = () => {
             </p>
             <button
               onClick={() => navigate(-1)}
-              className="bg-amber-500 hover:bg-amber-600 text-white px-6 py-2 rounded-lg transition-colors"
+              className="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2 rounded-lg transition-colors"
             >
               Go Back
             </button>
@@ -327,7 +327,7 @@ const Checkout = () => {
             <p className="text-gray-600 mb-4">Your cart is empty.</p>
             <button
               onClick={() => navigate("/")}
-              className="bg-amber-500 hover:bg-amber-600 text-white px-6 py-2 rounded-lg transition-colors"
+              className="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2 rounded-lg transition-colors"
             >
               Continue Shopping
             </button>
@@ -368,7 +368,7 @@ const Checkout = () => {
                         onChange={handleInputChange}
                         required
                         disabled={isLoading}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
                       />
                     </div>
                     <div>
@@ -386,7 +386,7 @@ const Checkout = () => {
                         onChange={handleInputChange}
                         required
                         disabled={isLoading}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
                       />
                     </div>
                   </div>
@@ -407,7 +407,7 @@ const Checkout = () => {
                         onChange={handleInputChange}
                         required
                         disabled={isLoading}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
                       />
                     </div>
                     <div>
@@ -425,7 +425,7 @@ const Checkout = () => {
                         onChange={handleInputChange}
                         required
                         disabled={isLoading}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
                       />
                     </div>
                   </div>
@@ -453,7 +453,7 @@ const Checkout = () => {
                         onChange={handleAreaSelection}
                         required={!showManualAddress}
                         disabled={isLoading}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
                       >
                         <option value="">Select an area</option>
                         {areaData.map((area) => (
@@ -468,7 +468,7 @@ const Checkout = () => {
                           type="button"
                           onClick={toggleManualAddress}
                           disabled={isLoading}
-                          className="text-amber-600 hover:text-amber-700 font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="text-yellow-600 hover:text-yellow-700 font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Don't see your area? Enter address manually
                         </button>
@@ -495,7 +495,7 @@ const Checkout = () => {
                         required
                         disabled={isLoading}
                         placeholder="Enter your hostel address"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
                       />
 
                       {areaData && areaData.length > 0 && showManualAddress && (
@@ -507,7 +507,7 @@ const Checkout = () => {
                               setFormData({ ...formData, address: "" });
                             }}
                             disabled={isLoading}
-                            className="text-amber-600 hover:text-amber-700 font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="text-yellow-600 hover:text-yellow-700 font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             ← Back to area selection
                           </button>
@@ -544,7 +544,7 @@ const Checkout = () => {
                         onChange={handleInputChange}
                         required
                         disabled={isLoading}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
                       />
                     </div>
                   </div>
@@ -563,7 +563,7 @@ const Checkout = () => {
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]"
+                    className="flex-1 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]"
                   >
                     {isLoading ? (
                       <span className="flex items-center justify-center">
@@ -602,7 +602,7 @@ const Checkout = () => {
                             e.target.src = "/placeholder-image.png"; // Add fallback image
                           }}
                         />
-                        <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-medium">
+                        <span className="absolute -top-2 -right-2 bg-yellow-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-medium">
                           {item.quantity}
                         </span>
                       </div>
@@ -610,7 +610,7 @@ const Checkout = () => {
                         <h4 className="text-sm font-medium text-gray-900 truncate">
                           {item.product_name}
                         </h4>
-                        <span className="text-lg font-bold text-amber-600">
+                        <span className="text-lg font-bold text-yellow-600">
                           {formatCurrency(Number(item.product_price))}
                         </span>
                       </div>
@@ -650,7 +650,7 @@ const Checkout = () => {
                 </div>
                 <div className="flex justify-between text-lg font-bold text-gray-900 pt-3 border-t border-gray-200">
                   <span>Total</span>
-                  <span className="text-amber-600">
+                  <span className="text-yellow-600">
                     {formatCurrency(cartSummary.total)}
                   </span>
                 </div>

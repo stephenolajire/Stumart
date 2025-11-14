@@ -25,7 +25,7 @@ const About = () => {
   return (
     <div className="bg-white hide-scrollbar w-full overflow-x-hidden">
       {/* Hero Section */}
-      <section className="relative min-h-screen bg-gradient-to-br from-amber-500 via-orange-500 to-red-500 flex items-center justify-center text-white overflow-hidden">
+      <section className="relative min-h-screen bg-gradient-to-br from-yellow-500 via-orange-500 to-red-500 flex items-center justify-center text-white overflow-hidden">
         <div className="absolute inset-0 bg-black/20"></div>
 
         <div
@@ -33,14 +33,14 @@ const About = () => {
           data-aos="fade-up"
         >
           <h1
-            className="text-6xl md:text-8xl font-bold mb-6 bg-gradient-to-r from-white to-amber-100 bg-clip-text text-transparent"
+            className="text-6xl md:text-8xl font-bold mb-6 bg-gradient-to-r from-white to-yellow-100 bg-clip-text text-transparent"
             data-aos="zoom-in"
             data-aos-delay="200"
           >
             About StuMart
           </h1>
           <p
-            className="text-2xl md:text-3xl font-light mb-8 text-amber-100"
+            className="text-2xl md:text-3xl font-light mb-8 text-yellow-100"
             data-aos="fade-up"
             data-aos-delay="400"
           >
@@ -72,14 +72,14 @@ const About = () => {
       </section>
 
       {/* Mission Section */}
-      <section className="py-20 bg-gradient-to-r from-gray-50 to-amber-50">
+      <section className="py-20 bg-gradient-to-r from-gray-50 to-yellow-50">
         <div className="w-full mx-auto px-6 text-center">
           <div
             className="bg-white rounded-3xl shadow-2xl p-12 border border-gray-100"
             data-aos="fade-up"
           >
             <div
-              className="w-16 h-16 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-8"
+              className="w-16 h-16 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-8"
               data-aos="flip-up"
               data-aos-delay="200"
             >
@@ -125,7 +125,7 @@ const About = () => {
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
               Why Choose StuMart?
             </h2>
-            <div className="w-24 h-1 bg-gradient-to-r from-amber-500 to-orange-500 mx-auto rounded-full"></div>
+            <div className="w-24 h-1 bg-gradient-to-r from-yellow-500 to-orange-500 mx-auto rounded-full"></div>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
@@ -180,7 +180,7 @@ const About = () => {
             </div>
 
             <div
-              className="group bg-gradient-to-br from-amber-50 to-yellow-50 rounded-3xl p-8 border border-amber-100 hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2"
+              className="group bg-gradient-to-br from-yellow-50 to-yellow-50 rounded-3xl p-8 border border-yellow-100 hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2"
               data-aos="fade-left"
               data-aos-delay="600"
             >
@@ -190,10 +190,10 @@ const About = () => {
                   alt="Quick Delivery"
                   className="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-110"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-amber-600/50 to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-yellow-600/50 to-transparent"></div>
               </div>
               <div className="flex items-center mb-4">
-                <div className="w-3 h-3 bg-amber-500 rounded-full mr-3"></div>
+                <div className="w-3 h-3 bg-yellow-500 rounded-full mr-3"></div>
                 <h3 className="text-2xl font-bold text-gray-900">
                   Quick Delivery
                 </h3>
@@ -208,7 +208,7 @@ const About = () => {
       </section>
 
       {/* How It Works Section */}
-      <section className="py-20 bg-gradient-to-br from-gray-50 to-amber-50">
+      <section className="py-20 bg-gradient-to-br from-gray-50 to-yellow-50">
         <div className="w-full mx-auto px-6">
           <div className="text-center mb-16" data-aos="fade-up">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
@@ -218,7 +218,7 @@ const About = () => {
               Getting your campus essentials delivered is simple and
               straightforward
             </p>
-            <div className="w-24 h-1 bg-gradient-to-r from-amber-500 to-orange-500 mx-auto rounded-full mt-4"></div>
+            <div className="w-24 h-1 bg-gradient-to-r from-yellow-500 to-orange-500 mx-auto rounded-full mt-4"></div>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
@@ -228,14 +228,14 @@ const About = () => {
               data-aos-delay="200"
             >
               <div className="absolute -top-6 left-1/2 transform -translate-x-1/2">
-                <div className="w-12 h-12 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <div className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
                   1
                 </div>
               </div>
               <div className="mt-8">
-                <div className="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-amber-200 transition-colors duration-300">
+                <div className="w-16 h-16 bg-yellow-100 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-yellow-200 transition-colors duration-300">
                   <svg
-                    className="w-8 h-8 text-amber-600"
+                    className="w-8 h-8 text-yellow-600"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -334,11 +334,11 @@ const About = () => {
       </section>
 
       {/* Our Impact Section */}
-      <section className="py-20 bg-gradient-to-r from-amber-500 to-orange-500">
+      <section className="py-20 bg-gradient-to-r from-yellow-500 to-orange-500">
         <div className="w-full mx-auto px-6">
           <div className="text-center mb-12" data-aos="fade-up">
             <h2 className="text-4xl font-bold text-white mb-4">Our Impact</h2>
-            <p className="text-xl text-amber-100">
+            <p className="text-xl text-yellow-100">
               Numbers that tell our story
             </p>
           </div>
@@ -350,10 +350,10 @@ const About = () => {
               data-aos-delay="200"
             >
               <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-6 hover:bg-white/30 transition-all duration-300 transform hover:scale-105">
-                <h3 className="text-4xl md:text-5xl font-bold text-white mb-2 group-hover:text-amber-100 transition-colors">
+                <h3 className="text-4xl md:text-5xl font-bold text-white mb-2 group-hover:text-yellow-100 transition-colors">
                   1000+
                 </h3>
-                <p className="text-amber-100 text-lg font-medium">
+                <p className="text-yellow-100 text-lg font-medium">
                   Active Users
                 </p>
               </div>
@@ -364,10 +364,10 @@ const About = () => {
               data-aos-delay="400"
             >
               <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-6 hover:bg-white/30 transition-all duration-300 transform hover:scale-105">
-                <h3 className="text-4xl md:text-5xl font-bold text-white mb-2 group-hover:text-amber-100 transition-colors">
+                <h3 className="text-4xl md:text-5xl font-bold text-white mb-2 group-hover:text-yellow-100 transition-colors">
                   50+
                 </h3>
-                <p className="text-amber-100 text-lg font-medium">
+                <p className="text-yellow-100 text-lg font-medium">
                   Campus Vendors
                 </p>
               </div>
@@ -378,10 +378,10 @@ const About = () => {
               data-aos-delay="600"
             >
               <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-6 hover:bg-white/30 transition-all duration-300 transform hover:scale-105">
-                <h3 className="text-4xl md:text-5xl font-bold text-white mb-2 group-hover:text-amber-100 transition-colors">
+                <h3 className="text-4xl md:text-5xl font-bold text-white mb-2 group-hover:text-yellow-100 transition-colors">
                   100+
                 </h3>
-                <p className="text-amber-100 text-lg font-medium">
+                <p className="text-yellow-100 text-lg font-medium">
                   Student Pickers
                 </p>
               </div>
@@ -392,10 +392,10 @@ const About = () => {
               data-aos-delay="800"
             >
               <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-6 hover:bg-white/30 transition-all duration-300 transform hover:scale-105">
-                <h3 className="text-4xl md:text-5xl font-bold text-white mb-2 group-hover:text-amber-100 transition-colors">
+                <h3 className="text-4xl md:text-5xl font-bold text-white mb-2 group-hover:text-yellow-100 transition-colors">
                   5000+
                 </h3>
-                <p className="text-amber-100 text-lg font-medium">
+                <p className="text-yellow-100 text-lg font-medium">
                   Deliveries Made
                 </p>
               </div>
@@ -418,7 +418,7 @@ const About = () => {
             {[
               {
                 icon: "M13 10V3L4 14h7v7l9-11h-7z",
-                color: "amber",
+                color: "yellow",
                 title: "Speed",
                 description:
                   "Fast delivery times that fit your busy student schedule",
@@ -542,13 +542,13 @@ const About = () => {
             </div>
 
             <div className="relative" data-aos="fade-left">
-              <div className="absolute inset-0 bg-gradient-to-r from-amber-500/20 to-orange-500/20 rounded-3xl transform rotate-3"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-3xl transform rotate-3"></div>
               <div className="relative bg-white rounded-3xl p-8 shadow-2xl border border-gray-100">
                 <div className="grid grid-cols-2 gap-6">
                   {[
                     {
                       icon: "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m3 5.197H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z",
-                      gradient: "from-amber-500 to-orange-500",
+                      gradient: "from-yellow-500 to-orange-500",
                       title: "Student-Centric",
                       description: "Every decision prioritizes student needs",
                     },
@@ -626,7 +626,7 @@ const About = () => {
             {[
               {
                 icon: "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z",
-                gradient: "from-amber-500 to-orange-500",
+                gradient: "from-yellow-500 to-orange-500",
                 title: "Students",
                 description:
                   "The heart of our platform - ordering, picking up, and delivering with ease.",
@@ -678,7 +678,7 @@ const About = () => {
                 <p className="text-gray-600 leading-relaxed mb-4">
                   {community.description}
                 </p>
-                <div className="text-sm text-amber-600 font-semibold">
+                <div className="text-sm text-yellow-600 font-semibold">
                   {community.cta}
                 </div>
               </div>
@@ -689,7 +689,7 @@ const About = () => {
 
       {/* Call to Action Section */}
       <section className="py-20 bg-gradient-to-r from-gray-900 via-purple-900 to-violet-900 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-amber-500/20 to-orange-500/20"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/20 to-orange-500/20"></div>
         <div className="absolute inset-0 opacity-5">
           <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
             <defs>
@@ -744,7 +744,7 @@ const About = () => {
             >
               {isAuthenticated ? (
                 <Link to="/products">
-                  <button className="group bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold py-4 px-8 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 focus:ring-4 focus:ring-amber-200 focus:outline-none">
+                  <button className="group bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-bold py-4 px-8 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 focus:ring-4 focus:ring-yellow-200 focus:outline-none">
                     <div className="flex items-center space-x-2">
                       <span className="text-lg">Get Started</span>
                       <svg
@@ -765,7 +765,7 @@ const About = () => {
                 </Link>
               ) : (
                 <Link to="/register">
-                  <button className="group bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold py-4 px-8 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 focus:ring-4 focus:ring-amber-200 focus:outline-none">
+                  <button className="group bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-bold py-4 px-8 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 focus:ring-4 focus:ring-yellow-200 focus:outline-none">
                     <div className="flex items-center space-x-2">
                       <span className="text-lg">Get Started</span>
                       <svg
@@ -815,7 +815,7 @@ const About = () => {
           data-aos-delay="800"
         ></div>
         <div
-          className="absolute bottom-20 right-10 w-16 h-16 bg-amber-500/30 rounded-full animate-pulse"
+          className="absolute bottom-20 right-10 w-16 h-16 bg-yellow-500/30 rounded-full animate-pulse"
           data-aos="fade-left"
           data-aos-delay="1000"
         ></div>
@@ -839,7 +839,7 @@ const About = () => {
           <div className="space-y-6">
             {[
               {
-                color: "amber",
+                color: "yellow",
                 question: "How do I become a delivery partner?",
                 answer:
                   "Simply register on our platform, verify your student status, and complete our brief orientation. You can start earning by delivering orders to fellow students on your campus.",

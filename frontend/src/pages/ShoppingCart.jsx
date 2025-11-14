@@ -160,7 +160,7 @@ const ShoppingCart = () => {
     return (
       <div className="pt-40 flex items-center justify-center h-auto bg-gray-50 hide-scrollbar">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-amber-500 border-t-transparent mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-yellow-500 border-t-transparent mx-auto mb-4"></div>
           <p className="text-gray-600 text-lg">Loading your cart...</p>
         </div>
       </div>
@@ -169,11 +169,11 @@ const ShoppingCart = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8 mt-31 md:mt-0">
-      <div className="max-w-7xl mx-auto">
+      <div className="w-full mx-auto">
         {/* Header Section */}
         <div className="mb-8">
           {/* <div
-            className="flex items-center text-gray-600 hover:text-amber-500 cursor-pointer mb-6 transition-colors duration-200"
+            className="flex items-center text-gray-600 hover:text-yellow-500 cursor-pointer mb-6 transition-colors duration-200"
             onClick={goBack}
           >
             <FaArrowLeft className="mr-2" />
@@ -211,7 +211,7 @@ const ShoppingCart = () => {
             </div>
             <Link
               to="/products"
-              className="inline-block bg-amber-500 hover:bg-amber-600 text-white font-medium py-3 px-8 rounded-lg transition-colors duration-200"
+              className="inline-block bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-3 px-8 rounded-lg transition-colors duration-200"
             >
               Continue Shopping
             </Link>
@@ -273,7 +273,7 @@ const ShoppingCart = () => {
                       {item.promotion_price &&
                       parseFloat(item.promotion_price) > 0 ? (
                         <div>
-                          <span className="font-semibold text-amber-600 text-lg">
+                          <span className="font-semibold text-yellow-600 text-lg">
                             ₦{formatPrice(item.promotion_price)}
                           </span>
                         </div>
@@ -421,7 +421,7 @@ const ShoppingCart = () => {
 
                 <Link
                   to="/checkout"
-                  className="w-full mt-6 bg-amber-500 hover:bg-amber-600 text-white font-medium py-4 px-6 rounded-lg text-center block transition-colors duration-200"
+                  className="w-full mt-6 bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-4 px-6 rounded-lg text-center block transition-colors duration-200"
                   style={{ textDecoration: "none" }}
                 >
                   Proceed to Checkout

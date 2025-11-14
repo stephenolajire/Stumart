@@ -44,7 +44,7 @@ const SearchBar = ({
               onKeyDown={handleKeyDown}
               onFocus={handleInputFocus}
               onBlur={hideSuggestions}
-              className="block w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:bg-white transition-all duration-200 text-sm placeholder-gray-500"
+              className="block w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 focus:bg-white transition-all duration-200 text-sm placeholder-gray-500"
               placeholder={placeholder}
             />
           </>
@@ -58,11 +58,11 @@ const SearchBar = ({
               onFocus={handleInputFocus}
               onBlur={hideSuggestions}
               placeholder={placeholder}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
             />
             <button
               onClick={handleSearch}
-              className="absolute right-0 top-0 bg-amber-500 text-white px-6 py-2 rounded-r-lg hover:bg-amber-600 transition-colors"
+              className="absolute right-0 top-0 bg-yellow-500 text-white px-6 py-2 rounded-r-lg hover:bg-yellow-600 transition-colors"
             >
               SEARCH
             </button>
@@ -76,7 +76,7 @@ const SearchBar = ({
           <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
             {isFetchingSuggestions ? (
               <div className="px-4 py-3 text-center text-gray-500">
-                <div className="animate-spin inline-block w-4 h-4 border-2 border-orange-500 border-t-transparent rounded-full mr-2"></div>
+                <div className="animate-spin inline-block w-4 h-4 border-2 border-yellow-500 border-t-transparent rounded-full mr-2"></div>
                 Searching...
               </div>
             ) : (

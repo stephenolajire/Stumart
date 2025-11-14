@@ -132,7 +132,7 @@ const Navigation = () => {
   return (
     <div className="hidden lg:block flex-1 w-full">
       {/* Top Banner */}
-      <div className="bg-gradient-to-r from-purple-600 to-orange-500 text-white text-sm py-2 px-10 w-[calc(100%-250px)] ">
+      <div className="bg-gradient-to-r from-purple-600 to-yellow-500 text-white text-sm py-2 px-10 w-[calc(100%-250px)] ">
         <div className="flex justify-between items-center w-full mx-auto">
           <div className="flex items-center space-x-6">
             <div className="flex items-center space-x-2">
@@ -182,7 +182,7 @@ const Navigation = () => {
               <input
                 type="text"
                 placeholder="Search products, brands and categories"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
                 value={searchParams}
                 onChange={(e) => setSearchParams(e.target.value)}
                 onKeyPress={handleKeyPress}
@@ -192,7 +192,7 @@ const Navigation = () => {
                 className={`absolute right-0 top-0 px-6 py-2 rounded-r-lg text-white transition-colors ${
                   isSearching
                     ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-yellow-500 hover:bg-amber-600"
+                    : "bg-yellow-500 hover:bg-yellow-600"
                 }`}
                 onClick={handleSearch}
                 disabled={isSearching}
@@ -207,7 +207,7 @@ const Navigation = () => {
             {/* Account Dropdown */}
             <div className="relative">
               <div
-                className="flex items-center space-x-2 cursor-pointer hover:text-amber-500 transition-colors"
+                className="flex items-center space-x-2 cursor-pointer hover:text-yellow-500 transition-colors"
                 onClick={() => setAccountDropdownOpen(!accountDropdownOpen)}
               >
                 <User className="w-5 h-5" />
@@ -291,7 +291,7 @@ const Navigation = () => {
             {/* Quick Links Dropdown */}
             <div className="relative">
               <div
-                className="flex items-center space-x-2 cursor-pointer hover:text-amber-500 transition-colors"
+                className="flex items-center space-x-2 cursor-pointer hover:text-yellow-500 transition-colors"
                 onClick={() =>
                   setQuickLinksDropdownOpen(!quickLinksDropdownOpen)
                 }
@@ -340,10 +340,10 @@ const Navigation = () => {
 
             {/* Cart */}
             <Link to="/shopping-cart">
-              <div className="flex relative items-center space-x-1 cursor-pointer hover:text-amber-500 transition-colors">
+              <div className="flex relative items-center space-x-1 cursor-pointer hover:text-yellow-500 transition-colors">
                 <ShoppingCart className="w-5 h-5" />
                 <span className="text-base">Cart</span>
-                <div className="bg-amber-500 text-white text-sm w-4 h-4 flex rounded-full items-center justify-center absolute right-8 -top-1">
+                <div className="bg-yellow-500 text-white text-sm w-4 h-4 flex rounded-full items-center justify-center absolute right-8 -top-1">
                   <p className="text-center mx-auto items-center justify-center">
                     {count}
                   </p>

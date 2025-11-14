@@ -115,7 +115,7 @@ const Signup = () => {
           icon: "error",
           title: "Registration Failed",
           html: `The following errors occurred:<br><br>${errorMessages}`,
-          confirmButtonColor: "#f59e0b", // amber-500
+          confirmButtonColor: "#f59e0b", // yellow-500
         });
       }
     }
@@ -359,7 +359,7 @@ const Signup = () => {
       icon: "error",
       title,
       text: message,
-      confirmButtonColor: "#f59e0b", // amber-500
+      confirmButtonColor: "#f59e0b", // yellow-500
     });
   };
 
@@ -619,7 +619,7 @@ const Signup = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-orange-50 to-yellow-50 py-8 px-4">
       <div className="max-w-2xl mx-auto">
         <form
           onSubmit={handleSubmit}
@@ -664,7 +664,7 @@ const Signup = () => {
                   name="userType"
                   value={formData.userType}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
                 >
                   <option value="">Select User Type</option>
                   {userTypes.map((type) => (
@@ -684,14 +684,14 @@ const Signup = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="flex items-center text-sm font-medium text-gray-700">
-                    <FaUser className="mr-2 text-amber-500" /> First Name
+                    <FaUser className="mr-2 text-yellow-500" /> First Name
                   </label>
                   <input
                     type="text"
                     name="firstName"
                     value={formData.firstName}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
                     placeholder="Enter first name"
                   />
                   {errors.firstName && (
@@ -702,14 +702,14 @@ const Signup = () => {
                 </div>
                 <div className="space-y-2">
                   <label className="flex items-center text-sm font-medium text-gray-700">
-                    <FaUser className="mr-2 text-amber-500" /> Last Name
+                    <FaUser className="mr-2 text-yellow-500" /> Last Name
                   </label>
                   <input
                     type="text"
                     name="lastName"
                     value={formData.lastName}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
                     placeholder="Enter last name"
                   />
                   {errors.lastName && (
@@ -723,14 +723,14 @@ const Signup = () => {
               {/* Email Field */}
               <div className="space-y-2">
                 <label className="flex items-center text-sm font-medium text-gray-700">
-                  <FaEnvelope className="mr-2 text-amber-500" /> Email
+                  <FaEnvelope className="mr-2 text-yellow-500" /> Email
                 </label>
                 <input
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
                   placeholder="Enter email address"
                 />
                 {errors.email && (
@@ -741,14 +741,14 @@ const Signup = () => {
               {/* Phone Number Field */}
               <div className="space-y-2">
                 <label className="flex items-center text-sm font-medium text-gray-700">
-                  <FaPhone className="mr-2 text-amber-500" /> Phone Number
+                  <FaPhone className="mr-2 text-yellow-500" /> Phone Number
                 </label>
                 <input
                   type="tel"
                   name="phoneNumber"
                   value={formData.phoneNumber}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
                   placeholder="Enter phone number"
                 />
                 {errors.phoneNumber && (
@@ -761,14 +761,14 @@ const Signup = () => {
               {/* State Field */}
               <div className="space-y-2">
                 <label className="flex items-center text-sm font-medium text-gray-700">
-                  <FaMapMarkerAlt className="mr-2 text-amber-500" /> State of
+                  <FaMapMarkerAlt className="mr-2 text-yellow-500" /> State of
                   Schooling/Operating
                 </label>
                 <select
                   name="state"
                   value={formData.state}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
                 >
                   <option value="">Select State</option>
                   {nigeriaStates.map((state) => (
@@ -785,13 +785,13 @@ const Signup = () => {
               {/* Institution Field */}
               <div className="space-y-2">
                 <label className="flex items-center text-sm font-medium text-gray-700">
-                  <FaUniversity className="mr-2 text-amber-500" /> Institution
+                  <FaUniversity className="mr-2 text-yellow-500" /> Institution
                 </label>
                 <select
                   name="institution"
                   value={formData.institution}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
                   disabled={!formData.state}
                 >
                   <option value="">
@@ -815,13 +815,13 @@ const Signup = () => {
               {/* Residence Field */}
               <div className="space-y-2">
                 <label className="flex items-center text-sm font-medium text-gray-700">
-                  <FaHouseUser className="mr-2 text-amber-500" /> Residence
+                  <FaHouseUser className="mr-2 text-yellow-500" /> Residence
                 </label>
                 <select
                   name="residence"
                   value={formData.residence}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
                 >
                   <option value="">Select Residence</option>
                   <option value="on_campus">On Campus</option>
@@ -837,14 +837,14 @@ const Signup = () => {
               {/* Profile Picture Field */}
               <div className="space-y-2">
                 <label className="flex items-center text-sm font-medium text-gray-700">
-                  <FaImage className="mr-2 text-amber-500" /> Profile Picture
+                  <FaImage className="mr-2 text-yellow-500" /> Profile Picture
                 </label>
                 <input
                   type="file"
                   name="profilePic"
                   onChange={handleChange}
                   accept="image/*"
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-yellow-50 file:text-yellow-700 hover:file:bg-yellow-100"
                 />
                 {errors.profilePic && (
                   <span className="text-red-500 text-sm">
@@ -857,7 +857,7 @@ const Signup = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="flex items-center text-sm font-medium text-gray-700">
-                    <FaLock className="mr-2 text-amber-500" /> Password
+                    <FaLock className="mr-2 text-yellow-500" /> Password
                   </label>
                   <div className="relative">
                     <input
@@ -865,7 +865,7 @@ const Signup = () => {
                       name="password"
                       value={formData.password}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 pr-12 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
+                      className="w-full px-4 py-3 pr-12 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
                       placeholder="Enter password"
                     />
                     <button
@@ -888,7 +888,7 @@ const Signup = () => {
                 </div>
                 <div className="space-y-2">
                   <label className="flex items-center text-sm font-medium text-gray-700">
-                    <FaLock className="mr-2 text-amber-500" /> Confirm Password
+                    <FaLock className="mr-2 text-yellow-500" /> Confirm Password
                   </label>
                   <div className="relative">
                     <input
@@ -896,7 +896,7 @@ const Signup = () => {
                       name="confirmPassword"
                       value={formData.confirmPassword}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 pr-12 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
+                      className="w-full px-4 py-3 pr-12 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
                       placeholder="Confirm password"
                     />
                     <button
@@ -931,7 +931,7 @@ const Signup = () => {
                     name="fleetType"
                     value={formData.fleetType}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
                   >
                     <option value="">Select Fleet Type</option>
                     {fleetTypes.map((type) => (
@@ -952,7 +952,7 @@ const Signup = () => {
                 <div className="space-y-6">
                   <div className="space-y-2">
                     <label className="flex items-center text-sm font-medium text-gray-700">
-                      <FaBuilding className="mr-2 text-amber-500" /> Business
+                      <FaBuilding className="mr-2 text-yellow-500" /> Business
                       Name
                     </label>
                     <input
@@ -960,7 +960,7 @@ const Signup = () => {
                       name="businessName"
                       value={formData.businessName}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
                       placeholder="Enter business name"
                     />
                     {errors.businessName && (
@@ -971,14 +971,14 @@ const Signup = () => {
                   </div>
                   <div className="space-y-2">
                     <label className="flex items-center text-sm font-medium text-gray-700">
-                      <FaList className="mr-2 text-amber-500" /> Business
+                      <FaList className="mr-2 text-yellow-500" /> Business
                       Category
                     </label>
                     <select
                       name="businessCategory"
                       value={formData.businessCategory}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
                     >
                       <option value="">Select Business Category</option>
                       {businessCategories.map((category) => (
@@ -997,14 +997,14 @@ const Signup = () => {
                   {showOtherCategories && (
                     <div className="space-y-2">
                       <label className="flex items-center text-sm font-medium text-gray-700">
-                        <FaList className="mr-2 text-amber-500" /> Specific
+                        <FaList className="mr-2 text-yellow-500" /> Specific
                         Category
                       </label>
                       <select
                         name="specificCategory"
                         value={formData.specificCategory}
                         onChange={handleChange}
-                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
                       >
                         <option value="">Select Specific Category</option>
                         {otherBusinessCategories.map((category) => (
@@ -1023,14 +1023,14 @@ const Signup = () => {
 
                   <div className="space-y-2">
                     <label className="flex items-center text-sm font-medium text-gray-700">
-                      <FaImage className="mr-2 text-amber-500" /> Shop Image
+                      <FaImage className="mr-2 text-yellow-500" /> Shop Image
                     </label>
                     <input
                       type="file"
                       name="shopImage"
                       onChange={handleChange}
                       accept="image/*"
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100"
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-yellow-50 file:text-yellow-700 hover:file:bg-yellow-100"
                       placeholder="Input Business Image"
                     />
                     {errors.shopImage && (
@@ -1046,14 +1046,14 @@ const Signup = () => {
                 <div className="space-y-6">
                   <div className="space-y-2">
                     <label className="flex items-center text-sm font-medium text-gray-700">
-                      <FaHome className="mr-2 text-amber-500" /> Hostel Name
+                      <FaHome className="mr-2 text-yellow-500" /> Hostel Name
                     </label>
                     <input
                       type="text"
                       name="hostelName"
                       value={formData.hostelName}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
                       placeholder="Enter hostel name"
                     />
                     {errors.hostelName && (
@@ -1071,7 +1071,7 @@ const Signup = () => {
                       name="roomNumber"
                       value={formData.roomNumber}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
                       placeholder="Enter room number"
                     />
                     {errors.roomNumber && (
@@ -1087,7 +1087,7 @@ const Signup = () => {
                 <div className="space-y-6">
                   <div className="space-y-2">
                     <label className="flex items-center text-sm font-medium text-gray-700">
-                      <FaUniversity className="mr-2 text-amber-500" /> Matric
+                      <FaUniversity className="mr-2 text-yellow-500" /> Matric
                       Number
                     </label>
                     <input
@@ -1095,7 +1095,7 @@ const Signup = () => {
                       name="matricNumber"
                       value={formData.matricNumber}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
                       placeholder="Enter matric number"
                     />
                     {errors.matricNumber && (
@@ -1106,14 +1106,14 @@ const Signup = () => {
                   </div>
                   <div className="space-y-2">
                     <label className="flex items-center text-sm font-medium text-gray-700">
-                      <FaList className="mr-2 text-amber-500" /> Department
+                      <FaList className="mr-2 text-yellow-500" /> Department
                     </label>
                     <input
                       type="text"
                       name="department"
                       value={formData.department}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
                       placeholder="Enter department"
                     />
                     {errors.department && (
@@ -1137,14 +1137,14 @@ const Signup = () => {
                     <div className="space-y-4">
                       <div className="space-y-2">
                         <label className="flex items-center text-sm font-medium text-gray-700">
-                          <FaMoneyBill className="mr-2 text-amber-500" /> Bank
+                          <FaMoneyBill className="mr-2 text-yellow-500" /> Bank
                           Name
                         </label>
                         <select
                           name="bankName"
                           value={formData.bankName}
                           onChange={handleChange}
-                          className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
+                          className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
                         >
                           <option value="">Select a bank</option>
                           {banks.map((bank) => (
@@ -1162,7 +1162,7 @@ const Signup = () => {
 
                       <div className="space-y-2">
                         <label className="flex items-center text-sm font-medium text-gray-700">
-                          <FaUser className="mr-2 text-amber-500" /> Account
+                          <FaUser className="mr-2 text-yellow-500" /> Account
                           Name
                         </label>
                         <input
@@ -1170,7 +1170,7 @@ const Signup = () => {
                           name="accountName"
                           value={formData.accountName}
                           onChange={handleChange}
-                          className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
+                          className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
                           placeholder="Enter account name"
                         />
                         {errors.accountName && (
@@ -1182,7 +1182,7 @@ const Signup = () => {
 
                       <div className="space-y-2">
                         <label className="flex items-center text-sm font-medium text-gray-700">
-                          <FaCreditCard className="mr-2 text-amber-500" />{" "}
+                          <FaCreditCard className="mr-2 text-yellow-500" />{" "}
                           Account Number
                         </label>
                         <input
@@ -1190,7 +1190,7 @@ const Signup = () => {
                           name="accountNumber"
                           value={formData.accountNumber}
                           onChange={handleChange}
-                          className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
+                          className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
                           placeholder="Enter 10-digit account number"
                           maxLength="10"
                         />
@@ -1208,7 +1208,7 @@ const Signup = () => {
               {/* Submit Button */}
               <button
                 type="submit"
-                className="w-full bg-amber-500 hover:bg-amber-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-md hover:shadow-lg mt-8"
+                className="w-full bg-yellow-500 hover:bg-yellow-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-md hover:shadow-lg mt-8"
                 disabled={!isSubmitEnabled || isLoading || throttleWaitTime > 0}
               >
                 {isLoading
@@ -1223,7 +1223,7 @@ const Signup = () => {
                 Already have an account?{" "}
                 <NavLink
                   to="/login"
-                  className="text-amber-600 hover:text-amber-700 font-medium transition-colors duration-200"
+                  className="text-yellow-600 hover:text-yellow-700 font-medium transition-colors duration-200"
                 >
                   log in
                 </NavLink>

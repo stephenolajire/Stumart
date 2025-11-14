@@ -89,12 +89,12 @@ const SetNewPasswordForm = () => {
           </h2>
 
           {throttleError && (
-            <div className="mb-4 p-4 bg-orange-50 border border-orange-200 rounded-md">
-              <p className="text-orange-800 text-sm font-medium">
+            <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+              <p className="text-yellow-800 text-sm font-medium">
                 {throttleError}
               </p>
               {throttleWaitTime > 0 && (
-                <p className="text-orange-700 text-sm mt-1">
+                <p className="text-yellow-700 text-sm mt-1">
                   Try again in {throttleWaitTime} seconds
                 </p>
               )}

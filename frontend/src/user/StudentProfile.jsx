@@ -133,10 +133,10 @@ const StudentProfile = () => {
   // Handle loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-orange-50 flex items-center justify-center">
         <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
           <div className="flex items-center justify-center space-x-3">
-            <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-8 h-8 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
             <span className="text-xl font-medium text-gray-700">
               Loading profile...
             </span>
@@ -149,7 +149,7 @@ const StudentProfile = () => {
   // Handle error state
   if (isError) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-orange-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full">
           <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100 text-center">
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -176,7 +176,7 @@ const StudentProfile = () => {
             </p>
             <button
               onClick={() => queryClient.refetchQueries(["studentProfile"])}
-              className="w-full py-3 px-4 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white font-semibold rounded-xl transition-all duration-300 transform hover:scale-[1.02] focus:ring-4 focus:ring-amber-200 focus:outline-none"
+              className="w-full py-3 px-4 bg-gradient-to-r from-yellow-500 to-yellow-500 hover:from-yellow-600 hover:to-yellow-600 text-white font-semibold rounded-xl transition-all duration-300 transform hover:scale-[1.02] focus:ring-4 focus:ring-yellow-200 focus:outline-none"
             >
               Try Again
             </button>
@@ -192,15 +192,15 @@ const StudentProfile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br mt-5 md:mt-0 from-amber-50 via-orange-50 to-yellow-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br mt-5 md:mt-0 from-yellow-50 via-orange-50 to-yellow-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
           <h2 className="text-4xl font-bold text-gray-900 mb-2 flex items-center justify-center">
-            <FaUser className="mr-3 text-amber-500" />
+            <FaUser className="mr-3 text-yellow-500" />
             Student Profile
           </h2>
-          <div className="w-24 h-1 bg-gradient-to-r from-amber-500 to-yellow-500 mx-auto rounded-full"></div>
+          <div className="w-24 h-1 bg-gradient-to-r from-yellow-500 to-yellow-500 mx-auto rounded-full"></div>
         </div>
 
         {/* Alert Messages */}
@@ -254,7 +254,7 @@ const StudentProfile = () => {
         {/* Main Profile Card */}
         <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden">
           {/* Profile Header */}
-          <div className="bg-gradient-to-r from-amber-500 to-yellow-500 px-8 pt-8 pb-4">
+          <div className="bg-gradient-to-r from-yellow-500 to-yellow-500 px-8 pt-8 pb-4">
             <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-6">
               {/* Profile Image */}
               <div className="relative">
@@ -275,7 +275,7 @@ const StudentProfile = () => {
                         />
                       )}
                     </div>
-                    <label className="mt-3 inline-block bg-white text-amber-600 font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg cursor-pointer transition-all duration-200 transform hover:scale-105">
+                    <label className="mt-3 inline-block bg-white text-yellow-600 font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg cursor-pointer transition-all duration-200 transform hover:scale-105">
                       Change Image
                       <input
                         type="file"
@@ -299,14 +299,14 @@ const StudentProfile = () => {
                 <h3 className="text-3xl font-bold mb-1">
                   {profile.user.first_name} {profile.user.last_name}
                 </h3>
-                <p className="text-amber-100 text-lg mb-4">
+                <p className="text-yellow-100 text-lg mb-4">
                   {profile.user.email}
                 </p>
 
                 {!editMode && (
                   <button
                     onClick={handleEdit}
-                    className="inline-flex items-center space-x-2 bg-white text-amber-600 font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 focus:ring-4 focus:ring-white focus:ring-opacity-50"
+                    className="inline-flex items-center space-x-2 bg-white text-yellow-600 font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 focus:ring-4 focus:ring-white focus:ring-opacity-50"
                   >
                     <FaEdit className="text-lg" />
                     <span>Edit Profile</span>
@@ -324,7 +324,7 @@ const StudentProfile = () => {
                 {/* Personal Information Section */}
                 <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200">
                   <h4 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-                    <FaUser className="mr-3 text-amber-500" />
+                    <FaUser className="mr-3 text-yellow-500" />
                     Personal Information
                   </h4>
 
@@ -339,7 +339,7 @@ const StudentProfile = () => {
                         value={formData.first_name || ""}
                         onChange={handleChange}
                         required
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-4 focus:ring-amber-100 focus:border-amber-500 transition-all duration-200 bg-white shadow-sm"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-4 focus:ring-yellow-100 focus:border-yellow-500 transition-all duration-200 bg-white shadow-sm"
                         placeholder="Enter your first name"
                       />
                     </div>
@@ -353,7 +353,7 @@ const StudentProfile = () => {
                         value={formData.last_name || ""}
                         onChange={handleChange}
                         required
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-4 focus:ring-amber-100 focus:border-amber-500 transition-all duration-200 bg-white shadow-sm"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-4 focus:ring-yellow-100 focus:border-yellow-500 transition-all duration-200 bg-white shadow-sm"
                         placeholder="Enter your last name"
                       />
                     </div>
@@ -367,7 +367,7 @@ const StudentProfile = () => {
                         value={formData.phone_number || ""}
                         onChange={handleChange}
                         required
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-4 focus:ring-amber-100 focus:border-amber-500 transition-all duration-200 bg-white shadow-sm"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-4 focus:ring-yellow-100 focus:border-yellow-500 transition-all duration-200 bg-white shadow-sm"
                         placeholder="Enter your phone number"
                       />
                     </div>
@@ -381,7 +381,7 @@ const StudentProfile = () => {
                         value={formData.state || ""}
                         onChange={handleChange}
                         required
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-4 focus:ring-amber-100 focus:border-amber-500 transition-all duration-200 bg-white shadow-sm"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-4 focus:ring-yellow-100 focus:border-yellow-500 transition-all duration-200 bg-white shadow-sm"
                         placeholder="Enter your state"
                       />
                     </div>
@@ -389,9 +389,9 @@ const StudentProfile = () => {
                 </div>
 
                 {/* Academic Information Section */}
-                <div className="bg-amber-50 rounded-2xl p-6 border border-amber-200">
+                <div className="bg-yellow-50 rounded-2xl p-6 border border-yellow-200">
                   <h4 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-                    <FaGraduationCap className="mr-3 text-amber-500" />
+                    <FaGraduationCap className="mr-3 text-yellow-500" />
                     Academic Information
                   </h4>
 
@@ -406,7 +406,7 @@ const StudentProfile = () => {
                         value={formData.institution || ""}
                         onChange={handleChange}
                         required
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-4 focus:ring-amber-100 focus:border-amber-500 transition-all duration-200 bg-white shadow-sm"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-4 focus:ring-yellow-100 focus:border-yellow-500 transition-all duration-200 bg-white shadow-sm"
                         placeholder="Enter your institution"
                       />
                     </div>
@@ -420,7 +420,7 @@ const StudentProfile = () => {
                         name="matric_number"
                         value={formData.matric_number || ""}
                         onChange={handleChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-4 focus:ring-amber-100 focus:border-amber-500 transition-all duration-200 bg-white shadow-sm"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-4 focus:ring-yellow-100 focus:border-yellow-500 transition-all duration-200 bg-white shadow-sm"
                         placeholder="Enter your matric number"
                       />
                     </div>
@@ -434,7 +434,7 @@ const StudentProfile = () => {
                         value={formData.department || ""}
                         onChange={handleChange}
                         required
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-4 focus:ring-amber-100 focus:border-amber-500 transition-all duration-200 bg-white shadow-sm"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-4 focus:ring-yellow-100 focus:border-yellow-500 transition-all duration-200 bg-white shadow-sm"
                         placeholder="Enter your department"
                       />
                     </div>
@@ -449,7 +449,7 @@ const StudentProfile = () => {
                     className={`flex-1 py-4 px-6 rounded-xl font-semibold text-white transition-all duration-300 shadow-lg ${
                       updateProfileMutation.isLoading
                         ? "bg-gray-400 cursor-not-allowed shadow-none"
-                        : "bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 active:from-amber-700 active:to-yellow-700 focus:ring-4 focus:ring-amber-200 focus:outline-none hover:shadow-xl"
+                        : "bg-gradient-to-r from-yellow-500 to-yellow-500 hover:from-yellow-600 hover:to-yellow-600 active:from-yellow-700 active:to-yellow-700 focus:ring-4 focus:ring-yellow-200 focus:outline-none hover:shadow-xl"
                     } transform hover:scale-[1.02] active:scale-[0.98]`}
                   >
                     {updateProfileMutation.isLoading ? (
@@ -483,13 +483,13 @@ const StudentProfile = () => {
                 {/* Personal Information Section */}
                 <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200">
                   <h4 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-                    <FaUser className="mr-3 text-amber-500" />
+                    <FaUser className="mr-3 text-yellow-500" />
                     Personal Information
                   </h4>
                   <div className="grid md:grid-cols-2 gap-6">
                     <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
                       <div className="flex items-center space-x-3">
-                        <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
+                        <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
                         <div>
                           <span className="block text-sm font-medium text-gray-500">
                             Phone
@@ -502,7 +502,7 @@ const StudentProfile = () => {
                     </div>
                     <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
                       <div className="flex items-center space-x-3">
-                        <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
+                        <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
                         <div>
                           <span className="block text-sm font-medium text-gray-500">
                             State
@@ -517,16 +517,16 @@ const StudentProfile = () => {
                 </div>
 
                 {/* Academic Information Section */}
-                <div className="bg-amber-50 rounded-2xl p-6 border border-amber-200">
+                <div className="bg-yellow-50 rounded-2xl p-6 border border-yellow-200">
                   <h4 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-                    <FaSchool className="mr-3 text-amber-500" />
+                    <FaSchool className="mr-3 text-yellow-500" />
                     Academic Information
                   </h4>
                   <div className="grid gap-6">
                     <div className="grid md:grid-cols-2 gap-6">
-                      <div className="bg-white rounded-xl p-4 border border-amber-100 shadow-sm">
+                      <div className="bg-white rounded-xl p-4 border border-yellow-100 shadow-sm">
                         <div className="flex items-center space-x-3">
-                          <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
+                          <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
                           <div>
                             <span className="block text-sm font-medium text-gray-500">
                               Institution
@@ -537,9 +537,9 @@ const StudentProfile = () => {
                           </div>
                         </div>
                       </div>
-                      <div className="bg-white rounded-xl p-4 border border-amber-100 shadow-sm">
+                      <div className="bg-white rounded-xl p-4 border border-yellow-100 shadow-sm">
                         <div className="flex items-center space-x-3">
-                          <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
+                          <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
                           <div>
                             <span className="block text-sm font-medium text-gray-500">
                               Department
@@ -551,9 +551,9 @@ const StudentProfile = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="bg-white rounded-xl p-4 border border-amber-100 shadow-sm">
+                    <div className="bg-white rounded-xl p-4 border border-yellow-100 shadow-sm">
                       <div className="flex items-center space-x-3">
-                        <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
+                        <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
                         <div>
                           <span className="block text-sm font-medium text-gray-500">
                             Matric Number

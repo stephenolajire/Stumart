@@ -39,7 +39,7 @@ const Card = ({ products }) => {
         return (
           <div
             key={product.id}
-            className="group relative bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-500 overflow-hidden border border-gray-100 hover:border-amber-200"
+            className="group relative bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-500 overflow-hidden border border-gray-100 hover:border-yellow-200"
           >
             {/* Discount Badge */}
             {discountPercentage && (
@@ -69,7 +69,7 @@ const Card = ({ products }) => {
               className="absolute top-3 right-3 z-20 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white hover:scale-110 transition-all duration-300 shadow-lg"
             >
               <Heart
-                className="w-4 h-4 transition-colors duration-300 text-amber-500"
+                className="w-4 h-4 transition-colors duration-300 text-yellow-500"
               />
             </button>
 
@@ -78,6 +78,7 @@ const Card = ({ products }) => {
               {/* Product Image */}
               <div className="relative overflow-hidden bg-gray-50 aspect-square">
                 <img
+                loading="lazy"
                   src={product.image_url}
                   alt={product.name}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
@@ -87,7 +88,7 @@ const Card = ({ products }) => {
               {/* Product Info */}
               <div className="p-3 md:p-4 space-y-2 md:space-y-3">
                 {/* Product Name */}
-                <h3 className="font-semibold text-gray-900 text-sm line-clamp-2 group-hover:text-amber-600 transition-colors duration-300 uppercase">
+                <h3 className="font-semibold text-gray-900 text-sm line-clamp-2 group-hover:text-yellow-600 transition-colors duration-300 uppercase">
                   {product.name}
                 </h3>
                 <h6 className="text-sm text-gray-600">{product.vendor_institution}</h6>

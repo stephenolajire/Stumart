@@ -834,7 +834,7 @@ const AddProduct = () => {
                 </label>
                 <div className="space-y-3">
                   {sizes.map((item, index) => (
-                    <div key={`size-${index}`} className="flex space-x-3">
+                    <div key={`size-${index}`} className="flex flex-col gap-2 md:flex-row space-x-3">
                       <input
                         type="text"
                         value={item.size}
@@ -883,7 +883,7 @@ const AddProduct = () => {
                 </label>
                 <div className="space-y-3">
                   {colors.map((item, index) => (
-                    <div key={`color-${index}`} className="flex space-x-3">
+                    <div key={`color-${index}`} className="flex flex-col gap-2 md:flex-row space-x-3">
                       <input
                         type="text"
                         value={item.color}

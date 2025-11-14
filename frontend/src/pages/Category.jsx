@@ -190,7 +190,7 @@ const Category = () => {
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50 py-4 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
+        <div className="w-full mx-auto">
           <div className="bg-white rounded-lg shadow-sm p-8 text-center">
             <div className="text-red-500 text-lg mb-4">
               ⚠️ Error Loading Products
@@ -198,7 +198,7 @@ const Category = () => {
             <p className="text-gray-600 mb-6">{errorMessage}</p>
             <button
               onClick={() => refetchProducts()}
-              className="bg-amber-500 hover:bg-amber-600 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200"
+              className="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200"
             >
               Try Again
             </button>
@@ -210,11 +210,11 @@ const Category = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 py-4 px-4 mt-31 lg:mt-0 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
+      <div className="w-full mx-auto">
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
           {/* <div
-            className="flex items-center text-gray-600 hover:text-amber-500 cursor-pointer mb-6 transition-colors duration-200"
+            className="flex items-center text-gray-600 hover:text-yellow-500 cursor-pointer mb-6 transition-colors duration-200"
             // onClick={goBack}
           >
             <FaArrowLeft className="mr-2" />
@@ -235,7 +235,7 @@ const Category = () => {
             </p>
           </div>
           <button
-            className="mt-4 sm:mt-0 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2"
+            className="mt-4 sm:mt-0 bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2"
             onClick={() => setShowFilters(!showFilters)}
           >
             {showFilters ? <FaTimes /> : <FaFilter />}
@@ -272,7 +272,7 @@ const Category = () => {
                 placeholder="Search products..."
                 value={filters.search}
                 onChange={(e) => handleFilterChange("search", e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
               />
             </div>
 
@@ -281,7 +281,7 @@ const Category = () => {
               <select
                 value={filters.sort}
                 onChange={(e) => handleFilterChange("sort", e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
               >
                 <option value="newest">Newest</option>
                 <option value="price_low">Price: Low to High</option>
@@ -294,7 +294,7 @@ const Category = () => {
               <select
                 value={filters.vendor}
                 onChange={(e) => handleFilterChange("vendor", e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
               >
                 <option value="">All Vendors</option>
                 {Array.from(
@@ -316,14 +316,14 @@ const Category = () => {
                 placeholder="Min Price"
                 value={filters.minPrice}
                 onChange={(e) => handleFilterChange("minPrice", e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
               />
               <input
                 type="number"
                 placeholder="Max Price"
                 value={filters.maxPrice}
                 onChange={(e) => handleFilterChange("maxPrice", e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
               />
             </div>
 
@@ -333,7 +333,7 @@ const Category = () => {
                 <select
                   value={filters.state}
                   onChange={(e) => handleStateChange(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
                 >
                   <option value="">All States</option>
                   {nigeriaStates.map((state) => (
@@ -352,7 +352,7 @@ const Category = () => {
                   value={filters.school}
                   onChange={(e) => handleFilterChange("school", e.target.value)}
                   disabled={!selectedState}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                 >
                   <option value="">All Schools</option>
                   {schools.map((school) => (
@@ -400,7 +400,7 @@ const Category = () => {
             </div>
             <button
               onClick={clearFilters}
-              className="bg-amber-500 hover:bg-amber-600 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200"
+              className="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200"
             >
               Clear All Filters
             </button>

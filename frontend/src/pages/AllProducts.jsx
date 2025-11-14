@@ -394,7 +394,7 @@ const AllProducts = () => {
         url="/products"
       />
 
-      <div className="max-w-7xl mx-auto">
+      <div className="w-full mx-auto">
         {/* View Mode Toggle */}
         {isAuthenticated && (
           <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
@@ -402,7 +402,7 @@ const AllProducts = () => {
               <select
                 value={viewMode}
                 onChange={(e) => handleViewModeChange(e.target.value)}
-                className="px-4 py-2 bg-amber-500 text-white rounded-lg font-medium hover:bg-amber-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
+                className="px-4 py-2 bg-yellow-500 text-white rounded-lg font-medium hover:bg-yellow-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
                 disabled={toggleLoading || allProductsLoading}
               >
                 <option value="school">My School Products</option>
@@ -410,7 +410,7 @@ const AllProducts = () => {
               </select>
               {toggleLoading && (
                 <div className="flex items-center text-gray-600">
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-amber-500 border-t-transparent mr-2"></div>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-yellow-500 border-t-transparent mr-2"></div>
                   <span className="text-sm">Loading...</span>
                 </div>
               )}
@@ -419,10 +419,11 @@ const AllProducts = () => {
         )}
 
         {/* Header Section */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+        <div className="flex flex-row sitems-center justify-between mb-6">
           {/* <Header title="All Products" /> */}
+          <div></div>
           <button
-            className="mt-4 sm:mt-0 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2"
+            className="mt-4 sm:mt-0 bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2"
             onClick={() => setShowFilters(!showFilters)}
           >
             {showFilters ? <FaTimes /> : <FaFilter />}
@@ -450,7 +451,7 @@ const AllProducts = () => {
                 Use the filter option to see products from a specific school
               </p>
               {!isAuthenticated && (
-                <p className="text-amber-600 font-medium">
+                <p className="text-yellow-600 font-medium">
                   Register to see products from your school
                 </p>
               )}
@@ -497,7 +498,7 @@ const AllProducts = () => {
                 placeholder="Search products..."
                 value={filters.search}
                 onChange={(e) => handleFilterChange("search", e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
               />
             </div>
 
@@ -506,7 +507,7 @@ const AllProducts = () => {
               <select
                 value={filters.category}
                 onChange={(e) => handleFilterChange("category", e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
               >
                 <option value="">All Categories</option>
                 {allProductsCategories.map((category) => (
@@ -522,7 +523,7 @@ const AllProducts = () => {
               <select
                 value={filters.sort}
                 onChange={(e) => handleFilterChange("sort", e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
               >
                 <option value="newest">Newest</option>
                 <option value="price_low">Price: Low to High</option>
@@ -537,14 +538,14 @@ const AllProducts = () => {
                 placeholder="Min Price"
                 value={filters.minPrice}
                 onChange={(e) => handleFilterChange("minPrice", e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
               />
               <input
                 type="number"
                 placeholder="Max Price"
                 value={filters.maxPrice}
                 onChange={(e) => handleFilterChange("maxPrice", e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
               />
             </div>
 
@@ -553,7 +554,7 @@ const AllProducts = () => {
               <select
                 value={filters.state}
                 onChange={(e) => handleStateChange(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
               >
                 <option value="">All States</option>
                 {nigeriaStates.map((state) => (
@@ -570,7 +571,7 @@ const AllProducts = () => {
                 value={filters.school}
                 onChange={(e) => handleFilterChange("school", e.target.value)}
                 disabled={!selectedState}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
               >
                 <option value="">All Schools</option>
                 {schools.map((school) => (
@@ -586,7 +587,7 @@ const AllProducts = () => {
               <select
                 value={filters.vendor}
                 onChange={(e) => handleFilterChange("vendor", e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
               >
                 <option value="">All Vendors</option>
                 {Array.from(
@@ -638,7 +639,7 @@ const AllProducts = () => {
             <p className="text-gray-600 mb-6">{errorMessage}</p>
             <button
               onClick={() => refetchProducts()}
-              className="bg-amber-500 hover:bg-amber-600 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200"
+              className="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200"
             >
               Try Again
             </button>
@@ -654,7 +655,7 @@ const AllProducts = () => {
             </div>
             <button
               onClick={clearFilters}
-              className="bg-amber-500 hover:bg-amber-600 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200"
+              className="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200"
             >
               Clear All Filters
             </button>
@@ -718,7 +719,7 @@ const AllProducts = () => {
                           disabled={allProductsLoading}
                           className={`px-3 py-2 rounded-lg font-medium transition-colors duration-200 ${
                             pageNum === currentPage
-                              ? "bg-amber-500 text-white shadow-md"
+                              ? "bg-yellow-500 text-white shadow-md"
                               : "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
                           }`}
                         >

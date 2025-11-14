@@ -31,18 +31,18 @@ const Rider = () => {
       />
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-amber-500 via-amber-600 to-orange-600 text-white py-20 px-4 ">
+      <section className="bg-gradient-to-br from-yellow-500 via-yellow-600 to-orange-600 text-white py-20 px-4 ">
         <div className="w-full mx-auto text-center" data-aos="fade-up">
           <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
             Become a Campus Picker
           </h1>
-          <p className="text-xl md:text-2xl mb-8 text-amber-100 max-w-3xl mx-auto">
+          <p className="text-xl md:text-2xl mb-8 text-yellow-100 max-w-3xl mx-auto">
             Earn money by delivering to fellow students while maintaining
             flexibility with your studies
           </p>
           <NavLink
             to="/register"
-            className="inline-block bg-white text-amber-600 px-8 py-4 rounded-full font-bold text-lg hover:bg-amber-50 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl"
+            className="inline-block bg-white text-yellow-600 px-8 py-4 rounded-full font-bold text-lg hover:bg-yellow-50 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl"
           >
             Join as Picker
           </NavLink>
@@ -64,8 +64,8 @@ const Rider = () => {
               data-aos="fade-up"
               data-aos-delay="100"
             >
-              <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <FaClock className="text-2xl text-amber-600" />
+              <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <FaClock className="text-2xl text-yellow-600" />
               </div>
               <h3 className="text-xl font-bold text-gray-800 mb-4">
                 Flexible Hours
@@ -79,8 +79,8 @@ const Rider = () => {
               data-aos="fade-up"
               data-aos-delay="200"
             >
-              <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <FaMoneyBillWave className="text-2xl text-amber-600" />
+              <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <FaMoneyBillWave className="text-2xl text-yellow-600" />
               </div>
               <h3 className="text-xl font-bold text-gray-800 mb-4">
                 Quick Earnings
@@ -94,8 +94,8 @@ const Rider = () => {
               data-aos="fade-up"
               data-aos-delay="300"
             >
-              <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <FaUserGraduate className="text-2xl text-amber-600" />
+              <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <FaUserGraduate className="text-2xl text-yellow-600" />
               </div>
               <h3 className="text-xl font-bold text-gray-800 mb-4">
                 Student-Friendly
@@ -109,8 +109,8 @@ const Rider = () => {
               data-aos="fade-up"
               data-aos-delay="400"
             >
-              <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <FaMapMarkedAlt className="text-2xl text-amber-600" />
+              <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <FaMapMarkedAlt className="text-2xl text-yellow-600" />
               </div>
               <h3 className="text-xl font-bold text-gray-800 mb-4">
                 Campus Territory
@@ -138,7 +138,7 @@ const Rider = () => {
               data-aos="fade-right"
               data-aos-delay="100"
             >
-              <div className="w-20 h-20 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center mx-auto mb-6 text-white text-2xl font-bold shadow-lg">
+              <div className="w-20 h-20 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center mx-auto mb-6 text-white text-2xl font-bold shadow-lg">
                 1
               </div>
               <h3 className="text-xl font-bold text-gray-800 mb-4">Sign Up</h3>
@@ -151,7 +151,7 @@ const Rider = () => {
               data-aos="fade-right"
               data-aos-delay="200"
             >
-              <div className="w-20 h-20 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center mx-auto mb-6 text-white text-2xl font-bold shadow-lg">
+              <div className="w-20 h-20 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center mx-auto mb-6 text-white text-2xl font-bold shadow-lg">
                 2
               </div>
               <h3 className="text-xl font-bold text-gray-800 mb-4">
@@ -166,7 +166,7 @@ const Rider = () => {
               data-aos="fade-right"
               data-aos-delay="300"
             >
-              <div className="w-20 h-20 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center mx-auto mb-6 text-white text-2xl font-bold shadow-lg">
+              <div className="w-20 h-20 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center mx-auto mb-6 text-white text-2xl font-bold shadow-lg">
                 3
               </div>
               <h3 className="text-xl font-bold text-gray-800 mb-4">
@@ -181,7 +181,7 @@ const Rider = () => {
               data-aos="fade-right"
               data-aos-delay="400"
             >
-              <div className="w-20 h-20 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center mx-auto mb-6 text-white text-2xl font-bold shadow-lg">
+              <div className="w-20 h-20 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center mx-auto mb-6 text-white text-2xl font-bold shadow-lg">
                 4
               </div>
               <h3 className="text-xl font-bold text-gray-800 mb-4">
@@ -204,8 +204,8 @@ const Rider = () => {
           <div className="space-y-8">
             <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300">
               <div className="flex items-start gap-6">
-                <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <FaUserGraduate className="text-2xl text-amber-600" />
+                <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <FaUserGraduate className="text-2xl text-yellow-600" />
                 </div>
                 <div>
                   <h3 className="text-xl font-bold text-gray-800 mb-3">
@@ -220,8 +220,8 @@ const Rider = () => {
             </div>
             <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300">
               <div className="flex items-start gap-6">
-                <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <FaShieldAlt className="text-2xl text-amber-600" />
+                <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <FaShieldAlt className="text-2xl text-yellow-600" />
                 </div>
                 <div>
                   <h3 className="text-xl font-bold text-gray-800 mb-3">
@@ -244,12 +244,12 @@ const Rider = () => {
             Earning Potential
           </h2>
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-gradient-to-br from-amber-500 to-orange-500 text-white p-8 rounded-2xl text-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-              <h3 className="text-lg font-semibold mb-4 text-amber-100">
+            <div className="bg-gradient-to-br from-yellow-500 to-orange-500 text-white p-8 rounded-2xl text-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+              <h3 className="text-lg font-semibold mb-4 text-yellow-100">
                 Base Rate
               </h3>
               <p className="text-4xl font-bold mb-2">₦300-500</p>
-              <span className="text-amber-100">Per delivery</span>
+              <span className="text-yellow-100">Per delivery</span>
             </div>
             <div className="bg-gradient-to-br from-green-500 to-emerald-500 text-white p-8 rounded-2xl text-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
               <h3 className="text-lg font-semibold mb-4 text-green-100">
@@ -278,7 +278,7 @@ const Rider = () => {
           <div className="space-y-6">
             <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300">
               <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                <span className="w-2 h-2 bg-amber-500 rounded-full mr-3"></span>
+                <span className="w-2 h-2 bg-yellow-500 rounded-full mr-3"></span>
                 What are the working hours?
               </h3>
               <p className="text-gray-600 leading-relaxed pl-5">
@@ -288,7 +288,7 @@ const Rider = () => {
             </div>
             <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300">
               <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                <span className="w-2 h-2 bg-amber-500 rounded-full mr-3"></span>
+                <span className="w-2 h-2 bg-yellow-500 rounded-full mr-3"></span>
                 How do I get paid?
               </h3>
               <p className="text-gray-600 leading-relaxed pl-5">
@@ -298,7 +298,7 @@ const Rider = () => {
             </div>
             <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300">
               <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                <span className="w-2 h-2 bg-amber-500 rounded-full mr-3"></span>
+                <span className="w-2 h-2 bg-yellow-500 rounded-full mr-3"></span>
                 What support do I get?
               </h3>
               <p className="text-gray-600 leading-relaxed pl-5">
@@ -312,19 +312,19 @@ const Rider = () => {
 
       {/* CTA Section */}
       <section
-        className="bg-gradient-to-br from-amber-500 via-amber-600 to-orange-600 text-white py-20 px-4"
+        className="bg-gradient-to-br from-yellow-500 via-yellow-600 to-orange-600 text-white py-20 px-4"
         data-aos="zoom-in"
       >
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">
             Start Earning Today
           </h2>
-          <p className="text-xl md:text-2xl mb-8 text-amber-100 max-w-2xl mx-auto">
+          <p className="text-xl md:text-2xl mb-8 text-yellow-100 max-w-2xl mx-auto">
             Join our network of student pickers and earn while you study
           </p>
           <Link
             to="/register"
-            className="inline-block bg-white text-amber-600 px-10 py-4 rounded-full font-bold text-xl hover:bg-amber-50 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl"
+            className="inline-block bg-white text-yellow-600 px-10 py-4 rounded-full font-bold text-xl hover:bg-yellow-50 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl"
           >
             Apply Now
           </Link>

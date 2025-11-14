@@ -150,7 +150,7 @@ const WithdrawalForm = () => {
             </span>
           </div>
           {limitsData.has_pending_withdrawal && (
-            <div className="flex items-center gap-2 mt-2 text-amber-600">
+            <div className="flex items-center gap-2 mt-2 text-yellow-600">
               <AlertCircle className="w-4 h-4" />
               <span className="text-sm">You have a pending withdrawal</span>
             </div>

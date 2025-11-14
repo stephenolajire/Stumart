@@ -164,13 +164,13 @@ const OtherService = () => {
       />
 
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-yellow-500 to-yellow-600 shadow-lg">
+      <div className="bg-gradient-to-r from-yellow-500 to-yellow-600 mt-30 shadow-lg">
         <Header
           title={`Other Services ${schoolParam ? `in ${schoolParam}` : ""}`}
         />
       </div>
 
-      <div className="w-full mx-auto py-8">
+      <div className="w-full mx-auto pb-8 px-4 md:px-6">
         {/* Search Section */}
         <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
           <div className="flex items-center mb-6">

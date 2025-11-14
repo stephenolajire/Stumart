@@ -85,9 +85,9 @@ const AdminOrderDetail = ({ onBack }) => {
         };
       case "PENDING":
         return {
-          color: "bg-amber-500 text-white",
-          bgColor: "bg-amber-50 border-amber-200",
-          textColor: "text-amber-700",
+          color: "bg-yellow-500 text-white",
+          bgColor: "bg-yellow-50 border-yellow-200",
+          textColor: "text-yellow-700",
           icon: <FaClock className="w-4 h-4" />,
         };
       case "PROCESSING":

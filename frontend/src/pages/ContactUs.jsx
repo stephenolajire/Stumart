@@ -93,10 +93,10 @@ const Contact = () => {
       />
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-amber-500 to-amber-600 text-white py-20">
+      <section className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">Contact Us</h1>
-          <p className="text-xl text-amber-100 mb-8">
+          <p className="text-xl text-yellow-100 mb-8">
             Get in touch with our support team
           </p>
         </div>
@@ -118,7 +118,7 @@ const Contact = () => {
               <div className="space-y-6 mb-8">
                 <div className="flex items-start space-x-4">
                   <div className="flex-shrink-0">
-                    <FaEnvelope className="w-6 h-6 text-amber-500 mt-1" />
+                    <FaEnvelope className="w-6 h-6 text-yellow-500 mt-1" />
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">
@@ -130,7 +130,7 @@ const Contact = () => {
 
                 <div className="flex items-start space-x-4">
                   <div className="flex-shrink-0">
-                    <FaPhone className="w-6 h-6 text-amber-500 mt-1" />
+                    <FaPhone className="w-6 h-6 text-yellow-500 mt-1" />
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">
@@ -142,7 +142,7 @@ const Contact = () => {
 
                 <div className="flex items-start space-x-4">
                   <div className="flex-shrink-0">
-                    <FaMapMarkerAlt className="w-6 h-6 text-amber-500 mt-1" />
+                    <FaMapMarkerAlt className="w-6 h-6 text-yellow-500 mt-1" />
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">
@@ -200,7 +200,7 @@ const Contact = () => {
                     value={formData.name}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 outline-none"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200 outline-none"
                   />
                 </div>
 
@@ -218,7 +218,7 @@ const Contact = () => {
                     value={formData.email}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 outline-none"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200 outline-none"
                   />
                 </div>
 
@@ -236,7 +236,7 @@ const Contact = () => {
                     value={formData.subject}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 outline-none"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200 outline-none"
                   />
                 </div>
 
@@ -254,14 +254,14 @@ const Contact = () => {
                     onChange={handleChange}
                     rows="5"
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 outline-none resize-vertical"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200 outline-none resize-vertical"
                   ></textarea>
                 </div>
 
                 <button
                   type="submit"
                   disabled={status.submitting}
-                  className="w-full bg-gradient-to-r from-amber-500 to-amber-600 text-white font-semibold py-3 px-6 rounded-lg hover:from-amber-600 hover:to-amber-700 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-lg hover:shadow-xl"
+                  className="w-full bg-gradient-to-r from-yellow-500 to-yellow-600 text-white font-semibold py-3 px-6 rounded-lg hover:from-yellow-600 hover:to-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-lg hover:shadow-xl"
                 >
                   {status.submitting ? "Sending..." : "Send Message"}
                 </button>

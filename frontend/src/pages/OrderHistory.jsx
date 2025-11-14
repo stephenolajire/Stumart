@@ -285,9 +285,9 @@ const OrderHistory = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center bg-white rounded-lg shadow-lg p-8 max-w-md mx-4">
           <div className="mb-6">
-            <div className="w-24 h-24 mx-auto mb-4 bg-amber-100 rounded-full flex items-center justify-center">
+            <div className="w-24 h-24 mx-auto mb-4 bg-yellow-100 rounded-full flex items-center justify-center">
               <svg
-                className="w-12 h-12 text-amber-500"
+                className="w-12 h-12 text-yellow-500"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -309,7 +309,7 @@ const OrderHistory = () => {
             </p>
             <Link
               to="/products"
-              className="inline-block bg-amber-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-amber-600 transition-colors duration-200 shadow-md"
+              className="inline-block bg-yellow-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-yellow-600 transition-colors duration-200 shadow-md"
             >
               Shop Now
             </Link>
@@ -337,7 +337,7 @@ const OrderHistory = () => {
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-sm">
                     <span className="font-medium text-gray-700">Order #:</span>
-                    <span className="text-amber-600 font-semibold">
+                    <span className="text-yellow-600 font-semibold">
                       {order.order_number}
                     </span>
                   </div>
@@ -361,14 +361,14 @@ const OrderHistory = () => {
                     <span className="text-sm font-medium text-gray-700">
                       Total:{" "}
                     </span>
-                    <span className="text-lg font-bold text-amber-600">
+                    <span className="text-lg font-bold text-yellow-600">
                       ₦{order.total.toFixed(2)}
                     </span>
                   </div>
                 </div>
 
                 <div className="flex justify-center md:justify-end">
-                  <div className="w-8 h-8 flex items-center justify-center bg-amber-100 rounded-full text-amber-600 font-bold text-lg">
+                  <div className="w-8 h-8 flex items-center justify-center bg-yellow-100 rounded-full text-yellow-600 font-bold text-lg">
                     {expandedOrder === order.order_number ? "−" : "+"}
                   </div>
                 </div>
@@ -384,7 +384,7 @@ const OrderHistory = () => {
                 <div className="bg-white rounded-lg p-4 mb-6">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
                     <svg
-                      className="w-5 h-5 mr-2 text-amber-500"
+                      className="w-5 h-5 mr-2 text-yellow-500"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -448,7 +448,7 @@ const OrderHistory = () => {
                 <div className="bg-white rounded-lg p-4 mb-6">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
                     <svg
-                      className="w-5 h-5 mr-2 text-amber-500"
+                      className="w-5 h-5 mr-2 text-yellow-500"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -487,7 +487,7 @@ const OrderHistory = () => {
                             <h4 className="font-semibold text-gray-800 mb-1">
                               {item.product.name}
                             </h4>
-                            <p className="text-sm text-amber-600 mb-2">
+                            <p className="text-sm text-yellow-600 mb-2">
                               Sold by: {item.vendor}
                             </p>
                             {item.size && (
@@ -501,7 +501,7 @@ const OrderHistory = () => {
                               </p>
                             )}
                             <div className="flex justify-between items-center mt-2">
-                              <p className="font-semibold text-amber-600">
+                              <p className="font-semibold text-yellow-600">
                                 ₦{item.price.toFixed(2)}
                               </p>
                               <p className="text-sm text-gray-600">
@@ -542,7 +542,7 @@ const OrderHistory = () => {
                       <span className="font-semibold text-gray-800">
                         Total:
                       </span>
-                      <span className="font-bold text-amber-600 text-lg">
+                      <span className="font-bold text-yellow-600 text-lg">
                         ₦{order.total.toFixed(2)}
                       </span>
                     </div>
@@ -569,7 +569,7 @@ const OrderHistory = () => {
                       </span>
                     ) : (
                       <button
-                        className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                         onClick={() => setReviewOrder(order)}
                         disabled={submitReviewMutation.isPending}
                       >
@@ -629,8 +629,8 @@ const OrderHistory = () => {
                   onClick={() => paginate(number)}
                   className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
                     currentPage === number
-                      ? "bg-amber-500 text-white"
-                      : "bg-white text-gray-700 border border-gray-300 hover:bg-amber-50 hover:text-amber-600"
+                      ? "bg-yellow-500 text-white"
+                      : "bg-white text-gray-700 border border-gray-300 hover:bg-yellow-50 hover:text-yellow-600"
                   }`}
                 >
                   {number}

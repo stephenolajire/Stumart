@@ -92,8 +92,8 @@ const Dashboard = ({ onOrderSelect }) => {
       title: "Active Deliveries",
       value: dashboardData.stats.activeDeliveries,
       icon: Truck,
-      color: "bg-orange-500",
-      bgColor: "bg-orange-50",
+      color: "bg-yellow-500",
+      bgColor: "bg-yellow-50",
     },
     {
       title: "Total Earnings",

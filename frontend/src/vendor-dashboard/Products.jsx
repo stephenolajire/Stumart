@@ -31,7 +31,7 @@ const Products = ({ products, onDeleteProduct }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6 w-full">
+    <div className="bg-white rounded-lg shadow-lg p-6 w-full px-4 md:px-6">
       {/* Header Controls */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         {/* Add Product Button */}

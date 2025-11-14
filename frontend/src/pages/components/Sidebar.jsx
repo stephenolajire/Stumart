@@ -69,9 +69,9 @@ const Sidebar = () => {
   };
 
   return (
-    <div className="max-h-screen h-screen bg-gradient-to-b from-orange-50 to-orange-100 border-r border-orange-200 shadow-lg overflow-hidden">
+    <div className="max-h-screen h-screen bg-gradient-to-b from-yellow-50 to-yellow-100 border-r border-yellow-200 shadow-lg overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-yellow-500 to-amber-500 text-white p-4 shadow-md">
+      <div className="bg-gradient-to-r from-yellow-500 to-yellow-500 text-white p-4 shadow-md">
         <h2 className="text-xl font-bold text-center">Categories</h2>
         <div className="w-12 h-1 bg-white/30 mx-auto mt-2 rounded-full"></div>
       </div>
@@ -85,8 +85,8 @@ const Sidebar = () => {
               className={`group relative mx-3 my-2 rounded-xl transition-all duration-300 cursor-pointer
                 ${
                   activeCategory === "All"
-                    ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg transform scale-105"
-                    : "bg-white hover:bg-orange-50 hover:shadow-md hover:transform hover:scale-102"
+                    ? "bg-gradient-to-r from-yellow-500 to-yellow-500 text-white shadow-lg transform scale-105"
+                    : "bg-white hover:bg-yellow-50 hover:shadow-md hover:transform hover:scale-102"
                 }`}
               onClick={() =>
                 setActiveCategory(activeCategory === "All" ? null : "All")
@@ -99,7 +99,7 @@ const Sidebar = () => {
                     ${
                       activeCategory === "All"
                         ? "ring-2 ring-white/50"
-                        : "ring-1 ring-orange-200"
+                        : "ring-1 ring-yellow-200"
                     }`}
                 >
                   <img
@@ -111,7 +111,7 @@ const Sidebar = () => {
                       e.target.nextSibling.style.display = "flex";
                     }}
                   />
-                  <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-amber-500 rounded-lg items-center justify-center text-white font-bold text-lg hidden">
+                  <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-lg items-center justify-center text-white font-bold text-lg hidden">
                     A
                   </div>
                 </div>
@@ -123,7 +123,7 @@ const Sidebar = () => {
                       ${
                         activeCategory === "All"
                           ? "text-white"
-                          : "text-gray-800 group-hover:text-orange-600"
+                          : "text-gray-800 group-hover:text-yellow-600"
                       }`}
                   >
                     All Categories
@@ -146,7 +146,7 @@ const Sidebar = () => {
                     ${
                       activeCategory === "All"
                         ? "text-white rotate-90"
-                        : "text-gray-400 group-hover:text-orange-500 group-hover:translate-x-1"
+                        : "text-gray-400 group-hover:text-yellow-500 group-hover:translate-x-1"
                     }`}
                 >
                   <svg
@@ -171,7 +171,7 @@ const Sidebar = () => {
               )}
 
               {/* Hover glow effect */}
-              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-orange-500/0 to-amber-500/0 group-hover:from-orange-500/5 group-hover:to-amber-500/5 transition-all duration-300 pointer-events-none"></div>
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-yellow-500/0 to-yellow-500/0 group-hover:from-yellow-500/5 group-hover:to-yellow-500/5 transition-all duration-300 pointer-events-none"></div>
             </div>
           </Link>
 
@@ -182,8 +182,8 @@ const Sidebar = () => {
               className={`group relative mx-3 my-2 rounded-xl transition-all duration-300 cursor-pointer
                 ${
                   activeCategory === category.name
-                    ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg transform scale-105"
-                    : "bg-white hover:bg-orange-50 hover:shadow-md hover:transform hover:scale-102"
+                    ? "bg-gradient-to-r from-yellow-500 to-yellow-500 text-white shadow-lg transform scale-105"
+                    : "bg-white hover:bg-yellow-50 hover:shadow-md hover:transform hover:scale-102"
                 }`}
               onClick={() => {
                 setActiveCategory(
@@ -202,7 +202,7 @@ const Sidebar = () => {
                     ${
                       activeCategory === category.name
                         ? "ring-2 ring-white/50"
-                        : "ring-1 ring-orange-200"
+                        : "ring-1 ring-yellow-200"
                     }
                   `}
                 >
@@ -216,7 +216,7 @@ const Sidebar = () => {
                     }}
                   />
                   {/* Fallback div with gradient background */}
-                  <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-amber-500 rounded-lg items-center justify-center text-white font-bold text-lg hidden">
+                  <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-lg items-center justify-center text-white font-bold text-lg hidden">
                     {category.name.charAt(0)}
                   </div>
                 </div>
@@ -228,7 +228,7 @@ const Sidebar = () => {
                       ${
                         activeCategory === category.name
                           ? "text-white"
-                          : "text-gray-800 group-hover:text-orange-600"
+                          : "text-gray-800 group-hover:text-yellow-600"
                       }
                     `}
                   >
@@ -253,7 +253,7 @@ const Sidebar = () => {
                     ${
                       activeCategory === category.name
                         ? "text-white rotate-90"
-                        : "text-gray-400 group-hover:text-orange-500 group-hover:translate-x-1"
+                        : "text-gray-400 group-hover:text-yellow-500 group-hover:translate-x-1"
                     }`}
                 >
                   <svg
@@ -278,14 +278,14 @@ const Sidebar = () => {
               )}
 
               {/* Hover glow effect */}
-              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-orange-500/0 to-amber-500/0 group-hover:from-orange-500/5 group-hover:to-amber-500/5 transition-all duration-300 pointer-events-none"></div>
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-yellow-500/0 to-yellow-500/0 group-hover:from-yellow-500/5 group-hover:to-yellow-500/5 transition-all duration-300 pointer-events-none"></div>
             </div>
           ))}
         </div>
 
         {/* Bottom decoration */}
         {/* <div className="px-4 pb-4">
-          <div className="bg-gradient-to-r from-orange-500 to-amber-500 rounded-xl p-4 text-white text-center">
+          <div className="bg-gradient-to-r from-yellow-500 to-yellow-500 rounded-xl p-4 text-white text-center">
             <div className="text-sm font-medium mb-1">Explore More</div>
             <div className="text-xs opacity-90">Discover amazing deals</div>
             <div className="flex justify-center mt-2">

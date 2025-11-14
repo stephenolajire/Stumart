@@ -53,11 +53,6 @@ const Login = () => {
     e.preventDefault();
     setIsLoading(true);
     setThrottleError(null);
-    console.log("🔍 API Base URL:", api.defaults.baseURL);
-    console.log("🔍 Full URL:", api.defaults.baseURL + "/token/");
-    console.log("🔍 Environment:", import.meta.env.MODE);
-    console.log("🔍 VITE_API_URL_PROD:", import.meta.env.VITE_API_URL_PROD);
-    console.log("🔍 VITE_API_URL_DEV:", import.meta.env.VITE_API_URL_DEV);
 
     try {
       const response = await api.post("/token/", formData);
@@ -220,7 +215,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 flex items-center justify-center px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-orange-50 to-yellow-50 flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
         {/* Logo Section */}
         <div className="text-center pt-8 pb-6 px-6">
@@ -265,7 +260,7 @@ const Login = () => {
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="Enter your email"
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
                 required
               />
             </div>
@@ -285,7 +280,7 @@ const Login = () => {
                   value={formData.password}
                   onChange={handleChange}
                   placeholder="Enter your password"
-                  className="w-full px-4 py-3 pr-12 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
+                  className="w-full px-4 py-3 pr-12 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
                   required
                 />
                 <button
@@ -306,7 +301,7 @@ const Login = () => {
             <div className="text-right">
               <NavLink
                 to="/forgot-password"
-                className="text-sm text-amber-600 hover:text-amber-700 font-medium transition-colors duration-200"
+                className="text-sm text-yellow-600 hover:text-yellow-700 font-medium transition-colors duration-200"
               >
                 Forgot Password?
               </NavLink>
@@ -314,7 +309,7 @@ const Login = () => {
 
             <button
               type="submit"
-              className="w-full bg-amber-500 hover:bg-amber-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] mt-6"
+              className="w-full bg-yellow-500 hover:bg-yellow-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] mt-6"
               disabled={isLoading || throttleWaitTime > 0}
             >
               {isLoading
@@ -328,7 +323,7 @@ const Login = () => {
               Don't have an account?{" "}
               <NavLink
                 to="/register"
-                className="text-amber-600 hover:text-amber-700 font-medium transition-colors duration-200"
+                className="text-yellow-600 hover:text-yellow-700 font-medium transition-colors duration-200"
               >
                 Register here
               </NavLink>

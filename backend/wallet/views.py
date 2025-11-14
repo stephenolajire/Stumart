@@ -499,13 +499,16 @@ class PaystackPaymentVerifyView(APIView):
                     'status': 'failed',
                     'message': 'Transaction not found'
                 }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Get the order (MOVED OUTSIDE THE ATOMIC BLOCK)
+            order = transaction.order
                 
             # Idempotency check - if transaction is already completed, don't process again
             if transaction.status == 'COMPLETED':
                 return Response({
                     'status': 'success',
                     'message': 'Payment already verified',
-                    # 'order_number': order.order_number
+                    'order_number': order.order_number  # Now 'order' is defined
                 }, status=status.HTTP_200_OK)
             
             # Only verify with Paystack if transaction hasn't been completed
@@ -550,8 +553,6 @@ class PaystackPaymentVerifyView(APIView):
                 transaction_obj.status = 'COMPLETED'
                 transaction_obj.payment_method = 'PAYSTACK'
                 transaction_obj.save()
-
-                order = transaction_obj.order
                 
                 # Check if order is already paid
                 if order.order_status != 'PAID':
@@ -624,21 +625,6 @@ class PaystackPaymentVerifyView(APIView):
                         logger.info(f"Sent out-of-stock notification to vendor {vendor.id}")
                     except Exception as e:
                         logger.error(f"Failed to send out-of-stock email to vendor {vendor.id}: {str(e)}")
-
-                # Update vendor wallets - with better error handling
-                # for vendor_id, amount in vendor_totals.items():
-                #     try:
-                #         vendor = Vendor.objects.get(id=vendor_id)
-                #         wallet, created = Wallet.objects.get_or_create(
-                #             vendor=vendor,
-                #             defaults={'balance': 0}
-                #         )
-                #         wallet.balance += amount
-                #         wallet.save()
-                #         logger.info(f"Updated wallet for vendor {vendor_id}, new balance: {wallet.balance}")
-                #     except Vendor.DoesNotExist:
-                #         logger.error(f"Vendor with ID {vendor_id} not found when processing payment")
-                #         continue
 
                 # Send order notifications to all vendors - improved implementation
                 for vendor in vendors_to_notify:

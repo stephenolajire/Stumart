@@ -141,7 +141,7 @@ const MobileNav = () => {
             <Link to="/">
               <div className="flex items-center space-x-1">
                 {/* <span className="text-2xl font-bold text-gray-900">STUMART</span> */}
-                <div className="w-10 h-10 bg-orange-500 rounded-full">
+                <div className="w-10 h-10 bg-yellow-500 rounded-full">
                   <img
                     src="/stumart.jpeg"
                     alt="logo"
@@ -157,7 +157,7 @@ const MobileNav = () => {
             {/* User Account */}
             <div className="relative">
               <div
-                className="flex items-center space-x-2 cursor-pointer hover:text-amber-500 transition-colors"
+                className="flex items-center space-x-2 cursor-pointer hover:text-yellow-500 transition-colors"
                 onClick={() => setAccountDropdownOpen(!accountDropdownOpen)}
               >
                 <User className="w-5 h-5" />
@@ -246,7 +246,7 @@ const MobileNav = () => {
               <button className="relative p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors duration-200">
                 <ShoppingCart className="w-6 h-6" />
                 {/* Cart Badge */}
-                <span className="absolute top-[-1px] right-[1px] bg-orange-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                <span className="absolute top-[-1px] right-[1px] bg-yellow-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
                   {count}
                 </span>
               </button>
@@ -286,7 +286,7 @@ const MobileNav = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyPress={handleKeyPress}
               disabled={isSearching}
-              className={`block w-full pl-10 pr-16 py-2.5 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:bg-white transition-all duration-200 text-sm placeholder-gray-500 ${
+              className={`block w-full pl-10 pr-16 py-2.5 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 focus:bg-white transition-all duration-200 text-sm placeholder-gray-500 ${
                 isSearching ? "opacity-50 cursor-not-allowed" : ""
               }`}
               placeholder="Search products, brands and categories"
@@ -299,7 +299,7 @@ const MobileNav = () => {
                 className={`px-3 py-1 mr-1 text-sm font-medium rounded-md transition-colors ${
                   isSearching
                     ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                    : "bg-orange-500 text-white hover:bg-orange-600"
+                    : "bg-yellow-500 text-white hover:bg-yellow-600"
                 }`}
               >
                 {isSearching ? "Searching..." : "Go"}

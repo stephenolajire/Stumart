@@ -56,7 +56,7 @@ const HomeCategory = () => {
                 </h2>
                 <button
                   onClick={() => handleSeeMore(categoryData.category_name)}
-                  className="flex items-center text-orange-500 hover:text-orange-600 transition-colors"
+                  className="flex items-center text-yellow-500 hover:text-yellow-600 transition-colors"
                 >
                   <span className="mr-1">See All</span>
                   <ChevronRight size={16} />

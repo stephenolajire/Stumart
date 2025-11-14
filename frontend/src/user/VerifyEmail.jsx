@@ -36,7 +36,7 @@ const VerifyEmail = () => {
         icon: "error",
         title: "OTP Expired",
         text: "The verification code has expired. Please request a new one.",
-        confirmButtonColor: "#f59e0b", // amber-500
+        confirmButtonColor: "#f59e0b", // yellow-500
       }).then(() => {
         navigate("/register");
       });
@@ -105,7 +105,7 @@ const VerifyEmail = () => {
         icon: "error",
         title: "Invalid OTP",
         text: "Please enter a complete 6-digit code",
-        confirmButtonColor: "#f59e0b", // amber-500
+        confirmButtonColor: "#f59e0b", // yellow-500
       });
       return;
     }
@@ -124,7 +124,7 @@ const VerifyEmail = () => {
         icon: "success",
         title: "Email Verified!",
         text: "Your email has been verified successfully.",
-        confirmButtonColor: "#f59e0b", // amber-500
+        confirmButtonColor: "#f59e0b", // yellow-500
       });
 
       navigate("/login");
@@ -141,14 +141,14 @@ const VerifyEmail = () => {
           text: `Please wait ${waitSeconds} seconds before trying again.`,
           timer: waitSeconds * 1000,
           timerProgressBar: true,
-          confirmButtonColor: "#f59e0b", // amber-500
+          confirmButtonColor: "#f59e0b", // yellow-500
         });
       } else {
         Swal.fire({
           icon: "error",
           title: "Verification Failed",
           text: error.response?.data?.error || "Please try again",
-          confirmButtonColor: "#f59e0b", // amber-500
+          confirmButtonColor: "#f59e0b", // yellow-500
         });
       }
     } finally {
@@ -172,7 +172,7 @@ const VerifyEmail = () => {
         icon: "success",
         title: "OTP Resent",
         text: "A new verification code has been sent to your email.",
-        confirmButtonColor: "#f59e0b", // amber-500
+        confirmButtonColor: "#f59e0b", // yellow-500
       });
     } catch (error) {
       if (error.response?.status === 429) {
@@ -185,14 +185,14 @@ const VerifyEmail = () => {
           text: `Please wait ${waitSeconds} seconds before requesting a new code.`,
           timer: waitSeconds * 1000,
           timerProgressBar: true,
-          confirmButtonColor: "#f59e0b", // amber-500
+          confirmButtonColor: "#f59e0b", // yellow-500
         });
       } else {
         Swal.fire({
           icon: "error",
           title: "Failed to Resend",
           text: error.response?.data?.error || "Failed to send new code",
-          confirmButtonColor: "#f59e0b", // amber-500
+          confirmButtonColor: "#f59e0b", // yellow-500
         });
       }
     } finally {
@@ -210,7 +210,7 @@ const VerifyEmail = () => {
         icon: "info",
         title: "Please Wait",
         text: `You can request a new code in ${timeString}`,
-        confirmButtonColor: "#f59e0b", // amber-500
+        confirmButtonColor: "#f59e0b", // yellow-500
       });
       return;
     }
@@ -232,11 +232,11 @@ const VerifyEmail = () => {
           </div>
 
           {/* Timer */}
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
             <div className="flex items-center justify-center">
               <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
-                <span className="text-amber-700 font-medium">
+                <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+                <span className="text-yellow-700 font-medium">
                   Time remaining: {formatTimeLeft()}
                 </span>
               </div>
@@ -270,7 +270,7 @@ const VerifyEmail = () => {
                   value={digit}
                   onChange={(e) => handleChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
-                  className="w-12 h-12 text-center text-xl font-semibold border-2 border-gray-300 rounded-lg focus:border-amber-500 focus:ring-2 focus:ring-amber-200 focus:outline-none transition-all duration-200 bg-white"
+                  className="w-12 h-12 text-center text-xl font-semibold border-2 border-gray-300 rounded-lg focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 focus:outline-none transition-all duration-200 bg-white"
                   required
                   onPaste={(e) => {
                     e.preventDefault();
@@ -290,7 +290,7 @@ const VerifyEmail = () => {
               className={`w-full py-3 px-4 rounded-lg font-medium text-white transition-all duration-200 ${
                 isLoading || timeLeft === 0 || throttleWaitTime > 0
                   ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-amber-500 hover:bg-amber-600 active:bg-amber-700 focus:ring-2 focus:ring-amber-200 focus:outline-none"
+                  : "bg-yellow-500 hover:bg-yellow-600 active:bg-yellow-700 focus:ring-2 focus:ring-yellow-200 focus:outline-none"
               } transform hover:scale-[1.02] active:scale-[0.98]`}
               disabled={isLoading || timeLeft === 0 || throttleWaitTime > 0}
             >
@@ -312,7 +312,7 @@ const VerifyEmail = () => {
               className={`w-full py-3 px-4 rounded-lg font-medium border-2 transition-all duration-200 ${
                 isLoading || timeLeft > 0 || throttleWaitTime > 0
                   ? "border-gray-300 text-gray-400 cursor-not-allowed bg-gray-50"
-                  : "border-amber-500 text-amber-600 hover:bg-amber-50 active:bg-amber-100 focus:ring-2 focus:ring-amber-200 focus:outline-none"
+                  : "border-yellow-500 text-yellow-600 hover:bg-yellow-50 active:bg-yellow-100 focus:ring-2 focus:ring-yellow-200 focus:outline-none"
               } transform hover:scale-[1.02] active:scale-[0.98]`}
               onClick={handleResendClick}
               disabled={isLoading || timeLeft > 0 || throttleWaitTime > 0}

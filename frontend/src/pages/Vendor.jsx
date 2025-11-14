@@ -30,7 +30,7 @@ const Vendors = () => {
       />
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-amber-500 to-amber-600 text-white py-24">
+      <section className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white py-24">
         <div
           className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center"
           data-aos="fade-up"
@@ -38,13 +38,13 @@ const Vendors = () => {
           <h1 className="text-5xl md:text-6xl font-bold mb-6">
             Become a StuMart Vendor
           </h1>
-          <p className="text-xl md:text-2xl text-amber-100 mb-10 max-w-3xl mx-auto">
+          <p className="text-xl md:text-2xl text-yellow-100 mb-10 max-w-3xl mx-auto">
             Expand your business reach across campus and connect with thousands
             of students
           </p>
           <NavLink
             to="/register"
-            className="inline-block bg-white text-amber-600 font-bold py-4 px-8 rounded-full hover:bg-gray-100 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
+            className="inline-block bg-white text-yellow-600 font-bold py-4 px-8 rounded-full hover:bg-gray-100 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
           >
             Start Selling Today
           </NavLink>
@@ -66,8 +66,8 @@ const Vendors = () => {
               data-aos="fade-up"
               data-aos-delay="100"
             >
-              <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <FaUsers className="text-2xl text-amber-600" />
+              <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <FaUsers className="text-2xl text-yellow-600" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-4">
                 Access Student Market
@@ -82,8 +82,8 @@ const Vendors = () => {
               data-aos="fade-up"
               data-aos-delay="200"
             >
-              <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <FaTruck className="text-2xl text-amber-600" />
+              <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <FaTruck className="text-2xl text-yellow-600" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-4">
                 Easy Delivery
@@ -98,8 +98,8 @@ const Vendors = () => {
               data-aos="fade-up"
               data-aos-delay="300"
             >
-              <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <FaMoneyBillWave className="text-2xl text-amber-600" />
+              <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <FaMoneyBillWave className="text-2xl text-yellow-600" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-4">
                 Quick Payments
@@ -113,8 +113,8 @@ const Vendors = () => {
               data-aos="fade-up"
               data-aos-delay="400"
             >
-              <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <FaChartLine className="text-2xl text-amber-600" />
+              <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <FaChartLine className="text-2xl text-yellow-600" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-4">
                 Business Growth
@@ -142,7 +142,7 @@ const Vendors = () => {
               data-aos="fade-right"
               data-aos-delay="100"
             >
-              <div className="w-20 h-20 bg-gradient-to-r from-amber-500 to-amber-600 rounded-full flex items-center justify-center mx-auto mb-6 text-white text-2xl font-bold shadow-lg">
+              <div className="w-20 h-20 bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-full flex items-center justify-center mx-auto mb-6 text-white text-2xl font-bold shadow-lg">
                 1
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-4">Register</h3>
@@ -155,7 +155,7 @@ const Vendors = () => {
               data-aos="fade-right"
               data-aos-delay="200"
             >
-              <div className="w-20 h-20 bg-gradient-to-r from-amber-500 to-amber-600 rounded-full flex items-center justify-center mx-auto mb-6 text-white text-2xl font-bold shadow-lg">
+              <div className="w-20 h-20 bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-full flex items-center justify-center mx-auto mb-6 text-white text-2xl font-bold shadow-lg">
                 2
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-4">
@@ -170,7 +170,7 @@ const Vendors = () => {
               data-aos="fade-right"
               data-aos-delay="300"
             >
-              <div className="w-20 h-20 bg-gradient-to-r from-amber-500 to-amber-600 rounded-full flex items-center justify-center mx-auto mb-6 text-white text-2xl font-bold shadow-lg">
+              <div className="w-20 h-20 bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-full flex items-center justify-center mx-auto mb-6 text-white text-2xl font-bold shadow-lg">
                 3
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-4">
@@ -185,7 +185,7 @@ const Vendors = () => {
               data-aos="fade-right"
               data-aos-delay="400"
             >
-              <div className="w-20 h-20 bg-gradient-to-r from-amber-500 to-amber-600 rounded-full flex items-center justify-center mx-auto mb-6 text-white text-2xl font-bold shadow-lg">
+              <div className="w-20 h-20 bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-full flex items-center justify-center mx-auto mb-6 text-white text-2xl font-bold shadow-lg">
                 4
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-4">
@@ -207,8 +207,8 @@ const Vendors = () => {
           </h2>
           <div className="space-y-8">
             <div className="bg-white rounded-2xl p-8 shadow-lg flex items-start space-x-6">
-              <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <FaStore className="text-xl text-amber-600" />
+              <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <FaStore className="text-xl text-yellow-600" />
               </div>
               <div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">
@@ -220,8 +220,8 @@ const Vendors = () => {
               </div>
             </div>
             <div className="bg-white rounded-2xl p-8 shadow-lg flex items-start space-x-6">
-              <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <FaShieldAlt className="text-xl text-amber-600" />
+              <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <FaShieldAlt className="text-xl text-yellow-600" />
               </div>
               <div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">
@@ -250,12 +250,12 @@ const Vendors = () => {
               <p className="text-4xl font-bold text-green-600 mb-2">₦0</p>
               <span className="text-green-700 font-medium">Free to join</span>
             </div>
-            <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-2xl p-8 text-center border-2 border-amber-200">
+            <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-2xl p-8 text-center border-2 border-yellow-200">
               <h3 className="text-xl font-bold text-gray-900 mb-4">
                 Commission Rate
               </h3>
-              <p className="text-4xl font-bold text-amber-600 mb-2">10%</p>
-              <span className="text-amber-700 font-medium">
+              <p className="text-4xl font-bold text-yellow-600 mb-2">10%</p>
+              <span className="text-yellow-700 font-medium">
                 Per successful order
               </span>
             </div>
@@ -312,17 +312,17 @@ const Vendors = () => {
 
       {/* CTA Section */}
       <section
-        className="py-20 bg-gradient-to-r from-amber-500 to-amber-600 text-white"
+        className="py-20 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white"
         data-aos="zoom-in"
       >
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-4xl font-bold mb-6">Ready to Start Selling?</h2>
-          <p className="text-xl text-amber-100 mb-10">
+          <p className="text-xl text-yellow-100 mb-10">
             Join our growing community of campus vendors today
           </p>
           <NavLink
             to="/register"
-            className="inline-block bg-white text-amber-600 font-bold py-4 px-8 rounded-full hover:bg-gray-100 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
+            className="inline-block bg-white text-yellow-600 font-bold py-4 px-8 rounded-full hover:bg-gray-100 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
           >
             Become a Vendor
           </NavLink>

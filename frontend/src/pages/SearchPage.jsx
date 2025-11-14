@@ -142,7 +142,7 @@ const SearchPage = () => {
                 We couldn't find any products matching your search criteria.
               </p>
               <button
-                className="inline-flex items-center px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-lg transition-colors duration-200"
+                className="inline-flex items-center px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-medium rounded-lg transition-colors duration-200"
                 onClick={() => navigate("/")}
               >
                 <FaArrowLeft className="mr-2" /> Back to Home
@@ -163,7 +163,7 @@ const SearchPage = () => {
             <p className="text-gray-600 lg:text-lg text-base">
               Showing results for "{searchParams?.productName || searchQuery}"
               {searchParams?.count !== undefined && (
-                <span className="ml-2 text-sm bg-amber-100 text-amber-800 px-2 py-1 rounded-full">
+                <span className="ml-2 text-sm bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
                   {searchParams.count} found
                 </span>
               )}
@@ -186,13 +186,13 @@ const SearchPage = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                  <FaFilter className="mr-2 text-amber-500" />
+                  <FaFilter className="mr-2 text-yellow-500" />
                   Filter by Shop
                 </h3>
                 <select
                   value={selectedShop}
                   onChange={(e) => handleShopFilter(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white text-gray-900 shadow-sm transition-colors duration-200"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 bg-white text-gray-900 shadow-sm transition-colors duration-200"
                 >
                   {shopNames.map((shop) => (
                     <option key={shop.id} value={shop.name}>
@@ -208,10 +208,10 @@ const SearchPage = () => {
                 </h3>
                 <div className="space-y-4">
                   <div className="flex justify-between items-center text-sm font-medium text-gray-700">
-                    <span className="px-3 py-1 bg-amber-100 text-amber-800 rounded-full">
+                    <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full">
                       {formatPrice(priceRange[0])}
                     </span>
-                    <span className="px-3 py-1 bg-amber-100 text-amber-800 rounded-full">
+                    <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full">
                       {formatPrice(priceRange[1])}
                     </span>
                   </div>
@@ -227,7 +227,7 @@ const SearchPage = () => {
 
                     {/* Active range */}
                     <div
-                      className="absolute top-1/2 h-2 bg-amber-500 rounded-full transform -translate-y-1/2"
+                      className="absolute top-1/2 h-2 bg-yellow-500 rounded-full transform -translate-y-1/2"
                       style={{
                         left: `${progress.start}%`,
                         width: `${progress.end - progress.start}%`,
@@ -297,7 +297,7 @@ const SearchPage = () => {
                 <div className="space-y-3">
                   <button
                     onClick={clearAllFilters}
-                    className="w-full px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-lg transition-colors duration-200"
+                    className="w-full px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-medium rounded-lg transition-colors duration-200"
                   >
                     Clear All Filters
                   </button>

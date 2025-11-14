@@ -81,7 +81,7 @@ const SidebarNavigation = ({ close, openMenu }) => {
           flex items-center justify-between px-4 py-3 cursor-pointer transition-all duration-200
           ${
             isActive
-              ? "bg-amber-50 border-r-4 border-amber-500"
+              ? "bg-yellow-50 border-r-4 border-yellow-500"
               : "hover:bg-gray-50"
           }
           ${isHeader ? "border-b border-gray-200" : ""}
@@ -91,7 +91,7 @@ const SidebarNavigation = ({ close, openMenu }) => {
           {item.icon && (
             <item.icon
               className={`w-5 h-5 ${
-                isActive ? "text-amber-500" : "text-gray-600"
+                isActive ? "text-yellow-500" : "text-gray-600"
               }`}
             />
           )}
@@ -100,7 +100,7 @@ const SidebarNavigation = ({ close, openMenu }) => {
               isHeader
                 ? "font-semibold text-gray-800 uppercase text-xs tracking-wide"
                 : isActive
-                ? "text-amber-600 font-medium"
+                ? "text-yellow-600 font-medium"
                 : "text-gray-700"
             }`}
           >
@@ -111,7 +111,7 @@ const SidebarNavigation = ({ close, openMenu }) => {
         {hasChevron && (
           <ChevronRight
             className={`w-4 h-4 transition-colors ${
-              isActive ? "text-amber-500" : "text-gray-400"
+              isActive ? "text-yellow-500" : "text-gray-400"
             }`}
           />
         )}
@@ -172,7 +172,7 @@ const SidebarNavigation = ({ close, openMenu }) => {
           </h3>
           {/* Replace Link with button for compatibility */}
           <Link to="/products">
-            <button onClick={()=>{close()}} className="text-xs text-amber-500 hover:text-amber-600 font-medium transition-colors">
+            <button onClick={()=>{close()}} className="text-xs text-yellow-500 hover:text-yellow-600 font-medium transition-colors">
               See All
             </button>
           </Link>

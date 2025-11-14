@@ -159,7 +159,7 @@ export default function OrderDetails() {
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-center py-20">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mx-auto mb-4"></div>
               <p className="text-gray-600">Loading order details...</p>
             </div>
           </div>
@@ -182,7 +182,7 @@ export default function OrderDetails() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <button
-                  className="bg-amber-500 hover:bg-amber-600 text-white px-6 py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                  className="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
                   onClick={handleRefresh}
                   disabled={isRefetching}
                 >
@@ -231,7 +231,7 @@ export default function OrderDetails() {
                 {isRefetching && (
                   <RefreshCw
                     size={20}
-                    className="text-amber-500 animate-spin"
+                    className="text-yellow-500 animate-spin"
                   />
                 )}
               </div>
@@ -276,7 +276,7 @@ export default function OrderDetails() {
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <Package className="text-amber-500" size={20} />
+                  <Package className="text-yellow-500" size={20} />
                   <h2 className="text-xl font-bold text-gray-900">
                     Items ({totalItems})
                   </h2>
@@ -322,7 +322,7 @@ export default function OrderDetails() {
                             </p>
                           )}
                           {item.vendor && (
-                            <p className="text-sm text-amber-600">
+                            <p className="text-sm text-yellow-600">
                               Sold by: {item.vendor}
                             </p>
                           )}
@@ -350,7 +350,7 @@ export default function OrderDetails() {
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <Truck className="text-amber-500" size={20} />
+                  <Truck className="text-yellow-500" size={20} />
                   <h2 className="text-xl font-bold text-gray-900">
                     Shipping Details
                   </h2>
@@ -436,7 +436,7 @@ export default function OrderDetails() {
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <CreditCard className="text-amber-500" size={20} />
+                  <CreditCard className="text-yellow-500" size={20} />
                   <h2 className="text-xl font-bold text-gray-900">
                     Payment Information
                   </h2>
@@ -516,7 +516,7 @@ export default function OrderDetails() {
                     <div className="border-t border-gray-300 pt-3">
                       <div className="flex justify-between items-center">
                         <p className="text-lg font-bold text-gray-900">Total</p>
-                        <p className="text-2xl font-bold text-amber-600">
+                        <p className="text-2xl font-bold text-yellow-600">
                           ₦{orderData.total.toFixed(2)}
                         </p>
                       </div>
@@ -531,7 +531,7 @@ export default function OrderDetails() {
         {/* Order Actions - Outside the print area */}
         <div className="mt-8 flex flex-wrap gap-4 justify-center">
           <button
-            className="bg-amber-500 hover:bg-amber-600 text-white px-6 py-3 rounded-lg transition-colors font-semibold"
+            className="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-lg transition-colors font-semibold"
             onClick={handlePrint}
           >
             Print Order
