@@ -168,7 +168,7 @@ const ShoppingCart = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8 mt-31 md:mt-0">
+    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8 mt-38 md:mt-0">
       <div className="w-full mx-auto">
         {/* Header Section */}
         <div className="mb-8">

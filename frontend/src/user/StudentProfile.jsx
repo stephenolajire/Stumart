@@ -192,7 +192,7 @@ const StudentProfile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br mt-5 md:mt-0 from-yellow-50 via-orange-50 to-yellow-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br mt-12 md:mt-0 from-yellow-50 via-orange-50 to-yellow-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">

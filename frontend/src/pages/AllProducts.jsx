@@ -386,7 +386,7 @@ const AllProducts = () => {
     allProductsError?.message || "Failed to load products. Please try again.";
 
   return (
-    <div className="min-h-screen bg-gray-50 mt-31 lg:mt-0 py-4 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 mt-38 lg:mt-0 py-4 px-4 sm:px-6 lg:px-8">
       <SEO
         title="All Products - StuMart | Campus Marketplace"
         description="Browse all products available on StuMart campus marketplace. Find textbooks, electronics, food, fashion, and more from students and vendors across Nigerian universities. Filter by school, category, price, and location."

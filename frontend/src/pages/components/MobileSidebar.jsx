@@ -121,7 +121,7 @@ const SidebarNavigation = ({ close, openMenu }) => {
 
   return (
     <div
-      className="w-80 absolute top-16 z-50 right-0 bg-white shadow-lg border-r border-gray-200 h-screen overflow-y-auto"
+      className="w-80 absolute top-23  z-100 right-0 bg-white shadow-lg border-r border-gray-200 h-screen overflow-y-auto"
       data-aos={openMenu ? "fade-in" : "fade-out"}
       data-aos-delay="600"
     >

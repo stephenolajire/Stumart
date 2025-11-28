@@ -1,4 +1,4 @@
-import React, { use, useContext, useState } from "react";
+import React, { useContext, useState } from "react";
 import {
   Menu,
   Search,
@@ -12,6 +12,8 @@ import {
   ChevronUp,
   X,
   MessageCircle,
+  Zap,
+  Phone,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { GlobalContext } from "../../constant/GlobalContext";
@@ -61,9 +63,6 @@ const MobileNav = () => {
       const response = await api.get("/search-products/", {
         params: {
           product_name: searchQuery.trim(),
-          // You can add state and institution filters if needed
-          // state: userState,
-          // institution: userInstitution,
         },
       });
 
@@ -79,7 +78,7 @@ const MobileNav = () => {
             },
           },
         });
-        window.location.reload()
+        window.location.reload();
       } else if (response.data.status === "not_found") {
         // Handle no results found
         navigate("/search-results", {
@@ -133,14 +132,39 @@ const MobileNav = () => {
 
   return (
     <header className="bg-white border-b border-gray-200 shadow-sm lg:hidden">
-      <div className="w-[100%] mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Top Banner - Mobile Optimized */}
+      <div className="bg-gradient-to-r from-purple-600 to-yellow-500 text-white text-xs py-2 px-4">
+        <div className="flex items-center justify-between">
+          {/* Left side - Promo */}
+          <div className="flex items-center space-x-1.5">
+            <Zap className="w-3.5 h-3.5 flex-shrink-0" />
+            <span className="font-medium truncate">Up to 50% OFF</span>
+          </div>
+
+          {/* Right side - Live indicator and phone */}
+          <div className="flex items-center space-x-3">
+            <a
+              href="tel:09006000000"
+              className="flex items-center space-x-1 hover:opacity-80 transition-opacity"
+            >
+              <Phone className="w-3.5 h-3.5 flex-shrink-0" />
+              <span className="hidden sm:inline text-xs">0900 600 0000</span>
+            </a>
+            <div className="flex items-center space-x-1">
+              <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
+              <span className="font-semibold text-xs">LIVE</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Navigation */}
+      <div className="w-full mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
-          {/* Menu Button */}
+          {/* Logo */}
           <div className="flex">
-            {/* Logo */}
             <Link to="/">
               <div className="flex items-center space-x-1">
-                {/* <span className="text-2xl font-bold text-gray-900">STUMART</span> */}
                 <div className="w-10 h-10 bg-yellow-500 rounded-full">
                   <img
                     src="/stumart.jpeg"
@@ -260,8 +284,11 @@ const MobileNav = () => {
                 <X className="w-6 h-6" />
               </button>
             ) : (
-              <button className="p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors duration-200">
-                <Menu onClick={toggleMenu} className="w-6 h-6" />
+              <button
+                onClick={toggleMenu}
+                className="p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors duration-200"
+              >
+                <Menu className="w-6 h-6" />
               </button>
             )}
 
@@ -273,38 +300,37 @@ const MobileNav = () => {
           </div>
         </div>
       </div>
-      <div>
-        {/* Search Bar */}
-        <div className="w-full mx-auto px-6 mb-4">
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-gray-400" />
-            </div>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyPress={handleKeyPress}
+
+      {/* Search Bar */}
+      <div className="w-full mx-auto px-4 sm:px-6 pb-4">
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-gray-400" />
+          </div>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyPress={handleKeyPress}
+            disabled={isSearching}
+            className={`block w-full pl-10 pr-16 py-2.5 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 focus:bg-white transition-all duration-200 text-sm placeholder-gray-500 ${
+              isSearching ? "opacity-50 cursor-not-allowed" : ""
+            }`}
+            placeholder="Search products, brands and categories"
+          />
+          {/* Search Button */}
+          <div className="absolute inset-y-0 right-0 flex items-center">
+            <button
+              onClick={handleSearchIconClick}
               disabled={isSearching}
-              className={`block w-full pl-10 pr-16 py-2.5 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 focus:bg-white transition-all duration-200 text-sm placeholder-gray-500 ${
-                isSearching ? "opacity-50 cursor-not-allowed" : ""
+              className={`px-3 py-1 mr-1 text-sm font-medium rounded-md transition-colors ${
+                isSearching
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : "bg-yellow-500 text-white hover:bg-yellow-600"
               }`}
-              placeholder="Search products, brands and categories"
-            />
-            {/* Search Button */}
-            <div className="absolute inset-y-0 right-0 flex items-center">
-              <button
-                onClick={handleSearchIconClick}
-                disabled={isSearching}
-                className={`px-3 py-1 mr-1 text-sm font-medium rounded-md transition-colors ${
-                  isSearching
-                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                    : "bg-yellow-500 text-white hover:bg-yellow-600"
-                }`}
-              >
-                {isSearching ? "Searching..." : "Go"}
-              </button>
-            </div>
+            >
+              {isSearching ? "Searching..." : "Go"}
+            </button>
           </div>
         </div>
       </div>

@@ -4,7 +4,7 @@ import HomeCategory from '../components/FashionCategory';
 
 const Landing = () => {
   return (
-    <main>
+    <main className='mt-7'>
       <section>
         <Hero />
       </section>

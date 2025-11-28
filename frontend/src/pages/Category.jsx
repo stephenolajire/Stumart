@@ -226,7 +226,7 @@ const Category = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-4 px-4 mt-31 lg:mt-0 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 py-4 px-4 mt-38 lg:mt-0 sm:px-6 lg:px-8">
       <div className="w-full mx-auto">
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">

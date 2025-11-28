@@ -320,7 +320,7 @@ const OrderHistory = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-6 px-4">
+    <div className="min-h-screen bg-gray-50 py-13 px-4">
       <Header title="Order History" />
 
       <div className="w-full mx-auto space-y-6">
