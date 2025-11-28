@@ -214,7 +214,7 @@ class PaystackTransferService:
             }
 
 class BankListView(APIView):
-    """Get list of supported banks with comprehensive Nigerian bank codes"""
+    """Get list of supported banks - ONLY banks that support transfers"""
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
@@ -224,10 +224,14 @@ class BankListView(APIView):
             banks_result = paystack.get_banks()
             
             if banks_result['success']:
-                banks = banks_result['banks']
+                # Filter banks that support transfers
+                banks = [
+                    bank for bank in banks_result['banks']
+                    if bank.get('supports_transfer', False) or bank.get('active', False)
+                ]
             else:
-                # Fallback to comprehensive local bank list
-                banks = self.get_comprehensive_bank_list()
+                # Fallback to local bank list - only transfer-supported banks
+                banks = self.get_transfer_supported_banks()
             
             # Sort banks alphabetically
             banks_sorted = sorted(banks, key=lambda x: x.get('name', ''))
@@ -240,8 +244,7 @@ class BankListView(APIView):
                 
         except Exception as e:
             logger.error(f"Error fetching banks: {str(e)}")
-            # Return comprehensive local bank list as fallback
-            banks = self.get_comprehensive_bank_list()
+            banks = self.get_transfer_supported_banks()
             return Response({
                 'success': True,
                 'banks': banks,
@@ -249,91 +252,191 @@ class BankListView(APIView):
                 'note': 'Returned local bank list due to API error'
             }, status=status.HTTP_200_OK)
     
-    def get_comprehensive_bank_list(self):
-        """Get comprehensive list of Nigerian banks"""
+    def get_transfer_supported_banks(self):
+        """Get list of banks that support transfers (excludes OPay, PalmPay, etc.)"""
         return [
-            # Commercial Banks
-            {"name": "Access Bank", "code": "044", "type": "commercial"},
-            {"name": "Citibank Nigeria Limited", "code": "023", "type": "commercial"},
-            {"name": "Ecobank Nigeria Plc", "code": "050", "type": "commercial"},
-            {"name": "Fidelity Bank", "code": "070", "type": "commercial"},
-            {"name": "First Bank of Nigeria", "code": "011", "type": "commercial"},
-            {"name": "First City Monument Bank", "code": "214", "type": "commercial"},
-            {"name": "Guaranty Trust Bank", "code": "058", "type": "commercial"},
-            {"name": "Heritage Bank", "code": "030", "type": "commercial"},
-            {"name": "Polaris Bank", "code": "076", "type": "commercial"},
-            {"name": "Providus Bank", "code": "101", "type": "commercial"},
-            {"name": "Stanbic IBTC Bank", "code": "221", "type": "commercial"},
-            {"name": "Standard Chartered Bank", "code": "068", "type": "commercial"},
-            {"name": "Sterling Bank", "code": "232", "type": "commercial"},
-            {"name": "Union Bank of Nigeria", "code": "032", "type": "commercial"},
-            {"name": "United Bank for Africa", "code": "033", "type": "commercial"},
-            {"name": "Unity Bank", "code": "215", "type": "commercial"},
-            {"name": "Wema Bank", "code": "035", "type": "commercial"},
-            {"name": "Zenith Bank", "code": "057", "type": "commercial"},
-            {"name": "Keystone Bank", "code": "082", "type": "commercial"},
-            {"name": "Jaiz Bank", "code": "301", "type": "commercial"},
-            {"name": "SunTrust Bank", "code": "100", "type": "commercial"},
-            {"name": "Titan Trust Bank", "code": "102", "type": "commercial"},
+            # Commercial Banks - All support transfers
+            {"name": "Access Bank", "code": "044", "type": "commercial", "supports_transfer": True},
+            {"name": "Citibank Nigeria Limited", "code": "023", "type": "commercial", "supports_transfer": True},
+            {"name": "Ecobank Nigeria Plc", "code": "050", "type": "commercial", "supports_transfer": True},
+            {"name": "Fidelity Bank", "code": "070", "type": "commercial", "supports_transfer": True},
+            {"name": "First Bank of Nigeria", "code": "011", "type": "commercial", "supports_transfer": True},
+            {"name": "First City Monument Bank", "code": "214", "type": "commercial", "supports_transfer": True},
+            {"name": "Guaranty Trust Bank", "code": "058", "type": "commercial", "supports_transfer": True},
+            {"name": "Heritage Bank", "code": "030", "type": "commercial", "supports_transfer": True},
+            {"name": "Polaris Bank", "code": "076", "type": "commercial", "supports_transfer": True},
+            {"name": "Providus Bank", "code": "101", "type": "commercial", "supports_transfer": True},
+            {"name": "Stanbic IBTC Bank", "code": "221", "type": "commercial", "supports_transfer": True},
+            {"name": "Standard Chartered Bank", "code": "068", "type": "commercial", "supports_transfer": True},
+            {"name": "Sterling Bank", "code": "232", "type": "commercial", "supports_transfer": True},
+            {"name": "Union Bank of Nigeria", "code": "032", "type": "commercial", "supports_transfer": True},
+            {"name": "United Bank for Africa", "code": "033", "type": "commercial", "supports_transfer": True},
+            {"name": "Unity Bank", "code": "215", "type": "commercial", "supports_transfer": True},
+            {"name": "Wema Bank", "code": "035", "type": "commercial", "supports_transfer": True},
+            {"name": "Zenith Bank", "code": "057", "type": "commercial", "supports_transfer": True},
+            {"name": "Keystone Bank", "code": "082", "type": "commercial", "supports_transfer": True},
+            {"name": "Jaiz Bank", "code": "301", "type": "commercial", "supports_transfer": True},
+            {"name": "SunTrust Bank", "code": "100", "type": "commercial", "supports_transfer": True},
+            {"name": "Titan Trust Bank", "code": "102", "type": "commercial", "supports_transfer": True},
             
-            # Microfinance Banks
-            {"name": "LAPO Microfinance Bank", "code": "50563", "type": "microfinance"},
-            {"name": "AB Microfinance Bank", "code": "51204", "type": "microfinance"},
-            {"name": "Accion Microfinance Bank", "code": "51336", "type": "microfinance"},
-            {"name": "Aella Credit", "code": "51310", "type": "microfinance"},
-            {"name": "Alekun Microfinance Bank", "code": "50994", "type": "microfinance"},
-            {"name": "Amju Unique Microfinance Bank", "code": "50926", "type": "microfinance"},
-            {"name": "Bowen Microfinance Bank", "code": "50931", "type": "microfinance"},
-            {"name": "Carbon", "code": "565", "type": "microfinance"},
-            {"name": "CEMCS Microfinance Bank", "code": "50823", "type": "microfinance"},
-            {"name": "Evangel Microfinance Bank", "code": "50957", "type": "microfinance"},
-            {"name": "FIMS Microfinance Bank", "code": "51314", "type": "microfinance"},
-            {"name": "Fortis Microfinance Bank", "code": "501", "type": "microfinance"},
-            {"name": "Hackman Microfinance Bank", "code": "51251", "type": "microfinance"},
-            {"name": "Hasal Microfinance Bank", "code": "50383", "type": "microfinance"},
-            {"name": "Ibile Microfinance Bank", "code": "51244", "type": "microfinance"},
-            {"name": "Imowo Microfinance Bank", "code": "50453", "type": "microfinance"},
-            {"name": "Infinity Microfinance Bank", "code": "50457", "type": "microfinance"},
-            {"name": "Kredi Money Microfinance Bank", "code": "50200", "type": "microfinance"},
-            {"name": "Kuda Bank", "code": "50211", "type": "microfinance"},
-            {"name": "Lagos Building Investment Company Plc.", "code": "90052", "type": "microfinance"},
-            {"name": "Mayfair Microfinance Bank", "code": "50563", "type": "microfinance"},
-            {"name": "Mint Finex Microfinance Bank", "code": "50304", "type": "microfinance"},
-            {"name": "NPF Microfinance Bank", "code": "552", "type": "microfinance"},
-            {"name": "Opay", "code": "999992", "type": "microfinance"},
-            {"name": "PalmPay", "code": "999991", "type": "microfinance"},
-            {"name": "Parkway - ReadyCash", "code": "51316", "type": "microfinance"},
-            {"name": "Paycom Microfinance Bank", "code": "50474", "type": "microfinance"},
-            {"name": "Petra Microfinance Bank", "code": "50746", "type": "microfinance"},
-            {"name": "Rahama Microfinance bank", "code": "51085", "type": "microfinance"},
-            {"name": "Renmoney Microfinance Bank", "code": "51322", "type": "microfinance"},
-            {"name": "Rubies Microfinance Bank", "code": "125", "type": "microfinance"},
-            {"name": "Sparkle Microfinance Bank", "code": "51310", "type": "microfinance"},
-            {"name": "Trust Microfinance Bank", "code": "51269", "type": "microfinance"},
-            {"name": "VFD Microfinance Bank", "code": "566", "type": "microfinance"},
-            {"name": "Visa Microfinance Bank", "code": "51355", "type": "microfinance"},
-            {"name": "Winco Microfinance Bank", "code": "51297", "type": "microfinance"},
+            # Microfinance Banks that support transfers
+            {"name": "LAPO Microfinance Bank", "code": "50563", "type": "microfinance", "supports_transfer": True},
+            {"name": "AB Microfinance Bank", "code": "51204", "type": "microfinance", "supports_transfer": True},
+            {"name": "Accion Microfinance Bank", "code": "51336", "type": "microfinance", "supports_transfer": True},
+            {"name": "Bowen Microfinance Bank", "code": "50931", "type": "microfinance", "supports_transfer": True},
+            {"name": "Carbon", "code": "565", "type": "microfinance", "supports_transfer": True},
+            {"name": "CEMCS Microfinance Bank", "code": "50823", "type": "microfinance", "supports_transfer": True},
+            {"name": "Kuda Bank", "code": "50211", "type": "microfinance", "supports_transfer": True},
+            {"name": "Moniepoint Microfinance Bank", "code": "50515", "type": "microfinance", "supports_transfer": True},
+            {"name": "VFD Microfinance Bank", "code": "566", "type": "microfinance", "supports_transfer": True},
+            {"name": "Rubies Microfinance Bank", "code": "125", "type": "microfinance", "supports_transfer": True},
             
-            # Digital Banks
-            {"name": "Moniepoint Microfinance Bank", "code": "50515", "type": "microfinance"},
-            {"name": "Rubies Microfinance Bank", "code": "125", "type": "microfinance"},
-            {"name": "GoMoney", "code": "100022", "type": "microfinance"},
-            
-            # Other Financial Institutions
-            {"name": "Nigeria Inter-Bank Settlement System Plc", "code": "999999", "type": "other"},
-            {"name": "Coronation Merchant Bank", "code": "559", "type": "merchant"},
-            {"name": "FBN Merchant Bank Limited", "code": "90067", "type": "merchant"},
-            {"name": "FSDH Merchant Bank Limited", "code": "501", "type": "merchant"},
-            {"name": "Greenwich Merchant Bank", "code": "562", "type": "merchant"},
-            {"name": "Nova Merchant Bank", "code": "103", "type": "merchant"},
-            {"name": "Rand Merchant Bank", "code": "502", "type": "merchant"},
-            
-            # Payment Service Banks
-            {"name": "9mobile", "code": "120001", "type": "payment_service"},
-            {"name": "Airtel", "code": "120002", "type": "payment_service"},
-            {"name": "MTN", "code": "120003", "type": "payment_service"},
-            {"name": "Globacom", "code": "120004", "type": "payment_service"},
+            # NOTE: OPay (999992) and PalmPay (999991) are EXCLUDED because they don't support transfers
+            # They only support "Pay with Bank" for receiving payments
         ]
+    
+    def get_comprehensive_bank_list(self):
+        """
+        DEPRECATED: Use get_transfer_supported_banks() instead
+        This method includes banks that don't support transfers
+        """
+        return self.get_transfer_supported_banks()
+
+
+class AccountVerificationView(APIView):
+    """Verify bank account details"""
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        try:
+            account_number = request.data.get('account_number', '').strip()
+            bank_code = request.data.get('bank_code', '').strip()
+            
+            # Validate inputs
+            if not account_number or not bank_code:
+                return Response({
+                    'error': 'Account number and bank code are required'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Validate account number format (should be 10 digits for NUBAN)
+            if not account_number.isdigit() or len(account_number) != 10:
+                return Response({
+                    'error': 'Account number must be 10 digits'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # CHECK: Ensure bank supports transfers
+            if not self.bank_supports_transfers(bank_code):
+                bank_name = self.get_bank_name(bank_code)
+                return Response({
+                    'error': f'{bank_name} does not support withdrawals via this platform. Please select a traditional bank account.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Initialize Paystack service
+            paystack = PaystackTransferService()
+            
+            # Resolve account
+            result = paystack.resolve_account(account_number, bank_code)
+            
+            if result['success']:
+                bank_name = self.get_bank_name(bank_code)
+                return Response({
+                    'success': True,
+                    'account_name': result['account_name'],
+                    'account_number': result['account_number'],
+                    'bank_name': bank_name,
+                    'bank_code': bank_code
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'error': result['message']
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+        except Exception as e:
+            logger.error(f"Account verification error: {str(e)}")
+            return Response({
+                'error': 'An error occurred while verifying account'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def bank_supports_transfers(self, bank_code):
+        """Check if a bank supports transfers"""
+        # List of banks that DON'T support transfers (payment-only banks)
+        non_transfer_banks = [
+            '999992',  # OPay
+            '999991',  # PalmPay
+            # Add other payment-only banks here
+        ]
+        return bank_code not in non_transfer_banks
+    
+    def get_bank_name(self, bank_code):
+        """Get bank name from bank code"""
+        bank_list = BankListView().get_transfer_supported_banks()
+        for bank in bank_list:
+            if bank['code'] == bank_code:
+                return bank['name']
+        
+        # If not found in transfer-supported list, check if it's a known non-transfer bank
+        non_transfer_banks = {
+            '999992': 'OPay',
+            '999991': 'PalmPay'
+        }
+        return non_transfer_banks.get(bank_code, 'Unknown Bank')
+
+
+class BankSearchView(APIView):
+    """Search for banks by name - only transfer-supported banks"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        try:
+            query = request.GET.get('q', '').strip().lower()
+            bank_type = request.GET.get('type', '').strip().lower()
+            
+            if not query:
+                return Response({
+                    'error': 'Search query is required'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Get only transfer-supported banks
+            all_banks = BankListView().get_transfer_supported_banks()
+            
+            # Filter by search query
+            filtered_banks = [
+                bank for bank in all_banks
+                if query in bank['name'].lower()
+            ]
+            
+            # Filter by type if specified
+            if bank_type and bank_type in ['commercial', 'microfinance', 'merchant']:
+                filtered_banks = [
+                    bank for bank in filtered_banks
+                    if bank['type'] == bank_type
+                ]
+            
+            # Sort by relevance
+            def sort_key(bank):
+                name_lower = bank['name'].lower()
+                if name_lower.startswith(query):
+                    return (0, name_lower)
+                elif query in name_lower:
+                    return (1, name_lower)
+                else:
+                    return (2, name_lower)
+            
+            filtered_banks.sort(key=sort_key)
+            
+            return Response({
+                'success': True,
+                'banks': filtered_banks[:20],
+                'total_found': len(filtered_banks),
+                'query': query,
+                'note': 'Only banks that support withdrawals are shown'
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Bank search error: {str(e)}")
+            return Response({
+                'error': 'Failed to search banks'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class AccountVerificationView(APIView):
     """Verify bank account details"""

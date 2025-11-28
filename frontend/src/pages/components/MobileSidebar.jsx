@@ -123,7 +123,7 @@ const SidebarNavigation = ({ close, openMenu }) => {
     <div
       className="w-80 absolute top-23  z-100 right-0 bg-white shadow-lg border-r border-gray-200 h-screen overflow-y-auto"
       data-aos={openMenu ? "fade-in" : "fade-out"}
-      data-aos-delay="600"
+      data-aos-delay="400"
     >
       {/* Help Section */}
       <div className="border-b border-gray-100">
