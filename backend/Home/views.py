@@ -13,7 +13,7 @@ import logging
 from django.db.models import Q, Prefetch, Count
 from django.core.cache import cache
 
-from backend.Project import settings
+from django.conf import settings
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
