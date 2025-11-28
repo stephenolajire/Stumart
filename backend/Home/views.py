@@ -238,7 +238,7 @@ class CategoryLastFiveView(APIView):
                         # KYC fields - THIS IS THE FIX
                         'vendor__kyc__verification_status'
                     )
-                    .order_by('-created_at')[:5]
+                    .order_by('-created_at')[:6]
                 )
 
                 # Only add category if it has products
