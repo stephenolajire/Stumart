@@ -31,6 +31,15 @@ import random
 from datetime import timedelta
 from wallet.models import *
 from .models import *
+from django.db.models import (
+    F, Sum, Count, Case, When, DecimalField, OuterRef, Subquery, Value, Prefetch,
+)
+from decimal import Decimal
+from django.contrib.postgres.aggregates import ArrayAgg, JSONBAgg
+from django.db.models import F, Value, OuterRef, Subquery
+from django.db.models.functions import JSONObject, Coalesce
+from User.models import*
+
 
 
 # Create your views here.
@@ -192,72 +201,91 @@ class ClearCartView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-class CartItemsView(APIView): 
-    permission_classes = [AllowAny] 
-     
-    def get(self, request, *args, **kwargs): 
-        try: 
-            from decimal import Decimal
-            
-            cart_code = request.query_params.get('cart_code') 
-             
-            # Get the appropriate cart 
-            cart = Cart.objects.filter(cart_code=cart_code).first() 
-            
+class CartItemsView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, *args, **kwargs):
+        try:
+            cart_code = request.query_params.get("cart_code")
+
+            # 0. Retrieve cart (still 1 ultra-light query)
+            cart = Cart.objects.filter(cart_code=cart_code).first()
             if not cart:
                 return Response(
                     {"error": "Cart not found"},
                     status=status.HTTP_404_NOT_FOUND
                 )
-             
-            # Get all cart items for the cart
-            cart_items = CartItem.objects.filter(cart=cart).select_related('product', 'product__vendor') 
-             
-            # Serialize the cart items 
-            cart_item_serializer = CartItemSerializer(cart_items, many=True) 
-            
-            # Calculate subtotal considering promotion prices
-            sub_total = Decimal('0.00')
-            for item in cart_items:
-                if hasattr(item.product, 'promotion_price') and item.product.promotion_price and item.product.promotion_price > Decimal('0.00'):
-                    # Use promotion price if it exists and is greater than 0
-                    sub_total += item.product.promotion_price * item.quantity
-                else:
-                    # Use regular price if no valid promotion price
-                    sub_total += item.product.price * item.quantity
-            
-            # Get unique vendors from cart items
-            unique_vendors = set(item.product.vendor for item in cart_items if hasattr(item.product, 'vendor'))
-            num_vendors = len(unique_vendors)
-            
-            # Calculate shipping fee (300 per vendor)
-            shipping_fee = Decimal('400') * num_vendors
-            
-            # Calculate tax (3% of subtotal)
-            tax = sub_total * Decimal('0.040')  # 3% tax
-            
-            # Calculate total
+
+            # QuerySet of all cart items for the cart
+            base_qs = CartItem.objects.filter(cart=cart)
+
+            # Subquery: Count DISTINCT vendors (SQL level)
+            vendor_subquery = (
+                base_qs.values("cart")  # Grouping
+                .annotate(vendor_count=Count("product__vendor", distinct=True))
+                .values("vendor_count")[:1]
+            )
+
+            # Subquery: subtotal calculation inside the DB
+            subtotal_subquery = (
+                base_qs.values("cart")
+                .annotate(
+                    sub_total=Sum(
+                        Case(
+                            When(
+                                product__promotion_price__gt=0,
+                                then=F("product__promotion_price") * F("quantity"),
+                            ),
+                            default=F("product__price") * F("quantity"),
+                            output_field=DecimalField()
+                        )
+                    )
+                )
+                .values("sub_total")[:1]
+            )
+
+            # FINAL SINGLE QUERY: bring items + stats
+            cart_items = (
+                base_qs
+                .select_related("product", "product__vendor")
+                .annotate(
+                    vendor_count=Subquery(vendor_subquery),
+                    sub_total=Subquery(subtotal_subquery),
+                )
+            )
+
+            # *Now* we read aggregated values FROM ANY ITEM (same values on all rows)
+            if cart_items:
+                sub_total = cart_items[0].sub_total or Decimal("0.00")
+                vendor_count = cart_items[0].vendor_count
+            else:
+                sub_total = Decimal("0.00")
+                vendor_count = 0
+
+            shipping_fee = Decimal("400.00") * vendor_count
+            tax = sub_total * Decimal("0.040")
             total = sub_total + shipping_fee + tax
-            
-            # Format response data
-            response_data = { 
-                "items": cart_item_serializer.data, 
-                "sub_total": sub_total,
-                "shipping_fee": shipping_fee,
-                "tax": tax,
-                "total": total,
-                "count": cart_items.count(),
-            } 
-             
-            return Response(response_data, status=status.HTTP_200_OK) 
-                 
-        except Exception as e: 
-            import traceback 
-            error_trace = traceback.format_exc() 
-            print(f"Error in CartView: {str(e)}") 
-            print(error_trace) 
-            return Response( 
-                {"error": f"An error occurred: {str(e)}"}, 
+
+            # Serialize AFTER the single query (no extra DB hits)
+            serializer = CartItemSerializer(cart_items, many=True)
+
+            return Response(
+                {
+                    "items": serializer.data,
+                    "sub_total": sub_total,
+                    "shipping_fee": shipping_fee,
+                    "tax": tax,
+                    "total": total,
+                    "count": len(cart_items),
+                },
+                status=status.HTTP_200_OK
+            )
+
+        except Exception as e:
+            import traceback
+            print(traceback.format_exc())
+            return Response(
+                {"error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -879,191 +907,204 @@ class CancelOrderView(APIView):
                 "message": f"An error occurred: {str(e)}"
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
 class OrderDetailView(APIView):
-    def get (request, order_number):
-        """Get details for a specific order by order number"""
+    def get(self, request, order_number):
+        """Optimized order detail view (MAX 2 queries)."""
         try:
-            # Try to find the order
-            order = get_object_or_404(Order, order_number=order_number)
-            
-            # Get all order items
-            order_items = OrderItem.objects.filter(order=order)
-            
-            # Try to get the transaction
-            try:
-                transaction = Transaction.objects.get(order=order)
-                transaction_data = {
-                    'transaction_id': transaction.transaction_id,
-                    'amount': float(transaction.amount),
-                    'status': transaction.status,
-                    'payment_method': transaction.payment_method,
-                    'created_at': transaction.created_at
+            # Query 1 — Get the order & related picker/user with select_related
+            order = (
+                Order.objects
+                .select_related("user", "picker")
+                .prefetch_related(
+                    Prefetch(
+                        "order_items",
+                        queryset=OrderItem.objects.select_related(
+                            "product", "vendor", "vendor__user"
+                        )
+                    )
+                )
+                .get(order_number=order_number)
+            )
+
+            # Query 2 — Fetch transaction (if exists)
+            transaction = (
+                Transaction.objects.filter(order=order)
+                .values(
+                    "transaction_id", "amount", "status",
+                    "payment_method", "created_at"
+                )
+                .first()
+            )
+
+            # Serialize items WITHOUT extra DB queries
+            items_data = [
+                {
+                    "id": item.id,
+                    "product": {
+                        "id": item.product.id,
+                        "name": item.product.name,
+                        "image": str(item.product.image) if item.product.image else None,
+                    },
+                    "quantity": item.quantity,
+                    "price": float(item.price),
+                    "size": item.size,
+                    "color": item.color,
+                    "vendor": (
+                        item.vendor.user.username
+                        if item.vendor and item.vendor.user
+                        else None
+                    ),
                 }
-            except Transaction.DoesNotExist:
-                transaction_data = None
-            
-            # Format the order items
-            items_data = []
-            for item in order_items:
-                product_data = {
-                    'id': item.product.id,
-                    'name': item.product.name,
-                    'image': str(item.product.image) if item.product.image else None
-                }
-                
-                items_data.append({
-                    'id': item.id,
-                    'product': product_data,
-                    'quantity': item.quantity,
-                    'price': float(item.price),
-                    'size': item.size,
-                    'color': item.color,
-                    'vendor': item.vendor.user.username if item.vendor else None
-                })
-            
-            # Build the response
+                for item in order.order_items.all()
+            ]
+
+            # Build response
             response_data = {
-                'id': order.id,
-                'order_number': order.order_number,
-                'first_name': order.first_name,
-                'last_name': order.last_name,
-                'email': order.email,
-                'phone': order.phone,
-                'address': order.address,
-                'room_number': order.room_number,
-                'subtotal': float(order.subtotal),
-                'shipping_fee': float(order.shipping_fee),
-                'tax': float(order.tax),
-                'total': float(order.total),
-                'order_status': order.order_status,
-                'created_at': order.created_at,
-                'order_items': items_data,
-                'transaction': transaction_data
+                "id": order.id,
+                "order_number": order.order_number,
+                "first_name": order.first_name,
+                "last_name": order.last_name,
+                "email": order.email,
+                "phone": order.phone,
+                "address": order.address,
+                "room_number": order.room_number,
+                "subtotal": float(order.subtotal),
+                "shipping_fee": float(order.shipping_fee),
+                "tax": float(order.tax),
+                "total": float(order.total),
+                "order_status": order.order_status,
+                "created_at": order.created_at,
+                "order_items": items_data,
+                "transaction": transaction,
             }
-            
+
             return Response(response_data)
-        
+
+        except Order.DoesNotExist:
+            return Response({"error": "Order not found"}, status=404)
+
         except Exception as e:
-            return Response({'error': str(e)}, status=400)
+            return Response({"error": str(e)}, status=400)
+
         
 
 class OrderHistoryView(APIView):
     def get(self, request):
-        """Get all orders for the authenticated user"""
         try:
             user = request.user
-            
-            # Get all orders for the user with related data to reduce DB queries
-            orders = Order.objects.filter(user=user).select_related('picker').prefetch_related(
-                'order_items__product',
-                'order_items__vendor',
-                'picker__picker_profile',  # Add this to prefetch picker profile
-                'picker__student_picker_profile'  # Add this to prefetch student picker profile
-            ).order_by('-created_at')
-            
-            order_data = []
-            for order in orders:
-                items_data = []
-                for item in order.order_items.all():  # Use prefetched data
-                    image_url = None
-                    if item.product.image:
-                        image_url = request.build_absolute_uri(item.product.image.url)
-                    
-                    product_data = {
-                        'id': item.product.id,
-                        'name': item.product.name,
-                        'image': image_url
-                    }
-                    
-                    # Get picker profile ID based on user type
-                    picker_profile_id = None
-                    picker_type = None
-                    if order.picker:
-                        try:
-                            if hasattr(order.picker, 'picker_profile'):
-                                picker_profile_id = order.picker.picker_profile.id
-                                picker_type = 'picker'
-                            elif hasattr(order.picker, 'student_picker_profile'):
-                                picker_profile_id = order.picker.student_picker_profile.id
-                                picker_type = 'student_picker'
-                        except Exception as e:
-                            print(f"Error getting picker profile: {e}")
-                    
-                    items_data.append({
-                        'id': item.id,
-                        'product': product_data,
-                        'quantity': item.quantity,
-                        'price': float(item.price),
-                        'size': item.size,
-                        'color': item.color,
-                        'vendor': item.vendor.business_name if item.vendor else None,
-                        'vendor_id': item.vendor.id if item.vendor else None,
-                    })
-                
-                # Also add picker info at order level
-                picker_info = None
-                if order.picker:
-                    picker_profile_id = None
-                    picker_type = None
-                    picker_name = f"{order.picker.first_name} {order.picker.last_name}"
-                    
-                    try:
-                        if hasattr(order.picker, 'picker_profile'):
-                            picker_profile_id = order.picker.picker_profile.id
-                            picker_type = 'picker'
-                            picker_info = {
-                                'user_id': order.picker.id,
-                                'profile_id': picker_profile_id,
-                                'name': picker_name,
-                                'type': picker_type,
-                                'fleet_type': order.picker.picker_profile.fleet_type,
-                                'rating': float(order.picker.picker_profile.rating)
-                            }
-                        elif hasattr(order.picker, 'student_picker_profile'):
-                            picker_profile_id = order.picker.student_picker_profile.id
-                            picker_type = 'student_picker'
-                            picker_info = {
-                                'user_id': order.picker.id,
-                                'profile_id': picker_profile_id,
-                                'name': picker_name,
-                                'type': picker_type,
-                                'hostel_name': order.picker.student_picker_profile.hostel_name,
-                                'room_number': order.picker.student_picker_profile.room_number,
-                                'rating': float(order.picker.student_picker_profile.rating)
-                            }
-                    except Exception as e:
-                        print(f"Error getting picker info: {e}")
-                
-                order_data.append({
-                    'id': order.id,
-                    'order_number': order.order_number,
-                    'subtotal': float(order.subtotal),
-                    'shipping_fee': float(order.shipping_fee),
-                    'tax': float(order.tax),
-                    'total': float(order.total),
-                    'order_status': order.order_status,
-                    'created_at': order.created_at.isoformat(),  # Better date formatting
-                    'order_items': items_data,
-                    'picker': picker_info,  # Complete picker information
-                    'reviewed': order.reviewed,
-                    'shipping': {
-                        'address': order.address,
-                        'room_number': order.room_number,
-                        'phone': order.phone,
-                        'email': order.email,
-                        'first_name': order.first_name,
-                        'last_name': order.last_name,
-                    }
-                })
-            
-            return Response(order_data, status=200)
-        
+
+            # Subquery: Fetch order items with product + vendor inside JSON
+            order_items_subquery = (
+                OrderItem.objects
+                .filter(order=OuterRef("pk"))
+                .annotate(
+                    product_json=JSONObject(
+                        id=F("product__id"),
+                        name=F("product__name"),
+                        image=F("product__image"),
+                    ),
+                    vendor_json=JSONObject(
+                        id=F("vendor__id"),
+                        business_name=F("vendor__business_name"),
+                    ),
+                )
+                .annotate(
+                    item_json=JSONObject(
+                        id=F("id"),
+                        quantity=F("quantity"),
+                        price=F("price"),
+                        size=F("size"),
+                        color=F("color"),
+                        product=F("product_json"),
+                        vendor=F("vendor_json"),
+                    )
+                )
+                .values("item_json")
+            )
+
+            # Subquery: picker profile (normal picker)
+            picker_profile_sub = (
+                Picker.objects
+                .filter(user=OuterRef("picker_id"))
+                .annotate(
+                    picker_json=JSONObject(
+                        fleet_type=F("fleet_type"),
+                        rating=F("rating"),
+                        profile_id=F("id"),
+                        type=Value("picker"),
+                    )
+                )
+                .values("picker_json")[:1]
+            )
+
+            # Subquery: student picker
+            student_picker_sub = (
+                StudentPicker.objects
+                .filter(user=OuterRef("picker_id"))
+                .annotate(
+                    picker_json=JSONObject(
+                        hostel_name=F("hostel_name"),
+                        room_number=F("room_number"),
+                        rating=F("rating"),
+                        profile_id=F("id"),
+                        type=Value("student_picker"),
+                    )
+                )
+                .values("picker_json")[:1]
+            )
+
+            # MAIN ONE QUERY
+            orders = (
+                Order.objects
+                .filter(user=user)
+                .annotate(
+                    picker_name=F("picker__first_name") + Value(" ") + F("picker__last_name"),
+
+                    picker_normal=Subquery(picker_profile_sub),
+                    picker_student=Subquery(student_picker_sub),
+
+                    picker_json=JSONObject(
+                        user_id=F("picker_id"),
+                        name=F("picker_name"),
+                        extra=Coalesce(F("picker_normal"), F("picker_student")),
+                    ),
+
+                    order_items_json=JSONBAgg(Subquery(order_items_subquery)),
+                    shipping_json=JSONObject(
+                        address=F("address"),
+                        room_number=F("room_number"),
+                        phone=F("phone"),
+                        email=F("email"),
+                        first_name=F("first_name"),
+                        last_name=F("last_name"),
+                    )
+                )
+                .values(
+                    "id",
+                    "order_number",
+                    "subtotal",
+                    "shipping_fee",
+                    "tax",
+                    "total",
+                    "order_status",
+                    "created_at",
+                    "order_items_json",
+                    "picker_json",
+                    "shipping_json",
+                    "reviewed",
+                )
+                .order_by("-created_at")
+            )
+
+            # Convert queryset to list
+            return Response(list(orders), status=200)
+
         except Exception as e:
             import traceback
-            print(f"Error in OrderHistoryView: {str(e)}")
-            print(traceback.format_exc())  # This will help debug future issues
-            return Response({'error': str(e)}, status=400)
+            print("OrderHistoryView error:", e)
+            print(traceback.format_exc())
+            return Response({"error": str(e)}, status=400)
+
         
 
 class PackOrderView(APIView):
@@ -1488,27 +1529,6 @@ class PackOrderView(APIView):
         except Exception as e:
             logger.error(f"Failed to send regular picker notification emails: {str(e)}", exc_info=True)
 
-
-from django.db import transaction
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from django.utils import timezone
-from django.core.mail import send_mail
-from django.conf import settings
-import logging
-
-logger = logging.getLogger(__name__)
-
-import uuid
-from django.db import transaction
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from django.utils import timezone
-from django.core.mail import send_mail
-from django.conf import settings
-import logging
 
 logger = logging.getLogger(__name__)
 
