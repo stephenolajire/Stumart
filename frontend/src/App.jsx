@@ -163,14 +163,7 @@ function App() {
               <Route path="chatbot" element={<Chatbot />} />
 
               {/* =================== STUDENT PROTECTED ROUTES =================== */}
-              <Route
-                path="shopping-cart"
-                element={
-                  <ProtectedRoute allowedRoles={["student"]}>
-                    <ShoppingCart />
-                  </ProtectedRoute>
-                }
-              />
+              <Route path="shopping-cart" element={<ShoppingCart />} />
               <Route
                 path="checkout"
                 element={

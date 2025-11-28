@@ -820,127 +820,83 @@ class SearchSpecificServiceView(APIView):
                     "school": school
                 }
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+        
 
 class AllProductsView(APIView):
     pagination_class = CustomPagination
 
     def get(self, request):
         try:
-            # Parse request parameters
             filters = self._parse_request_params(request)
-            
-            print(f"Request params - viewOtherProducts: {filters['view_other_products']}, authenticated: {request.user.is_authenticated}")
-            if request.user.is_authenticated:
-                print(f"User institution: {request.user.institution}")
-            if filters['school']:
-                print(f"School parameter provided: {filters['school']}")
-            
-            # Handle different user states separately
-            if request.user.is_authenticated:
-                if filters['view_other_products']:
-                    queryset = self._handle_authenticated_viewing_other_schools(request, filters)
-                else:
-                    queryset = self._handle_authenticated_viewing_own_school(request, filters)
-            else:
-                queryset = self._handle_anonymous_user(request, filters)
-            
-            # Apply KYC filtering first (most restrictive)
-            queryset = self._apply_kyc_filtering(queryset)
-            
-            # Apply common filters and return response
+
+            # Base queryset
+            queryset = Product.objects.select_related(
+                'vendor', 'vendor__vendor_profile'
+            ).prefetch_related(
+                'additional_images',
+                'sizes',
+                'colors'
+            ).filter(
+                vendor__kyc__verification_status='approved'
+            )
+
+            # Apply school / institution filters
+            queryset = self._apply_school_filter(queryset, request, filters)
+
+            # Apply other common filters
             queryset = self._apply_common_filters(queryset, filters)
+
+            # Apply sorting
             queryset = self._apply_sorting(queryset, filters['sort'])
-            
+
+            # Return paginated and serialized response
             return self._paginate_and_serialize(queryset, request, filters)
 
         except Exception as e:
             return self._handle_error(e)
 
-    def _apply_kyc_filtering(self, queryset):
-        # Filter to only include products from vendors with approved KYC
-        queryset = queryset.filter(vendor__kyc__verification_status='approved')
-        print(f"After KYC filtering (approved only): {queryset.count()}")
-        return queryset
+    # -------------------- Helper Methods -------------------- #
 
-    def _handle_authenticated_viewing_own_school(self, request, filters):
-        print(f"Authenticated user viewing own school: {request.user.institution}")
-        print("IGNORING any 'school' parameter - user can only see their own institution")
-        
-        # Start with all products, then filter ONLY by user's institution
-        queryset = Product.objects.all()
-        queryset = queryset.filter(vendor__institution__iexact=request.user.institution)
-        
-        print(f"Products from user's institution ({request.user.institution}): {queryset.count()}")
-        
-        return queryset
+    def _apply_school_filter(self, queryset, request, filters):
+        """Filter products based on authenticated/anonymous and school selection"""
+        user = request.user
 
-    def _handle_authenticated_viewing_other_schools(self, request, filters):
-        print("Authenticated user viewing other schools")
-        
-        # Start with all products
-        queryset = Product.objects.all()
-        
-        # If they specify a particular school, filter by that school
-        if filters['school']:
-            print(f"Filtering by specific school: {filters['school']}")
-            queryset = queryset.filter(vendor__institution__iexact=filters['school'])
-            print(f"Products from specified school: {queryset.count()}")
+        if user.is_authenticated:
+            if filters['view_other_products']:
+                # Viewing products from other schools
+                if filters['school']:
+                    queryset = queryset.filter(vendor__institution__iexact=filters['school'])
+            else:
+                # Only own institution
+                queryset = queryset.filter(vendor__institution__iexact=user.institution)
         else:
-            # No school specified = show products from ALL schools
-            print(f"Showing products from all schools: {queryset.count()}")
-        
-        return queryset
+            # Anonymous user
+            if filters['school']:
+                queryset = queryset.filter(vendor__institution__iexact=filters['school'])
 
-    def _handle_anonymous_user(self, request, filters):
-        
-        print("Anonymous user browsing products")
-        
-        # Start with all products
-        queryset = Product.objects.all()
-        
-        # If they specify a school, filter by that school
-        if filters['school']:
-            print(f"Anonymous user filtering by school: {filters['school']}")
-            queryset = queryset.filter(vendor__institution__iexact=filters['school'])
-            print(f"Products from specified school: {queryset.count()}")
-        else:
-            # No school specified = show products from ALL schools
-            print(f"Anonymous user seeing all products: {queryset.count()}")
-        
         return queryset
 
     def _apply_common_filters(self, queryset, filters):
-        
-        # Category filter
+        """Apply category, price, search, state, and vendor filters"""
         if filters['category']:
             queryset = queryset.filter(vendor__vendor_profile__business_category__iexact=filters['category'])
-            print(f"After category filter: {queryset.count()}")
 
-        # Price range filter
         queryset = queryset.filter(
-            price__gte=filters['min_price'], 
+            price__gte=filters['min_price'],
             price__lte=filters['max_price']
         )
-        print(f"After price filter: {queryset.count()}")
 
-        # Search filter
         if filters['search']:
             queryset = queryset.filter(
                 models.Q(name__icontains=filters['search']) |
                 models.Q(description__icontains=filters['search'])
             )
-            print(f"After search filter: {queryset.count()}")
 
-        # State filter
         if filters['state']:
             queryset = queryset.filter(vendor__state__iexact=filters['state'])
-            print(f"After state filter: {queryset.count()}")
 
-        # Vendor filter
         if filters['vendor']:
             queryset = queryset.filter(vendor__vendor_profile__business_name__iexact=filters['vendor'])
-            print(f"After vendor filter: {queryset.count()}")
 
         return queryset
 
@@ -952,21 +908,20 @@ class AllProductsView(APIView):
             return queryset.order_by('-price')
         elif sort_option == 'rating':
             return queryset.order_by('-vendor__rating')
-        else:  # default to 'newest'
-            return queryset.order_by('-created_at')
+        else:
+            return queryset.order_by('-created_at')  # Default: newest first
 
     def _parse_request_params(self, request):
         """Parse and validate all request parameters"""
         params = request.query_params
-        
-        # Parse price filters with error handling
+
         try:
-            min_price = Decimal(params.get('minPrice')) if params.get('minPrice') else Decimal('0')
+            min_price = Decimal(params.get('minPrice', '0'))
         except (ValueError, TypeError):
             min_price = Decimal('0')
 
         try:
-            max_price = Decimal(params.get('maxPrice')) if params.get('maxPrice') else Decimal('999999999')
+            max_price = Decimal(params.get('maxPrice', '999999999'))
         except (ValueError, TypeError):
             max_price = Decimal('999999999')
 
@@ -983,33 +938,31 @@ class AllProductsView(APIView):
         }
 
     def _paginate_and_serialize(self, queryset, request, filters):
-        """Handle pagination and serialization"""
-        print(f"Final product count: {queryset.count()}")
-        
-        # Pagination
+        """Handle pagination and serialization efficiently"""
+        total_products = queryset.count()  # Single count
+
         paginator = self.pagination_class()
         paginated_products = paginator.paginate_queryset(queryset, request)
-        
-        # Serialization
-        serializer = ProductSerializer(paginated_products, many=True)
+
+        serializer = ProductSerializer(paginated_products, many=True, context={'request': request})
         response = paginator.get_paginated_response(serializer.data)
-        
-        # Add metadata
-        response.data['user_institution'] = request.user.institution if request.user.is_authenticated else None
-        response.data['view_other_products'] = filters['view_other_products']
-        response.data['total_products'] = queryset.count()
-        
-        # Calculate user's institution product count for authenticated users
+
+        # Metadata
+        response.data.update({
+            'user_institution': request.user.institution if request.user.is_authenticated else None,
+            'view_other_products': filters['view_other_products'],
+            'total_products': total_products
+        })
+
+        # Count products from user's institution (if authenticated)
         if request.user.is_authenticated:
-            # Also apply KYC filtering to user's institution product count
-            user_institution_products = Product.objects.filter(
-                vendor__institution__iexact=request.user.institution,
-                vendor__kyc__verification_status='approved'
+            user_institution_products = queryset.filter(
+                vendor__institution__iexact=request.user.institution
             ).count()
             response.data['user_institution_product_count'] = user_institution_products
         else:
             response.data['user_institution_product_count'] = None
-        
+
         return response
 
     def _handle_error(self, error):
@@ -1022,7 +975,7 @@ class AllProductsView(APIView):
             },
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
-        
+
 
 class CreateVendorReviewView(APIView):
     """Create a vendor review"""

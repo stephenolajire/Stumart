@@ -438,7 +438,7 @@ const ProductDetails = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-41 lg:pt-21">
+    <div className="min-h-screen bg-gray-50 pt-51 lg:pt-21">
       <SEO
         title={
           product

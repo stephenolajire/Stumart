@@ -239,11 +239,11 @@ const Category = () => {
           </div> */}
           <div>
             {isAuthenticated ? (
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-2xl capitalize font-bold text-gray-900">
                 {category} Category in {userInstitution}
               </h1>
             ) : (
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-2xl font-bold capitalize text-gray-900">
                 {category} Category in All Registered Institutions
               </h1>
             )}

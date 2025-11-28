@@ -29,7 +29,7 @@ const Card = ({ products }) => {
   };
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-6">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 md:gap-4">
       {products.map((product) => {
         const discountPercentage = calculateDiscount(
           parseFloat(product.price),
@@ -39,7 +39,7 @@ const Card = ({ products }) => {
         return (
           <div
             key={product.id}
-            className="group relative bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-500 overflow-hidden border border-gray-100 hover:border-yellow-200"
+            className="group relative lg:rounded-lg bg-white shadow-md hover:shadow-xl transition-all duration-500 overflow-hidden border border-gray-100 hover:border-yellow-200"
           >
             {/* Discount Badge */}
             {discountPercentage && (
@@ -76,19 +76,19 @@ const Card = ({ products }) => {
             {/* Product Link Container */}
             <Link to={`/product/${product.id}`} className="block">
               {/* Product Image */}
-              <div className="relative overflow-hidden bg-gray-50 aspect-square">
+              <div className="relative overflow-hidden bg-gray-50">
                 <img
                 loading="lazy"
                   src={product.image_url}
                   alt={product.name}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  className="w-full h-30 lg:h-40 object-cover transition-transform duration-700 group-hover:scale-110"
                 />
               </div>
 
               {/* Product Info */}
-              <div className="p-3 md:p-4 space-y-2 md:space-y-3">
+              <div className="p-3 md:p-4 space-y-1 md:space-y-3">
                 {/* Product Name */}
-                <h3 className="font-semibold text-gray-900 text-sm line-clamp-2 group-hover:text-yellow-600 transition-colors duration-300 uppercase">
+                <h3 className="font-medium lg:font-semibold text-gray-900 sm:xs lg:text-sm line-clamp-2 group-hover:text-yellow-600 transition-colors duration-300 sm:capitalize lg:uppercase">
                   {product.name}
                 </h3>
                 <h6 className="text-sm text-gray-600">{product.vendor_institution}</h6>
@@ -116,7 +116,7 @@ const Card = ({ products }) => {
                     </div>
                   ) : (
                     <div className="flex items-center space-x-2">
-                      <span className="text-lg font-bold text-gray-900">
+                      <span className="text-base lg:text-lg font-bold text-gray-900">
                         {formatPrice(parseFloat(product.price))}
                       </span>
                     </div>
