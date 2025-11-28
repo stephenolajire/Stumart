@@ -1,4 +1,4 @@
-# models.py for stumart app
+# models.py for stumart app - OPTIMIZED
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -21,24 +21,19 @@ class Product(models.Model):
         on_delete=models.CASCADE, 
         related_name="products"
     )
-    name = models.CharField(max_length=100, db_index=True)  # Added db_index for search
+    name = models.CharField(max_length=100)
     description = models.TextField()
-    keyword = models.CharField(
-        max_length=100,
-        default=" ",
-    )
+    keyword = models.CharField(max_length=100, default=" ")
+    
     price = models.DecimalField(
         max_digits=10, 
         decimal_places=2,
-        validators=[
-            MinValueValidator(0.01),
-            MaxValueValidator(99999.99)
-        ]
+        validators=[MinValueValidator(0.01), MaxValueValidator(99999.99)]
     )
+    
     in_stock = models.PositiveIntegerField(default=0)
     image = CloudinaryField('product_images/', null=True, blank=True)
     
-    # Fashion-specific fields
     gender = models.CharField(
         max_length=10, 
         choices=GENDER_CHOICES, 
@@ -47,16 +42,13 @@ class Product(models.Model):
         default="unisex"
     )
     
-    created_at = models.DateTimeField(auto_now_add=True, db_index=True)  # Added db_index
+    created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     promotion_price = models.DecimalField(
         max_digits=10, 
         decimal_places=2,
-        validators=[
-            MinValueValidator(0.01),
-            MaxValueValidator(99999.99)
-        ],
+        validators=[MinValueValidator(0.01), MaxValueValidator(99999.99)],
         default=0.00,
         null=True,
         blank=True
@@ -73,25 +65,35 @@ class Product(models.Model):
     class Meta:
         ordering = ['-created_at']
         indexes = [
-            # Composite indexes for common query patterns
-            models.Index(fields=['vendor', '-created_at'], name='prod_vendor_created_idx'),
-            models.Index(fields=['vendor', 'price'], name='prod_vendor_price_idx'),
-            models.Index(fields=['vendor', 'in_stock'], name='prod_vendor_stock_idx'),
+            # CRITICAL: Most frequently used query patterns from CategoryLastFiveView & ProductCategoryView
             
-            # Price sorting indexes
-            models.Index(fields=['price', '-created_at'], name='prod_price_created_idx'),
-            models.Index(fields=['-price', '-created_at'], name='prod_price_desc_crt_idx'),
+            # 1. Vendor + Created (for vendor's product listings sorted by date)
+            models.Index(fields=['vendor', '-created_at'], name='prod_vendor_date'),
             
-            # Date-based indexes
-            models.Index(fields=['-created_at'], name='prod_created_idx'),
+            # 2. Created descending (for latest products - CategoryLastFiveView uses this)
+            models.Index(fields=['-created_at'], name='prod_date_desc'),
             
-            # Search and filtering indexes
-            models.Index(fields=['name'], name='prod_name_idx'),
-            models.Index(fields=['gender', '-created_at'], name='prod_gender_created_idx'),
-            models.Index(fields=['in_stock', '-created_at'], name='prod_stock_created_idx'),
+            # 3. Price sorting (low to high)
+            models.Index(fields=['price', '-created_at'], name='prod_price_asc'),
             
-            # Promotion filtering
-            models.Index(fields=['promotion_price', '-created_at'], name='prod_promo_created_idx'),
+            # 4. Price sorting (high to low)
+            models.Index(fields=['-price', '-created_at'], name='prod_price_desc'),
+            
+            # 5. Gender filtering with date (for fashion category filters)
+            models.Index(fields=['gender', '-created_at'], name='prod_gender_date'),
+            
+            # 6. Stock + Created (for popular sorting by availability)
+            models.Index(fields=['-in_stock', '-created_at'], name='prod_stock_date'),
+            
+            # 7. Vendor + Price (for vendor price filtering)
+            models.Index(fields=['vendor', 'price'], name='prod_vendor_price'),
+            
+            # 8. Search optimization (name, keyword fields)
+            # Note: For better search, consider PostgreSQL full-text search or Elasticsearch
+            models.Index(fields=['name'], name='prod_name_search'),
+            
+            # 9. Promotion filtering
+            models.Index(fields=['promotion_price'], name='prod_promo'),
         ]
         verbose_name = 'Product'
         verbose_name_plural = 'Products'
@@ -132,6 +134,11 @@ class ProductImage(models.Model):
     )
     image = CloudinaryField('product_images/')
     
+    class Meta:
+        indexes = [
+            models.Index(fields=['product'], name='prod_img_product'),
+        ]
+    
     def __str__(self):
         return f"Image for {self.product.name}"
 
@@ -146,11 +153,14 @@ class ProductSize(models.Model):
     size = models.CharField(max_length=20, default="M")
     quantity = models.PositiveIntegerField(default=0)
     
-    def __str__(self):
-        return f"{self.product.name} - {self.size}"
-    
     class Meta:
         unique_together = ('product', 'size')
+        indexes = [
+            models.Index(fields=['product', 'quantity'], name='prod_size_qty'),
+        ]
+    
+    def __str__(self):
+        return f"{self.product.name} - {self.size}"
 
 
 class ProductColor(models.Model):
@@ -163,22 +173,31 @@ class ProductColor(models.Model):
     color = models.CharField(max_length=50, default="red")
     quantity = models.PositiveIntegerField(default=0)
     
-    def __str__(self):
-        return f"{self.product.name} - {self.color}"
-    
     class Meta:
         unique_together = ('product', 'color')
+        indexes = [
+            models.Index(fields=['product', 'quantity'], name='prod_color_qty'),
+        ]
+    
+    def __str__(self):
+        return f"{self.product.name} - {self.color}"
 
 
 class Cart(models.Model):
     """Model for user cart"""
-    cart_code = models.CharField(max_length=100, unique=True)
+    cart_code = models.CharField(max_length=100, unique=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
     
+    class Meta:
+        indexes = [
+            models.Index(fields=['cart_code'], name='cart_code_idx'),
+            models.Index(fields=['-created_at'], name='cart_created_idx'),
+        ]
+    
     def __str__(self):
         return f"{self.cart_code}"
-    
+
 
 class CartItem(models.Model):
     """Model for items in the cart"""
@@ -198,12 +217,18 @@ class CartItem(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
     
+    class Meta:
+        indexes = [
+            models.Index(fields=['cart', 'product'], name='cart_item_lookup'),
+            models.Index(fields=['cart'], name='cart_items_idx'),
+        ]
+    
     def __str__(self):
         return f"{self.product.name}"
-    
+
 
 class Order(models.Model):
-    order_number = models.CharField(max_length=20, unique=True)
+    order_number = models.CharField(max_length=20, unique=True, db_index=True)
     user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
@@ -224,6 +249,15 @@ class Order(models.Model):
     company_picker = models.BooleanField(default=False, blank=True, null=True)
     company_picker_email = models.EmailField(blank=True, null=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['order_number'], name='order_num_idx'),
+            models.Index(fields=['user', '-created_at'], name='order_user_date'),
+            models.Index(fields=['-created_at'], name='order_date_idx'),
+            models.Index(fields=['order_status', '-created_at'], name='order_status_date'),
+            models.Index(fields=['picker'], name='order_picker_idx'),
+        ]
+
     def __str__(self):
         return self.order_number
 
@@ -236,16 +270,20 @@ class OrderItem(models.Model):
     vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE)
     size = models.CharField(max_length=50, null=True, blank=True)
     color = models.CharField(max_length=50, null=True, blank=True)
-    
-    # Add this new field
     is_packed = models.BooleanField(default=False)
     packed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['order', 'vendor'], name='order_item_vendor'),
+            models.Index(fields=['vendor', 'is_packed'], name='order_item_packed'),
+            models.Index(fields=['order'], name='order_items_idx'),
+        ]
 
     def __str__(self):
         return f"{self.product.name} - {self.quantity}"
 
     def save(self, *args, **kwargs):
-        # Auto-set packed_at when is_packed changes to True
         if self.is_packed and not self.packed_at:
             from django.utils import timezone
             self.packed_at = timezone.now()
