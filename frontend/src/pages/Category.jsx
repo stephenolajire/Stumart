@@ -6,11 +6,19 @@ import React, {
   useMemo,
 } from "react";
 import { useSearchParams } from "react-router-dom";
-import { FaFilter, FaTimes, FaBox, FaSadTear, FaStore, FaArrowLeft } from "react-icons/fa";
+import {
+  FaFilter,
+  FaTimes,
+  FaBox,
+  FaSadTear,
+  FaStore,
+  FaArrowLeft,
+} from "react-icons/fa";
 import { GlobalContext } from "../constant/GlobalContext";
 import { nigeriaInstitutions, nigeriaStates } from "../constant/data";
 import Card from "./components/Card";
 import Spinner from "../components/Spinner";
+import Pagination from "../company/Pagination";
 
 const Category = () => {
   const [searchParams] = useSearchParams();
@@ -19,6 +27,7 @@ const Category = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [selectedState, setSelectedState] = useState("");
   const [schools, setSchools] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const { useProductCategory, isAuthenticated } = useContext(GlobalContext);
 
@@ -63,6 +72,14 @@ const Category = () => {
     error,
     refetch: refetchProducts,
   } = useProductCategory(currentFilters);
+
+  console.log(productsData);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    // Optionally scroll to top
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   // Extract data from React Query response
   const products = productsData?.data?.results || [];
@@ -411,6 +428,14 @@ const Category = () => {
           </div>
         )}
       </div>
+      <Pagination
+        count={productsData.data.count || 0}
+        next={productsData.data.next || null}
+        previous={productsData.data.previous || null}
+        currentPage={currentPage}
+        onPageChange={handlePageChange}
+        resultsPerPage={18}
+      />
     </div>
   );
 };
