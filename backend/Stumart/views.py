@@ -289,14 +289,26 @@ class VendorsByOtherandSchoolView(APIView):
 class ProductView(APIView):
     def get(self, request, id):
         try:
-            product = Product.objects.get(id=id)
+            product = (
+                Product.objects
+                .select_related('vendor__vendor_profile') 
+                .prefetch_related(
+                    'additional_images', 
+                    'sizes',              
+                    'colors',             
+                )
+                .get(id=id)
+            )
+
             serializer = ProductSerializer(product, context={'request': request})
             return Response(serializer.data)
+
         except Product.DoesNotExist:
             return Response(
-                {"error": "Product not found"}, 
+                {"error": "Product not found"},
                 status=status.HTTP_404_NOT_FOUND
             )
+
         
 class GetVendorView(APIView):
     """API endpoint to get vendor information before creating a product"""
