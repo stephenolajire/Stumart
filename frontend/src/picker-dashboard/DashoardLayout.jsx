@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import Sidebar from "./Sidebar";
+import Sidebar from "./SidebarPicker";
 import Dashboard from "./Dashboard";
 import AvailableOrders from "./AvailableOrders";
 import MyDeliveries from "./MyDeliveries";
@@ -10,6 +10,7 @@ import OrderDetail from "./DeliveryDetail";
 import { useNavigate } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import WithdrawalDashboard from "../withdrawal/WithdrawalDashboard";
+import SidebarPicker from "./SidebarPicker";
 
 const DashboardLayout = () => {
   const [activeView, setActiveView] = useState("dashboard");
@@ -63,7 +64,7 @@ const DashboardLayout = () => {
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       {/* Sidebar Container - Hidden on mobile by default, shown when menu is open */}
       <div className="hidden lg:flex">
-        <Sidebar toggleMenu={toggleMenu} activeView={activeView} onViewChange={handleViewChange} />
+        <SidebarPicker toggleMenu={toggleMenu} activeView={activeView} onViewChange={handleViewChange} />
       </div>
 
       {/* Main Content Area */}

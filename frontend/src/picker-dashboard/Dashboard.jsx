@@ -13,7 +13,7 @@ import {
   Eye,
 } from "lucide-react";
 import api from "../constant/api";
-import ThemeToggle from "../components/ThemeToggle";
+// import ThemeToggle from "../components/ThemeToggle";
 
 const Dashboard = ({ onOrderSelect }) => {
   const [dashboardData, setDashboardData] = useState({
@@ -114,9 +114,9 @@ const Dashboard = ({ onOrderSelect }) => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Theme Toggle */}
-      <div className="fixed top-8 right-8 z-50">
+      {/* <div className="fixed top-8 right-8 z-50">
         <ThemeToggle />
-      </div>
+      </div> */}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}

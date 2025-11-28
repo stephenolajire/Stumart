@@ -133,7 +133,7 @@ const PaymentVerification = () => {
         )}
 
         {verificationStatus === "success" && (
-          <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
+          <div className="bg-white rounded-2xl mt-39 lg:mt-0 shadow-lg p-8 text-center">
             <div className="mb-8">
               <div className="mx-auto w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-6">
                 <CheckCircle className="w-12 h-12 text-green-600" />

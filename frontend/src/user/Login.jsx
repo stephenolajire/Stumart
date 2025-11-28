@@ -100,7 +100,7 @@ const Login = () => {
 
       if (user_type === "company") {
         auth();
-        navigate("/company/");
+        navigate("/company");
         return;
       }
 
