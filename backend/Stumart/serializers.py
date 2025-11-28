@@ -92,32 +92,39 @@ class ProductSerializer(serializers.ModelSerializer):
     
     def get_image_url(self, obj):
         if obj.image:
+            # Resize the image to a smaller size, e.g., 300x300
+            resized_url = obj.image.build_url(width=300, height=300, crop='fill')
+
             request = self.context.get('request')
             if request:
-                return request.build_absolute_uri(obj.image.url)
-            return obj.image.url
+                return request.build_absolute_uri(resized_url)
+            return resized_url
         return None
+
         
     def get_additional_images(self, obj):
         request = self.context.get('request')
         images = []
-        
-        for image in obj.additional_images.all():
-            image_data = {
-                'id': image.id,
-                'image_url': None
-            }
-            
+
+        for image in obj.additional_images.all()[:4]:  # only first 3
+            image_url = None
             if image.image:
+                # Resize the image to a smaller size, e.g., 300x300
+                # Cloudinary automatically generates a URL for the resized image
+                image_url = image.image.build_url(width=300, height=300, crop='fill')
+
+                # If you want absolute URL including domain
                 if request:
-                    image_data['image_url'] = request.build_absolute_uri(image.image.url)
-                else:
-                    image_data['image_url'] = image.image.url
-                    
-            images.append(image_data)
-            
+                    image_url = request.build_absolute_uri(image_url)
+
+            images.append({
+                'id': image.id,
+                'image_url': image_url
+            })
+
         return images
-      
+
+        
 
 class ProductCreateSerializer(serializers.ModelSerializer):
     sizes = serializers.CharField(required=False)
