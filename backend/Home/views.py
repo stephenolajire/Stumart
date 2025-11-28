@@ -13,6 +13,8 @@ import logging
 from django.db.models import Q, Prefetch, Count
 from django.core.cache import cache
 
+from backend.Project import settings
+
 User = get_user_model()
 logger = logging.getLogger(__name__)
 
@@ -39,6 +41,7 @@ class ProductCategoryView(APIView):
             min_price = request.query_params.get('minPrice', '').strip()
             max_price = request.query_params.get('maxPrice', '').strip()
             sort_by = request.query_params.get('sort', 'newest').strip()
+            gender = request.query_params.get('gender', '').strip()
 
             # Build optimized queryset with select_related for ForeignKeys
             queryset = Product.objects.select_related(
@@ -47,8 +50,9 @@ class ProductCategoryView(APIView):
                 'vendor__kyc'
             ).only(
                 # Product fields
-                'id', 'name', 'description', 'price', 'created_at', 'vendor_id',
-                'image', 'stock_quantity', 'is_available',  # Add other fields you need
+                'id', 'name', 'description', 'price', 'promotion_price', 
+                'created_at', 'vendor_id', 'image', 'in_stock', 
+                'gender', 'delivery_day', 'keyword',
                 # Vendor fields
                 'vendor__id', 'vendor__institution', 'vendor__state',
                 # Vendor profile fields
@@ -66,6 +70,10 @@ class ProductCategoryView(APIView):
             category_filter = Q(vendor__vendor_profile__business_category__iexact=category)
             category_filter |= Q(vendor__vendor_profile__specific_category__iexact=category)
             queryset = queryset.filter(category_filter)
+
+            # Apply gender filtering for fashion products
+            if gender and gender in ['men', 'women', 'unisex', 'kids']:
+                queryset = queryset.filter(gender=gender)
 
             # Apply school filtering based on authentication
             if request.user.is_authenticated:
@@ -90,8 +98,12 @@ class ProductCategoryView(APIView):
 
             # Apply search filtering
             if search:
-                search_filter = Q(name__icontains=search) | Q(description__icontains=search)
-                search_filter |= Q(vendor__vendor_profile__business_name__icontains=search)
+                search_filter = (
+                    Q(name__icontains=search) | 
+                    Q(description__icontains=search) |
+                    Q(keyword__icontains=search) |
+                    Q(vendor__vendor_profile__business_name__icontains=search)
+                )
                 queryset = queryset.filter(search_filter)
 
             # Apply price filtering
@@ -112,11 +124,13 @@ class ProductCategoryView(APIView):
                 queryset = queryset.order_by('price', '-created_at')
             elif sort_by == 'price_high':
                 queryset = queryset.order_by('-price', '-created_at')
-            else:
+            elif sort_by == 'popular':
+                # You can add a popularity field or order by sales
+                queryset = queryset.order_by('-in_stock', '-created_at')
+            else:  # newest (default)
                 queryset = queryset.order_by('-created_at')
 
             # Get unique vendors efficiently
-            # Use values() to avoid loading full objects
             unique_vendors = (
                 User.objects
                 .filter(
@@ -158,6 +172,7 @@ class ProductCategoryView(APIView):
                     'minPrice': min_price,
                     'maxPrice': max_price,
                     'sort': sort_by,
+                    'gender': gender,
                 }
             })
             
@@ -211,8 +226,9 @@ class CategoryLastFiveView(APIView):
                         vendor__vendor_profile__business_category__iexact=category
                     )
                     .only(
-                        'id', 'name', 'description', 'price', 'created_at', 
-                        'image', 'stock_quantity', 'is_available', 'vendor_id',
+                        'id', 'name', 'description', 'price', 'promotion_price',
+                        'created_at', 'image', 'in_stock', 'vendor_id',
+                        'gender', 'delivery_day',
                         'vendor__id',
                         'vendor__vendor_profile__business_name',
                         'vendor__vendor_profile__business_category'
@@ -224,7 +240,7 @@ class CategoryLastFiveView(APIView):
                 if products:
                     serializer = ProductSerializer(products, many=True)
                     
-                    # Get total count efficiently (use aggregation)
+                    # Get total count efficiently
                     total_count = (
                         Product.objects
                         .filter(

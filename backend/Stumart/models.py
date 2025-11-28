@@ -8,7 +8,7 @@ from User.models import Vendor
 from django.utils.translation import gettext_lazy as _
 
 class Product(models.Model):
-    """Base product model"""
+    """Base product model with optimized indexes"""
     GENDER_CHOICES = (
         ('men', 'Men'),
         ('women', 'Women'),
@@ -21,7 +21,7 @@ class Product(models.Model):
         on_delete=models.CASCADE, 
         related_name="products"
     )
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, db_index=True)  # Added db_index for search
     description = models.TextField()
     keyword = models.CharField(
         max_length=100,
@@ -39,9 +39,15 @@ class Product(models.Model):
     image = CloudinaryField('product_images/', null=True, blank=True)
     
     # Fashion-specific fields
-    gender = models.CharField(max_length=10, choices=GENDER_CHOICES, null=True, blank=True, default="unisex")
+    gender = models.CharField(
+        max_length=10, 
+        choices=GENDER_CHOICES, 
+        null=True, 
+        blank=True, 
+        default="unisex"
+    )
     
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)  # Added db_index
     updated_at = models.DateTimeField(auto_now=True)
 
     promotion_price = models.DecimalField(
@@ -51,7 +57,6 @@ class Product(models.Model):
             MinValueValidator(0.01),
             MaxValueValidator(99999.99)
         ],
-
         default=0.00,
         null=True,
         blank=True
@@ -67,9 +72,55 @@ class Product(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+        indexes = [
+            # Composite indexes for common query patterns
+            models.Index(fields=['vendor', '-created_at'], name='prod_vendor_created_idx'),
+            models.Index(fields=['vendor', 'price'], name='prod_vendor_price_idx'),
+            models.Index(fields=['vendor', 'in_stock'], name='prod_vendor_stock_idx'),
+            
+            # Price sorting indexes
+            models.Index(fields=['price', '-created_at'], name='prod_price_created_idx'),
+            models.Index(fields=['-price', '-created_at'], name='prod_price_desc_crt_idx'),
+            
+            # Date-based indexes
+            models.Index(fields=['-created_at'], name='prod_created_idx'),
+            
+            # Search and filtering indexes
+            models.Index(fields=['name'], name='prod_name_idx'),
+            models.Index(fields=['gender', '-created_at'], name='prod_gender_created_idx'),
+            models.Index(fields=['in_stock', '-created_at'], name='prod_stock_created_idx'),
+            
+            # Promotion filtering
+            models.Index(fields=['promotion_price', '-created_at'], name='prod_promo_created_idx'),
+        ]
+        verbose_name = 'Product'
+        verbose_name_plural = 'Products'
     
     def __str__(self):
         return self.name
+    
+    @property
+    def is_on_promotion(self):
+        """Check if product has active promotion"""
+        return self.promotion_price and self.promotion_price > 0
+    
+    @property
+    def effective_price(self):
+        """Get the effective price (promotion price if available, else regular price)"""
+        return self.promotion_price if self.is_on_promotion else self.price
+    
+    @property
+    def discount_percentage(self):
+        """Calculate discount percentage if on promotion"""
+        if self.is_on_promotion and self.price > 0:
+            discount = ((self.price - self.promotion_price) / self.price) * 100
+            return round(discount, 2)
+        return 0
+    
+    @property
+    def is_available(self):
+        """Check if product is available in stock"""
+        return self.in_stock > 0
 
 
 class ProductImage(models.Model):
