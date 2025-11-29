@@ -2149,6 +2149,78 @@ class ConfirmDeliveryView(APIView):
 class CustomerConfirmationView(APIView):
     permission_classes = []
     
+    def get(self, request, customer_confirmation_code=None):
+        """Handle GET requests to fetch order details"""
+        try:
+            if not customer_confirmation_code:
+                return Response({
+                    'error': 'Customer confirmation code is required'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            try:
+                opportunity = DeliveryOpportunity.objects.get(
+                    customer_confirmation_code=customer_confirmation_code
+                )
+            except DeliveryOpportunity.DoesNotExist:
+                return Response({
+                    'error': 'Invalid customer confirmation code'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            order = opportunity.order
+            
+            # Determine if customer can confirm
+            can_confirm = (
+                opportunity.status == 'completed' and 
+                order.order_status != 'COMPLETED'
+            )
+            
+            already_confirmed = order.order_status == 'COMPLETED'
+            
+            # Get rider/picker info
+            rider_info = {}
+            if opportunity.picker_type == 'company_rider' and opportunity.company_rider:
+                rider = opportunity.company_rider
+                rider_info = {
+                    'name': f"{rider.first_name} {rider.last_name}",
+                    'phone': rider.phone_number,
+                    'accepted_at': opportunity.accepted_at.isoformat() if opportunity.accepted_at else None,
+                    'pickup_time': opportunity.pickup_time.strftime('%H:%M') if opportunity.pickup_time else None
+                }
+            elif opportunity.user_picker:
+                picker = opportunity.user_picker
+                rider_info = {
+                    'name': f"{picker.first_name} {picker.last_name}",
+                    'phone': picker.phone_number,
+                    'accepted_at': opportunity.accepted_at.isoformat() if opportunity.accepted_at else None,
+                    'pickup_time': opportunity.pickup_time.strftime('%H:%M') if opportunity.pickup_time else None
+                }
+            
+            return Response({
+                'success': True,
+                'can_confirm': can_confirm,
+                'already_confirmed': already_confirmed,
+                'opportunity_status': opportunity.status,
+                'order_status': order.order_status,
+                'order': {
+                    'order_number': order.order_number,
+                    'customer_name': f"{order.first_name} {order.last_name}",
+                    'customer_phone': order.phone_number,
+                    'total_amount': str(order.total),
+                    'shipping_fee': str(order.shipping_fee),
+                    'delivery_address': order.delivery_address,
+                    'room_number': order.room_number,
+                    'created_at': order.created_at.isoformat()
+                },
+                'rider_info': rider_info,
+                'delivered_at': opportunity.completed_at.isoformat() if opportunity.completed_at else None
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Error in GET CustomerConfirmationView: {str(e)}", exc_info=True)
+            return Response({
+                'error': 'An error occurred while fetching order details.'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
     def post(self, request):
         try:
             customer_confirmation_code = request.data.get('customer_confirmation_code')
