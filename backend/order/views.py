@@ -16,6 +16,8 @@ from io import BytesIO
 from django.http import HttpResponse
 from decimal import Decimal
 import logging
+
+from payment.payment_client import AutomatedPayoutService
 logger = logging.getLogger(__name__)
 from weasyprint import HTML
 from django.template import Context, Template
@@ -2145,7 +2147,7 @@ class ConfirmDeliveryView(APIView):
 
 
 class CustomerConfirmationView(APIView):
-    permission_classes = []  # Allow anonymous access for customer confirmation
+    permission_classes = []
     
     def post(self, request):
         try:
@@ -2158,7 +2160,6 @@ class CustomerConfirmationView(APIView):
             
             with transaction.atomic():
                 try:
-                    # Get the delivery opportunity with the customer confirmation code
                     opportunity = DeliveryOpportunity.objects.select_for_update().get(
                         customer_confirmation_code=customer_confirmation_code
                     )
@@ -2167,7 +2168,6 @@ class CustomerConfirmationView(APIView):
                         'error': 'Invalid customer confirmation code'
                     }, status=status.HTTP_404_NOT_FOUND)
                 
-                # Check if opportunity is in completed state (delivery was confirmed by rider)
                 if opportunity.status != 'completed':
                     return Response({
                         'error': 'This delivery has not been confirmed yet by the rider',
@@ -2176,24 +2176,27 @@ class CustomerConfirmationView(APIView):
                 
                 order = opportunity.order
                 
-                # Check if order is already completed
                 if order.order_status == 'COMPLETED':
                     return Response({
                         'error': 'This order has already been confirmed by customer',
                         'message': 'Order is already in completed status'
                     }, status=status.HTTP_409_CONFLICT)
                 
-                # Update order status to COMPLETED
+                # Update order status
                 order.order_status = 'COMPLETED'
-                order.confirm = True  # Set customer confirmation flag
+                order.confirm = True
                 order.save()
                 
-                # Handle payment distribution based on picker type
+                # Process payment distribution (wallet credits)
                 payment_details = self.process_payment_distribution(order, opportunity)
+                
+                # **NEW: Initiate automated payouts**
+                payout_service = AutomatedPayoutService()
+                payout_results = payout_service.process_all_payouts(order, opportunity, payment_details)
                 
                 # Send notifications after transaction commits
                 transaction.on_commit(lambda: self.send_customer_confirmation_notifications(
-                    order, opportunity, payment_details
+                    order, opportunity, payment_details, payout_results
                 ))
                 
                 return Response({
@@ -2201,7 +2204,8 @@ class CustomerConfirmationView(APIView):
                     'message': 'Order confirmed successfully by customer',
                     'order_number': order.order_number,
                     'confirmed_at': timezone.now(),
-                    'payment_details': payment_details
+                    'payment_details': payment_details,
+                    'automated_payouts': payout_results
                 }, status=status.HTTP_200_OK)
                 
         except Exception as e:
@@ -2210,60 +2214,8 @@ class CustomerConfirmationView(APIView):
                 'error': 'An error occurred while processing your confirmation. Please try again.'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
-    def get(self, request, customer_confirmation_code=None):
-        """Get order details for customer confirmation"""
-        try:
-            if not customer_confirmation_code:
-                return Response({
-                    'error': 'Customer confirmation code is required'
-                }, status=status.HTTP_400_BAD_REQUEST)
-            
-            try:
-                opportunity = DeliveryOpportunity.objects.get(
-                    customer_confirmation_code=customer_confirmation_code
-                )
-            except DeliveryOpportunity.DoesNotExist:
-                return Response({
-                    'error': 'Invalid customer confirmation code'
-                }, status=status.HTTP_404_NOT_FOUND)
-            
-            order = opportunity.order
-            
-            return Response({
-                'customer_confirmation_code': customer_confirmation_code,
-                'can_confirm': (opportunity.status == 'completed' and 
-                              order.order_status == 'DELIVERED' and 
-                              not order.confirm),
-                'opportunity_status': opportunity.status,
-                'order_status': order.order_status,
-                'already_confirmed': order.confirm,
-                'delivered_at': opportunity.delivered_at if hasattr(opportunity, 'delivered_at') else None,
-                'order': {
-                    'order_number': order.order_number,
-                    'customer_name': f"{order.first_name} {order.last_name}",
-                    'customer_phone': order.phone,
-                    'delivery_address': order.address,
-                    'room_number': order.room_number or 'Not specified',
-                    'total_amount': float(order.total),
-                    'shipping_fee': float(order.shipping_fee),
-                    'created_at': order.created_at
-                },
-                'rider_info': {
-                    'name': opportunity.accepted_rider_name,
-                    'phone': opportunity.accepted_rider_phone,
-                    'pickup_time': opportunity.pickup_time,
-                    'accepted_at': opportunity.accepted_at
-                }
-            }, status=status.HTTP_200_OK)
-            
-        except Exception as e:
-            logger.error(f"Error getting customer confirmation details: {str(e)}", exc_info=True)
-            return Response({
-                'error': 'An error occurred while fetching confirmation details'
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
     def process_payment_distribution(self, order, opportunity):
-        """Process payment distribution based on picker type"""
+        """Process payment distribution (wallet credits only, not transfers)"""
         payment_details = {
             'picker_payment': 0,
             'company_earnings': 0,
@@ -2276,9 +2228,8 @@ class CustomerConfirmationView(APIView):
         try:
             shipping_fee = Decimal(str(order.shipping_fee))
             tax_amount = Decimal(str(order.tax))
-            company_commission = Decimal('100.00')  # ₦100 commission for company
+            company_commission = Decimal('100.00')
             
-            # Update Stumart wallet with tax and commission
             stumart_earnings = tax_amount
             
             # Handle Company Rider
@@ -2286,23 +2237,21 @@ class CustomerConfirmationView(APIView):
                 company_rider = opportunity.company_rider
                 company = company_rider.company
                 
-                # Calculate earnings (shipping fee minus company commission)
                 rider_earnings = shipping_fee - company_commission
                 
-                # Update company rider earnings
+                # Update company rider stats
                 company_rider.total_earnings = (company_rider.total_earnings or Decimal('0')) + rider_earnings
                 company_rider.completed_deliveries += 1
                 company_rider.save()
                 
-                # Update company wallet
+                # Update company wallet (they'll withdraw later via automated payout)
                 company_wallet, created = CompanyWallet.objects.get_or_create(
                     company=company,
                     defaults={'balance': Decimal('0')}
                 )
-                company_wallet.balance += rider_earnings  # Company gets the rider earnings
+                company_wallet.balance += rider_earnings
                 company_wallet.save()
                 
-                # Add commission to Stumart earnings
                 stumart_earnings += company_commission
                 
                 payment_details.update({
@@ -2311,14 +2260,12 @@ class CustomerConfirmationView(APIView):
                     'company_earnings': float(rider_earnings),
                     'company_commission': float(company_commission)
                 })
-                
-                logger.info(f"Company rider {company_rider.name} earned ₦{rider_earnings}, Company wallet updated")
             
             # Handle Regular Picker or Student Picker
             elif opportunity.user_picker:
                 picker = opportunity.user_picker
                 
-                # Update picker wallet
+                # Update picker wallet (they'll receive automated payout)
                 if picker.user_type == 'picker':
                     picker_wallet, created = PickerWalletAccount.objects.get_or_create(
                         picker=picker.picker_profile,
@@ -2327,7 +2274,6 @@ class CustomerConfirmationView(APIView):
                     picker_wallet.amount += shipping_fee
                     picker_wallet.save()
                     
-                    # Update picker stats
                     picker.picker_profile.total_deliveries += 1
                     picker.picker_profile.save()
                     
@@ -2339,7 +2285,6 @@ class CustomerConfirmationView(APIView):
                     picker_wallet.amount += shipping_fee
                     picker_wallet.save()
                     
-                    # Update student picker stats
                     picker.student_picker_profile.total_deliveries += 1
                     picker.student_picker_profile.save()
                 
@@ -2347,18 +2292,13 @@ class CustomerConfirmationView(APIView):
                     'picker_type': picker.user_type,
                     'picker_payment': float(shipping_fee)
                 })
-                
-                logger.info(f"Picker {picker.email} earned ₦{shipping_fee}")
             
-            # Update Stumart platform wallet
+            # Update Stumart wallet
             stumart_wallet = StumartWalletAccount.get_instance()
             if opportunity.picker_type == 'company_rider':
-                # For company riders, add both tax and commission
                 stumart_wallet.add_tax(tax_amount)
                 stumart_wallet.add_commission(company_commission)
-                # stumart_wallet.save()
                 
-                # Create transaction records
                 WalletTransactionAccount.objects.create(
                     transaction_type='tax',
                     amount=tax_amount,
@@ -2375,9 +2315,7 @@ class CustomerConfirmationView(APIView):
                     description=f"Commission from company rider delivery - order #{order.order_number}"
                 )
             else:
-                # For regular/student pickers, only add tax
                 stumart_wallet.add_tax(tax_amount)
-                # stumart_wallet.save()
                 
                 WalletTransactionAccount.objects.create(
                     transaction_type='tax',
@@ -2389,9 +2327,7 @@ class CustomerConfirmationView(APIView):
             
             payment_details['stumart_earnings'] = float(stumart_earnings)
             
-            logger.info(f"Stumart platform earned ₦{stumart_earnings} (Tax: ₦{tax_amount}, Commission: ₦{company_commission if opportunity.picker_type == 'company_rider' else 0})")
-            
-            # Calculate and distribute vendor payments
+            # Calculate vendor payments
             vendor_payments = self.calculate_vendor_payments(order)
             payment_details['vendor_payments'] = vendor_payments
             
@@ -2402,11 +2338,10 @@ class CustomerConfirmationView(APIView):
             raise
     
     def calculate_vendor_payments(self, order):
-        """Calculate and distribute payments to vendors"""
+        """Calculate vendor payments (returns dict of vendor_id: amount)"""
         vendor_totals = {}
         
         try:
-            # Get all order items
             order_items = order.order_items.all()
             
             for item in order_items:
@@ -2421,6 +2356,7 @@ class CustomerConfirmationView(APIView):
             # Update vendor wallets
             for vendor_id, amount in vendor_totals.items():
                 try:
+                    from User.models import Vendor
                     vendor = Vendor.objects.get(id=vendor_id)
                     wallet, created = VendorWallets.objects.get_or_create(
                         vendor=vendor,
@@ -2431,12 +2367,6 @@ class CustomerConfirmationView(APIView):
                     
                     logger.info(f"Updated wallet for vendor {vendor_id}, credited: ₦{amount}")
                     
-                    # Send vendor notification email
-                    self.notify_vendor_payment(vendor, order, amount, wallet.balance)
-                    
-                except Vendor.DoesNotExist:
-                    logger.error(f"Vendor with ID {vendor_id} not found")
-                    continue
                 except Exception as e:
                     logger.error(f"Error updating vendor {vendor_id} wallet: {str(e)}")
                     continue
@@ -2447,72 +2377,88 @@ class CustomerConfirmationView(APIView):
             logger.error(f"Error calculating vendor payments: {str(e)}")
             return {}
     
-    def notify_vendor_payment(self, vendor, order, amount, new_balance):
-        """Send payment notification to vendor"""
+    def send_customer_confirmation_notifications(self, order, opportunity, payment_details, payout_results):
+        """Send notifications including automated payout status"""
         try:
-            subject = f"Payment Received - Order #{order.order_number}"
-            
-            message = (
-                f"Dear {vendor.business_name},\n\n"
-                f"Great news! Payment for Order #{order.order_number} has been processed.\n\n"
-                f"💰 PAYMENT DETAILS:\n"
-                f"• Order Number: {order.order_number}\n"
-                f"• Amount Credited: ₦{amount}\n"
-                f"• New Wallet Balance: ₦{new_balance}\n"
-                f"• Payment Date: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
-                f"The payment has been credited to your wallet and is ready for withdrawal.\n\n"
-                f"Thank you for your business!\n\n"
-                f"Best regards,\n"
-                f"Stumart Team"
-            )
-            
-            send_mail(
-                subject=subject,
-                message=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[vendor.user.email],
-                fail_silently=True
-            )
-            
-            logger.info(f"Payment notification sent to vendor {vendor.id}")
-            
-        except Exception as e:
-            logger.error(f"Failed to send payment notification to vendor {vendor.id}: {str(e)}")
-    
-    def send_customer_confirmation_notifications(self, order, opportunity, payment_details):
-        """Send notifications about customer confirmation"""
-        try:
-            # Notify customer about successful confirmation
+            # Notify customer
             self.notify_customer_confirmation_success(order, opportunity)
             
-            # Notify admin about order completion
-            self.notify_admin_order_completed(order, opportunity, payment_details)
+            # Notify admin with payout details
+            self.notify_admin_order_completed(order, opportunity, payment_details, payout_results)
             
-            # Notify picker about payment
-            self.notify_picker_payment(order, opportunity, payment_details)
+            # Notify vendors about automated payouts
+            self.notify_vendors_automated_payout(order, payout_results.get('vendor_payouts', []))
+            
+            # Notify picker about automated payout
+            if payout_results.get('picker_payout'):
+                self.notify_picker_automated_payout(opportunity, payout_results['picker_payout'])
             
         except Exception as e:
-            logger.error(f"Error sending customer confirmation notifications: {str(e)}", exc_info=True)
+            logger.error(f"Error sending notifications: {str(e)}", exc_info=True)
     
-    def notify_customer_confirmation_success(self, order, opportunity):
-        """Thank customer for confirming order receipt"""
+    def notify_vendors_automated_payout(self, order, vendor_payouts):
+        """Notify vendors about automated payouts"""
+        for payout in vendor_payouts:
+            try:
+                if not payout['success']:
+                    continue
+                
+                from User.models import Vendor
+                vendor = Vendor.objects.get(id=payout['vendor_id'])
+                
+                subject = f"💰 Payment Sent - Order #{order.order_number}"
+                
+                message = (
+                    f"Dear {vendor.business_name},\n\n"
+                    f"Great news! Your payment has been automatically processed and sent to your bank account.\n\n"
+                    f"💸 PAYMENT DETAILS:\n"
+                    f"• Order Number: {order.order_number}\n"
+                    f"• Amount: ₦{payout['amount']}\n"
+                    f"• Bank Account: {vendor.account_name} - {vendor.account_number}\n"
+                    f"• Reference: {payout['reference']}\n"
+                    f"• Status: Processing (arrives within 10-30 minutes)\n"
+                    f"• Processed: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+                    f"⏰ DELIVERY TIMELINE:\n"
+                    f"Your payment will arrive in your bank account within 10-30 minutes.\n\n"
+                    f"📝 NOTE:\n"
+                    f"This is an automated payout triggered by customer order confirmation.\n"
+                    f"No manual withdrawal needed!\n\n"
+                    f"Thank you for your business!\n\n"
+                    f"Best regards,\n"
+                    f"Stumart Team"
+                )
+                
+                send_mail(
+                    subject=subject,
+                    message=message,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[vendor.user.email],
+                    fail_silently=True
+                )
+                
+                logger.info(f"Automated payout notification sent to vendor {vendor.business_name}")
+                
+            except Exception as e:
+                logger.error(f"Failed to notify vendor about automated payout: {str(e)}")
+    
+    def notify_picker_automated_payout(self, opportunity, payout_result):
+        """Notify picker about automated payout"""
         try:
-            subject = f"Thank You for Confirming Order #{order.order_number}"
+            picker = opportunity.user_picker
+            
+            subject = f"💰 Delivery Payment Sent - Order #{opportunity.order.order_number}"
             
             message = (
-                f"Hello {order.first_name},\n\n"
-                f"Thank you for confirming the receipt of your order #{order.order_number}!\n\n"
-                f"📦 ORDER SUMMARY:\n"
-                f"• Order Number: {order.order_number}\n"
-                f"• Total Amount: ₦{order.total}\n"
-                f"• Delivered To: {order.address}\n"
-                f"• Delivered By: {opportunity.accepted_rider_name}\n"
-                f"• Confirmed At: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
-                f"Your confirmation helps us maintain quality service and ensures our delivery partners are compensated fairly.\n\n"
-                f"We hope you enjoyed your order! Please don't hesitate to shop with us again.\n\n"
-                f"⭐ RATE YOUR EXPERIENCE:\n"
-                f"We'd love to hear about your experience. Consider leaving a review for the vendors and delivery partner.\n\n"
-                f"Thank you for choosing Stumart!\n\n"
+                f"Hello {picker.first_name} {picker.last_name},\n\n"
+                f"Your delivery payment has been automatically processed!\n\n"
+                f"💸 PAYMENT DETAILS:\n"
+                f"• Order Number: {opportunity.order.order_number}\n"
+                f"• Amount: ₦{payout_result['amount']}\n"
+                f"• Reference: {payout_result['reference']}\n"
+                f"• Status: Processing (arrives within 10-30 minutes)\n"
+                f"• Processed: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+                f"⏰ Your payment will arrive in your bank account within 10-30 minutes.\n\n"
+                f"Thank you for your excellent delivery service!\n\n"
                 f"Best regards,\n"
                 f"Stumart Team"
             )
@@ -2521,44 +2467,37 @@ class CustomerConfirmationView(APIView):
                 subject=subject,
                 message=message,
                 from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[order.email],
+                recipient_list=[picker.email],
                 fail_silently=True
             )
             
-            logger.info(f"Customer confirmation thank you email sent for order {order.order_number}")
-            
         except Exception as e:
-            logger.error(f"Failed to send customer confirmation email: {str(e)}")
+            logger.error(f"Failed to notify picker about automated payout: {str(e)}")
     
-    def notify_admin_order_completed(self, order, opportunity, payment_details):
-        """Notify admin about order completion"""
+    def notify_admin_order_completed(self, order, opportunity, payment_details, payout_results):
+        """Notify admin with payout details"""
         try:
             admin_emails = [settings.DEFAULT_FROM_EMAIL]
             
-            subject = f"Order Completed - #{order.order_number}"
+            # Format payout results
+            vendor_payout_summary = "\n".join([
+                f"  - {p['vendor_name']}: ₦{p['amount']} ({p['reference'] if p['success'] else p['error']})"
+                for p in payout_results.get('vendor_payouts', [])
+            ])
+            
+            subject = f"Order Completed with Automated Payouts - #{order.order_number}"
             
             message = (
-                f"An order has been completed and confirmed by the customer:\n\n"
+                f"Order completed with automated payout processing:\n\n"
                 f"ORDER INFO:\n"
                 f"• Order Number: {order.order_number}\n"
                 f"• Customer: {order.first_name} {order.last_name}\n"
-                f"• Email: {order.email}\n"
-                f"• Phone: {order.phone}\n"
-                f"• Address: {order.address}\n"
                 f"• Total: ₦{order.total}\n\n"
-                f"DELIVERY INFO:\n"
-                f"• Rider: {opportunity.accepted_rider_name}\n"
-                f"• Phone: {opportunity.accepted_rider_phone}\n"
-                f"• Picker Type: {payment_details.get('picker_type', 'Unknown')}\n"
-                f"• Delivered At: {getattr(opportunity, 'delivered_at', 'N/A')}\n"
-                f"• Confirmed At: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
-                f"PAYMENT DISTRIBUTION:\n"
-                f"• Picker Payment: ₦{payment_details.get('picker_payment', 0)}\n"
-                f"• Rider Earnings: ₦{payment_details.get('rider_earnings', 0)}\n"
-                f"• Company Earnings: ₦{payment_details.get('company_earnings', 0)}\n"
-                f"• Stumart Earnings: ₦{payment_details.get('stumart_earnings', 0)}\n"
-                f"• Vendor Payments: {payment_details.get('vendor_payments', {})}\n\n"
-                f"Status: Order marked as COMPLETED"
+                f"AUTOMATED PAYOUTS:\n"
+                f"Vendors:\n{vendor_payout_summary}\n\n"
+                f"Picker: {payout_results.get('picker_payout', {}).get('picker_email', 'N/A')} - "
+                f"₦{payout_results.get('picker_payout', {}).get('amount', 0)}\n\n"
+                f"Status: All payouts initiated automatically"
             )
             
             send_mail(
@@ -2569,51 +2508,5 @@ class CustomerConfirmationView(APIView):
                 fail_silently=True
             )
             
-            logger.info(f"Admin notification sent for completed order {order.order_number}")
-            
         except Exception as e:
-            logger.error(f"Failed to send admin notification: {str(e)}")
-    
-    def notify_picker_payment(self, order, opportunity, payment_details):
-        """Notify picker about payment"""
-        try:
-            if opportunity.picker_type == 'company_rider':
-                # For company riders, we might not have direct email access
-                # This would be handled by the company's internal system
-                logger.info(f"Company rider payment notification handled internally")
-                return
-            
-            if opportunity.user_picker:
-                picker_email = opportunity.user_picker.email
-                picker_name = f"{opportunity.user_picker.first_name} {opportunity.user_picker.last_name}"
-                payment_amount = payment_details.get('picker_payment', 0)
-                
-                subject = f"Payment Received - Delivery #{order.order_number}"
-                
-                message = (
-                    f"Hello {picker_name},\n\n"
-                    f"Congratulations! Payment for your delivery has been processed.\n\n"
-                    f"💰 PAYMENT DETAILS:\n"
-                    f"• Order Number: {order.order_number}\n"
-                    f"• Delivery Fee: ₦{payment_amount}\n"
-                    f"• Customer: {order.first_name} {order.last_name}\n"
-                    f"• Delivery Address: {order.address}\n"
-                    f"• Payment Date: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
-                    f"The payment has been credited to your wallet.\n\n"
-                    f"Thank you for your excellent delivery service!\n\n"
-                    f"Best regards,\n"
-                    f"Stumart Team"
-                )
-                
-                send_mail(
-                    subject=subject,
-                    message=message,
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[picker_email],
-                    fail_silently=True
-                )
-                
-                logger.info(f"Payment notification sent to picker {picker_email}")
-                
-        except Exception as e:
-            logger.error(f"Failed to send picker payment notification: {str(e)}")
+            logger.error(f"Failed to notify admin: {str(e)}")

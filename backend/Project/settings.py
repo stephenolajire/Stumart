@@ -50,7 +50,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'rest_framework',
     'User',
-    'Stumart',
+    # 'Stumart',
     'Vendor',
     'Picker',
     'cloudinary_storage',
@@ -66,6 +66,8 @@ INSTALLED_APPS = [
     'order',
     'payment',
     'wallet',
+    'django_crontab',
+    'Stumart.apps.StumartConfig',
 ]
 
 MIDDLEWARE = [
@@ -407,3 +409,59 @@ JAZZMIN_SETTINGS = {
     'show_ui_builder': True,
     'navigation_expanded': False,
 }
+
+CRONJOBS = [
+    # Check payout status every 30 minutes
+    # Format: ('schedule', 'function_path', ['arguments'])
+    ('*/30 * * * *', 'django.core.management.call_command', ['check_payout_status'], {}, '>> /var/log/stumart/payout_check.log 2>&1'),
+    
+    # Retry failed payouts every 4 hours
+    ('0 */4 * * *', 'django.core.management.call_command', ['retry_failed_payouts'], {}, '>> /var/log/stumart/payout_retry.log 2>&1'),
+    
+    # Optional: Daily summary report at 9 AM
+    # ('0 9 * * *', 'django.core.management.call_command', ['send_daily_payout_report'], {}, '>> /var/log/stumart/daily_report.log 2>&1'),
+]
+
+# Optional: Add prefix to cron job comments
+CRONTAB_COMMENT = 'stumart-payouts'
+
+# Optional: Lock file to prevent concurrent runs
+CRONTAB_LOCK_JOBS = True
+
+
+LOGS_DIR = os.path.join(BASE_DIR, 'logs')
+if not os.path.exists(LOGS_DIR):
+    os.makedirs(LOGS_DIR)
+
+CRONJOBS = [
+    # Check payout status every 30 minutes
+    (
+        '*/30 * * * *',
+        'django.core.management.call_command',
+        ['check_payout_status'],
+        {},
+        f'>> {LOGS_DIR}/payout_check.log 2>&1'
+    ),
+    
+    # Retry failed payouts every 4 hours
+    (
+        '0 */4 * * *',
+        'django.core.management.call_command',
+        ['retry_failed_payouts'],
+        {},
+        f'>> {LOGS_DIR}/payout_retry.log 2>&1'
+    ),
+    
+    # Optional: Clear old logs weekly (Sunday at midnight)
+    (
+        '0 0 * * 0',
+        'django.core.management.call_command',
+        ['clear_old_logs'],
+        {'days': 30},
+        f'>> {LOGS_DIR}/maintenance.log 2>&1'
+    ),
+]
+
+
+# Add command prefix for easier identification
+CRONTAB_COMMAND_PREFIX = 'DJANGO_SETTINGS_MODULE=stumart.settings'

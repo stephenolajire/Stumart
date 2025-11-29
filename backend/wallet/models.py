@@ -26,10 +26,10 @@ class DeliveryOpportunity(models.Model):
     customer_confirmation_code = models.CharField(max_length=100, blank=True, null=True, unique=True)
 
     # For company riders (they don't have User accounts)
-    company_rider = models.ForeignKey(CompanyRider, null=True, blank=True, on_delete=models.CASCADE, related_name='delivery_opportunities')
+    company_rider = models.ForeignKey(CompanyRider, null=True, blank=True, on_delete=models.SET_NULL, related_name='delivery_opportunities')
     
     # For regular/student pickers (they have User accounts)
-    user_picker = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE, related_name='delivery_opportunities')
+    user_picker = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='delivery_opportunities')
     
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     created_at = models.DateTimeField(auto_now_add=True)

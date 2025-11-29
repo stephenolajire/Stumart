@@ -18,7 +18,13 @@ from .models import WithdrawalRequest
 from wallet.models import WalletTransactionAccount
 from User.models import User
 
-# Create your views here.
+from django.core.cache import cache
+from django.conf import settings
+import requests
+import logging
+
+logger = logging.getLogger(__name__)
+
 class PaystackTransferService:
     """Service class to handle Paystack transfers"""
     
@@ -29,6 +35,98 @@ class PaystackTransferService:
             'Authorization': f'Bearer {self.secret_key}',
             'Content-Type': 'application/json'
         }
+    
+    def get_banks_list(self, force_refresh=False):
+        """
+        Get cached list of banks or fetch from API
+        Returns list of banks with their codes
+        """
+        cache_key = 'paystack_banks_list'
+        
+        # Try to get from cache first
+        if not force_refresh:
+            cached_banks = cache.get(cache_key)
+            if cached_banks:
+                return cached_banks
+        
+        # Fetch from API
+        try:
+            response = requests.get(
+                f"{self.base_url}/bank",
+                headers=self.headers,
+                timeout=30
+            )
+            response_data = response.json()
+            
+            if response.status_code == 200 and response_data.get('status'):
+                banks = response_data['data']
+                # Cache for 24 hours (86400 seconds)
+                cache.set(cache_key, banks, 86400)
+                logger.info(f"Cached {len(banks)} banks from Paystack")
+                return banks
+            else:
+                logger.error(f"Failed to fetch banks: {response_data.get('message')}")
+                return []
+                
+        except requests.RequestException as e:
+            logger.error(f"Network error fetching banks: {str(e)}")
+            return []
+        except Exception as e:
+            logger.error(f"Error fetching banks: {str(e)}")
+            return []
+    
+    def get_bank_code(self, bank_name):
+        """
+        Get bank code from bank name
+        Args:
+            bank_name: Name of the bank (e.g., "Access Bank", "GTBank")
+        Returns:
+            bank_code (str) or None if not found
+        """
+        if not bank_name:
+            return None
+        
+        banks = self.get_banks_list()
+        
+        if not banks:
+            logger.error("No banks available for lookup")
+            return None
+        
+        bank_name_lower = bank_name.lower().strip()
+        
+        # Try exact match first
+        for bank in banks:
+            if bank['name'].lower() == bank_name_lower:
+                logger.info(f"Found exact match: {bank['name']} -> {bank['code']}")
+                return bank['code']
+        
+        # Try partial match (for cases like "Access" matching "Access Bank")
+        for bank in banks:
+            bank_full_name = bank['name'].lower()
+            # Check if bank_name is in full name or vice versa
+            if bank_name_lower in bank_full_name or bank_full_name in bank_name_lower:
+                logger.info(f"Found partial match: {bank_name} -> {bank['name']} ({bank['code']})")
+                return bank['code']
+        
+        # Log available banks for debugging
+        logger.warning(f"Bank code not found for: '{bank_name}'. Available banks: {[b['name'] for b in banks[:5]]}...")
+        return None
+    
+    def get_bank_name_from_code(self, bank_code):
+        """
+        Get bank name from bank code (reverse lookup)
+        Useful for displaying bank names
+        """
+        if not bank_code:
+            return None
+        
+        banks = self.get_banks_list()
+        
+        for bank in banks:
+            if bank['code'] == bank_code:
+                return bank['name']
+        
+        return None
     
     def resolve_account(self, account_number, bank_code):
         """Resolve bank account to get account name"""
@@ -65,6 +163,20 @@ class PaystackTransferService:
                 'success': False,
                 'message': 'An error occurred during account resolution'
             }
+    
+    def resolve_account_with_bank_name(self, account_number, bank_name):
+        """
+        Convenience method to resolve account using bank name instead of code
+        """
+        bank_code = self.get_bank_code(bank_name)
+        
+        if not bank_code:
+            return {
+                'success': False,
+                'message': f'Could not find bank code for: {bank_name}'
+            }
+        
+        return self.resolve_account(account_number, bank_code)
     
     def create_transfer_recipient(self, name, account_number, bank_code):
         """Create a transfer recipient on Paystack"""
@@ -103,6 +215,20 @@ class PaystackTransferService:
                 'success': False,
                 'message': 'An error occurred during recipient creation'
             }
+    
+    def create_transfer_recipient_with_bank_name(self, name, account_number, bank_name):
+        """
+        Convenience method to create recipient using bank name instead of code
+        """
+        bank_code = self.get_bank_code(bank_name)
+        
+        if not bank_code:
+            return {
+                'success': False,
+                'message': f'Could not find bank code for: {bank_name}'
+            }
+        
+        return self.create_transfer_recipient(name, account_number, bank_code)
     
     def initiate_transfer(self, amount, recipient_code, reason=None):
         """Initiate a transfer to a recipient"""
@@ -184,34 +310,20 @@ class PaystackTransferService:
     
     def get_banks(self):
         """Get list of supported banks"""
-        url = f"{self.base_url}/bank"
+        banks = self.get_banks_list()
         
-        try:
-            response = requests.get(url, headers=self.headers, timeout=30)
-            response_data = response.json()
-            
-            if response.status_code == 200 and response_data.get('status'):
-                return {
-                    'success': True,
-                    'banks': response_data['data']
-                }
-            else:
-                return {
-                    'success': False,
-                    'message': 'Failed to fetch banks'
-                }
-        except requests.RequestException as e:
-            logger.error(f"Get banks request error: {str(e)}")
+        if banks:
+            return {
+                'success': True,
+                'banks': banks
+            }
+        else:
             return {
                 'success': False,
-                'message': 'Network error during bank fetch'
+                'message': 'Failed to fetch banks'
             }
-        except Exception as e:
-            logger.error(f"Get banks error: {str(e)}")
-            return {
-                'success': False,
-                'message': 'An error occurred during bank fetch'
-            }
+        
+
 
 class BankListView(APIView):
     """Get list of supported banks - ONLY banks that support transfers"""

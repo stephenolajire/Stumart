@@ -59,6 +59,8 @@ class CartItemAdmin(admin.ModelAdmin):
 
 from django.contrib import admin
 from .models import Order, OrderItem, Transaction
+from django.contrib import messages
+from django.db import transaction
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
@@ -66,6 +68,44 @@ class OrderAdmin(admin.ModelAdmin):
     list_filter = ['order_status', 'created_at']
     search_fields = ['order_number', 'email', 'first_name', 'last_name']
     readonly_fields = ['order_number', 'created_at']
+
+    def delete_model(self, request, obj):
+        """Override delete to handle delivery opportunities"""
+        try:
+            with transaction.atomic():
+                # Delete delivery opportunities first
+                delivery_count = obj.delivery_opportunities.count()
+                obj.delivery_opportunities.all().delete()
+                
+                # Now delete the order
+                obj.delete()
+                
+                messages.success(
+                    request, 
+                    f"Order {obj.order_number} and {delivery_count} delivery opportunities deleted."
+                )
+        except Exception as e:
+            messages.error(request, f"Error deleting order: {str(e)}")
+    
+    def delete_queryset(self, request, queryset):
+        """Handle bulk deletion"""
+        try:
+            with transaction.atomic():
+                total_opportunities = 0
+                for order in queryset:
+                    count = order.delivery_opportunities.count()
+                    total_opportunities += count
+                    order.delivery_opportunities.all().delete()
+                
+                order_count = queryset.count()
+                queryset.delete()
+                
+                messages.success(
+                    request, 
+                    f"{order_count} orders and {total_opportunities} delivery opportunities deleted."
+                )
+        except Exception as e:
+            messages.error(request, f"Error in bulk deletion: {str(e)}")
 
 
 @admin.register(OrderItem)

@@ -1,3 +1,4 @@
+from datetime import timezone
 from django.db import models
 from django.contrib.auth import get_user_model
 from decimal import Decimal
@@ -6,8 +7,6 @@ import uuid
 User = get_user_model()
 
 class WithdrawalRequest(models.Model):
-    """Model to track withdrawal requests"""
-    
     STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('processing', 'Processing'),
@@ -23,69 +22,73 @@ class WithdrawalRequest(models.Model):
         ('company', 'Company'),
     ]
     
-    # Basic fields
-    id = models.BigAutoField(primary_key=True)
+    # Existing fields
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='withdrawal_requests')
     user_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES)
-    
-    # Amount fields
-    amount = models.DecimalField(max_digits=12, decimal_places=2, help_text="Requested withdrawal amount")
-    final_amount = models.DecimalField(max_digits=12, decimal_places=2, help_text="Final amount after fees")
-    
-    # Bank details
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
     bank_name = models.CharField(max_length=100, null=True, blank=True)
     bank_code = models.CharField(max_length=10, null=True, blank=True)
-    account_number = models.CharField(max_length=20, null=True, blank=True)
+    account_number = models.CharField(max_length=10, null=True, blank=True)
     account_name = models.CharField(max_length=100, null=True, blank=True)
-
-    # Status tracking
+    final_amount = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    failure_reason = models.TextField(blank=True, null=True)
     
-    # Paystack integration fields
+    # Paystack fields
     paystack_recipient_code = models.CharField(max_length=100, blank=True, null=True)
     paystack_transfer_code = models.CharField(max_length=100, blank=True, null=True)
-    paystack_reference = models.CharField(max_length=100, blank=True, null=True)
+    paystack_reference = models.CharField(max_length=100, blank=True, null=True, unique=True)
     
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
-    processed_at = models.DateTimeField(blank=True, null=True)
-    completed_at = models.DateTimeField(blank=True, null=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    processed_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
     
-    # Additional fields
-    notes = models.TextField(blank=True, null=True, help_text="Internal notes")
-    ip_address = models.GenericIPAddressField(blank=True, null=True)
+    # Failure tracking
+    failure_reason = models.TextField(blank=True, null=True)
+    
+    # **NEW FIELDS FOR AUTOMATED PAYOUTS**
+    is_automated = models.BooleanField(
+        default=False,
+        help_text="True if this withdrawal was triggered automatically after order completion"
+    )
+    
+    related_order = models.ForeignKey(
+        'Stumart.Order',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='automated_withdrawals',
+        help_text="The order that triggered this automated withdrawal"
+    )
+    
+    automation_triggered_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="When the automated withdrawal was triggered"
+    )
+    
+    notes = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Additional notes about the withdrawal"
+    )
     
     class Meta:
-        db_table = 'withdrawal_requests'
         ordering = ['-created_at']
         indexes = [
-            models.Index(fields=['user', '-created_at']),
-            models.Index(fields=['status', '-created_at']),
+            models.Index(fields=['user', 'status']),
             models.Index(fields=['paystack_reference']),
-            models.Index(fields=['created_at']),
+            models.Index(fields=['is_automated', 'created_at']),
+            models.Index(fields=['related_order']),
         ]
     
     def __str__(self):
-        return f"Withdrawal {self.id} - {self.user.username} - ₦{self.amount} - {self.status}"
-    
-    @property
-    def is_pending(self):
-        return self.status in ['pending', 'processing']
-    
-    @property
-    def is_completed(self):
-        return self.status == 'completed'
-    
-    @property
-    def is_failed(self):
-        return self.status in ['failed', 'cancelled']
+        auto_flag = " (AUTO)" if self.is_automated else ""
+        return f"{self.user.email} - ₦{self.amount} - {self.status}{auto_flag}"
     
     def save(self, *args, **kwargs):
-        # Ensure final_amount is set
-        if not self.final_amount:
-            self.final_amount = self.amount
+        if self.is_automated and not self.automation_triggered_at:
+            self.automation_triggered_at = timezone.now()
         super().save(*args, **kwargs)
 
 class WithdrawalFee(models.Model):

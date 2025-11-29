@@ -123,7 +123,7 @@ class CompanyRider(models.Model):
     completed_deliveries = models.PositiveIntegerField(default=0)
     join_date = models.DateField()
     last_active = models.DateTimeField(auto_now=True)
-    company = models.ForeignKey('Company', on_delete=models.CASCADE, related_name='riders')
+    company = models.ForeignKey('Company', on_delete=models.SET_NULL, null=True, related_name='riders')
     total_earnings = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
 
     def __str__(self):
