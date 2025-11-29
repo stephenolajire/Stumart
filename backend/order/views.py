@@ -2150,7 +2150,7 @@ class CustomerConfirmationView(APIView):
     permission_classes = []
     
     def get(self, request, customer_confirmation_code=None):
-        """Handle GET requests to fetch order details"""
+        """Get order details for customer confirmation"""
         try:
             if not customer_confirmation_code:
                 return Response({
@@ -2168,57 +2168,37 @@ class CustomerConfirmationView(APIView):
             
             order = opportunity.order
             
-            # Determine if customer can confirm
-            can_confirm = (
-                opportunity.status == 'completed' and 
-                order.order_status != 'COMPLETED'
-            )
-            
-            already_confirmed = order.order_status == 'COMPLETED'
-            
-            # Get rider/picker info
-            rider_info = {}
-            if opportunity.picker_type == 'company_rider' and opportunity.company_rider:
-                rider = opportunity.company_rider
-                rider_info = {
-                    'name': f"{rider.first_name} {rider.last_name}",
-                    'phone': rider.phone_number,
-                    'accepted_at': opportunity.accepted_at.isoformat() if opportunity.accepted_at else None,
-                    'pickup_time': opportunity.pickup_time.strftime('%H:%M') if opportunity.pickup_time else None
-                }
-            elif opportunity.user_picker:
-                picker = opportunity.user_picker
-                rider_info = {
-                    'name': f"{picker.first_name} {picker.last_name}",
-                    'phone': picker.phone_number,
-                    'accepted_at': opportunity.accepted_at.isoformat() if opportunity.accepted_at else None,
-                    'pickup_time': opportunity.pickup_time.strftime('%H:%M') if opportunity.pickup_time else None
-                }
-            
             return Response({
-                'success': True,
-                'can_confirm': can_confirm,
-                'already_confirmed': already_confirmed,
+                'customer_confirmation_code': customer_confirmation_code,
+                'can_confirm': (opportunity.status == 'completed' and 
+                              order.order_status == 'DELIVERED' and 
+                              not order.confirm),
                 'opportunity_status': opportunity.status,
                 'order_status': order.order_status,
+                'already_confirmed': order.confirm,
+                'delivered_at': opportunity.delivered_at if hasattr(opportunity, 'delivered_at') else None,
                 'order': {
                     'order_number': order.order_number,
                     'customer_name': f"{order.first_name} {order.last_name}",
-                    'customer_phone': order.phone_number,
-                    'total_amount': str(order.total),
-                    'shipping_fee': str(order.shipping_fee),
-                    'delivery_address': order.delivery_address,
-                    'room_number': order.room_number,
-                    'created_at': order.created_at.isoformat()
+                    'customer_phone': order.phone,
+                    'delivery_address': order.address,
+                    'room_number': order.room_number or 'Not specified',
+                    'total_amount': float(order.total),
+                    'shipping_fee': float(order.shipping_fee),
+                    'created_at': order.created_at
                 },
-                'rider_info': rider_info,
-                'delivered_at': opportunity.completed_at.isoformat() if opportunity.completed_at else None
+                'rider_info': {
+                    'name': opportunity.accepted_rider_name,
+                    'phone': opportunity.accepted_rider_phone,
+                    'pickup_time': opportunity.pickup_time,
+                    'accepted_at': opportunity.accepted_at
+                }
             }, status=status.HTTP_200_OK)
             
         except Exception as e:
-            logger.error(f"Error in GET CustomerConfirmationView: {str(e)}", exc_info=True)
+            logger.error(f"Error getting customer confirmation details: {str(e)}", exc_info=True)
             return Response({
-                'error': 'An error occurred while fetching order details.'
+                'error': 'An error occurred while fetching confirmation details'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     def post(self, request):
