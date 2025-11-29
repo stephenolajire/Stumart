@@ -2293,37 +2293,50 @@ class CustomerConfirmationView(APIView):
                     'picker_payment': float(shipping_fee)
                 })
             
-            # Update Stumart wallet
+            # Update Stumart wallet and create transaction records
             stumart_wallet = StumartWalletAccount.get_instance()
-            if opportunity.picker_type == 'company_rider':
-                stumart_wallet.add_tax(tax_amount)
-                stumart_wallet.add_commission(company_commission)
-                
-                WalletTransactionAccount.objects.create(
-                    transaction_type='tax',
-                    amount=tax_amount,
-                    order=order,
-                    stumart_wallet=stumart_wallet,
-                    description=f"Tax collected from order #{order.order_number}"
-                )
-                
-                WalletTransactionAccount.objects.create(
-                    transaction_type='commission',
-                    amount=company_commission,
-                    order=order,
-                    stumart_wallet=stumart_wallet,
-                    description=f"Commission from company rider delivery - order #{order.order_number}"
-                )
+            
+            # Get the user associated with Stumart wallet
+            # Option 1: If StumartWalletAccount has a user field
+            stumart_user = getattr(stumart_wallet, 'user', None)
+            
+            # Option 2: If no user field, get a system admin user
+            if not stumart_user:
+                stumart_user = User.objects.filter(is_superuser=True).first()
+            
+            # If still no user found, log error and skip transaction creation
+            if not stumart_user:
+                logger.error("No user found for Stumart wallet transactions")
             else:
-                stumart_wallet.add_tax(tax_amount)
-                
-                WalletTransactionAccount.objects.create(
-                    transaction_type='tax',
-                    amount=tax_amount,
-                    order=order,
-                    stumart_wallet=stumart_wallet,
-                    description=f"Tax collected from order #{order.order_number}"
-                )
+                if opportunity.picker_type == 'company_rider':
+                    stumart_wallet.add_tax(tax_amount)
+                    stumart_wallet.add_commission(company_commission)
+                    
+                    WalletTransactionAccount.objects.create(
+                        transaction_type='tax',
+                        amount=tax_amount,
+                        order=order,
+                        user=stumart_user,
+                        description=f"Tax collected from order #{order.order_number}"
+                    )
+                    
+                    WalletTransactionAccount.objects.create(
+                        transaction_type='commission',
+                        amount=company_commission,
+                        order=order,
+                        user=stumart_user,
+                        description=f"Commission from company rider delivery - order #{order.order_number}"
+                    )
+                else:
+                    stumart_wallet.add_tax(tax_amount)
+                    
+                    WalletTransactionAccount.objects.create(
+                        transaction_type='tax',
+                        amount=tax_amount,
+                        order=order,
+                        user=stumart_user,
+                        description=f"Tax collected from order #{order.order_number}"
+                    )
             
             payment_details['stumart_earnings'] = float(stumart_earnings)
             
