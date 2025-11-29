@@ -992,121 +992,120 @@ class OrderDetailView(APIView):
 
 class OrderHistoryView(APIView):
     def get(self, request):
+        """Get all orders for the authenticated user"""
         try:
             user = request.user
-
-            # Subquery: Fetch order items with product + vendor inside JSON
-            order_items_subquery = (
-                OrderItem.objects
-                .filter(order=OuterRef("pk"))
-                .annotate(
-                    product_json=JSONObject(
-                        id=F("product__id"),
-                        name=F("product__name"),
-                        image=F("product__image"),
-                    ),
-                    vendor_json=JSONObject(
-                        id=F("vendor__id"),
-                        business_name=F("vendor__business_name"),
-                    ),
-                )
-                .annotate(
-                    item_json=JSONObject(
-                        id=F("id"),
-                        quantity=F("quantity"),
-                        price=F("price"),
-                        size=F("size"),
-                        color=F("color"),
-                        product=F("product_json"),
-                        vendor=F("vendor_json"),
-                    )
-                )
-                .values("item_json")
-            )
-
-            # Subquery: picker profile (normal picker)
-            picker_profile_sub = (
-                Picker.objects
-                .filter(user=OuterRef("picker_id"))
-                .annotate(
-                    picker_json=JSONObject(
-                        fleet_type=F("fleet_type"),
-                        rating=F("rating"),
-                        profile_id=F("id"),
-                        type=Value("picker"),
-                    )
-                )
-                .values("picker_json")[:1]
-            )
-
-            # Subquery: student picker
-            student_picker_sub = (
-                StudentPicker.objects
-                .filter(user=OuterRef("picker_id"))
-                .annotate(
-                    picker_json=JSONObject(
-                        hostel_name=F("hostel_name"),
-                        room_number=F("room_number"),
-                        rating=F("rating"),
-                        profile_id=F("id"),
-                        type=Value("student_picker"),
-                    )
-                )
-                .values("picker_json")[:1]
-            )
-
-            # MAIN ONE QUERY
-            orders = (
-                Order.objects
-                .filter(user=user)
-                .annotate(
-                    picker_name=F("picker__first_name") + Value(" ") + F("picker__last_name"),
-
-                    picker_normal=Subquery(picker_profile_sub),
-                    picker_student=Subquery(student_picker_sub),
-
-                    picker_json=JSONObject(
-                        user_id=F("picker_id"),
-                        name=F("picker_name"),
-                        extra=Coalesce(F("picker_normal"), F("picker_student")),
-                    ),
-
-                    order_items_json=JSONBAgg(Subquery(order_items_subquery)),
-                    shipping_json=JSONObject(
-                        address=F("address"),
-                        room_number=F("room_number"),
-                        phone=F("phone"),
-                        email=F("email"),
-                        first_name=F("first_name"),
-                        last_name=F("last_name"),
-                    )
-                )
-                .values(
-                    "id",
-                    "order_number",
-                    "subtotal",
-                    "shipping_fee",
-                    "tax",
-                    "total",
-                    "order_status",
-                    "created_at",
-                    "order_items_json",
-                    "picker_json",
-                    "shipping_json",
-                    "reviewed",
-                )
-                .order_by("-created_at")
-            )
-
-            # Convert queryset to list
-            return Response(list(orders), status=200)
-
+            
+            # Get all orders for the user with related data to reduce DB queries
+            orders = Order.objects.filter(user=user).select_related('picker').prefetch_related(
+                'order_items__product',
+                'order_items__vendor',
+                'picker__picker_profile',  # Add this to prefetch picker profile
+                'picker__student_picker_profile'  # Add this to prefetch student picker profile
+            ).order_by('-created_at')
+            
+            order_data = []
+            for order in orders:
+                items_data = []
+                for item in order.order_items.all():  # Use prefetched data
+                    image_url = None
+                    if item.product.image:
+                        image_url = request.build_absolute_uri(item.product.image.url)
+                    
+                    product_data = {
+                        'id': item.product.id,
+                        'name': item.product.name,
+                        'image': image_url
+                    }
+                    
+                    # Get picker profile ID based on user type
+                    picker_profile_id = None
+                    picker_type = None
+                    if order.picker:
+                        try:
+                            if hasattr(order.picker, 'picker_profile'):
+                                picker_profile_id = order.picker.picker_profile.id
+                                picker_type = 'picker'
+                            elif hasattr(order.picker, 'student_picker_profile'):
+                                picker_profile_id = order.picker.student_picker_profile.id
+                                picker_type = 'student_picker'
+                        except Exception as e:
+                            print(f"Error getting picker profile: {e}")
+                    
+                    items_data.append({
+                        'id': item.id,
+                        'product': product_data,
+                        'quantity': item.quantity,
+                        'price': float(item.price),
+                        'size': item.size,
+                        'color': item.color,
+                        'vendor': item.vendor.business_name if item.vendor else None,
+                        'vendor_id': item.vendor.id if item.vendor else None,
+                    })
+                
+                # Also add picker info at order level
+                picker_info = None
+                if order.picker:
+                    picker_profile_id = None
+                    picker_type = None
+                    picker_name = f"{order.picker.first_name} {order.picker.last_name}"
+                    
+                    try:
+                        if hasattr(order.picker, 'picker_profile'):
+                            picker_profile_id = order.picker.picker_profile.id
+                            picker_type = 'picker'
+                            picker_info = {
+                                'user_id': order.picker.id,
+                                'profile_id': picker_profile_id,
+                                'name': picker_name,
+                                'type': picker_type,
+                                'fleet_type': order.picker.picker_profile.fleet_type,
+                                'rating': float(order.picker.picker_profile.rating)
+                            }
+                        elif hasattr(order.picker, 'student_picker_profile'):
+                            picker_profile_id = order.picker.student_picker_profile.id
+                            picker_type = 'student_picker'
+                            picker_info = {
+                                'user_id': order.picker.id,
+                                'profile_id': picker_profile_id,
+                                'name': picker_name,
+                                'type': picker_type,
+                                'hostel_name': order.picker.student_picker_profile.hostel_name,
+                                'room_number': order.picker.student_picker_profile.room_number,
+                                'rating': float(order.picker.student_picker_profile.rating)
+                            }
+                    except Exception as e:
+                        print(f"Error getting picker info: {e}")
+                
+                order_data.append({
+                    'id': order.id,
+                    'order_number': order.order_number,
+                    'subtotal': float(order.subtotal),
+                    'shipping_fee': float(order.shipping_fee),
+                    'tax': float(order.tax),
+                    'total': float(order.total),
+                    'order_status': order.order_status,
+                    'created_at': order.created_at.isoformat(),  # Better date formatting
+                    'order_items': items_data,
+                    'picker': picker_info,  # Complete picker information
+                    'reviewed': order.reviewed,
+                    'shipping': {
+                        'address': order.address,
+                        'room_number': order.room_number,
+                        'phone': order.phone,
+                        'email': order.email,
+                        'first_name': order.first_name,
+                        'last_name': order.last_name,
+                    }
+                })
+            
+            return Response(order_data, status=200)
+        
         except Exception as e:
             import traceback
-            print("OrderHistoryView error:", e)
-            print(traceback.format_exc())
-            return Response({"error": str(e)}, status=400)
-
+            print(f"Error in OrderHistoryView: {str(e)}")
+            print(traceback.format_exc())  # This will help debug future issues
+            return Response({'error': str(e)}, status=400)
         
 
 class PackOrderView(APIView):
