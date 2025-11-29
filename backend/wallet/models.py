@@ -75,20 +75,40 @@ class StumartWalletAccount(models.Model):
     @classmethod
     def get_instance(cls):
         """Get or create the single platform wallet instance"""
-        wallet, created = cls.objects.get_or_create(pk=1)
+        from decimal import Decimal
+        
+        wallet, created = cls.objects.get_or_create(
+            pk=1,
+            defaults={
+                'balance': Decimal('0.00'),
+                'total_tax_collected': Decimal('0.00'),
+                'total_commission_collected': Decimal('0.00')
+            }
+        )
+        
+        # Ensure all decimal fields are actually Decimal type
+        wallet.balance = Decimal(str(wallet.balance))
+        wallet.total_tax_collected = Decimal(str(wallet.total_tax_collected))
+        wallet.total_commission_collected = Decimal(str(wallet.total_commission_collected))
+    
         return wallet
+
     
     def add_tax(self, amount):
         """Add tax amount to the wallet"""
         amount = Decimal(str(amount))
+        self.balance = Decimal(str(self.balance))  # Ensure balance is Decimal
         self.balance += amount
+        self.total_tax_collected = Decimal(str(self.total_tax_collected))
         self.total_tax_collected += amount
         self.save()
-    
+
     def add_commission(self, amount):
         """Add commission amount to the wallet"""
         amount = Decimal(str(amount))
+        self.balance = Decimal(str(self.balance))  # Ensure balance is Decimal
         self.balance += amount
+        self.total_commission_collected = Decimal(str(self.total_commission_collected))
         self.total_commission_collected += amount
         self.save()
 
