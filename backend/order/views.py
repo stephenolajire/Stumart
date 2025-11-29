@@ -2461,6 +2461,47 @@ class CustomerConfirmationView(APIView):
         except Exception as e:
             logger.error(f"Error sending notifications: {str(e)}", exc_info=True)
     
+    def notify_customer_confirmation_success(self, order, opportunity):
+        """Notify customer about successful confirmation"""
+        try:
+            customer_email = order.email
+            customer_name = f"{order.first_name} {order.last_name}"
+            
+            subject = f"✅ Order Confirmed - #{order.order_number}"
+            
+            message = (
+                f"Dear {customer_name},\n\n"
+                f"Thank you for confirming receipt of your order!\n\n"
+                f"📦 ORDER DETAILS:\n"
+                f"• Order Number: {order.order_number}\n"
+                f"• Total Amount: ₦{order.total}\n"
+                f"• Delivery Address: {order.address}\n"
+                f"• Confirmed At: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+                f"🚴 RIDER INFORMATION:\n"
+                f"• Name: {opportunity.accepted_rider_name}\n"
+                f"• Phone: {opportunity.accepted_rider_phone}\n\n"
+                f"Your order has been successfully completed. "
+                f"All payments have been processed automatically.\n\n"
+                f"Thank you for shopping with Stumart! "
+                f"We hope to serve you again soon.\n\n"
+                f"If you have any questions or concerns, please don't hesitate to contact us.\n\n"
+                f"Best regards,\n"
+                f"The Stumart Team"
+            )
+            
+            send_mail(
+                subject=subject,
+                message=message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[customer_email],
+                fail_silently=True
+            )
+            
+            logger.info(f"Customer confirmation notification sent to {customer_email}")
+            
+        except Exception as e:
+            logger.error(f"Failed to notify customer about confirmation: {str(e)}")
+    
     def notify_vendors_automated_payout(self, order, vendor_payouts):
         """Notify vendors about automated payouts"""
         for payout in vendor_payouts:
