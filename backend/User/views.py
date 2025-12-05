@@ -648,8 +648,14 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 }
             return response
         except Exception as e:
+            # LOG THE ACTUAL ERROR
+            print(f"Login error: {str(e)}")
+            print(f"Error type: {type(e).__name__}")
+            import traceback
+            traceback.print_exc()
+            
             return Response(
-                {'error': 'Invalid credentials'},
+                {'error': f'Login failed: {str(e)}'},  # Show actual error temporarily
                 status=status.HTTP_401_UNAUTHORIZED
             )
 

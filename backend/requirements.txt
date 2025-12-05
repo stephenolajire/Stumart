@@ -27,6 +27,7 @@ dj-rest-auth==7.0.1
 Django==5.1.6
 django-allauth==65.9.0
 django-appconf==1.0.6
+django-apscheduler==0.7.0
 django-cloudinary-storage==0.3.0
 django-cors-headers==4.7.0
 django-crontab==0.7.1
@@ -39,7 +40,7 @@ django-silk==5.4.3
 django-templated-email==3.0.1
 django-use-email-as-username==1.4.0
 djangorestframework==3.15.2
-djangorestframework_simplejwt==5.5.0
+djangorestframework_simplejwt==5.5.1
 drf-spectacular==0.28.0
 drf-yasg==1.21.7
 fonttools==4.57.0
@@ -83,7 +84,7 @@ pydantic_core==2.23.4
 pydyf==0.11.0
 pyHanko==0.26.0
 pyhanko-certvalidator==0.26.8
-PyJWT==2.9.0
+PyJWT==2.10.1
 pypdf==5.4.0
 pyphen==0.17.2
 pypng==0.20220715.0
