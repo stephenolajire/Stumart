@@ -242,6 +242,12 @@ class Picker(models.Model):
     bank_name = models.CharField(max_length=100)
     account_number = models.CharField(max_length=10)
     account_name = models.CharField(max_length=100)
+    paystack_recipient_code = models.CharField(max_length=100, blank=True, null=True)  # ADD THIS
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['paystack_recipient_code']),  # ADD THIS
+        ]
 
     def __str__(self):
         return f"Picker: {self.user.email}"
@@ -256,6 +262,12 @@ class StudentPicker(models.Model):
     bank_name = models.CharField(max_length=100)
     account_number = models.CharField(max_length=10)
     account_name = models.CharField(max_length=100)
+    paystack_recipient_code = models.CharField(max_length=100, blank=True, null=True)  # ADD THIS
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['paystack_recipient_code']),  # ADD THIS
+        ]
 
     def __str__(self):
         return f"Student Picker: {self.user.email}"
