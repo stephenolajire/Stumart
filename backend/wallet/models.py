@@ -160,6 +160,15 @@ class WalletTransactionAccount(models.Model):
         ('rider_earnings', 'Rider Earnings'),
         ('withdrawal', 'Withdrawal'),
         ('refund', 'Refund'),
+        ('transfer_out', 'Automated Transfer'),  # NEW
+    ]
+    
+    TRANSFER_STATUS = [
+        ('pending', 'Pending'),
+        ('processing', 'Processing'),
+        ('success', 'Success'),
+        ('failed', 'Failed'),
+        ('reversed', 'Reversed'),
     ]
     
     transaction_type = models.CharField(max_length=20, choices=TRANSACTION_TYPES)
@@ -169,6 +178,21 @@ class WalletTransactionAccount(models.Model):
     withdrawal_request = models.ForeignKey(WithdrawalRequest, null=True, blank=True, on_delete=models.CASCADE)
     description = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    
+    # NEW FIELDS FOR TRANSFER TRACKING
+    reference = models.CharField(max_length=255, null=True, blank=True, unique=True)
+    transfer_code = models.CharField(max_length=100, null=True, blank=True)
+    transfer_status = models.CharField(max_length=20, choices=TRANSFER_STATUS, null=True, blank=True)
+    transfer_initiated_at = models.DateTimeField(null=True, blank=True)
+    transfer_completed_at = models.DateTimeField(null=True, blank=True)
+    transfer_error = models.TextField(null=True, blank=True)
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['reference']),
+            models.Index(fields=['transfer_status']),
+            models.Index(fields=['transaction_type', 'created_at']),
+        ]
     
     def __str__(self):
         return f"{self.get_transaction_type_display()} - ₦{self.amount} - {self.user.email}"

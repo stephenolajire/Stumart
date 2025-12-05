@@ -435,6 +435,13 @@ CRONJOBS = [
         {},
         f'>> {LOGS_DIR}/payout_check.log 2>&1'
     ),
+    (
+        '*/3 * * * *',
+        'django.core.management.call_command',
+        ['register_existing_recipients'],
+        {},
+        f'>> {LOGS_DIR}/recipint_check.log 2>&1'
+    ),
     
     # Retry failed payouts every 4 hours
     (

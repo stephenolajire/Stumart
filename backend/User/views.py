@@ -7,6 +7,8 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework.decorators import action
 from rest_framework_simplejwt.views import TokenObtainPairView
+
+from User.paystack_register import PaystackTransferService
 from .models import *
 from .serializers import *
 from django.core.mail import send_mail
@@ -27,6 +29,57 @@ class BaseAPIView(APIView):
     serializer_class = None
     permission_classes = [AllowAny]
     throttle_classes = [RegisterThrottle]
+    # Flag to determine if this model needs Paystack registration
+    requires_paystack = False
+
+    def _register_paystack_recipient(self, instance):
+        """
+        Helper method to register Paystack transfer recipient
+        Returns: (success, recipient_code, error_message)
+        """
+        try:
+            # Check if instance has required attributes for Paystack
+            if not all(hasattr(instance, attr) for attr in ['bank_name', 'account_name', 'account_number']):
+                logger.warning(f"Instance {instance} missing required Paystack attributes")
+                return False, None, "Missing bank details"
+            
+            # Skip if already has recipient code
+            if hasattr(instance, 'paystack_recipient_code') and instance.paystack_recipient_code:
+                logger.info(f"Instance already has Paystack recipient code")
+                return True, instance.paystack_recipient_code, None
+            
+            # Initialize Paystack service
+            paystack_service = PaystackTransferService()
+            
+            # Get bank code from bank name
+            bank_code = paystack_service.get_bank_code(instance.bank_name)
+            
+            if not bank_code:
+                error_msg = f"Bank code not found for {instance.bank_name}"
+                logger.warning(error_msg)
+                return False, None, error_msg
+            
+            # Create transfer recipient on Paystack
+            success, recipient_code, error = paystack_service.create_transfer_recipient(
+                account_name=instance.account_name,
+                account_number=instance.account_number,
+                bank_code=bank_code
+            )
+            
+            if success:
+                # Save recipient code to instance
+                instance.paystack_recipient_code = recipient_code
+                instance.save()
+                logger.info(f"Paystack recipient created: {recipient_code}")
+                return True, recipient_code, None
+            else:
+                logger.warning(f"Failed to create Paystack recipient: {error}")
+                return False, None, error
+                
+        except Exception as e:
+            error_msg = f"Exception during Paystack registration: {str(e)}"
+            logger.error(error_msg)
+            return False, None, error_msg
 
     def get(self, request, pk=None):
         if pk:
@@ -47,6 +100,18 @@ class BaseAPIView(APIView):
                 
                 # Get the user object
                 user = instance.user if hasattr(instance, 'user') else instance
+                
+                # Handle Paystack registration if required
+                paystack_registered = False
+                paystack_error = None
+                
+                if self.requires_paystack:
+                    success, recipient_code, error = self._register_paystack_recipient(instance)
+                    paystack_registered = success
+                    paystack_error = error
+                    
+                    if not success:
+                        logger.warning(f"Paystack registration failed for {user.email}: {error}")
                 
                 # Create OTP and send email
                 otp = OTP.objects.create(user=user)
@@ -69,12 +134,23 @@ class BaseAPIView(APIView):
                     fail_silently=False,
                 )
                 
-                # Return success response
-                return Response({
+                # Prepare response
+                response_data = {
                     'message': 'Registration successful. Please check your email for verification code.',
                     'user_id': user.id,
                     'data': serializer.data
-                }, status=status.HTTP_201_CREATED)
+                }
+                
+                # Add Paystack info if applicable
+                if self.requires_paystack:
+                    response_data['paystack_registered'] = paystack_registered
+                    if paystack_error:
+                        response_data['paystack_error'] = paystack_error
+                        response_data['paystack_note'] = 'Bank account registration failed. Please verify your bank details and retry later.'
+                    else:
+                        response_data['paystack_note'] = 'Bank account successfully registered for transfers.'
+                
+                return Response(response_data, status=status.HTTP_201_CREATED)
                 
             except Exception as e:
                 logger.error(f"Registration error: {str(e)}")
@@ -83,7 +159,6 @@ class BaseAPIView(APIView):
                     'detail': str(e)
                 }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
-            # This was missing - always return a Response!
             return Response({
                 'error': 'Validation failed',
                 'details': serializer.errors

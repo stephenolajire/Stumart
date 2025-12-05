@@ -2238,25 +2238,20 @@ class CustomerConfirmationView(APIView):
                 order.confirm = True
                 order.save()
                 
-                # Process payment distribution (wallet credits)
-                payment_details = self.process_payment_distribution(order, opportunity)
-                
-                # **NEW: Initiate automated payouts**
-                payout_service = AutomatedPayoutService()
-                payout_results = payout_service.process_all_payouts(order, opportunity, payment_details)
+                # Process automated transfers to vendors and pickers
+                transfer_results = self.process_automated_transfers(order, opportunity)
                 
                 # Send notifications after transaction commits
-                transaction.on_commit(lambda: self.send_customer_confirmation_notifications(
-                    order, opportunity, payment_details, payout_results
+                transaction.on_commit(lambda: self.send_transfer_notifications(
+                    order, opportunity, transfer_results
                 ))
                 
                 return Response({
                     'success': True,
-                    'message': 'Order confirmed successfully by customer',
+                    'message': 'Order confirmed successfully. Transfers initiated.',
                     'order_number': order.order_number,
                     'confirmed_at': timezone.now(),
-                    'payment_details': payment_details,
-                    'automated_payouts': payout_results
+                    'transfer_results': transfer_results
                 }, status=status.HTTP_200_OK)
                 
         except Exception as e:
@@ -2265,14 +2260,16 @@ class CustomerConfirmationView(APIView):
                 'error': 'An error occurred while processing your confirmation. Please try again.'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
-    def process_payment_distribution(self, order, opportunity):
-        """Process payment distribution (wallet credits only, not transfers)"""
-        payment_details = {
-            'picker_payment': 0,
-            'company_earnings': 0,
-            'rider_earnings': 0,
-            'picker_type': None,
-            'vendor_payments': {},
+    def process_automated_transfers(self, order, opportunity):
+        """Process automated transfers to vendors and pickers"""
+        from User.paystack_register import PaystackTransferService
+        from User.models import Vendor, Picker, StudentPicker
+        
+        transfer_service = PaystackTransferService()
+        results = {
+            'vendor_transfers': [],
+            'picker_transfer': None,
+            'company_rider_transfer': None,
             'stumart_earnings': 0
         }
         
@@ -2281,84 +2278,20 @@ class CustomerConfirmationView(APIView):
             tax_amount = Decimal(str(order.tax))
             company_commission = Decimal('100.00')
             
-            stumart_earnings = tax_amount
+            # Calculate Stumart earnings
+            if opportunity.picker_type == 'company_rider':
+                stumart_earnings = tax_amount + company_commission
+            else:
+                stumart_earnings = tax_amount
             
-            # Handle Company Rider
-            if opportunity.picker_type == 'company_rider' and opportunity.company_rider:
-                company_rider = opportunity.company_rider
-                company = company_rider.company
-                
-                rider_earnings = shipping_fee - company_commission
-                
-                # Update company rider stats
-                company_rider.total_earnings = (company_rider.total_earnings or Decimal('0')) + rider_earnings
-                company_rider.completed_deliveries += 1
-                company_rider.save()
-                
-                # Update company wallet (they'll withdraw later via automated payout)
-                company_wallet, created = CompanyWallet.objects.get_or_create(
-                    company=company,
-                    defaults={'balance': Decimal('0')}
-                )
-                company_wallet.balance += rider_earnings
-                company_wallet.save()
-                
-                stumart_earnings += company_commission
-                
-                payment_details.update({
-                    'picker_type': 'company_rider',
-                    'rider_earnings': float(rider_earnings),
-                    'company_earnings': float(rider_earnings),
-                    'company_commission': float(company_commission)
-                })
-            
-            # Handle Regular Picker or Student Picker
-            elif opportunity.user_picker:
-                picker = opportunity.user_picker
-                
-                # Update picker wallet (they'll receive automated payout)
-                if picker.user_type == 'picker':
-                    picker_wallet, created = PickerWalletAccount.objects.get_or_create(
-                        picker=picker.picker_profile,
-                        defaults={'amount': Decimal('0')}
-                    )
-                    picker_wallet.amount += shipping_fee
-                    picker_wallet.save()
-                    
-                    picker.picker_profile.total_deliveries += 1
-                    picker.picker_profile.save()
-                    
-                elif picker.user_type == 'student_picker':
-                    picker_wallet, created = StudentPickerWalletAccount.objects.get_or_create(
-                        student_picker=picker.student_picker_profile,
-                        defaults={'amount': Decimal('0')}
-                    )
-                    picker_wallet.amount += shipping_fee
-                    picker_wallet.save()
-                    
-                    picker.student_picker_profile.total_deliveries += 1
-                    picker.student_picker_profile.save()
-                
-                payment_details.update({
-                    'picker_type': picker.user_type,
-                    'picker_payment': float(shipping_fee)
-                })
-            
-            # Update Stumart wallet and create transaction records
+            # Update Stumart wallet
             stumart_wallet = StumartWalletAccount.get_instance()
-            
-            # Get the user associated with Stumart wallet
-            # Option 1: If StumartWalletAccount has a user field
             stumart_user = getattr(stumart_wallet, 'user', None)
             
-            # Option 2: If no user field, get a system admin user
             if not stumart_user:
                 stumart_user = User.objects.filter(is_superuser=True).first()
             
-            # If still no user found, log error and skip transaction creation
-            if not stumart_user:
-                logger.error("No user found for Stumart wallet transactions")
-            else:
+            if stumart_user:
                 if opportunity.picker_type == 'company_rider':
                     stumart_wallet.add_tax(tax_amount)
                     stumart_wallet.add_commission(company_commission)
@@ -2389,20 +2322,291 @@ class CustomerConfirmationView(APIView):
                         description=f"Tax collected from order #{order.order_number}"
                     )
             
-            payment_details['stumart_earnings'] = float(stumart_earnings)
+            results['stumart_earnings'] = float(stumart_earnings)
             
-            # Calculate vendor payments
+            # 1. Process Vendor Transfers
             vendor_payments = self.calculate_vendor_payments(order)
-            payment_details['vendor_payments'] = vendor_payments
             
-            return payment_details
+            for vendor_id, amount in vendor_payments.items():
+                try:
+                    vendor = Vendor.objects.get(id=vendor_id)
+                    
+                    # Check if vendor has recipient code
+                    if not vendor.paystack_recipient_code:
+                        logger.warning(f"Vendor {vendor.business_name} has no recipient code, skipping transfer")
+                        results['vendor_transfers'].append({
+                            'vendor_id': vendor_id,
+                            'vendor_name': vendor.business_name,
+                            'vendor_email': vendor.user.email,
+                            'amount': float(amount),
+                            'success': False,
+                            'error': 'No recipient code configured'
+                        })
+                        
+                        # Still credit wallet as fallback
+                        wallet, created = VendorWallets.objects.get_or_create(
+                            vendor=vendor,
+                            defaults={'balance': Decimal('0')}
+                        )
+                        wallet.balance += amount
+                        wallet.save()
+                        
+                        # Create wallet transaction record
+                        WalletTransactionAccount.objects.create(
+                            transaction_type='vendor_payment',
+                            amount=amount,
+                            order=order,
+                            user=vendor.user,
+                            description=f"Payment credited to wallet for order #{order.order_number} (no recipient code)"
+                        )
+                        continue
+                    
+                    # Convert amount to kobo (Paystack uses lowest currency unit)
+                    amount_in_kobo = int(amount * 100)
+                    
+                    # Generate unique reference
+                    timestamp = int(timezone.now().timestamp() * 1000)
+                    reference = f"vendor_{vendor_id}_order_{order.order_number}_{timestamp}"
+                    
+                    # Initiate transfer
+                    success, transfer_data, error = transfer_service.initiate_transfer(
+                        amount=amount_in_kobo,
+                        recipient_code=vendor.paystack_recipient_code,
+                        reason=f"Payment for order #{order.order_number}",
+                        reference=reference
+                    )
+                    
+                    if success:
+                        transfer_code = transfer_data.get('transfer_code') if transfer_data else None
+                        
+                        # Create wallet transaction record for the transfer
+                        WalletTransactionAccount.objects.create(
+                            transaction_type='vendor_payment',
+                            amount=amount,
+                            order=order,
+                            user=vendor.user,
+                            description=f"Automated transfer for order #{order.order_number} | Ref: {reference} | Transfer Code: {transfer_code}"
+                        )
+                        
+                        results['vendor_transfers'].append({
+                            'vendor_id': vendor_id,
+                            'vendor_name': vendor.business_name,
+                            'vendor_email': vendor.user.email,
+                            'amount': float(amount),
+                            'success': True,
+                            'reference': reference,
+                            'transfer_code': transfer_code
+                        })
+                        
+                        logger.info(f"Transfer initiated for vendor {vendor.business_name}: ₦{amount}")
+                    else:
+                        logger.error(f"Transfer failed for vendor {vendor.business_name}: {error}")
+                        results['vendor_transfers'].append({
+                            'vendor_id': vendor_id,
+                            'vendor_name': vendor.business_name,
+                            'vendor_email': vendor.user.email,
+                            'amount': float(amount),
+                            'success': False,
+                            'error': error
+                        })
+                        
+                        # Fallback: Credit wallet
+                        wallet, created = VendorWallets.objects.get_or_create(
+                            vendor=vendor,
+                            defaults={'balance': Decimal('0')}
+                        )
+                        wallet.balance += amount
+                        wallet.save()
+                        
+                        # Create wallet transaction record
+                        WalletTransactionAccount.objects.create(
+                            transaction_type='vendor_payment',
+                            amount=amount,
+                            order=order,
+                            user=vendor.user,
+                            description=f"Payment credited to wallet for order #{order.order_number} (transfer failed: {error})"
+                        )
+                        
+                except Exception as e:
+                    logger.error(f"Error processing transfer for vendor {vendor_id}: {str(e)}")
+                    results['vendor_transfers'].append({
+                        'vendor_id': vendor_id,
+                        'amount': float(amount),
+                        'success': False,
+                        'error': str(e)
+                    })
+            
+            # 2. Process Picker/Rider Transfers
+            if opportunity.picker_type == 'company_rider' and opportunity.company_rider:
+                # Company riders: Credit company wallet (companies handle their own rider payments)
+                company_rider = opportunity.company_rider
+                company = company_rider.company
+                
+                rider_earnings = shipping_fee - company_commission
+                
+                company_rider.total_earnings = (company_rider.total_earnings or Decimal('0')) + rider_earnings
+                company_rider.completed_deliveries += 1
+                company_rider.save()
+                
+                company_wallet, created = CompanyWallet.objects.get_or_create(
+                    company=company,
+                    defaults={'balance': Decimal('0')}
+                )
+                company_wallet.balance += rider_earnings
+                company_wallet.save()
+                
+                # Create transaction record
+                WalletTransactionAccount.objects.create(
+                    transaction_type='rider_earnings',
+                    amount=rider_earnings,
+                    order=order,
+                    user=company.user,
+                    description=f"Rider earnings credited to company wallet for order #{order.order_number}"
+                )
+                
+                results['company_rider_transfer'] = {
+                    'rider_name': company_rider.name,
+                    'company_name': company.user.email,
+                    'amount': float(rider_earnings),
+                    'success': True,
+                    'note': 'Credited to company wallet (company manages rider payments)'
+                }
+                
+            elif opportunity.user_picker:
+                picker = opportunity.user_picker
+                picker_profile = None
+                recipient_code = None
+                
+                # Get picker profile and recipient code
+                if picker.user_type == 'picker':
+                    picker_profile = picker.picker_profile
+                    recipient_code = picker_profile.paystack_recipient_code
+                    picker_profile.total_deliveries += 1
+                    picker_profile.save()
+                    
+                elif picker.user_type == 'student_picker':
+                    picker_profile = picker.student_picker_profile
+                    recipient_code = picker_profile.paystack_recipient_code
+                    picker_profile.total_deliveries += 1
+                    picker_profile.save()
+                
+                if not recipient_code:
+                    logger.warning(f"Picker {picker.email} has no recipient code, crediting wallet")
+                    
+                    # Fallback: Credit wallet
+                    if picker.user_type == 'picker':
+                        wallet, created = PickerWalletAccount.objects.get_or_create(
+                            picker=picker_profile,
+                            defaults={'amount': Decimal('0')}
+                        )
+                        wallet.amount += shipping_fee
+                        wallet.save()
+                    else:
+                        wallet, created = StudentPickerWalletAccount.objects.get_or_create(
+                            student_picker=picker_profile,
+                            defaults={'amount': Decimal('0')}
+                        )
+                        wallet.amount += shipping_fee
+                        wallet.save()
+                    
+                    # Create transaction record
+                    WalletTransactionAccount.objects.create(
+                        transaction_type='delivery_payment',
+                        amount=shipping_fee,
+                        order=order,
+                        user=picker,
+                        description=f"Delivery payment credited to wallet for order #{order.order_number} (no recipient code)"
+                    )
+                    
+                    results['picker_transfer'] = {
+                        'picker_email': picker.email,
+                        'picker_name': f"{picker.first_name} {picker.last_name}",
+                        'picker_type': picker.user_type,
+                        'amount': float(shipping_fee),
+                        'success': False,
+                        'error': 'No recipient code configured (wallet credited)'
+                    }
+                else:
+                    # Initiate transfer to picker
+                    amount_in_kobo = int(shipping_fee * 100)
+                    timestamp = int(timezone.now().timestamp() * 1000)
+                    reference = f"picker_{picker.id}_order_{order.order_number}_{timestamp}"
+                    
+                    success, transfer_data, error = transfer_service.initiate_transfer(
+                        amount=amount_in_kobo,
+                        recipient_code=recipient_code,
+                        reason=f"Delivery payment for order #{order.order_number}",
+                        reference=reference
+                    )
+                    
+                    if success:
+                        transfer_code = transfer_data.get('transfer_code') if transfer_data else None
+                        
+                        # Create transaction record
+                        WalletTransactionAccount.objects.create(
+                            transaction_type='delivery_payment',
+                            amount=shipping_fee,
+                            order=order,
+                            user=picker,
+                            description=f"Automated transfer for delivery #{order.order_number} | Ref: {reference} | Transfer Code: {transfer_code}"
+                        )
+                        
+                        results['picker_transfer'] = {
+                            'picker_email': picker.email,
+                            'picker_name': f"{picker.first_name} {picker.last_name}",
+                            'picker_type': picker.user_type,
+                            'amount': float(shipping_fee),
+                            'success': True,
+                            'reference': reference,
+                            'transfer_code': transfer_code
+                        }
+                        
+                        logger.info(f"Transfer initiated for picker {picker.email}: ₦{shipping_fee}")
+                    else:
+                        logger.error(f"Transfer failed for picker {picker.email}: {error}")
+                        
+                        # Fallback: Credit wallet
+                        if picker.user_type == 'picker':
+                            wallet, created = PickerWalletAccount.objects.get_or_create(
+                                picker=picker_profile,
+                                defaults={'amount': Decimal('0')}
+                            )
+                            wallet.amount += shipping_fee
+                            wallet.save()
+                        else:
+                            wallet, created = StudentPickerWalletAccount.objects.get_or_create(
+                                student_picker=picker_profile,
+                                defaults={'amount': Decimal('0')}
+                            )
+                            wallet.amount += shipping_fee
+                            wallet.save()
+                        
+                        # Create transaction record
+                        WalletTransactionAccount.objects.create(
+                            transaction_type='delivery_payment',
+                            amount=shipping_fee,
+                            order=order,
+                            user=picker,
+                            description=f"Delivery payment credited to wallet for order #{order.order_number} (transfer failed: {error})"
+                        )
+                        
+                        results['picker_transfer'] = {
+                            'picker_email': picker.email,
+                            'picker_name': f"{picker.first_name} {picker.last_name}",
+                            'picker_type': picker.user_type,
+                            'amount': float(shipping_fee),
+                            'success': False,
+                            'error': error
+                        }
+            
+            return results
             
         except Exception as e:
-            logger.error(f"Error processing payment distribution: {str(e)}", exc_info=True)
+            logger.error(f"Error in process_automated_transfers: {str(e)}", exc_info=True)
             raise
     
     def calculate_vendor_payments(self, order):
-        """Calculate vendor payments (returns dict of vendor_id: amount)"""
+        """Calculate vendor payments - returns dict of vendor_id: amount"""
         vendor_totals = {}
         
         try:
@@ -2417,48 +2621,31 @@ class CustomerConfirmationView(APIView):
                 else:
                     vendor_totals[vendor_id] = item_total
             
-            # Update vendor wallets
-            for vendor_id, amount in vendor_totals.items():
-                try:
-                    from User.models import Vendor
-                    vendor = Vendor.objects.get(id=vendor_id)
-                    wallet, created = VendorWallets.objects.get_or_create(
-                        vendor=vendor,
-                        defaults={'balance': Decimal('0')}
-                    )
-                    wallet.balance += amount
-                    wallet.save()
-                    
-                    logger.info(f"Updated wallet for vendor {vendor_id}, credited: ₦{amount}")
-                    
-                except Exception as e:
-                    logger.error(f"Error updating vendor {vendor_id} wallet: {str(e)}")
-                    continue
-            
-            return {str(k): float(v) for k, v in vendor_totals.items()}
+            return vendor_totals
             
         except Exception as e:
             logger.error(f"Error calculating vendor payments: {str(e)}")
             return {}
     
-    def send_customer_confirmation_notifications(self, order, opportunity, payment_details, payout_results):
-        """Send notifications including automated payout status"""
+    def send_transfer_notifications(self, order, opportunity, transfer_results):
+        """Send notifications about automated transfers"""
         try:
             # Notify customer
             self.notify_customer_confirmation_success(order, opportunity)
             
-            # Notify admin with payout details
-            self.notify_admin_order_completed(order, opportunity, payment_details, payout_results)
+            # Notify vendors about their transfers
+            for vendor_transfer in transfer_results.get('vendor_transfers', []):
+                self.notify_vendor_transfer(order, vendor_transfer)
             
-            # Notify vendors about automated payouts
-            self.notify_vendors_automated_payout(order, payout_results.get('vendor_payouts', []))
+            # Notify picker about their transfer
+            if transfer_results.get('picker_transfer'):
+                self.notify_picker_transfer(order, opportunity, transfer_results['picker_transfer'])
             
-            # Notify picker about automated payout
-            if payout_results.get('picker_payout'):
-                self.notify_picker_automated_payout(opportunity, payout_results['picker_payout'])
+            # Notify admin with full transfer summary
+            self.notify_admin_transfers_completed(order, opportunity, transfer_results)
             
         except Exception as e:
-            logger.error(f"Error sending notifications: {str(e)}", exc_info=True)
+            logger.error(f"Error sending transfer notifications: {str(e)}", exc_info=True)
     
     def notify_customer_confirmation_success(self, order, opportunity):
         """Notify customer about successful confirmation"""
@@ -2480,7 +2667,7 @@ class CustomerConfirmationView(APIView):
                 f"• Name: {opportunity.accepted_rider_name}\n"
                 f"• Phone: {opportunity.accepted_rider_phone}\n\n"
                 f"Your order has been successfully completed. "
-                f"All payments have been processed automatically.\n\n"
+                f"All payments have been processed automatically and sent to vendors and delivery personnel.\n\n"
                 f"Thank you for shopping with Stumart! "
                 f"We hope to serve you again soon.\n\n"
                 f"If you have any questions or concerns, please don't hesitate to contact us.\n\n"
@@ -2501,108 +2688,174 @@ class CustomerConfirmationView(APIView):
         except Exception as e:
             logger.error(f"Failed to notify customer about confirmation: {str(e)}")
     
-    def notify_vendors_automated_payout(self, order, vendor_payouts):
-        """Notify vendors about automated payouts"""
-        for payout in vendor_payouts:
-            try:
-                if not payout['success']:
-                    continue
-                
-                from User.models import Vendor
-                vendor = Vendor.objects.get(id=payout['vendor_id'])
-                
+    def notify_vendor_transfer(self, order, vendor_transfer):
+        """Notify vendor about automated transfer"""
+        try:
+            vendor_email = vendor_transfer.get('vendor_email')
+            vendor_name = vendor_transfer.get('vendor_name')
+            
+            if not vendor_email or not vendor_name:
+                logger.warning(f"Missing vendor email or name in transfer: {vendor_transfer}")
+                return
+            
+            if vendor_transfer['success']:
                 subject = f"💰 Payment Sent - Order #{order.order_number}"
                 
                 message = (
-                    f"Dear {vendor.business_name},\n\n"
+                    f"Dear {vendor_name},\n\n"
                     f"Great news! Your payment has been automatically processed and sent to your bank account.\n\n"
                     f"💸 PAYMENT DETAILS:\n"
                     f"• Order Number: {order.order_number}\n"
-                    f"• Amount: ₦{payout['amount']}\n"
-                    f"• Bank Account: {vendor.account_name} - {vendor.account_number}\n"
-                    f"• Reference: {payout['reference']}\n"
+                    f"• Amount: ₦{vendor_transfer['amount']:.2f}\n"
+                    f"• Reference: {vendor_transfer.get('reference', 'N/A')}\n"
+                    f"• Transfer Code: {vendor_transfer.get('transfer_code', 'N/A')}\n"
                     f"• Status: Processing (arrives within 10-30 minutes)\n"
                     f"• Processed: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
                     f"⏰ DELIVERY TIMELINE:\n"
                     f"Your payment will arrive in your bank account within 10-30 minutes.\n\n"
                     f"📝 NOTE:\n"
-                    f"This is an automated payout triggered by customer order confirmation.\n"
+                    f"This is an automated transfer triggered by customer order confirmation.\n"
                     f"No manual withdrawal needed!\n\n"
                     f"Thank you for your business!\n\n"
                     f"Best regards,\n"
                     f"Stumart Team"
                 )
+            else:
+                subject = f"⚠️ Transfer Issue - Order #{order.order_number}"
                 
-                send_mail(
-                    subject=subject,
-                    message=message,
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[vendor.user.email],
-                    fail_silently=True
+                message = (
+                    f"Dear {vendor_name},\n\n"
+                    f"We attempted to process your payment automatically, but encountered an issue.\n\n"
+                    f"💸 PAYMENT DETAILS:\n"
+                    f"• Order Number: {order.order_number}\n"
+                    f"• Amount: ₦{vendor_transfer['amount']:.2f}\n"
+                    f"• Issue: {vendor_transfer.get('error', 'Transfer failed')}\n\n"
+                    f"📝 WHAT HAPPENS NEXT:\n"
+                    f"Your payment has been credited to your Stumart wallet.\n"
+                    f"You can withdraw it manually through the app.\n\n"
+                    f"If you continue to experience issues, please contact support.\n\n"
+                    f"Best regards,\n"
+                    f"Stumart Team"
                 )
-                
-                logger.info(f"Automated payout notification sent to vendor {vendor.business_name}")
-                
-            except Exception as e:
-                logger.error(f"Failed to notify vendor about automated payout: {str(e)}")
-    
-    def notify_picker_automated_payout(self, opportunity, payout_result):
-        """Notify picker about automated payout"""
-        try:
-            picker = opportunity.user_picker
-            
-            subject = f"💰 Delivery Payment Sent - Order #{opportunity.order.order_number}"
-            
-            message = (
-                f"Hello {picker.first_name} {picker.last_name},\n\n"
-                f"Your delivery payment has been automatically processed!\n\n"
-                f"💸 PAYMENT DETAILS:\n"
-                f"• Order Number: {opportunity.order.order_number}\n"
-                f"• Amount: ₦{payout_result['amount']}\n"
-                f"• Reference: {payout_result['reference']}\n"
-                f"• Status: Processing (arrives within 10-30 minutes)\n"
-                f"• Processed: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
-                f"⏰ Your payment will arrive in your bank account within 10-30 minutes.\n\n"
-                f"Thank you for your excellent delivery service!\n\n"
-                f"Best regards,\n"
-                f"Stumart Team"
-            )
             
             send_mail(
                 subject=subject,
                 message=message,
                 from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[picker.email],
+                recipient_list=[vendor_email],
+                fail_silently=True
+            )
+            
+            logger.info(f"Transfer notification sent to vendor {vendor_name}")
+            
+        except Exception as e:
+            logger.error(f"Failed to notify vendor about transfer: {str(e)}")
+    
+    def notify_picker_transfer(self, order, opportunity, picker_transfer):
+        """Notify picker about automated transfer"""
+        try:
+            picker_email = picker_transfer.get('picker_email')
+            picker_name = picker_transfer.get('picker_name', picker_email)
+            
+            if not picker_email:
+                logger.warning("Missing picker email in transfer notification")
+                return
+            
+            if picker_transfer['success']:
+                subject = f"💰 Delivery Payment Sent - Order #{order.order_number}"
+                
+                message = (
+                    f"Hello {picker_name},\n\n"
+                    f"Your delivery payment has been automatically processed!\n\n"
+                    f"💸 PAYMENT DETAILS:\n"
+                    f"• Order Number: {order.order_number}\n"
+                    f"• Amount: ₦{picker_transfer['amount']:.2f}\n"
+                    f"• Reference: {picker_transfer.get('reference', 'N/A')}\n"
+                    f"• Transfer Code: {picker_transfer.get('transfer_code', 'N/A')}\n"
+                    f"• Status: Processing (arrives within 10-30 minutes)\n"
+                    f"• Processed: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+                    f"⏰ Your payment will arrive in your bank account within 10-30 minutes.\n\n"
+                    f"Thank you for your excellent delivery service!\n\n"
+                    f"Best regards,\n"
+                    f"Stumart Team"
+                )
+            else:
+                subject = f"⚠️ Payment Issue - Order #{order.order_number}"
+                
+                message = (
+                    f"Hello {picker_name},\n\n"
+                    f"We attempted to process your delivery payment automatically, but encountered an issue.\n\n"
+                    f"💸 PAYMENT DETAILS:\n"
+                    f"• Order Number: {order.order_number}\n"
+                    f"• Amount: ₦{picker_transfer['amount']:.2f}\n"
+                    f"• Issue: {picker_transfer.get('error', 'Transfer failed')}\n\n"
+                    f"📝 WHAT HAPPENS NEXT:\n"
+                    f"Your payment has been credited to your Stumart wallet.\n"
+                    f"You can withdraw it manually through the app.\n\n"
+                    f"Best regards,\n"
+                    f"Stumart Team"
+                )
+            
+            send_mail(
+                subject=subject,
+                message=message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[picker_email],
                 fail_silently=True
             )
             
         except Exception as e:
-            logger.error(f"Failed to notify picker about automated payout: {str(e)}")
+            logger.error(f"Failed to notify picker about transfer: {str(e)}")
     
-    def notify_admin_order_completed(self, order, opportunity, payment_details, payout_results):
-        """Notify admin with payout details"""
+    def notify_admin_transfers_completed(self, order, opportunity, transfer_results):
+        """Notify admin with complete transfer summary"""
         try:
             admin_emails = [settings.DEFAULT_FROM_EMAIL]
             
-            # Format payout results
-            vendor_payout_summary = "\n".join([
-                f"  - {p['vendor_name']}: ₦{p['amount']} ({p['reference'] if p['success'] else p['error']})"
-                for p in payout_results.get('vendor_payouts', [])
-            ])
+            # Format vendor transfers
+            vendor_summary = []
+            for v in transfer_results.get('vendor_transfers', []):
+                status = "✓ SUCCESS" if v['success'] else "✗ FAILED"
+                vendor_summary.append(
+                    f"  {status} - {v.get('vendor_name', 'Unknown')}: ₦{v['amount']:.2f}\n"
+                    f"    Ref: {v.get('reference', v.get('error', 'N/A'))}"
+                )
+            vendor_text = "\n".join(vendor_summary) if vendor_summary else "  None"
             
-            subject = f"Order Completed with Automated Payouts - #{order.order_number}"
+            # Format picker transfer
+            picker_info = transfer_results.get('picker_transfer')
+            if picker_info:
+                status = "✓ SUCCESS" if picker_info['success'] else "✗ FAILED"
+                picker_text = (
+                    f"  {status} - {picker_info.get('picker_name', picker_info.get('picker_email', 'Unknown'))} ({picker_info['picker_type']})\n"
+                    f"  Amount: ₦{picker_info['amount']:.2f}\n"
+                    f"  Ref: {picker_info.get('reference', picker_info.get('error', 'N/A'))}"
+                )
+            elif transfer_results.get('company_rider_transfer'):
+                rider_info = transfer_results['company_rider_transfer']
+                picker_text = (
+                    f"  ✓ COMPANY RIDER - {rider_info['rider_name']}\n"
+                    f"  Amount: ₦{rider_info['amount']:.2f} (credited to {rider_info['company_name']})\n"
+                    f"  Note: {rider_info['note']}"
+                )
+            else:
+                picker_text = "  None"
+            
+            subject = f"🔄 Automated Transfers Completed - Order #{order.order_number}"
             
             message = (
-                f"Order completed with automated payout processing:\n\n"
-                f"ORDER INFO:\n"
+                f"Automated transfers processed for completed order:\n\n"
+                f"📦 ORDER INFO:\n"
                 f"• Order Number: {order.order_number}\n"
                 f"• Customer: {order.first_name} {order.last_name}\n"
-                f"• Total: ₦{order.total}\n\n"
-                f"AUTOMATED PAYOUTS:\n"
-                f"Vendors:\n{vendor_payout_summary}\n\n"
-                f"Picker: {payout_results.get('picker_payout', {}).get('picker_email', 'N/A')} - "
-                f"₦{payout_results.get('picker_payout', {}).get('amount', 0)}\n\n"
-                f"Status: All payouts initiated automatically"
+                f"• Total: ₦{order.total}\n"
+                f"• Confirmed: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+                f"💸 VENDOR TRANSFERS:\n{vendor_text}\n\n"
+                f"🚴 PICKER/RIDER TRANSFER:\n{picker_text}\n\n"
+                f"💰 STUMART EARNINGS: ₦{transfer_results.get('stumart_earnings', 0):.2f}\n\n"
+                f"{'='*50}\n"
+                f"All successful transfers will arrive in 10-30 minutes.\n"
+                f"Failed transfers have been credited to respective wallets for manual processing."
             )
             
             send_mail(
