@@ -314,7 +314,7 @@ const ShoppingCart = () => {
                             />
                           </svg>
                         </button>
-                        <span className="px-4 py-2 font-medium min-w-[3rem] text-center">
+                        <span className="px-4 py-2 font-medium min-w-12 text-center">
                           {item.quantity}
                         </span>
                         <button
@@ -407,7 +407,7 @@ const ShoppingCart = () => {
                   </div>
 
                   <div className="flex justify-between text-gray-600">
-                    <span>Commission</span>
+                    <span>Service Charge</span>
                     <span>₦{formatPrice(cartSummary.tax)}</span>
                   </div>
 

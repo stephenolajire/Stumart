@@ -264,8 +264,19 @@ class CartItemsView(APIView):
                 sub_total = Decimal("0.00")
                 vendor_count = 0
 
-            shipping_fee = Decimal("400.00") * vendor_count
-            tax = sub_total * Decimal("0.040")
+            # NEW SHIPPING FEE LOGIC
+            if vendor_count == 0:
+                shipping_fee = Decimal("0.00")
+            elif vendor_count == 1:
+                shipping_fee = Decimal("500.00")
+            elif 2 <= vendor_count < 4:
+                shipping_fee = Decimal("600.00")
+            else:  # vendor_count >= 4
+                shipping_fee = Decimal("800.00")
+
+            # FLAT TAX RATE
+            tax = Decimal("100.00")
+            
             total = sub_total + shipping_fee + tax
 
             # Serialize AFTER the single query (no extra DB hits)
@@ -2278,11 +2289,16 @@ class CustomerConfirmationView(APIView):
             tax_amount = Decimal(str(order.tax))
             company_commission = Decimal('100.00')
             
+            # Platform fees
+            vendor_platform_fee = Decimal('50.00')  # ₦50 per vendor
+            picker_platform_fee = Decimal('100.00')  # ₦100 per picker/student_picker
+            
             # Calculate Stumart earnings
             if opportunity.picker_type == 'company_rider':
                 stumart_earnings = tax_amount + company_commission
             else:
-                stumart_earnings = tax_amount
+                # Add picker platform fee to Stumart earnings
+                stumart_earnings = tax_amount + picker_platform_fee
             
             # Update Stumart wallet
             stumart_wallet = StumartWalletAccount.get_instance()
@@ -2313,6 +2329,7 @@ class CustomerConfirmationView(APIView):
                     )
                 else:
                     stumart_wallet.add_tax(tax_amount)
+                    stumart_wallet.add_commission(picker_platform_fee)
                     
                     WalletTransactionAccount.objects.create(
                         transaction_type='tax',
@@ -2321,15 +2338,46 @@ class CustomerConfirmationView(APIView):
                         user=stumart_user,
                         description=f"Tax collected from order #{order.order_number}"
                     )
+                    
+                    WalletTransactionAccount.objects.create(
+                        transaction_type='commission',
+                        amount=picker_platform_fee,
+                        order=order,
+                        user=stumart_user,
+                        description=f"Platform fee from picker delivery - order #{order.order_number}"
+                    )
             
             results['stumart_earnings'] = float(stumart_earnings)
             
             # 1. Process Vendor Transfers
             vendor_payments = self.calculate_vendor_payments(order)
             
+            # Add vendor platform fee to Stumart earnings
+            total_vendor_platform_fees = vendor_platform_fee * len(vendor_payments)
+            stumart_earnings += total_vendor_platform_fees
+            results['stumart_earnings'] = float(stumart_earnings)
+            
+            # Record vendor platform fees
+            if stumart_user and len(vendor_payments) > 0:
+                WalletTransactionAccount.objects.create(
+                    transaction_type='commission',
+                    amount=total_vendor_platform_fees,
+                    order=order,
+                    user=stumart_user,
+                    description=f"Platform fees from {len(vendor_payments)} vendor(s) - order #{order.order_number}"
+                )
+            
             for vendor_id, amount in vendor_payments.items():
                 try:
                     vendor = Vendor.objects.get(id=vendor_id)
+                    
+                    # Deduct platform fee from vendor payment
+                    vendor_payout = amount - vendor_platform_fee
+                    
+                    # Ensure payout is not negative
+                    if vendor_payout < 0:
+                        logger.warning(f"Vendor {vendor.business_name} payout would be negative (₦{vendor_payout}), setting to 0")
+                        vendor_payout = Decimal('0.00')
                     
                     # Check if vendor has recipient code
                     if not vendor.paystack_recipient_code:
@@ -2338,7 +2386,9 @@ class CustomerConfirmationView(APIView):
                             'vendor_id': vendor_id,
                             'vendor_name': vendor.business_name,
                             'vendor_email': vendor.user.email,
-                            'amount': float(amount),
+                            'gross_amount': float(amount),
+                            'platform_fee': float(vendor_platform_fee),
+                            'net_amount': float(vendor_payout),
                             'success': False,
                             'error': 'No recipient code configured'
                         })
@@ -2348,21 +2398,21 @@ class CustomerConfirmationView(APIView):
                             vendor=vendor,
                             defaults={'balance': Decimal('0')}
                         )
-                        wallet.balance += amount
+                        wallet.balance += vendor_payout
                         wallet.save()
                         
                         # Create wallet transaction record
                         WalletTransactionAccount.objects.create(
                             transaction_type='vendor_payment',
-                            amount=amount,
+                            amount=vendor_payout,
                             order=order,
                             user=vendor.user,
-                            description=f"Payment credited to wallet for order #{order.order_number} (no recipient code)"
+                            description=f"Payment credited to wallet for order #{order.order_number} (₦{amount} - ₦{vendor_platform_fee} fee = ₦{vendor_payout}) (no recipient code)"
                         )
                         continue
                     
                     # Convert amount to kobo (Paystack uses lowest currency unit)
-                    amount_in_kobo = int(amount * 100)
+                    amount_in_kobo = int(vendor_payout * 100)
                     
                     # Generate unique reference
                     timestamp = int(timezone.now().timestamp() * 1000)
@@ -2372,7 +2422,7 @@ class CustomerConfirmationView(APIView):
                     success, transfer_data, error = transfer_service.initiate_transfer(
                         amount=amount_in_kobo,
                         recipient_code=vendor.paystack_recipient_code,
-                        reason=f"Payment for order #{order.order_number}",
+                        reason=f"Payment for order #{order.order_number} (less ₦{vendor_platform_fee} platform fee)",
                         reference=reference
                     )
                     
@@ -2382,30 +2432,34 @@ class CustomerConfirmationView(APIView):
                         # Create wallet transaction record for the transfer
                         WalletTransactionAccount.objects.create(
                             transaction_type='vendor_payment',
-                            amount=amount,
+                            amount=vendor_payout,
                             order=order,
                             user=vendor.user,
-                            description=f"Automated transfer for order #{order.order_number} | Ref: {reference} | Transfer Code: {transfer_code}"
+                            description=f"Automated transfer for order #{order.order_number} (₦{amount} - ₦{vendor_platform_fee} fee = ₦{vendor_payout}) | Ref: {reference} | Transfer Code: {transfer_code}"
                         )
                         
                         results['vendor_transfers'].append({
                             'vendor_id': vendor_id,
                             'vendor_name': vendor.business_name,
                             'vendor_email': vendor.user.email,
-                            'amount': float(amount),
+                            'gross_amount': float(amount),
+                            'platform_fee': float(vendor_platform_fee),
+                            'net_amount': float(vendor_payout),
                             'success': True,
                             'reference': reference,
                             'transfer_code': transfer_code
                         })
                         
-                        logger.info(f"Transfer initiated for vendor {vendor.business_name}: ₦{amount}")
+                        logger.info(f"Transfer initiated for vendor {vendor.business_name}: ₦{vendor_payout} (₦{amount} - ₦{vendor_platform_fee} fee)")
                     else:
                         logger.error(f"Transfer failed for vendor {vendor.business_name}: {error}")
                         results['vendor_transfers'].append({
                             'vendor_id': vendor_id,
                             'vendor_name': vendor.business_name,
                             'vendor_email': vendor.user.email,
-                            'amount': float(amount),
+                            'gross_amount': float(amount),
+                            'platform_fee': float(vendor_platform_fee),
+                            'net_amount': float(vendor_payout),
                             'success': False,
                             'error': error
                         })
@@ -2415,23 +2469,25 @@ class CustomerConfirmationView(APIView):
                             vendor=vendor,
                             defaults={'balance': Decimal('0')}
                         )
-                        wallet.balance += amount
+                        wallet.balance += vendor_payout
                         wallet.save()
                         
                         # Create wallet transaction record
                         WalletTransactionAccount.objects.create(
                             transaction_type='vendor_payment',
-                            amount=amount,
+                            amount=vendor_payout,
                             order=order,
                             user=vendor.user,
-                            description=f"Payment credited to wallet for order #{order.order_number} (transfer failed: {error})"
+                            description=f"Payment credited to wallet for order #{order.order_number} (₦{amount} - ₦{vendor_platform_fee} fee = ₦{vendor_payout}) (transfer failed: {error})"
                         )
                         
                 except Exception as e:
                     logger.error(f"Error processing transfer for vendor {vendor_id}: {str(e)}")
                     results['vendor_transfers'].append({
                         'vendor_id': vendor_id,
-                        'amount': float(amount),
+                        'gross_amount': float(amount),
+                        'platform_fee': float(vendor_platform_fee),
+                        'net_amount': float(amount - vendor_platform_fee),
                         'success': False,
                         'error': str(e)
                     })
@@ -2461,13 +2517,15 @@ class CustomerConfirmationView(APIView):
                     amount=rider_earnings,
                     order=order,
                     user=company.user,
-                    description=f"Rider earnings credited to company wallet for order #{order.order_number}"
+                    description=f"Rider earnings credited to company wallet for order #{order.order_number} (₦{shipping_fee} - ₦{company_commission} commission)"
                 )
                 
                 results['company_rider_transfer'] = {
                     'rider_name': company_rider.name,
                     'company_name': company.user.email,
-                    'amount': float(rider_earnings),
+                    'gross_amount': float(shipping_fee),
+                    'commission': float(company_commission),
+                    'net_amount': float(rider_earnings),
                     'success': True,
                     'note': 'Credited to company wallet (company manages rider payments)'
                 }
@@ -2476,6 +2534,14 @@ class CustomerConfirmationView(APIView):
                 picker = opportunity.user_picker
                 picker_profile = None
                 recipient_code = None
+                
+                # Calculate picker payout (deduct platform fee)
+                picker_payout = shipping_fee - picker_platform_fee
+                
+                # Ensure payout is not negative
+                if picker_payout < 0:
+                    logger.warning(f"Picker {picker.email} payout would be negative (₦{picker_payout}), setting to 0")
+                    picker_payout = Decimal('0.00')
                 
                 # Get picker profile and recipient code
                 if picker.user_type == 'picker':
@@ -2499,43 +2565,45 @@ class CustomerConfirmationView(APIView):
                             picker=picker_profile,
                             defaults={'amount': Decimal('0')}
                         )
-                        wallet.amount += shipping_fee
+                        wallet.amount += picker_payout
                         wallet.save()
                     else:
                         wallet, created = StudentPickerWalletAccount.objects.get_or_create(
                             student_picker=picker_profile,
                             defaults={'amount': Decimal('0')}
                         )
-                        wallet.amount += shipping_fee
+                        wallet.amount += picker_payout
                         wallet.save()
                     
                     # Create transaction record
                     WalletTransactionAccount.objects.create(
                         transaction_type='delivery_payment',
-                        amount=shipping_fee,
+                        amount=picker_payout,
                         order=order,
                         user=picker,
-                        description=f"Delivery payment credited to wallet for order #{order.order_number} (no recipient code)"
+                        description=f"Delivery payment credited to wallet for order #{order.order_number} (₦{shipping_fee} - ₦{picker_platform_fee} fee = ₦{picker_payout}) (no recipient code)"
                     )
                     
                     results['picker_transfer'] = {
                         'picker_email': picker.email,
                         'picker_name': f"{picker.first_name} {picker.last_name}",
                         'picker_type': picker.user_type,
-                        'amount': float(shipping_fee),
+                        'gross_amount': float(shipping_fee),
+                        'platform_fee': float(picker_platform_fee),
+                        'net_amount': float(picker_payout),
                         'success': False,
                         'error': 'No recipient code configured (wallet credited)'
                     }
                 else:
                     # Initiate transfer to picker
-                    amount_in_kobo = int(shipping_fee * 100)
+                    amount_in_kobo = int(picker_payout * 100)
                     timestamp = int(timezone.now().timestamp() * 1000)
                     reference = f"picker_{picker.id}_order_{order.order_number}_{timestamp}"
                     
                     success, transfer_data, error = transfer_service.initiate_transfer(
                         amount=amount_in_kobo,
                         recipient_code=recipient_code,
-                        reason=f"Delivery payment for order #{order.order_number}",
+                        reason=f"Delivery payment for order #{order.order_number} (less ₦{picker_platform_fee} platform fee)",
                         reference=reference
                     )
                     
@@ -2545,23 +2613,25 @@ class CustomerConfirmationView(APIView):
                         # Create transaction record
                         WalletTransactionAccount.objects.create(
                             transaction_type='delivery_payment',
-                            amount=shipping_fee,
+                            amount=picker_payout,
                             order=order,
                             user=picker,
-                            description=f"Automated transfer for delivery #{order.order_number} | Ref: {reference} | Transfer Code: {transfer_code}"
+                            description=f"Automated transfer for delivery #{order.order_number} (₦{shipping_fee} - ₦{picker_platform_fee} fee = ₦{picker_payout}) | Ref: {reference} | Transfer Code: {transfer_code}"
                         )
                         
                         results['picker_transfer'] = {
                             'picker_email': picker.email,
                             'picker_name': f"{picker.first_name} {picker.last_name}",
                             'picker_type': picker.user_type,
-                            'amount': float(shipping_fee),
+                            'gross_amount': float(shipping_fee),
+                            'platform_fee': float(picker_platform_fee),
+                            'net_amount': float(picker_payout),
                             'success': True,
                             'reference': reference,
                             'transfer_code': transfer_code
                         }
                         
-                        logger.info(f"Transfer initiated for picker {picker.email}: ₦{shipping_fee}")
+                        logger.info(f"Transfer initiated for picker {picker.email}: ₦{picker_payout} (₦{shipping_fee} - ₦{picker_platform_fee} fee)")
                     else:
                         logger.error(f"Transfer failed for picker {picker.email}: {error}")
                         
@@ -2571,30 +2641,32 @@ class CustomerConfirmationView(APIView):
                                 picker=picker_profile,
                                 defaults={'amount': Decimal('0')}
                             )
-                            wallet.amount += shipping_fee
+                            wallet.amount += picker_payout
                             wallet.save()
                         else:
                             wallet, created = StudentPickerWalletAccount.objects.get_or_create(
                                 student_picker=picker_profile,
                                 defaults={'amount': Decimal('0')}
                             )
-                            wallet.amount += shipping_fee
+                            wallet.amount += picker_payout
                             wallet.save()
                         
                         # Create transaction record
                         WalletTransactionAccount.objects.create(
                             transaction_type='delivery_payment',
-                            amount=shipping_fee,
+                            amount=picker_payout,
                             order=order,
                             user=picker,
-                            description=f"Delivery payment credited to wallet for order #{order.order_number} (transfer failed: {error})"
+                            description=f"Delivery payment credited to wallet for order #{order.order_number} (₦{shipping_fee} - ₦{picker_platform_fee} fee = ₦{picker_payout}) (transfer failed: {error})"
                         )
                         
                         results['picker_transfer'] = {
                             'picker_email': picker.email,
                             'picker_name': f"{picker.first_name} {picker.last_name}",
                             'picker_type': picker.user_type,
-                            'amount': float(shipping_fee),
+                            'gross_amount': float(shipping_fee),
+                            'platform_fee': float(picker_platform_fee),
+                            'net_amount': float(picker_payout),
                             'success': False,
                             'error': error
                         }

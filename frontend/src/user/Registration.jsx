@@ -619,14 +619,14 @@ const Signup = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-orange-50 to-yellow-50 py-8 px-4">
+    <div className="min-h-screen bg-linear-to-br from-yellow-50 via-orange-50 to-yellow-50 py-8 px-4">
       <div className="max-w-2xl mx-auto">
         <form
           onSubmit={handleSubmit}
           className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden"
         >
           {/* Logo Section */}
-          <div className="text-center pt-8 pb-6 px-6 bg-gradient-to-b from-white to-gray-50">
+          <div className="text-center pt-8 pb-6 px-6 bg-linear-to-b from-white to-gray-50">
             <img
               src={logo}
               alt="StuMart Logo"

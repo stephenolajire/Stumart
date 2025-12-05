@@ -170,18 +170,7 @@ class PaystackTransferService:
         reason: str = "Payout",
         reference: Optional[str] = None
     ) -> Tuple[bool, Optional[Dict], Optional[str]]:
-        """
-        Initiate a transfer to a recipient
         
-        Args:
-            amount: Amount in kobo (NGN)
-            recipient_code: Paystack recipient code
-            reason: Reason for transfer
-            reference: Optional unique reference
-        
-        Returns:
-            Tuple of (success, transfer_data, error_message)
-        """
         url = f"{self.BASE_URL}/transfer"
         
         payload = {
@@ -213,15 +202,7 @@ class PaystackTransferService:
             return False, None, error_msg
     
     def verify_transfer(self, reference: str) -> Tuple[bool, Optional[Dict], Optional[str]]:
-        """
-        Verify transfer status
         
-        Args:
-            reference: Transfer reference
-        
-        Returns:
-            Tuple of (success, transfer_data, error_message)
-        """
         url = f"{self.BASE_URL}/transfer/verify/{reference}"
         
         try:
