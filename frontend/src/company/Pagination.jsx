@@ -129,7 +129,7 @@ const Pagination = ({
               <button
                 key={page}
                 onClick={() => handlePageClick(page)}
-                className={`min-w-[40px] px-3 py-2 rounded-lg font-medium transition-all ${
+                className={`min-w-10 px-3 py-2 rounded-lg font-medium transition-all ${
                   isActive
                     ? "bg-yellow-600 text-white shadow-md scale-105"
                     : "bg-white text-gray-700 hover:bg-yellow-50 border border-gray-300"

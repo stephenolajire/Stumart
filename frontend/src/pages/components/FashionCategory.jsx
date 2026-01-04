@@ -15,7 +15,7 @@ const HomeCategory = () => {
 
   if (isLoading) {
     return (
-      <div className="bg-gradient-to-br from-gray-50 to-white pb-12">
+      <div className="bg-linear-to-br from-gray-50 to-white pb-12">
         <div className="w-full mx-auto p-4">
           <div className="text-center">Loading categories...</div>
         </div>
@@ -25,7 +25,7 @@ const HomeCategory = () => {
 
   if (error) {
     return (
-      <div className="bg-gradient-to-br from-gray-50 to-white pb-12">
+      <div className="bg-linear-to-br from-gray-50 to-white pb-12">
         <div className="w-full mx-auto p-4">
           <div className="text-center text-red-500">
             Error loading categories
@@ -39,7 +39,7 @@ const HomeCategory = () => {
   const categories = homeData?.data ? Object.entries(homeData.data) : [];
 
   return (
-    <div className="bg-gradient-to-br from-gray-50 to-white pb-12 mt-5">
+    <div className="bg-linear-to-br from-gray-50 to-white pb-12 mt-5">
       <div className="w-full mx-auto">
         {categories.map(([categoryKey, categoryData]) => {
           // Skip categories with no products

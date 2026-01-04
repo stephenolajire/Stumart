@@ -356,8 +356,18 @@ export const useCartMutations = () => {
 };
 
 export const useProductCategory = (filters) => {
-  const { category, vendor, state, school, search, minPrice, maxPrice, sort } =
-    filters || {};
+  // FIXED: Added 'page' to destructured filters
+  const {
+    category,
+    vendor,
+    state,
+    school,
+    search,
+    minPrice,
+    maxPrice,
+    sort,
+    page,
+  } = filters || {};
 
   return useQuery({
     queryKey: [
@@ -371,6 +381,7 @@ export const useProductCategory = (filters) => {
       minPrice,
       maxPrice,
       sort,
+      page, // ADDED: Include page in queryKey so React Query knows to refetch when page changes
     ],
     queryFn: async () => {
       // Build query parameters
@@ -410,18 +421,25 @@ export const useProductCategory = (filters) => {
         params.append("sort", sort);
       }
 
+      // ADDED: Include page parameter in API request
+      if (page && page > 1) {
+        params.append("page", page);
+      }
+
       const queryString = params.toString();
       const url = `/product-category/${queryString ? `?${queryString}` : ""}`;
 
       console.log("Fetching category products with URL:", url);
       console.log("Applied filters:", filters);
+      console.log("Current page:", page); // Added for debugging
 
       const response = await api.get(url);
       return response;
     },
     enabled: !!category, // Only run if category is provided
-    staleTime: 60 * 60 * 1000, // 5 minutes
-    cacheTime: 60 * 60 * 1000, // 10 minutes
+    keepPreviousData: true, // ADDED: Keep previous data while fetching new page (prevents flash of empty content)
+    staleTime: 60 * 60 * 1000, // 1 hour (was 5 minutes in comment, fixed)
+    cacheTime: 60 * 60 * 1000, // 1 hour (was 10 minutes in comment, fixed)
     refetchOnWindowFocus: false,
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
@@ -434,6 +452,11 @@ export const useProductCategory = (filters) => {
         data?.data?.results?.length || 0,
         "products"
       );
+      console.log("Page info:", {
+        count: data?.data?.count,
+        next: data?.data?.next,
+        previous: data?.data?.previous,
+      });
     },
   });
 };

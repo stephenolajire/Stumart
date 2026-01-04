@@ -214,10 +214,25 @@ class CategoryLastFiveView(APIView):
                 .distinct()
             )
 
-            response_data = {}
+            # Convert to list and sort with Food first
+            categories_list = list(categories)
+            
+            # Custom sorting: Food first, then alphabetically
+            def sort_categories(category):
+                # Return 0 for Food (comes first), 1 for everything else
+                if category.lower() == 'food':
+                    return (0, category.lower())
+                else:
+                    return (1, category.lower())
+            
+            categories_list.sort(key=sort_categories)
 
-            for category in categories:
-                # Fixed query - added kyc fields to only() or removed from select_related
+            # Use OrderedDict to maintain insertion order
+            from collections import OrderedDict
+            response_data = OrderedDict()
+
+            for category in categories_list:
+                # Fixed query - added kyc fields to only()
                 products = (
                     Product.objects
                     .select_related('vendor', 'vendor__vendor_profile', 'vendor__kyc')
@@ -235,7 +250,7 @@ class CategoryLastFiveView(APIView):
                         # Vendor profile fields
                         'vendor__vendor_profile__business_name',
                         'vendor__vendor_profile__business_category',
-                        # KYC fields - THIS IS THE FIX
+                        # KYC fields
                         'vendor__kyc__verification_status'
                     )
                     .order_by('-created_at')[:6]

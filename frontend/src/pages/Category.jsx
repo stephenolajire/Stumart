@@ -21,8 +21,7 @@ import Spinner from "../components/Spinner";
 import Pagination from "../company/Pagination";
 
 const Category = () => {
-  const [searchParams] = useSearchParams();
-  const [setSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const category = searchParams.get("category");
   const [showFilters, setShowFilters] = useState(false);
   const [selectedState, setSelectedState] = useState("");
@@ -42,7 +41,7 @@ const Category = () => {
     sort: searchParams.get("sort") || "newest",
   });
 
-  // Memoize the current filter state to prevent unnecessary API calls
+  // FIXED: Include page parameter in currentFilters
   const currentFilters = useMemo(() => {
     return {
       category,
@@ -53,6 +52,7 @@ const Category = () => {
       minPrice: filters.minPrice,
       maxPrice: filters.maxPrice,
       sort: filters.sort,
+      page: currentPage, // ADD THIS LINE
     };
   }, [
     category,
@@ -63,6 +63,7 @@ const Category = () => {
     filters.minPrice,
     filters.maxPrice,
     filters.sort,
+    currentPage, // ADD THIS DEPENDENCY
   ]);
 
   // Use the React Query hook for fetching category products
@@ -75,9 +76,9 @@ const Category = () => {
 
   console.log(productsData);
 
+  // FIXED: Handle page change and scroll to top
   const handlePageChange = (page) => {
     setCurrentPage(page);
-    // Optionally scroll to top
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -91,14 +92,12 @@ const Category = () => {
   const singleVendorInfo = useMemo(() => {
     if (!products || products.length === 0) return null;
 
-    // Get unique vendor IDs from products
     const uniqueVendorIds = [
       ...new Set(
         products.map((product) => product.vendor_id || product.vendorId)
       ),
     ];
 
-    // If there's only one unique vendor ID, find the vendor details
     if (uniqueVendorIds.length === 1 && uniqueVendorIds[0]) {
       const vendorId = uniqueVendorIds[0];
       const vendor = allVendors.find((v) => v.id === vendorId);
@@ -108,12 +107,13 @@ const Category = () => {
     return null;
   }, [products, allVendors]);
 
-  // Handle filter changes
+  // FIXED: Reset to page 1 when filters change
   const handleFilterChange = useCallback(
     (name, value) => {
       console.log("Filter changed:", name, value);
 
       setFilters((prev) => ({ ...prev, [name]: value }));
+      setCurrentPage(1); // RESET TO PAGE 1 WHEN FILTER CHANGES
 
       setSearchParams((prev) => {
         if (value) {
@@ -121,10 +121,10 @@ const Category = () => {
         } else {
           prev.delete(name);
         }
-        // Ensure category is always in URL
         if (category) {
           prev.set("category", category);
         }
+        prev.delete("page"); // REMOVE PAGE FROM URL WHEN FILTER CHANGES
         return prev;
       });
     },
@@ -137,7 +137,7 @@ const Category = () => {
       setSelectedState(state);
       setSchools(state ? nigeriaInstitutions[state] || [] : []);
       handleFilterChange("state", state);
-      handleFilterChange("school", ""); // Clear school when state changes
+      handleFilterChange("school", "");
     },
     [handleFilterChange]
   );
@@ -157,6 +157,7 @@ const Category = () => {
     setFilters(resetFilters);
     setSelectedState("");
     setSchools([]);
+    setCurrentPage(1); // RESET PAGE
 
     const params = new URLSearchParams();
     if (category) {
@@ -210,7 +211,7 @@ const Category = () => {
         <div className="w-full mx-auto">
           <div className="bg-white rounded-lg shadow-sm p-8 text-center">
             <div className="text-red-500 text-lg mb-4">
-              ⚠️ Error Loading Products
+              Error Loading Products
             </div>
             <p className="text-gray-600 mb-6">{errorMessage}</p>
             <button
@@ -230,13 +231,6 @@ const Category = () => {
       <div className="w-full mx-auto">
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
-          {/* <div
-            className="flex items-center text-gray-600 hover:text-yellow-500 cursor-pointer mb-6 transition-colors duration-200"
-            // onClick={goBack}
-          >
-            <FaArrowLeft className="mr-2" />
-            <span className="font-medium">Back</span>
-          </div> */}
           <div>
             {isAuthenticated ? (
               <h1 className="text-2xl capitalize font-bold text-gray-900">
@@ -262,7 +256,7 @@ const Category = () => {
 
         {/* Single Vendor Display */}
         {singleVendorInfo && products.length > 0 && (
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <div className="bg-linear-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4 mb-6">
             <div className="flex items-center justify-center space-x-2">
               <FaStore className="text-blue-600 text-lg" />
               <span className="text-gray-700">
@@ -306,7 +300,7 @@ const Category = () => {
               </select>
             </div>
 
-            {/* Vendor - Always shown */}
+            {/* Vendor */}
             <div>
               <select
                 value={filters.vendor}
@@ -429,9 +423,9 @@ const Category = () => {
         )}
       </div>
       <Pagination
-        count={productsData.data.count || 0}
-        next={productsData.data.next || null}
-        previous={productsData.data.previous || null}
+        count={productsData?.data?.count || 0}
+        next={productsData?.data?.next || null}
+        previous={productsData?.data?.previous || null}
         currentPage={currentPage}
         onPageChange={handlePageChange}
         resultsPerPage={18}
