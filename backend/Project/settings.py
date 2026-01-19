@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework_simplejwt',
     'rest_framework',
+    'drf_spectacular',
     'User',
     # 'Stumart',
     'Vendor',
@@ -254,7 +255,19 @@ REST_FRAMEWORK = {
         'password_reset': '3/minute',
         'register': '3/hour',
     },
-    'EXCEPTION_HANDLER': 'User.utils.custom_exception_handler'
+    'EXCEPTION_HANDLER': 'User.utils.custom_exception_handler',
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+# drf-spectacular configuration for Swagger/OpenAPI
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'StuMart API',
+    'DESCRIPTION': 'StuMart E-Commerce Platform API Documentation',
+    'VERSION': '1.0.0',
+    'SERVE_PERMISSIONS': ['rest_framework.permissions.AllowAny'],
+    'SCHEMA_PATH_PREFIX': r'/api',
+    'COERCE_DECIMAL_TO_STRING': True,
+    'ENUM_ADD_EXPLICIT_BLANK_CHOICE': False,
 }
 
 AUTH_USER_MODEL = "User.User"

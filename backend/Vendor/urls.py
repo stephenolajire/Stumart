@@ -2,7 +2,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
-from .views import UpdateStockAPIView, ProductStockHistoryAPIView, ProductPromtionAPIView
+from .views import UpdateStockAPIView, ProductStockHistoryAPIView, ProductPromtionAPIView, VendorProductsListView
 from .webhooks import PaystackWebhookView
 
 router = DefaultRouter()
@@ -46,4 +46,7 @@ urlpatterns = [
     
     # Profile endpoint
     path('profile/', views.UserProfileView.as_view(), name='user_profile'),
+    
+    # Admin - Get vendor products
+    path('admin/vendor/<int:vendor_id>/products/', VendorProductsListView.as_view(), name='vendor_products_list'),
 ]

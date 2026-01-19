@@ -2,7 +2,7 @@ from django.contrib import admin
 
 # Register your models here.
 from django.contrib import admin
-from .models import PickerWalletAccount, StudentPickerWalletAccount, WalletTransactionAccount,StumartWalletAccount, CompanyWallet, VendorWallets, WithdrawalRequest
+from .models import PickerWalletAccount, StudentPickerWalletAccount, WalletTransactionAccount,StumartWalletAccount, CompanyWallet, VendorWallets, WithdrawalRequest, DeliveryOpportunity
 
 @admin.register(WalletTransactionAccount)
 class WalletTransactionAdmin(admin.ModelAdmin):
@@ -46,3 +46,11 @@ class PickerWalletAdmin(admin.ModelAdmin):
     list_display = ('picker', 'amount', 'updated_at')
     search_fields = ('picker__user__email',)
     readonly_fields = ('created_at', 'updated_at')
+
+@admin.register(DeliveryOpportunity)
+class DeliveryOpportunityAdmin(admin.ModelAdmin):
+    list_display = ('order', 'status', 'user_picker', 'company_rider', 'created_at')
+    list_filter = ('status', 'created_at', 'picker_type')
+    search_fields = ('order__order_number', 'user_picker__email', 'company_rider__name')
+    # readonly_fields = ('created_at', 'updated_at')
+

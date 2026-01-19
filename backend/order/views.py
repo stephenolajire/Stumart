@@ -2409,6 +2409,17 @@ class CustomerConfirmationView(APIView):
                             user=vendor.user,
                             description=f"Payment credited to wallet for order #{order.order_number} (₦{amount} - ₦{vendor_platform_fee} fee = ₦{vendor_payout}) (no recipient code)"
                         )
+                        # Record failed transfer for audit
+                        try:
+                            WalletTransactionAccount.objects.create(
+                                transaction_type='failed_transfer',
+                                amount=vendor_payout,
+                                order=order,
+                                user=vendor.user,
+                                description=f"Failed transfer (no recipient code) for order #{order.order_number} - credited to wallet"
+                            )
+                        except Exception:
+                            pass
                         continue
                     
                     # Convert amount to kobo (Paystack uses lowest currency unit)
@@ -2480,6 +2491,17 @@ class CustomerConfirmationView(APIView):
                             user=vendor.user,
                             description=f"Payment credited to wallet for order #{order.order_number} (₦{amount} - ₦{vendor_platform_fee} fee = ₦{vendor_payout}) (transfer failed: {error})"
                         )
+                        # Record failed transfer for audit
+                        try:
+                            WalletTransactionAccount.objects.create(
+                                transaction_type='failed_transfer',
+                                amount=vendor_payout,
+                                order=order,
+                                user=vendor.user,
+                                description=f"Failed transfer for order #{order.order_number} - error: {error}"
+                            )
+                        except Exception:
+                            pass
                         
                 except Exception as e:
                     logger.error(f"Error processing transfer for vendor {vendor_id}: {str(e)}")
@@ -2583,6 +2605,17 @@ class CustomerConfirmationView(APIView):
                         user=picker,
                         description=f"Delivery payment credited to wallet for order #{order.order_number} (₦{shipping_fee} - ₦{picker_platform_fee} fee = ₦{picker_payout}) (no recipient code)"
                     )
+                    # Record failed transfer for audit
+                    try:
+                        WalletTransactionAccount.objects.create(
+                            transaction_type='failed_transfer',
+                            amount=picker_payout,
+                            order=order,
+                            user=picker,
+                            description=f"Failed transfer (no recipient code) for order #{order.order_number} - credited to wallet"
+                        )
+                    except Exception:
+                        pass
                     
                     results['picker_transfer'] = {
                         'picker_email': picker.email,
@@ -2659,6 +2692,17 @@ class CustomerConfirmationView(APIView):
                             user=picker,
                             description=f"Delivery payment credited to wallet for order #{order.order_number} (₦{shipping_fee} - ₦{picker_platform_fee} fee = ₦{picker_payout}) (transfer failed: {error})"
                         )
+                        # Record failed transfer for audit
+                        try:
+                            WalletTransactionAccount.objects.create(
+                                transaction_type='failed_transfer',
+                                amount=picker_payout,
+                                order=order,
+                                user=picker,
+                                description=f"Failed transfer for order #{order.order_number} - error: {error}"
+                            )
+                        except Exception:
+                            pass
                         
                         results['picker_transfer'] = {
                             'picker_email': picker.email,

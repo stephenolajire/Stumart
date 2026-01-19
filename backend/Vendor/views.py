@@ -2162,3 +2162,61 @@ def get_settings_data(request):
         'vendor': vendor_data,
         'userType': user.user_type
     })
+
+
+class VendorProductsListView(APIView):
+    """Get all products for a specific vendor (admin access)"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, vendor_id):
+        try:
+            # Get vendor
+            vendor = Vendor.objects.get(id=vendor_id)
+            
+            # Get all products for this vendor
+            products = Product.objects.filter(vendor=vendor.user).select_related('vendor')
+            
+            # Build product list with all details
+            product_data = []
+            for product in products:
+                product_data.append({
+                    'id': product.id,
+                    'name': product.name,
+                    'description': product.description,
+                    'price': float(product.price),
+                    'promotion_price': float(product.promotion_price) if product.promotion_price else 0,
+                    'in_stock': product.in_stock,
+                    'gender': product.gender,
+                    'keyword': product.keyword,
+                    'delivery_day': product.delivery_day,
+                    'image': product.image.url if product.image else None,
+                    'created_at': product.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                    'updated_at': product.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
+                    'is_on_promotion': product.is_on_promotion,
+                    'discount_percentage': float(product.discount_percentage),
+                    'effective_price': float(product.effective_price),
+                    'is_available': product.is_available,
+                })
+            
+            return Response({
+                'success': True,
+                'vendor': {
+                    'id': vendor.id,
+                    'name': vendor.business_name,
+                    'category': vendor.business_category,
+                    'rating': float(vendor.rating),
+                    'verified': vendor.is_verified,
+                },
+                'products': product_data,
+                'total_products': len(product_data),
+            }, status=status.HTTP_200_OK)
+            
+        except Vendor.DoesNotExist:
+            return Response({
+                'error': 'Vendor not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.error(f"Error fetching vendor products: {str(e)}")
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

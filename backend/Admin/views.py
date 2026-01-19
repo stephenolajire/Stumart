@@ -743,3 +743,253 @@ class ContactView(APIView):
             }, status=status.HTTP_201_CREATED)
             
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class VendorProductsListView(APIView):
+    """API endpoint to fetch all products belonging to a specific vendor - Admin Dashboard"""
+    permission_classes = [IsAdminUser]
+    
+    def get(self, request, vendor_id):
+        """
+        Get all products for a vendor with complete details
+        
+        Args:
+            vendor_id: The ID of the vendor
+            
+        Returns:
+            JSON response with vendor info and products list
+        """
+        try:
+            # Get the vendor by ID
+            vendor = Vendor.objects.select_related('user').get(id=vendor_id)
+            
+            # Fetch all products for this vendor
+            products = Product.objects.filter(vendor=vendor.user).values(
+                'id',
+                'name',
+                'description',
+                'price',
+                'promotion_price',
+                'in_stock',
+                'image',
+                'created_at',
+                'updated_at',
+                'gender',
+                'keyword'
+            ).order_by('-created_at')
+            
+            # Process products to include computed fields
+            products_list = []
+            for product in products:
+                # Calculate effective price (promotion price if available, else regular price)
+                effective_price = (
+                    product['promotion_price'] 
+                    if product['promotion_price'] and product['promotion_price'] > 0 
+                    else product['price']
+                )
+                
+                products_list.append({
+                    'id': product['id'],
+                    'name': product['name'],
+                    'description': product['description'],
+                    'price': float(product['price']) if product['price'] else 0,
+                    'promotion_price': float(product['promotion_price']) if product['promotion_price'] else 0,
+                    'in_stock': product['in_stock'],
+                    'image': str(product['image']) if product['image'] else None,
+                    'effective_price': float(effective_price) if effective_price else 0,
+                    'gender': product['gender'],
+                    'keyword': product['keyword'],
+                    'created_at': product['created_at'].isoformat() if product['created_at'] else None,
+                    'updated_at': product['updated_at'].isoformat() if product['updated_at'] else None,
+                })
+            
+            return Response({
+                'success': True,
+                'vendor': {
+                    'id': vendor.id,
+                    'name': vendor.business_name,
+                    'category': vendor.business_category,
+                    'rating': vendor.rating,
+                    'verified': vendor.user.is_verified,
+                },
+                'products': products_list,
+                'total_products': len(products_list)
+            }, status=status.HTTP_200_OK)
+            
+        except Vendor.DoesNotExist:
+            return Response({
+                'success': False,
+                'error': 'Vendor not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.error(f"Error fetching vendor products: {str(e)}")
+            return Response({
+                'success': False,
+                'error': 'An error occurred while fetching vendor products'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class SendTargetedNewsletterView(APIView):
+    """
+    Send newsletter to specific user types within a state and institution
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        try:
+            # Get data from request
+            state = request.data.get('state')
+            institution = request.data.get('institution')
+            user_type = request.data.get('user_type')
+            subject = request.data.get('subject')
+            message = request.data.get('message')
+            cta_url = request.data.get('cta_url', '')  # Optional call-to-action URL
+            cta_text = request.data.get('cta_text', '')  # Optional CTA button text
+            show_recipient_info = request.data.get('show_recipient_info', True)
+            
+            # Validate required fields
+            if not all([state, institution, user_type, subject, message]):
+                return Response(
+                    {'error': 'All fields are required: state, institution, user_type, subject, message'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Validate user_type
+            valid_user_types = ['student', 'vendor', 'picker', 'student_picker', 'all']
+            if user_type not in valid_user_types:
+                return Response(
+                    {'error': f'Invalid user_type. Must be one of: {", ".join(valid_user_types)}'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Build query filters
+            filters = Q(state=state, institution=institution, is_active=True)
+            
+            # Add user_type filter if not 'all'
+            if user_type != 'all':
+                filters &= Q(user_type=user_type)
+            
+            # Get filtered users
+            recipients = User.objects.filter(filters)
+            
+            if not recipients.exists():
+                return Response(
+                    {
+                        'message': 'No users found matching the criteria',
+                        'count': 0,
+                        'filters': {
+                            'state': state,
+                            'institution': institution,
+                            'user_type': user_type
+                        }
+                    },
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # Send emails to each recipient
+            sent_count = 0
+            failed_count = 0
+            
+            for user in recipients:
+                try:
+                    # Prepare context for the email template
+                    context = {
+                        'user': user,
+                        'subject': subject,
+                        'message': message,
+                        'institution': institution,
+                        'state': state,
+                        'user_type': user_type,
+                        'cta_url': cta_url,
+                        'cta_text': cta_text,
+                        'show_recipient_info': show_recipient_info,
+                        'current_year': timezone.now().year,
+                    }
+                    
+                    # Render HTML email
+                    html_message = render_to_string('email/targeted-email.html', context)
+                    plain_message = strip_tags(html_message)
+                    
+                    # Send email
+                    send_mail(
+                        subject=subject,
+                        message=plain_message,
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        recipient_list=[user.email],
+                        html_message=html_message,
+                        fail_silently=False,
+                    )
+                    
+                    sent_count += 1
+                    
+                except Exception as email_error:
+                    failed_count += 1
+                    print(f"Failed to send email to {user.email}: {str(email_error)}")
+            
+            return Response(
+                {
+                    'message': f'Newsletter sending completed',
+                    'sent': sent_count,
+                    'failed': failed_count,
+                    'total': recipients.count(),
+                    'filters': {
+                        'state': state,
+                        'institution': institution,
+                        'user_type': user_type
+                    }
+                },
+                status=status.HTTP_200_OK
+            )
+                
+        except Exception as e:
+            return Response(
+                {
+                    'error': 'An error occurred while processing the request',
+                    'details': str(e)
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class GetUserCountByFiltersView(APIView):
+    """
+    Get count of users matching the filters before sending newsletter
+    """
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    
+    def get(self, request):
+        try:
+            state = request.query_params.get('state')
+            institution = request.query_params.get('institution')
+            user_type = request.query_params.get('user_type')
+            
+            if not all([state, institution, user_type]):
+                return Response(
+                    {'error': 'State, institution, and user_type are required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            filters = Q(state=state, institution=institution, is_active=True)
+            
+            if user_type != 'all':
+                filters &= Q(user_type=user_type)
+            
+            count = User.objects.filter(filters).count()
+            
+            return Response(
+                {
+                    'count': count,
+                    'filters': {
+                        'state': state,
+                        'institution': institution,
+                        'user_type': user_type
+                    }
+                },
+                status=status.HTTP_200_OK
+            )
+            
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

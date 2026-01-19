@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ subject }}</title>
+    <style>
+      :root {
+        --primary-100: #fdf6e9;
+        --primary-200: #f9e5bb;
+        --primary-300: #f4d08d;
+        --primary-400: #efbb5f;
+        --primary-500: #daa520;
+        --primary-600: #b38517;
+        --primary-700: #8c660f;
+        --primary-800: #664807;
+        --primary-900: #402c04;
+
+        --secondary-100: #e6e6e6;
+        --secondary-200: #cccccc;
+        --secondary-300: #b3b3b3;
+        --secondary-400: #999999;
+        --secondary-500: #000000;
+        --secondary-600: #1a1a1a;
+        --secondary-700: #333333;
+        --secondary-800: #4d4d4d;
+        --secondary-900: #666666;
+
+        --neutral-white: #ffffff;
+        --neutral-gray-50: #f9fafb;
+        --neutral-gray-100: #f3f4f6;
+        --neutral-gray-200: #e5e7eb;
+        --neutral-gray-300: #d1d5db;
+        --neutral-gray-400: #9ca3af;
+
+        --success: #22c55e;
+        --warning: #f59e0b;
+        --error: #ef4444;
+        --info: #3b82f6;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Montserrat", "Poppins", Arial, sans-serif;
+        line-height: 1.6;
+        color: var(--secondary-600);
+        background-color: var(--neutral-gray-100);
+        font-size: 16px;
+      }
+
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .newsletter {
+        background-color: var(--neutral-white);
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }
+
+      .header {
+        text-align: center;
+        padding: 24px 20px;
+        background-color: var(--primary-500);
+        color: var(--neutral-white);
+      }
+
+      .header h1 {
+        font-size: 28px;
+        margin-bottom: 8px;
+        color: var(--neutral-white);
+      }
+
+      .header p {
+        font-size: 16px;
+        opacity: 0.9;
+      }
+
+      .logo {
+        margin-bottom: 16px;
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--neutral-white);
+      }
+
+      .content {
+        padding: 24px;
+      }
+
+      .greeting {
+        font-size: 18px;
+        margin-bottom: 16px;
+        color: var(--secondary-600);
+        font-weight: 600;
+      }
+
+      .message-content {
+        background-color: var(--neutral-gray-50);
+        border-left: 4px solid var(--primary-500);
+        border-radius: 6px;
+        padding: 20px;
+        margin: 24px 0;
+        color: var(--secondary-700);
+        line-height: 1.8;
+      }
+
+      .message-content p {
+        margin-bottom: 12px;
+      }
+
+      .message-content p:last-child {
+        margin-bottom: 0;
+      }
+
+      .info-badge {
+        display: inline-block;
+        background-color: var(--primary-100);
+        color: var(--primary-700);
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: 600;
+        margin: 4px 4px 4px 0;
+      }
+
+      .recipient-info {
+        background-color: var(--neutral-gray-50);
+        border-radius: 6px;
+        padding: 16px;
+        margin-bottom: 24px;
+        font-size: 14px;
+      }
+
+      .recipient-info p {
+        margin-bottom: 4px;
+        color: var(--secondary-700);
+      }
+
+      .action-button {
+        display: block;
+        text-align: center;
+        background-color: var(--primary-500);
+        color: var(--neutral-white);
+        padding: 12px 24px;
+        border-radius: 4px;
+        text-decoration: none;
+        font-weight: 600;
+        margin: 24px auto;
+        max-width: 250px;
+        transition: background-color 0.3s ease;
+      }
+
+      .action-button:hover {
+        background-color: var(--primary-600);
+      }
+
+      .divider {
+        height: 1px;
+        background-color: var(--neutral-gray-200);
+        margin: 24px 0;
+      }
+
+      .footer {
+        text-align: center;
+        padding: 24px;
+        background-color: var(--neutral-gray-50);
+        color: var(--secondary-600);
+        font-size: 14px;
+        border-top: 1px solid var(--neutral-gray-200);
+      }
+
+      .footer p {
+        margin-bottom: 8px;
+      }
+
+      .footer-links {
+        margin-top: 12px;
+      }
+
+      .footer-links a {
+        color: var(--primary-600);
+        text-decoration: none;
+        margin: 0 8px;
+      }
+
+      .footer-links a:hover {
+        text-decoration: underline;
+      }
+
+      @media screen and (max-width: 600px) {
+        .container {
+          padding: 10px;
+        }
+
+        .content {
+          padding: 16px;
+        }
+
+        .header h1 {
+          font-size: 24px;
+        }
+
+        .logo {
+          font-size: 24px;
+        }
+
+        .greeting {
+          font-size: 16px;
+        }
+
+        .message-content {
+          padding: 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="newsletter">
+        <div class="header">
+          <div class="logo">STUMART</div>
+          <h1>{{ subject }}</h1>
+          <p>Important update from Stumart</p>
+        </div>
+
+        <div class="content">
+          <p class="greeting">Hello {{ user.first_name|default:"Valued User" }},</p>
+
+          <div class="message-content">
+            {{ message|safe|linebreaks }}
+          </div>
+
+          {% if show_recipient_info %}
+          <div class="recipient-info">
+            <p><strong>This message is sent to:</strong></p>
+            <p>
+              <span class="info-badge">{{ institution }}</span>
+              <span class="info-badge">{{ state }}</span>
+              {% if user_type != 'all' %}
+              <span class="info-badge">{{ user_type|title }}s</span>
+              {% endif %}
+            </p>
+          </div>
+          {% endif %}
+
+          {% if cta_url and cta_text %}
+          <a href="{{ cta_url }}" class="action-button">{{ cta_text }}</a>
+          {% endif %}
+
+          <div class="divider"></div>
+
+          <p style="color: var(--secondary-600); font-size: 14px;">
+            Thank you for being a valued member of the Stumart community. We're
+            committed to providing you with the best campus marketplace
+            experience.
+          </p>
+        </div>
+
+        <div class="footer">
+          <p>&copy; {{ current_year }} Stumart. All rights reserved.</p>
+          <p>
+            You are receiving this email because you are registered on Stumart
+            at {{ institution }}, {{ state }}.
+          </p>
+          
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
