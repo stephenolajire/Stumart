@@ -55,7 +55,7 @@ const Hero = () => {
 
   if (isLoading) {
     return (
-      <div className="relative w-full h-auto lg:h-100 mt-31 lg:mt-0 pb-2 bg-gradient-to-r from-[#713a1f] via-yellow[#753a1d] to-[#713a1f] overflow-hidden">
+      <div className="relative w-full h-auto lg:h-100 mt-31 lg:mt-0 pb-2 bg-linear-to-r from-[#713a1f] via-yellow[#753a1d] to-[#713a1f] overflow-hidden">
         <div className="flex items-center justify-center h-96">
           <div className="text-white text-xl">Loading products...</div>
         </div>
@@ -65,7 +65,7 @@ const Hero = () => {
 
   if (error || products.length === 0) {
     return (
-      <div className="relative w-full h-auto lg:h-100 mt-31 lg:mt-0 pb-2 bg-gradient-to-r from-[#713a1f] via-yellow[#753a1d] to-[#713a1f] overflow-hidden">
+      <div className="relative w-full h-auto lg:h-100 mt-31 lg:mt-0 pb-2 bg-linear-to-r from-[#713a1f] via-yellow[#753a1d] to-[#713a1f] overflow-hidden">
         <div className="flex items-center justify-center h-96">
           <div className="text-white text-xl">No products available</div>
         </div>
@@ -76,7 +76,7 @@ const Hero = () => {
   const currentProduct = products[currentSlide];
 
   return (
-    <div className="relative w-full h-auto lg:h-150 pt-37 lg:pt-0 lg:pb-2 pb-5 bg-gradient-to-r from-[#713a1f] via-yellow[#753a1d] to-[#713a1f] overflow-hidden">
+    <div className="relative w-full h-auto lg:h-150 pt-37 lg:pt-0 lg:pb-2 pb-5 bg-linear-to-r from-[#713a1f] via-yellow[#753a1d] to-[#713a1f] overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute top-10 left-10 w-20 h-20 border-2 border-white rounded-full"></div>
@@ -163,7 +163,7 @@ const Hero = () => {
                 />
 
                 {/* Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent"></div>
 
                 {/* Mobile Content - Only show on small screens */}
                 <div className="absolute bottom-6 left-6 right-6 lg:hidden">
@@ -256,7 +256,7 @@ const Hero = () => {
         </div>
 
         {/* Slide Indicators */}
-        <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2 z-10">
+        {/* <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2 z-10">
           {products.map((_, index) => (
             <button
               key={index}
@@ -266,7 +266,7 @@ const Hero = () => {
               }`}
             />
           ))}
-        </div>
+        </div> */}
       </div>
     </div>
   );

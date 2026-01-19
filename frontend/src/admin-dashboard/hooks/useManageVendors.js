@@ -76,7 +76,7 @@ export const useToggleVendorVerification = () => {
         return oldData.map((vendor) =>
           vendor.id === vendorId
             ? { ...vendor, is_verified: !isVerified }
-            : vendor
+            : vendor,
         );
       });
 
@@ -141,7 +141,7 @@ export const useUpdateVendor = () => {
         if (!oldData) return oldData;
 
         return oldData.map((vendor) =>
-          vendor.id === variables.vendorId ? data : vendor
+          vendor.id === variables.vendorId ? data : vendor,
         );
       });
     },
@@ -168,4 +168,18 @@ export const useBusinessCategories = () => {
     isLoading: false,
     error: null,
   };
+};
+// Fetch vendor products
+export const useVendorProducts = (vendorId) => {
+  return useQuery({
+    queryKey: ["vendor-products", vendorId],
+    queryFn: async () => {
+      const response = await api.get(`vendors/${vendorId}/products/`);
+      return response.data;
+    },
+    enabled: !!vendorId, // Only run query if vendorId is provided
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 10 * 60 * 1000, // 10 minutes
+    retry: 2,
+  });
 };

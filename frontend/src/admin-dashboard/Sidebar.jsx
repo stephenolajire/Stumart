@@ -13,13 +13,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 
-const Sidebar = ({
-  activeTab,
-  setActiveTab,
-  isOpen,
-  toggleSidebar,
-  resetSelection,
-}) => {
+const Sidebar = ({ activeTab, setActiveTab, isOpen, toggleSidebar }) => {
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: <FaChartBar /> },
     { id: "users", label: "Manage Users", icon: <FaUsers /> },
@@ -35,7 +29,6 @@ const Sidebar = ({
 
   const handleNavigate = (tabId) => {
     setActiveTab(tabId);
-    resetSelection();
     // Close sidebar on mobile after navigation
     if (window.innerWidth <= 768 && isOpen) {
       toggleSidebar();
@@ -125,7 +118,7 @@ const Sidebar = ({
                 type="button"
               >
                 <span
-                  className={`text-lg flex-shrink-0 ${
+                  className={`text-lg shrink-0 ${
                     activeTab === item.id
                       ? "text-white"
                       : "text-gray-500 group-hover:text-gray-700"
@@ -159,7 +152,7 @@ const Sidebar = ({
           onClick={handleLogout}
           aria-label="Logout"
         >
-          <span className="text-lg flex-shrink-0 text-gray-500 group-hover:text-red-600">
+          <span className="text-lg shrink-0 text-gray-500 group-hover:text-red-600">
             <FaSignOutAlt />
           </span>
 

@@ -61,7 +61,7 @@ import DeliveryDetail from "./picker-dashboard/DeliveryDetail";
 
 // Admin Dashboard
 import AdminDashboard from "./admin-dashboard/AdminDashboard";
-import AdminOrderDetail from "./admin-dashboard/OrderDetail";
+import VendorProducts from "./admin-dashboard/VendorProducts";
 
 // Company Dashboard Pages
 import DeliveryPartnerDashboard from "./company/CDashboard";
@@ -310,7 +310,7 @@ function App() {
 
             {/* =================== ADMIN PROTECTED ROUTES =================== */}
             <Route
-              path="/admin-dashboard"
+              path="/admin-dashboard/*"
               element={
                 <ProtectedRoute allowedRoles={["admin"]}>
                   <AdminDashboard />
@@ -318,10 +318,10 @@ function App() {
               }
             />
             <Route
-              path="/admin-order-detail/:orderId"
+              path="/admin/vendor-products/:vendorId"
               element={
                 <ProtectedRoute allowedRoles={["admin"]}>
-                  <AdminOrderDetail />
+                  <VendorProducts />
                 </ProtectedRoute>
               }
             />

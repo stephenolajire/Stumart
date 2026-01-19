@@ -1,6 +1,8 @@
 // VendorWallets.jsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { FaArrowLeft } from "react-icons/fa";
 import styles from "./css/VendorWallets.module.css";
 
 const VendorWallets = () => {
@@ -10,6 +12,7 @@ const VendorWallets = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedWallets, setSelectedWallets] = useState([]);
   const [processingPayout, setProcessingPayout] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchWallets();
@@ -75,7 +78,7 @@ const VendorWallets = () => {
     (wallet) =>
       wallet.vendor_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       wallet.vendor_email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      wallet.account_number.includes(searchQuery)
+      wallet.account_number.includes(searchQuery),
   );
 
   // Calculate total amount to be paid
@@ -87,7 +90,27 @@ const VendorWallets = () => {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h3>Vendor Wallets</h3>
+        <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+          <button
+            onClick={() => navigate("/admin-dashboard/payments")}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              padding: "0.5rem 1rem",
+              border: "none",
+              background: "none",
+              cursor: "pointer",
+              color: "#666",
+              fontSize: "0.875rem",
+            }}
+            className="hover:text-gray-900"
+          >
+            <FaArrowLeft size={16} />
+            Back to Payments
+          </button>
+          <h3>Vendor Wallets</h3>
+        </div>
         <div className={styles.searchContainer}>
           <input
             type="text"

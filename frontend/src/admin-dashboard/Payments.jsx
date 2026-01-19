@@ -1,6 +1,7 @@
 // Payments.jsx
 import React, { useState, useMemo } from "react";
 import { useDebouncedCallback } from "use-debounce";
+import { Link } from "react-router-dom";
 import LoadingSpinner from "./LoadingSpinner";
 import { usePaymentTransactions } from "./hooks/usePayments";
 
@@ -25,7 +26,7 @@ const Payments = () => {
       query: debouncedQuery.trim(),
       status,
     }),
-    [debouncedQuery, status]
+    [debouncedQuery, status],
   );
 
   // Fetch transactions with current filters
@@ -104,13 +105,21 @@ const Payments = () => {
               </span>
             )}
           </div>
-          <button
-            onClick={() => refetch()}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50"
-            disabled={isFetching}
-          >
-            {isRefetching ? "Refreshing..." : "Refresh"}
-          </button>
+          <div className="flex items-center space-x-3">
+            <Link
+              to="/admin-dashboard/payments/vendor-wallets"
+              className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+            >
+              View Vendor Wallets
+            </Link>
+            <button
+              onClick={() => refetch()}
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50"
+              disabled={isFetching}
+            >
+              {isRefetching ? "Refreshing..." : "Refresh"}
+            </button>
+          </div>
         </div>
 
         {/* Filter Section */}
@@ -233,7 +242,7 @@ const Payments = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
                         className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusClass(
-                          transaction.status
+                          transaction.status,
                         )}`}
                       >
                         {transaction.status}

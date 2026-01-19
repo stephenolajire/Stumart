@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { useDebouncedCallback } from "use-debounce";
 import LoadingSpinner from "./LoadingSpinner";
 import { MEDIA_BASE_URL } from "../constant/api";
@@ -9,6 +10,7 @@ import {
 } from "./hooks/useManageVendors";
 
 const ManageVendors = () => {
+  const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("");
   const [verified, setVerified] = useState("");
@@ -33,7 +35,7 @@ const ManageVendors = () => {
       category,
       verified,
     }),
-    [debouncedQuery, category, verified]
+    [debouncedQuery, category, verified],
   );
 
   // Fetch vendors with current filters
@@ -66,7 +68,7 @@ const ManageVendors = () => {
         alert("Failed to update verification status. Please try again.");
       }
     },
-    [toggleVerificationMutation]
+    [toggleVerificationMutation],
   );
 
   const handleSearch = useCallback((e) => {
@@ -80,6 +82,13 @@ const ManageVendors = () => {
     setVerified("");
     setDebouncedQuery("");
   }, []);
+
+  const handleViewProducts = useCallback(
+    (vendorId) => {
+      navigate(`/admin/vendor-products/${vendorId}`);
+    },
+    [navigate],
+  );
 
   const handleShowDetails = useCallback((vendor) => {
     setSelectedVendor(vendor);
@@ -99,7 +108,7 @@ const ManageVendors = () => {
         toggleVerificationMutation.variables?.vendorId === vendorId
       );
     },
-    [toggleVerificationMutation]
+    [toggleVerificationMutation],
   );
 
   if (isLoading && !vendors.length) return <LoadingSpinner />;
@@ -301,16 +310,23 @@ const ManageVendors = () => {
                         <div className="flex items-center space-x-2">
                           <button
                             onClick={() => handleShowDetails(vendor)}
-                            className="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 transition-colors disabled:opacity-50"
+                            className="px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600 transition-colors disabled:opacity-50"
                             disabled={isUpdating}
                           >
                             Details
                           </button>
                           <button
+                            onClick={() => handleViewProducts(vendor.id)}
+                            className="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 transition-colors disabled:opacity-50"
+                            disabled={isUpdating}
+                          >
+                            Products
+                          </button>
+                          <button
                             onClick={() =>
                               handleToggleVerificationStatus(
                                 vendor.id,
-                                vendor.is_verified
+                                vendor.is_verified,
                               )
                             }
                             className="px-3 py-1 bg-yellow-500 text-white text-sm rounded hover:bg-yellow-600 transition-colors disabled:opacity-50"
@@ -321,8 +337,8 @@ const ManageVendors = () => {
                               vendor.id
                               ? "Updating..."
                               : vendor.is_verified
-                              ? "Unverify"
-                              : "Verify"}
+                                ? "Unverify"
+                                : "Verify"}
                           </button>
                         </div>
                       </td>
@@ -337,212 +353,208 @@ const ManageVendors = () => {
 
       {/* Vendor Details Modal */}
       {showModal && selectedVendor && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-          onClick={handleCloseModal}
-        >
-          <div
-            className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
+        <VendorDetailsModal
+          vendor={selectedVendor}
+          onClose={handleCloseModal}
+          onToggleVerification={() =>
+            handleToggleVerificationStatus(
+              selectedVendor.id,
+              selectedVendor.is_verified,
+            )
+          }
+          isUpdating={isVendorBeingUpdated(selectedVendor.id)}
+        />
+      )}
+    </div>
+  );
+};
+
+// Vendor Details Modal Component
+const VendorDetailsModal = ({
+  vendor,
+  onClose,
+  onToggleVerification,
+  isUpdating,
+}) => {
+  return (
+    <div
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Modal Header */}
+        <div className="flex items-center justify-between p-6 border-b sticky top-0 bg-white z-10">
+          <h3 className="text-xl font-bold text-gray-900">Vendor Details</h3>
+          <button
+            className="text-gray-400 hover:text-gray-600 transition-colors text-2xl"
+            onClick={onClose}
+            aria-label="Close modal"
           >
-            {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b">
-              <h3 className="text-xl font-bold text-gray-900">
-                Vendor Details
-              </h3>
-              <button
-                className="text-gray-400 hover:text-gray-600 transition-colors text-2xl"
-                onClick={handleCloseModal}
-                aria-label="Close modal"
-              >
-                ×
-              </button>
+            ×
+          </button>
+        </div>
+
+        {/* Modal Body */}
+        <div className="p-6">
+          {/* Vendor Profile */}
+          <div className="flex items-start space-x-6 mb-8">
+            <div className="shrink-0">
+              {vendor.shop_image && (
+                <img
+                  src={`${MEDIA_BASE_URL}${vendor.shop_image}`}
+                  alt={vendor.business_name}
+                  className="w-24 h-24 rounded-lg object-cover"
+                  loading="lazy"
+                />
+              )}
             </div>
 
-            {/* Modal Body */}
-            <div className="p-6">
-              {/* Vendor Profile */}
-              <div className="flex items-start space-x-6 mb-8">
-                <div className="flex-shrink-0">
-                  {selectedVendor.shop_image && (
-                    <img
-                      src={`${MEDIA_BASE_URL}${selectedVendor.shop_image}`}
-                      alt={selectedVendor.business_name}
-                      className="w-24 h-24 rounded-lg object-cover"
-                      loading="lazy"
-                    />
-                  )}
-                </div>
+            <div className="flex-1">
+              <h4 className="text-xl font-bold text-gray-900 mb-2">
+                {vendor.business_name}
+              </h4>
+              <p className="text-gray-600 mb-2">{vendor.user_name}</p>
+              <span
+                className={`inline-flex items-center px-2 py-1 text-sm font-medium rounded-full ${
+                  vendor.is_verified
+                    ? "bg-green-100 text-green-800"
+                    : "bg-red-100 text-red-800"
+                }`}
+              >
+                {vendor.is_verified ? "✓ Verified" : "⚠ Unverified"}
+              </span>
+            </div>
+          </div>
 
-                <div className="flex-1">
-                  <h4 className="text-xl font-bold text-gray-900 mb-2">
-                    {selectedVendor.business_name}
-                  </h4>
-                  <p className="text-gray-600 mb-2">
-                    {selectedVendor.user?.first_name}{" "}
-                    {selectedVendor.user?.last_name}
-                  </p>
-                  <span
-                    className={`inline-flex items-center px-2 py-1 text-sm font-medium rounded-full ${
-                      selectedVendor.is_verified
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
-                    }`}
-                  >
-                    {selectedVendor.is_verified ? "✓ Verified" : "⚠ Unverified"}
+          {/* Details Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Business Information */}
+            <div className="space-y-4">
+              <h5 className="text-lg font-semibold text-gray-900">
+                Business Information
+              </h5>
+              <div className="space-y-3">
+                <div className="flex justify-between py-2 border-b border-gray-100">
+                  <span className="font-medium text-gray-600">
+                    Business ID:
+                  </span>
+                  <span className="text-gray-900">{vendor.id}</span>
+                </div>
+                <div className="flex justify-between py-2 border-b border-gray-100">
+                  <span className="font-medium text-gray-600">Category:</span>
+                  <span className="text-gray-900">
+                    {vendor.business_category}
+                  </span>
+                </div>
+                {vendor.specific_category && (
+                  <div className="flex justify-between py-2 border-b border-gray-100">
+                    <span className="font-medium text-gray-600">
+                      Specific Category:
+                    </span>
+                    <span className="text-gray-900">
+                      {vendor.specific_category}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between py-2 border-b border-gray-100">
+                  <span className="font-medium text-gray-600">Rating:</span>
+                  <span className="text-gray-900">
+                    {vendor.rating || 0} ({vendor.total_ratings || 0} reviews)
                   </span>
                 </div>
               </div>
+            </div>
 
-              {/* Details Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="space-y-4">
-                  <h5 className="text-lg font-semibold text-gray-900">
-                    Business Information
-                  </h5>
-                  <div className="space-y-3">
-                    <div className="flex justify-between py-2 border-b border-gray-100">
-                      <span className="font-medium text-gray-600">
-                        Business ID:
-                      </span>
-                      <span className="text-gray-900">{selectedVendor.id}</span>
-                    </div>
-                    <div className="flex justify-between py-2 border-b border-gray-100">
-                      <span className="font-medium text-gray-600">
-                        Category:
-                      </span>
-                      <span className="text-gray-900">
-                        {selectedVendor.business_category}
-                      </span>
-                    </div>
-                    {selectedVendor.specific_category && (
-                      <div className="flex justify-between py-2 border-b border-gray-100">
-                        <span className="font-medium text-gray-600">
-                          Specific Category:
-                        </span>
-                        <span className="text-gray-900">
-                          {selectedVendor.specific_category}
-                        </span>
-                      </div>
-                    )}
-                    <div className="flex justify-between py-2 border-b border-gray-100">
-                      <span className="font-medium text-gray-600">Rating:</span>
-                      <span className="text-gray-900">
-                        {selectedVendor.rating || 0} (
-                        {selectedVendor.total_ratings || 0} reviews)
-                      </span>
-                    </div>
-                  </div>
+            {/* Contact Information */}
+            <div className="space-y-4">
+              <h5 className="text-lg font-semibold text-gray-900">
+                Contact Information
+              </h5>
+              <div className="space-y-3">
+                <div className="flex justify-between py-2 border-b border-gray-100">
+                  <span className="font-medium text-gray-600">Email:</span>
+                  <span className="text-gray-900 break-all">
+                    {vendor.email}
+                  </span>
                 </div>
-
-                <div className="space-y-4">
-                  <h5 className="text-lg font-semibold text-gray-900">
-                    Contact Information
-                  </h5>
-                  <div className="space-y-3">
-                    <div className="flex justify-between py-2 border-b border-gray-100">
-                      <span className="font-medium text-gray-600">Email:</span>
-                      <span className="text-gray-900">
-                        {selectedVendor.email}
-                      </span>
-                    </div>
-                    <div className="flex justify-between py-2 border-b border-gray-100">
-                      <span className="font-medium text-gray-600">Phone:</span>
-                      <span className="text-gray-900">
-                        {selectedVendor.phone_number}
-                      </span>
-                    </div>
-                    <div className="flex justify-between py-2 border-b border-gray-100">
-                      <span className="font-medium text-gray-600">State:</span>
-                      <span className="text-gray-900">
-                        {selectedVendor.state}
-                      </span>
-                    </div>
-                    <div className="flex justify-between py-2 border-b border-gray-100">
-                      <span className="font-medium text-gray-600">
-                        Institution:
-                      </span>
-                      <span className="text-gray-900">
-                        {selectedVendor.institution}
-                      </span>
-                    </div>
-                  </div>
+                <div className="flex justify-between py-2 border-b border-gray-100">
+                  <span className="font-medium text-gray-600">Phone:</span>
+                  <span className="text-gray-900">{vendor.phone_number}</span>
                 </div>
-
-                <div className="space-y-4">
-                  <h5 className="text-lg font-semibold text-gray-900">
-                    Banking Information
-                  </h5>
-                  <div className="space-y-3">
-                    <div className="flex justify-between py-2 border-b border-gray-100">
-                      <span className="font-medium text-gray-600">
-                        Account Name:
-                      </span>
-                      <span className="text-gray-900">
-                        {selectedVendor.account_name}
-                      </span>
-                    </div>
-                    <div className="flex justify-between py-2 border-b border-gray-100">
-                      <span className="font-medium text-gray-600">
-                        Account Number:
-                      </span>
-                      <span className="text-gray-900">
-                        {selectedVendor.account_number}
-                      </span>
-                    </div>
-                    <div className="flex justify-between py-2 border-b border-gray-100">
-                      <span className="font-medium text-gray-600">Bank:</span>
-                      <span className="text-gray-900">
-                        {selectedVendor.bank_name}
-                      </span>
-                    </div>
-                    {selectedVendor.paystack_recipient_code && (
-                      <div className="flex justify-between py-2 border-b border-gray-100">
-                        <span className="font-medium text-gray-600">
-                          Paystack Code:
-                        </span>
-                        <span className="text-gray-900">
-                          {selectedVendor.paystack_recipient_code}
-                        </span>
-                      </div>
-                    )}
-                  </div>
+                <div className="flex justify-between py-2 border-b border-gray-100">
+                  <span className="font-medium text-gray-600">State:</span>
+                  <span className="text-gray-900">{vendor.state}</span>
                 </div>
-              </div>
-
-              {/* Modal Actions */}
-              <div className="flex justify-center mt-8">
-                <button
-                  onClick={() =>
-                    handleToggleVerificationStatus(
-                      selectedVendor.id,
-                      selectedVendor.is_verified
-                    )
-                  }
-                  className="px-6 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors disabled:opacity-50"
-                  disabled={isVendorBeingUpdated(selectedVendor.id)}
-                >
-                  {isVendorBeingUpdated(selectedVendor.id)
-                    ? "Updating..."
-                    : selectedVendor.is_verified
-                    ? "Unverify Vendor"
-                    : "Verify Vendor"}
-                </button>
+                <div className="flex justify-between py-2 border-b border-gray-100">
+                  <span className="font-medium text-gray-600">
+                    Institution:
+                  </span>
+                  <span className="text-gray-900">{vendor.institution}</span>
+                </div>
               </div>
             </div>
 
-            {/* Modal Footer */}
-            <div className="flex items-center justify-end p-6 border-t bg-gray-50">
-              <button
-                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
-                onClick={handleCloseModal}
-              >
-                Close
-              </button>
+            {/* Banking Information */}
+            <div className="space-y-4">
+              <h5 className="text-lg font-semibold text-gray-900">
+                Banking Information
+              </h5>
+              <div className="space-y-3">
+                <div className="flex justify-between py-2 border-b border-gray-100">
+                  <span className="font-medium text-gray-600">
+                    Account Name:
+                  </span>
+                  <span className="text-gray-900">{vendor.account_name}</span>
+                </div>
+                <div className="flex justify-between py-2 border-b border-gray-100">
+                  <span className="font-medium text-gray-600">
+                    Account Number:
+                  </span>
+                  <span className="text-gray-900">{vendor.account_number}</span>
+                </div>
+                <div className="flex justify-between py-2 border-b border-gray-100">
+                  <span className="font-medium text-gray-600">Bank:</span>
+                  <span className="text-gray-900">{vendor.bank_name}</span>
+                </div>
+                {vendor.paystack_recipient_code && (
+                  <div className="flex justify-between py-2 border-b border-gray-100">
+                    <span className="font-medium text-gray-600">
+                      Paystack Code:
+                    </span>
+                    <span className="text-gray-900">
+                      {vendor.paystack_recipient_code}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
-      )}
+
+        {/* Modal Footer */}
+        <div className="flex items-center justify-between p-6 border-t bg-gray-50">
+          <button
+            onClick={onToggleVerification}
+            className="px-6 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors disabled:opacity-50"
+            disabled={isUpdating}
+          >
+            {isUpdating
+              ? "Updating..."
+              : vendor.is_verified
+                ? "Unverify Vendor"
+                : "Verify Vendor"}
+          </button>
+          <button
+            className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
+            onClick={onClose}
+          >
+            Close
+          </button>
+        </div>
+      </div>
     </div>
   );
 };

@@ -21,7 +21,7 @@ import {
 import LoadingSpinner from "./LoadingSpinner";
 import { useOrders } from "./hooks/useOrders";
 
-const Orders = ({ onSelectOrder }) => {
+const Orders = () => {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
@@ -42,7 +42,7 @@ const Orders = ({ onSelectOrder }) => {
       query: debouncedQuery.trim(),
       status,
     }),
-    [debouncedQuery, status]
+    [debouncedQuery, status],
   );
 
   // Fetch orders with current filters
@@ -176,7 +176,7 @@ const Orders = ({ onSelectOrder }) => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white">
+        <div className="bg-linear-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-blue-100 text-sm font-medium">Total Orders</p>
@@ -185,7 +185,7 @@ const Orders = ({ onSelectOrder }) => {
             <FaBox className="w-8 h-8 text-blue-200" />
           </div>
         </div>
-        <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl p-6 text-white">
+        <div className="bg-linear-to-br from-emerald-500 to-emerald-600 rounded-xl p-6 text-white">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-emerald-100 text-sm font-medium">Completed</p>
@@ -196,7 +196,7 @@ const Orders = ({ onSelectOrder }) => {
             <FaCheck className="w-8 h-8 text-emerald-200" />
           </div>
         </div>
-        <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl p-6 text-white">
+        <div className="bg-linear-to-br from-yellow-500 to-yellow-600 rounded-xl p-6 text-white">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-yellow-100 text-sm font-medium">Pending</p>
@@ -207,7 +207,7 @@ const Orders = ({ onSelectOrder }) => {
             <FaClock className="w-8 h-8 text-yellow-200" />
           </div>
         </div>
-        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white">
+        <div className="bg-linear-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-purple-100 text-sm font-medium">In Transit</p>
@@ -313,7 +313,7 @@ const Orders = ({ onSelectOrder }) => {
                   <div className="p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-xl flex items-center justify-center text-white font-bold">
+                        <div className="w-12 h-12 bg-linear-to-br from-yellow-400 to-yellow-500 rounded-xl flex items-center justify-center text-white font-bold">
                           #{order.order_number.slice(-3)}
                         </div>
                         <div>
@@ -373,15 +373,6 @@ const Orders = ({ onSelectOrder }) => {
                           View Details
                         </button>
                       </Link>
-                      {onSelectOrder && (
-                        <button
-                          onClick={() => onSelectOrder(order)}
-                          className="px-4 py-2.5 bg-yellow-500 hover:bg-yellow-600 text-white font-medium rounded-lg transition-colors duration-200 flex items-center gap-2"
-                        >
-                          <FaMousePointer className="w-4 h-4" />
-                          Select
-                        </button>
-                      )}
                     </div>
                   </div>
                 </div>

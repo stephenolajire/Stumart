@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import api from "../constant/api";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   FaArrowLeft,
   FaUser,
@@ -25,13 +25,14 @@ import {
   FaPalette,
 } from "react-icons/fa";
 
-const AdminOrderDetail = ({ onBack }) => {
+const AdminOrderDetail = () => {
   const [orderDetail, setOrderDetail] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [statusUpdate, setStatusUpdate] = useState("");
   const [updateLoading, setUpdateLoading] = useState(false);
   const { orderId } = useParams();
+  const navigate = useNavigate();
   const order_id = orderId;
 
   useEffect(() => {
@@ -170,7 +171,7 @@ const AdminOrderDetail = ({ onBack }) => {
       <div className="flex items-center justify-between bg-white rounded-xl shadow-lg border border-gray-100 p-6">
         <div className="flex items-center gap-6">
           <button
-            onClick={onBack}
+            onClick={() => navigate("/admin-dashboard/orders")}
             className="inline-flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200"
           >
             <FaArrowLeft className="w-4 h-4" />
@@ -244,7 +245,7 @@ const AdminOrderDetail = ({ onBack }) => {
               </h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4">
+              <div className="bg-linear-to-br from-blue-50 to-blue-100 rounded-lg p-4">
                 <div className="flex items-center gap-2 text-blue-600 mb-2">
                   <FaCalendarAlt className="w-4 h-4" />
                   <span className="font-medium">Order Date</span>
@@ -253,7 +254,7 @@ const AdminOrderDetail = ({ onBack }) => {
                   {formatDate(orderDetail.created_at)}
                 </p>
               </div>
-              <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4">
+              <div className="bg-linear-to-br from-green-50 to-green-100 rounded-lg p-4">
                 <div className="flex items-center gap-2 text-green-600 mb-2">
                   <FaCreditCard className="w-4 h-4" />
                   <span className="font-medium">Total Amount</span>
