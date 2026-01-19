@@ -32,7 +32,6 @@ const Utilities = () => {
   });
   const [recipientCount, setRecipientCount] = useState(null);
 
-  // Helper function to set loading state for specific actions
   const setActionLoading = (action, isLoading) => {
     setLoading((prev) => ({
       ...prev,
@@ -40,7 +39,6 @@ const Utilities = () => {
     }));
   };
 
-  // Download functions
   const handleDownloadUsers = async () => {
     setActionLoading("users", true);
     try {
@@ -162,7 +160,6 @@ const Utilities = () => {
     }
   };
 
-  // Email functions
   const handleSendNewsletterToPickers = async () => {
     const { value: newsletter } = await Swal.fire({
       title: "Send Newsletter to Pickers",
@@ -388,7 +385,6 @@ const Utilities = () => {
     }
   };
 
-  // Targeted Newsletter Functions
   const handleGetRecipientCount = async () => {
     const { state, institution, user_type } = targetedNewsletterData;
 
@@ -486,7 +482,6 @@ const Utilities = () => {
             confirmButtonColor: "#eab308",
           });
 
-          // Reset form
           setTargetedNewsletterData({
             state: "",
             institution: "",
@@ -518,7 +513,6 @@ const Utilities = () => {
       [field]: value,
     }));
 
-    // Reset recipient count when filters change
     if (field !== "subject" && field !== "message") {
       setRecipientCount(null);
     }
@@ -530,190 +524,172 @@ const Utilities = () => {
     title,
     description,
     loadingKey,
-    variant = "primary",
   }) => {
-    const baseClasses =
-      "w-full p-6 rounded-xl border-2 transition-all duration-200 flex items-center space-x-4 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98]";
-
-    const variantClasses = {
-      download:
-        "bg-blue-50 border-blue-200 hover:border-blue-300 hover:bg-blue-100 text-blue-800",
-      newsletter:
-        "bg-green-50 border-green-200 hover:border-green-300 hover:bg-green-100 text-green-800",
-      reminder:
-        "bg-orange-50 border-orange-200 hover:border-orange-300 hover:bg-orange-100 text-orange-800",
-      targeted:
-        "bg-purple-50 border-purple-200 hover:border-purple-300 hover:bg-purple-100 text-purple-800",
-      primary:
-        "bg-yellow-50 border-yellow-200 hover:border-yellow-300 hover:bg-yellow-100 text-yellow-800",
-    };
-
     return (
       <button
-        className={`${baseClasses} ${variantClasses[variant]}`}
         onClick={onClick}
         disabled={loading[loadingKey]}
+        className="group relative bg-white hover:bg-gray-50 border border-gray-200 rounded-xl p-6 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-md hover:border-gray-300"
       >
-        <div className="shrink-0 w-12 h-12 flex items-center justify-center rounded-full bg-white shadow-sm">
-          {loading[loadingKey] ? (
-            <Loader2 className="w-6 h-6 animate-spin text-gray-600" />
-          ) : (
-            <Icon className="w-6 h-6 text-gray-600" />
-          )}
-        </div>
-        <div className="flex-1 text-left">
-          <h3 className="text-lg font-semibold mb-1">{title}</h3>
-          <p className="text-sm opacity-80">{description}</p>
+        <div className="flex items-start gap-4">
+          <div className="shrink-0 w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center group-hover:bg-gray-200 transition-colors">
+            {loading[loadingKey] ? (
+              <Loader2 className="w-6 h-6 text-gray-600 animate-spin" />
+            ) : (
+              <Icon className="w-6 h-6 text-gray-700" />
+            )}
+          </div>
+          <div className="flex-1 text-left">
+            <h3 className="text-base font-semibold text-gray-900 mb-1">
+              {title}
+            </h3>
+            <p className="text-sm text-gray-500">{description}</p>
+          </div>
         </div>
       </button>
     );
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-6">
-      <div className="w-full mx-auto px-4">
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="w-full mx-auto">
         {/* Header */}
-        <div className="mb-8 text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-3">Utilities</h1>
-          <p className="text-xl text-gray-600">
-            Download reports and send communications to users
-          </p>
+        <div className="mb-10">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Utilities</h1>
+          <p className="text-gray-600">Manage reports and communications</p>
         </div>
 
-        {/* Main Grid */}
-        <div className="grid gap-8">
+        {/* Main Content */}
+        <div className="space-y-8">
           {/* Download Section */}
-          <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-            <div className="bg-linear-to-r from-blue-500 to-blue-600 px-8 py-6 flex items-center space-x-4">
-              <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                <Download className="w-6 h-6 text-white" />
+          <section>
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-10 h-10 rounded-lg bg-gray-900 flex items-center justify-center">
+                <Download className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-white">
+                <h2 className="text-xl font-semibold text-gray-900">
                   Download Reports
                 </h2>
-                <p className="text-blue-100">
-                  Export data for analysis and record keeping
+                <p className="text-sm text-gray-500">
+                  Export data for analysis
                 </p>
               </div>
             </div>
 
-            <div className="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <ActionButton
                 onClick={handleDownloadUsers}
                 icon={Users}
-                title="Download Users"
-                description="Export complete list of registered users"
+                title="Users"
+                description="Export users list"
                 loadingKey="users"
-                variant="download"
               />
-
               <ActionButton
                 onClick={handleDownloadVendors}
                 icon={Store}
-                title="Download Vendors"
-                description="Export complete list of registered vendors"
+                title="Vendors"
+                description="Export vendors list"
                 loadingKey="vendors"
-                variant="download"
               />
-
               <ActionButton
                 onClick={handleDownloadPickers}
                 icon={Truck}
-                title="Download Pickers"
-                description="Export complete list of registered pickers"
+                title="Pickers"
+                description="Export pickers list"
                 loadingKey="pickers"
-                variant="download"
               />
-
               <ActionButton
                 onClick={handleDownloadTransactions}
                 icon={CreditCard}
-                title="Download Transactions"
-                description="Export complete transaction history"
+                title="Transactions"
+                description="Export transaction history"
                 loadingKey="transactions"
-                variant="download"
               />
             </div>
-          </div>
+          </section>
 
           {/* Newsletter Section */}
-          <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-            <div className="bg-linear-to-r from-green-500 to-green-600 px-8 py-6 flex items-center space-x-4">
-              <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                <Send className="w-6 h-6 text-white" />
+          <section>
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-10 h-10 rounded-lg bg-gray-900 flex items-center justify-center">
+                <Send className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-white">
+                <h2 className="text-xl font-semibold text-gray-900">
                   Send Newsletters
                 </h2>
-                <p className="text-green-100">
-                  Communicate with your user base through newsletters
+                <p className="text-sm text-gray-500">
+                  Communicate with user groups
                 </p>
               </div>
             </div>
 
-            <div className="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <ActionButton
                 onClick={handleSendNewsletterToPickers}
                 icon={Truck}
-                title="Newsletter to Pickers"
-                description="Send newsletter to all registered pickers"
+                title="To Pickers"
+                description="Send to all pickers"
                 loadingKey="newsletterPickers"
-                variant="newsletter"
               />
-
               <ActionButton
                 onClick={handleSendNewsletterToVendors}
                 icon={Store}
-                title="Newsletter to Vendors"
-                description="Send newsletter to all registered vendors"
+                title="To Vendors"
+                description="Send to all vendors"
                 loadingKey="newsletterVendors"
-                variant="newsletter"
               />
-
               <ActionButton
                 onClick={handleSendNewsletterToAllUsers}
                 icon={Users}
-                title="Newsletter to All Users"
-                description="Send newsletter to all registered users"
+                title="To All Users"
+                description="Send to everyone"
                 loadingKey="newsletterAll"
-                variant="newsletter"
               />
             </div>
-          </div>
+          </section>
 
           {/* Targeted Newsletter Section */}
-          <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-            <div className="bg-linear-to-r from-purple-500 to-purple-600 px-8 py-6 flex items-center space-x-4">
-              <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                <Target className="w-6 h-6 text-white" />
+          <section>
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-10 h-10 rounded-lg bg-gray-900 flex items-center justify-center">
+                <Target className="w-5 h-5 text-white" />
               </div>
-              <div className="flex-1">
-                <h2 className="text-2xl font-bold text-white">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">
                   Targeted Newsletter
                 </h2>
-                <p className="text-purple-100">
-                  Send newsletters to specific user groups by location and type
+                <p className="text-sm text-gray-500">
+                  Send to specific user segments
                 </p>
               </div>
             </div>
 
-            <div className="p-8">
+            <div className="bg-white border border-gray-200 rounded-xl p-6">
               {!showTargetedNewsletterForm ? (
-                <ActionButton
+                <button
                   onClick={() => setShowTargetedNewsletterForm(true)}
-                  icon={MapPin}
-                  title="Send Targeted Newsletter"
-                  description="Target users by state, institution, and user type"
-                  loadingKey=""
-                  variant="targeted"
-                />
+                  className="w-full group bg-gray-50 hover:bg-gray-100 border-2 border-dashed border-gray-300 hover:border-gray-400 rounded-lg p-8 transition-all duration-200"
+                >
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-12 h-12 rounded-lg bg-white border border-gray-200 flex items-center justify-center group-hover:border-gray-300">
+                      <MapPin className="w-6 h-6 text-gray-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-semibold text-gray-900 mb-1">
+                        Create Targeted Campaign
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        Filter by state, institution, and user type
+                      </p>
+                    </div>
+                  </div>
+                </button>
               ) : (
                 <div className="space-y-6">
-                  {/* Filter Section */}
+                  {/* Filters */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {/* State Selection */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         State
@@ -726,7 +702,7 @@ const Utilities = () => {
                             e.target.value,
                           )
                         }
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm"
                       >
                         <option value="">Select State</option>
                         {nigeriaStates.map((state) => (
@@ -737,7 +713,6 @@ const Utilities = () => {
                       </select>
                     </div>
 
-                    {/* Institution Selection */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Institution
@@ -750,7 +725,7 @@ const Utilities = () => {
                             e.target.value,
                           )
                         }
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm disabled:bg-gray-50 disabled:text-gray-400"
                         disabled={!targetedNewsletterData.state}
                       >
                         <option value="">Select Institution</option>
@@ -765,7 +740,6 @@ const Utilities = () => {
                       </select>
                     </div>
 
-                    {/* User Type Selection */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         User Type
@@ -778,7 +752,7 @@ const Utilities = () => {
                             e.target.value,
                           )
                         }
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm"
                       >
                         <option value="">Select User Type</option>
                         <option value="all">All Users</option>
@@ -792,33 +766,33 @@ const Utilities = () => {
 
                   {/* Recipient Count */}
                   {recipientCount !== null && (
-                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <Users className="w-5 h-5 text-purple-600" />
-                        <span className="text-sm font-medium text-purple-900">
-                          Recipients Found:
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Users className="w-5 h-5 text-gray-600" />
+                        <span className="text-sm font-medium text-gray-700">
+                          Recipients Found
                         </span>
                       </div>
-                      <span className="text-2xl font-bold text-purple-600">
+                      <span className="text-xl font-bold text-gray-900">
                         {recipientCount}
                       </span>
                     </div>
                   )}
 
-                  {/* Get Count Button */}
+                  {/* Count Button */}
                   <button
                     onClick={handleGetRecipientCount}
                     disabled={loading.recipientCount}
-                    className="w-full px-6 py-3 bg-purple-100 text-purple-700 rounded-lg font-medium hover:bg-purple-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                    className="w-full px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
                   >
                     {loading.recipientCount ? (
                       <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <Loader2 className="w-4 h-4 animate-spin" />
                         <span>Checking...</span>
                       </>
                     ) : (
                       <>
-                        <Users className="w-5 h-5" />
+                        <Users className="w-4 h-4" />
                         <span>Check Recipient Count</span>
                       </>
                     )}
@@ -839,7 +813,7 @@ const Utilities = () => {
                         )
                       }
                       placeholder="Enter email subject"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm"
                     />
                   </div>
 
@@ -858,12 +832,12 @@ const Utilities = () => {
                       }
                       placeholder="Enter newsletter message"
                       rows="6"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent resize-none text-sm"
                     />
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex space-x-4">
+                  <div className="flex gap-3 pt-2">
                     <button
                       onClick={() => {
                         setShowTargetedNewsletterForm(false);
@@ -876,23 +850,23 @@ const Utilities = () => {
                         });
                         setRecipientCount(null);
                       }}
-                      className="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+                      className="flex-1 px-4 py-2.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg font-medium transition-colors text-sm"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={handleSendTargetedNewsletter}
                       disabled={loading.targetedNewsletter}
-                      className="flex-1 px-6 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                      className="flex-1 px-4 py-2.5 bg-gray-900 hover:bg-gray-800 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
                     >
                       {loading.targetedNewsletter ? (
                         <>
-                          <Loader2 className="w-5 h-5 animate-spin" />
+                          <Loader2 className="w-4 h-4 animate-spin" />
                           <span>Sending...</span>
                         </>
                       ) : (
                         <>
-                          <Send className="w-5 h-5" />
+                          <Send className="w-4 h-4" />
                           <span>Send Newsletter</span>
                         </>
                       )}
@@ -901,44 +875,41 @@ const Utilities = () => {
                 </div>
               )}
             </div>
-          </div>
+          </section>
 
           {/* Reminder Section */}
-          <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-            <div className="bg-linear-to-r from-orange-500 to-orange-600 px-8 py-6 flex items-center space-x-4">
-              <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                <AlertCircle className="w-6 h-6 text-white" />
+          <section>
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-10 h-10 rounded-lg bg-gray-900 flex items-center justify-center">
+                <AlertCircle className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-white">
+                <h2 className="text-xl font-semibold text-gray-900">
                   Send Reminders
                 </h2>
-                <p className="text-orange-100">
-                  Send targeted reminders to improve compliance
+                <p className="text-sm text-gray-500">
+                  Automated reminder notifications
                 </p>
               </div>
             </div>
 
-            <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <ActionButton
                 onClick={handleSendKYCReminder}
                 icon={UserCheck}
                 title="KYC Reminder"
-                description="Remind users without KYC to complete verification"
+                description="Remind unverified users"
                 loadingKey="kycReminder"
-                variant="reminder"
               />
-
               <ActionButton
                 onClick={handleSendProductReminder}
                 icon={Package}
                 title="Product Reminder"
-                description="Remind vendors without products to add listings"
+                description="Remind vendors to add products"
                 loadingKey="productReminder"
-                variant="reminder"
               />
             </div>
-          </div>
+          </section>
         </div>
       </div>
     </div>

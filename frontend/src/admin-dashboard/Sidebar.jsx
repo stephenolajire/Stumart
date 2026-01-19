@@ -29,7 +29,6 @@ const Sidebar = ({ activeTab, setActiveTab, isOpen, toggleSidebar }) => {
 
   const handleNavigate = (tabId) => {
     setActiveTab(tabId);
-    // Close sidebar on mobile after navigation
     if (window.innerWidth <= 768 && isOpen) {
       toggleSidebar();
     }
@@ -37,33 +36,29 @@ const Sidebar = ({ activeTab, setActiveTab, isOpen, toggleSidebar }) => {
 
   const handleLogout = async () => {
     try {
-      // Show confirmation dialog first
       const result = await Swal.fire({
         title: "Confirm Logout",
         text: "Are you sure you want to logout?",
         icon: "question",
         showCancelButton: true,
-        confirmButtonColor: "#eab308",
+        confirmButtonColor: "#111827",
         cancelButtonColor: "#6b7280",
         confirmButtonText: "Yes, logout",
         cancelButtonText: "Cancel",
       });
 
       if (result.isConfirmed) {
-        // Clear all authentication-related items
         localStorage.removeItem("access");
         localStorage.removeItem("refresh");
 
-        // Show success message
         await Swal.fire({
           title: "Logged Out",
           text: "You have been successfully logged out",
           icon: "success",
-          confirmButtonColor: "#eab308",
+          confirmButtonColor: "#111827",
           timer: 2000,
         });
 
-        // Navigate to login
         navigate("/login", { replace: true });
       }
     } catch (error) {
@@ -72,44 +67,48 @@ const Sidebar = ({ activeTab, setActiveTab, isOpen, toggleSidebar }) => {
         title: "Logout Failed",
         text: "Please try again",
         icon: "error",
-        confirmButtonColor: "#eab308",
+        confirmButtonColor: "#111827",
       });
     }
   };
 
   return (
     <div
-      className={`h-full bg-white shadow-xl flex flex-col ${
+      className={`h-full bg-white border-r border-gray-200 flex flex-col ${
         isOpen ? "w-64" : "w-20"
       } transition-all duration-300`}
     >
       {/* Header */}
-      <div className="flex items-center justify-center h-16 border-b border-gray-200 bg-yellow-500">
+      <div className="flex items-center justify-center h-16 border-b border-gray-200">
         {isOpen ? (
-          <h2 className="text-white font-bold text-lg">
-            STUMART{" "}
-            <span className="text-yellow-200 text-sm font-normal">Admin</span>
-          </h2>
+          <div className="text-center">
+            <h2 className="text-gray-900 font-bold text-xl tracking-tight">
+              STUMART
+            </h2>
+            <p className="text-xs text-gray-500 font-medium">Admin Panel</p>
+          </div>
         ) : (
-          <h2 className="text-white font-bold text-2xl" title="STUMART Admin">
-            S
-          </h2>
+          <div className="w-10 h-10 bg-gray-900 rounded-lg flex items-center justify-center">
+            <h2 className="text-white font-bold text-xl" title="STUMART Admin">
+              S
+            </h2>
+          </div>
         )}
       </div>
 
       {/* Navigation */}
       <nav
-        className="flex-1 py-6"
+        className="flex-1 py-4 overflow-y-auto"
         role="navigation"
         aria-label="Main navigation"
       >
-        <ul className="space-y-2 px-3">
+        <ul className="space-y-1 px-3">
           {menuItems.map((item) => (
             <li key={item.id}>
               <button
-                className={`w-full flex items-center px-3 py-3 rounded-lg text-left transition-all duration-200 group relative ${
+                className={`w-full flex items-center px-3 py-2.5 rounded-lg text-left transition-all duration-200 group relative ${
                   activeTab === item.id
-                    ? "bg-yellow-500 text-white shadow-md"
+                    ? "bg-gray-900 text-white"
                     : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                 }`}
                 onClick={() => handleNavigate(item.id)}
@@ -118,7 +117,7 @@ const Sidebar = ({ activeTab, setActiveTab, isOpen, toggleSidebar }) => {
                 type="button"
               >
                 <span
-                  className={`text-lg shrink-0 ${
+                  className={`text-base shrink-0 ${
                     activeTab === item.id
                       ? "text-white"
                       : "text-gray-500 group-hover:text-gray-700"
@@ -128,14 +127,14 @@ const Sidebar = ({ activeTab, setActiveTab, isOpen, toggleSidebar }) => {
                 </span>
 
                 {isOpen && (
-                  <span className="ml-3 font-medium truncate">
+                  <span className="ml-3 font-medium text-sm truncate">
                     {item.label}
                   </span>
                 )}
 
                 {/* Tooltip for collapsed state */}
                 {!isOpen && (
-                  <div className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                  <div className="absolute left-full ml-2 px-2.5 py-1.5 bg-gray-900 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 shadow-lg">
                     {item.label}
                   </div>
                 )}
@@ -148,19 +147,19 @@ const Sidebar = ({ activeTab, setActiveTab, isOpen, toggleSidebar }) => {
       {/* Footer - Logout */}
       <div className="border-t border-gray-200 p-3">
         <button
-          className="w-full flex items-center px-3 py-3 rounded-lg text-left transition-all duration-200 group relative text-gray-600 hover:bg-red-50 hover:text-red-600"
+          className="w-full flex items-center px-3 py-2.5 rounded-lg text-left transition-all duration-200 group relative text-gray-600 hover:bg-gray-100 hover:text-gray-900"
           onClick={handleLogout}
           aria-label="Logout"
         >
-          <span className="text-lg shrink-0 text-gray-500 group-hover:text-red-600">
+          <span className="text-base shrink-0 text-gray-500 group-hover:text-gray-700">
             <FaSignOutAlt />
           </span>
 
-          {isOpen && <span className="ml-3 font-medium">Logout</span>}
+          {isOpen && <span className="ml-3 font-medium text-sm">Logout</span>}
 
           {/* Tooltip for collapsed state */}
           {!isOpen && (
-            <div className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+            <div className="absolute left-full ml-2 px-2.5 py-1.5 bg-gray-900 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 shadow-lg">
               Logout
             </div>
           )}

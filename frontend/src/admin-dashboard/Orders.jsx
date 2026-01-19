@@ -12,11 +12,11 @@ import {
   FaTimes,
   FaBox,
   FaExclamationTriangle,
-  FaMousePointer,
   FaFilter,
   FaCalendarAlt,
   FaUser,
   FaDollarSign,
+  FaSync,
 } from "react-icons/fa";
 import LoadingSpinner from "./LoadingSpinner";
 import { useOrders } from "./hooks/useOrders";
@@ -26,17 +26,14 @@ const Orders = () => {
   const [status, setStatus] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
 
-  // Debounce search input for better performance
   const debouncedSearch = useDebouncedCallback((value) => {
     setDebouncedQuery(value);
   }, 500);
 
-  // Update debounced query when query changes
   React.useEffect(() => {
     debouncedSearch(query);
   }, [query, debouncedSearch]);
 
-  // Memoize filters to prevent unnecessary re-renders
   const filters = useMemo(
     () => ({
       query: debouncedQuery.trim(),
@@ -45,7 +42,6 @@ const Orders = () => {
     [debouncedQuery, status],
   );
 
-  // Fetch orders with current filters
   const {
     data: orders = [],
     isLoading,
@@ -58,7 +54,6 @@ const Orders = () => {
 
   const handleSearch = useCallback((e) => {
     e.preventDefault();
-    // The debounced search will handle the actual filtering
   }, []);
 
   const clearFilters = useCallback(() => {
@@ -71,44 +66,32 @@ const Orders = () => {
     switch (status) {
       case "COMPLETED":
         return {
-          color: "bg-emerald-500 text-white",
-          bgColor: "bg-emerald-50",
-          textColor: "text-emerald-700",
+          color: "bg-emerald-100 text-emerald-700 border-emerald-200",
           icon: <FaCheck className="w-3 h-3" />,
         };
       case "PENDING":
         return {
-          color: "bg-yellow-500 text-white",
-          bgColor: "bg-yellow-50",
-          textColor: "text-yellow-700",
+          color: "bg-yellow-100 text-yellow-700 border-yellow-200",
           icon: <FaClock className="w-3 h-3" />,
         };
       case "IN_TRANSIT":
         return {
-          color: "bg-blue-500 text-white",
-          bgColor: "bg-blue-50",
-          textColor: "text-blue-700",
+          color: "bg-blue-100 text-blue-700 border-blue-200",
           icon: <FaTruck className="w-3 h-3" />,
         };
       case "DELIVERED":
         return {
-          color: "bg-purple-500 text-white",
-          bgColor: "bg-purple-50",
-          textColor: "text-purple-700",
+          color: "bg-purple-100 text-purple-700 border-purple-200",
           icon: <FaShippingFast className="w-3 h-3" />,
         };
       case "CANCELLED":
         return {
-          color: "bg-red-500 text-white",
-          bgColor: "bg-red-50",
-          textColor: "text-red-700",
+          color: "bg-red-100 text-red-700 border-red-200",
           icon: <FaTimes className="w-3 h-3" />,
         };
       default:
         return {
-          color: "bg-gray-500 text-white",
-          bgColor: "bg-gray-50",
-          textColor: "text-gray-700",
+          color: "bg-gray-100 text-gray-700 border-gray-200",
           icon: <FaClock className="w-3 h-3" />,
         };
     }
@@ -126,22 +109,21 @@ const Orders = () => {
 
   if (isError) {
     return (
-      <div className="min-h-96 flex items-center justify-center">
+      <div className="min-h-96 flex items-center justify-center p-4">
         <div className="text-center max-w-md">
-          <div className="w-24 h-24 mx-auto mb-6 bg-red-100 rounded-full flex items-center justify-center">
-            <FaExclamationTriangle className="w-10 h-10 text-red-500" />
+          <div className="w-20 h-20 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
+            <FaExclamationTriangle className="w-8 h-8 text-gray-600" />
           </div>
           <h3 className="text-xl font-semibold text-gray-900 mb-2">
             Unable to Load Orders
           </h3>
-          <p className="text-gray-600 mb-8">
+          <p className="text-gray-600 mb-6">
             There was an error loading the orders. Please try again.
           </p>
           <button
             onClick={() => refetch()}
-            className="inline-flex items-center px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200"
+            className="inline-flex items-center px-6 py-3 bg-gray-900 hover:bg-gray-800 text-white font-medium rounded-lg transition-colors"
           >
-            {/* <FaRefresh className="w-4 h-4 mr-2" /> */}
             Try Again
           </button>
         </div>
@@ -150,102 +132,126 @@ const Orders = () => {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 py-4 sm:py-6 bg-gray-50 min-h-screen">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Order Management</h1>
-          <p className="mt-2 text-gray-600">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            Order Management
+          </h1>
+          <p className="mt-1 text-sm sm:text-base text-gray-600">
             Monitor and manage all customer orders
           </p>
         </div>
         <button
           onClick={() => refetch()}
           disabled={isFetching}
-          className="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 disabled:opacity-50 font-medium text-gray-700 transition-colors duration-200"
+          className="inline-flex items-center justify-center px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 font-medium text-gray-700 transition-colors text-sm"
         >
           {isRefetching ? (
-            <FaSpinner className="animate-spin w-4 h-4 mr-2" />
+            <>
+              <FaSpinner className="animate-spin w-4 h-4 mr-2" />
+              Refreshing...
+            </>
           ) : (
-            // <FaRefresh className="w-4 h-4 mr-2" />
-            <p>Refresh</p>
+            <>
+              <FaSync className="w-4 h-4 mr-2" />
+              Refresh
+            </>
           )}
-          {isRefetching ? "Refreshing..." : "Refresh"}
         </button>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-linear-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="bg-white border border-gray-200 rounded-xl p-4 sm:p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-blue-100 text-sm font-medium">Total Orders</p>
-              <p className="text-3xl font-bold">{orders.length}</p>
+              <p className="text-gray-500 text-xs sm:text-sm font-medium mb-1">
+                Total Orders
+              </p>
+              <p className="text-xl sm:text-3xl font-bold text-gray-900">
+                {orders.length}
+              </p>
             </div>
-            <FaBox className="w-8 h-8 text-blue-200" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+              <FaBox className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />
+            </div>
           </div>
         </div>
-        <div className="bg-linear-to-br from-emerald-500 to-emerald-600 rounded-xl p-6 text-white">
+        <div className="bg-white border border-gray-200 rounded-xl p-4 sm:p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-emerald-100 text-sm font-medium">Completed</p>
-              <p className="text-3xl font-bold">
+              <p className="text-gray-500 text-xs sm:text-sm font-medium mb-1">
+                Completed
+              </p>
+              <p className="text-xl sm:text-3xl font-bold text-gray-900">
                 {orders.filter((o) => o.status === "COMPLETED").length}
               </p>
             </div>
-            <FaCheck className="w-8 h-8 text-emerald-200" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-emerald-100 rounded-lg flex items-center justify-center">
+              <FaCheck className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600" />
+            </div>
           </div>
         </div>
-        <div className="bg-linear-to-br from-yellow-500 to-yellow-600 rounded-xl p-6 text-white">
+        <div className="bg-white border border-gray-200 rounded-xl p-4 sm:p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-yellow-100 text-sm font-medium">Pending</p>
-              <p className="text-3xl font-bold">
+              <p className="text-gray-500 text-xs sm:text-sm font-medium mb-1">
+                Pending
+              </p>
+              <p className="text-xl sm:text-3xl font-bold text-gray-900">
                 {orders.filter((o) => o.status === "PENDING").length}
               </p>
             </div>
-            <FaClock className="w-8 h-8 text-yellow-200" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+              <FaClock className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600" />
+            </div>
           </div>
         </div>
-        <div className="bg-linear-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white">
+        <div className="bg-white border border-gray-200 rounded-xl p-4 sm:p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-purple-100 text-sm font-medium">In Transit</p>
-              <p className="text-3xl font-bold">
+              <p className="text-gray-500 text-xs sm:text-sm font-medium mb-1">
+                In Transit
+              </p>
+              <p className="text-xl sm:text-3xl font-bold text-gray-900">
                 {orders.filter((o) => o.status === "IN_TRANSIT").length}
               </p>
             </div>
-            <FaTruck className="w-8 h-8 text-purple-200" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+              <FaTruck className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+            </div>
           </div>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-        <div className="flex items-center gap-4 mb-6">
-          <FaFilter className="w-5 h-5 text-gray-400" />
-          <h3 className="text-lg font-semibold text-gray-900">
+      <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
+        <div className="flex items-center gap-3 mb-4 sm:mb-6">
+          <FaFilter className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900">
             Filter & Search
           </h3>
         </div>
 
         <form onSubmit={handleSearch} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4">
             <div className="relative">
-              <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <FaSearch className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"
-                placeholder="Search by order number, customer..."
+                placeholder="Search orders..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 bg-gray-50 focus:bg-white transition-all duration-200"
+                className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm"
               />
             </div>
 
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 bg-gray-50 focus:bg-white transition-all duration-200"
+              className="px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm"
             >
               <option value="">All Statuses</option>
               <option value="PENDING">Pending</option>
@@ -258,14 +264,14 @@ const Orders = () => {
             <div className="flex gap-2">
               <button
                 type="submit"
-                className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-3 px-6 rounded-xl transition-all duration-200 transform hover:-translate-y-0.5"
+                className="flex-1 bg-gray-900 hover:bg-gray-800 text-white font-medium py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg transition-colors text-sm"
               >
                 Search
               </button>
               <button
                 type="button"
                 onClick={clearFilters}
-                className="px-4 py-3 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-xl transition-colors duration-200"
+                className="px-3 sm:px-4 py-2.5 sm:py-3 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors text-sm"
               >
                 Clear
               </button>
@@ -274,110 +280,130 @@ const Orders = () => {
         </form>
 
         {isFetching && !isRefetching && (
-          <div className="flex items-center justify-center py-4 mt-4 border-t border-gray-100">
-            <FaSpinner className="animate-spin w-5 h-5 mr-3 text-yellow-500" />
-            <span className="text-gray-600 font-medium">
+          <div className="flex items-center justify-center py-4 mt-4 border-t border-gray-200">
+            <FaSpinner className="animate-spin w-5 h-5 mr-3 text-gray-600" />
+            <span className="text-gray-600 font-medium text-sm">
               Searching orders...
             </span>
           </div>
         )}
       </div>
 
-      {/* Orders Grid */}
-      <div className="grid gap-6">
+      {/* Orders Table */}
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         {orders.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-xl shadow-lg border border-gray-100">
-            <div className="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
-              <FaBox className="w-10 h-10 text-gray-400" />
+          <div className="text-center py-12 sm:py-16">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-4 sm:mb-6 bg-gray-100 rounded-full flex items-center justify-center">
+              <FaBox className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
               No Orders Found
             </h3>
-            <p className="text-gray-500">
+            <p className="text-sm sm:text-base text-gray-500">
               {isFetching
                 ? "Searching for orders..."
                 : "No orders match your current filters."}
             </p>
           </div>
         ) : (
-          <div className="grid gap-4">
-            {orders.map((order) => {
-              const statusConfig = getStatusConfig(order.status);
-              const dateTime = formatDate(order.created_at);
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Order
+                  </th>
+                  <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider hidden sm:table-cell">
+                    Customer
+                  </th>
+                  <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider hidden md:table-cell">
+                    Date
+                  </th>
+                  <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider hidden lg:table-cell">
+                    Items
+                  </th>
+                  <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Total
+                  </th>
+                  <th className="px-4 sm:px-6 py-3 sm:py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Action
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {orders.map((order) => {
+                  const statusConfig = getStatusConfig(order.status);
+                  const dateTime = formatDate(order.created_at);
 
-              return (
-                <div
-                  key={order.id}
-                  className="bg-white rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-                >
-                  <div className="p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-linear-to-br from-yellow-400 to-yellow-500 rounded-xl flex items-center justify-center text-white font-bold">
-                          #{order.order_number.slice(-3)}
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                            Order #{order.order_number}
-                          </h3>
-                          <div className="flex items-center text-sm text-gray-500 gap-4">
-                            <span className="flex items-center gap-1">
-                              <FaUser className="w-3 h-3" />
+                  return (
+                    <tr
+                      key={order.id}
+                      className="hover:bg-gray-50 transition-colors"
+                    >
+                      <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-900 rounded-lg flex items-center justify-center text-white font-bold text-xs sm:text-sm shrink-0">
+                            #{order.order_number.slice(-3)}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-sm font-semibold text-gray-900 truncate">
+                              #{order.order_number}
+                            </div>
+                            <div className="text-xs text-gray-500 sm:hidden">
                               {order.customer_name}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <FaCalendarAlt className="w-3 h-3" />
-                              {dateTime.date} at {dateTime.time}
-                            </span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-
-                      <div
-                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium text-sm ${statusConfig.color}`}
-                      >
-                        {statusConfig.icon}
-                        {order.status.replace("_", " ")}
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4 mb-6">
-                      <div className="bg-gray-50 rounded-lg p-4">
-                        <div className="flex items-center gap-2 text-gray-600 text-sm mb-1">
-                          <FaBox className="w-4 h-4" />
-                          Items
+                      </td>
+                      <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap hidden sm:table-cell">
+                        <div className="text-sm text-gray-900">
+                          {order.customer_name}
                         </div>
-                        <p className="font-semibold text-gray-900">
-                          {order.items_count}{" "}
-                          {order.items_count === 1 ? "item" : "items"}
-                        </p>
-                      </div>
-                      <div className="bg-gray-50 rounded-lg p-4">
-                        <div className="flex items-center gap-2 text-gray-600 text-sm mb-1">
-                          <FaDollarSign className="w-4 h-4" />
-                          Total
+                      </td>
+                      <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap hidden md:table-cell">
+                        <div className="text-sm text-gray-900">
+                          {dateTime.date}
                         </div>
-                        <p className="font-semibold text-gray-900">
+                        <div className="text-xs text-gray-500">
+                          {dateTime.time}
+                        </div>
+                      </td>
+                      <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border ${statusConfig.color}`}
+                        >
+                          {statusConfig.icon}
+                          <span className="hidden sm:inline">
+                            {order.status.replace("_", " ")}
+                          </span>
+                        </span>
+                      </td>
+                      <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap hidden lg:table-cell">
+                        <div className="text-sm text-gray-900">
+                          {order.items_count}
+                        </div>
+                      </td>
+                      <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                        <div className="text-sm font-semibold text-gray-900">
                           ₦{order.total.toLocaleString()}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-3">
-                      <Link
-                        to={`/admin-order-detail/${order.id}`}
-                        className="flex-1"
-                      >
-                        <button className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-colors duration-200">
-                          <FaEye className="w-4 h-4" />
-                          View Details
-                        </button>
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+                        </div>
+                      </td>
+                      <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-right">
+                        <Link to={`/admin-dashboard/orders/${order.id}`}>
+                          <button className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-900 hover:bg-gray-800 text-white text-xs sm:text-sm font-medium rounded-lg transition-colors">
+                            <FaEye className="w-3 h-3 sm:w-4 sm:h-4" />
+                            <span className="hidden sm:inline">View</span>
+                          </button>
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
