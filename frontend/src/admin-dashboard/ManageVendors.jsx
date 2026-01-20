@@ -8,12 +8,15 @@ import {
   useToggleVendorVerification,
   useBusinessCategories,
 } from "./hooks/useManageVendors";
+import { nigeriaStates, nigeriaInstitutions } from "../constant/data";
 
 const ManageVendors = () => {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("");
   const [verified, setVerified] = useState("");
+  const [state, setState] = useState("");
+  const [institution, setInstitution] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [selectedVendor, setSelectedVendor] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -34,8 +37,10 @@ const ManageVendors = () => {
       query: debouncedQuery.trim(),
       category,
       verified,
+      state,
+      institution,
     }),
-    [debouncedQuery, category, verified],
+    [debouncedQuery, category, verified, state, institution],
   );
 
   // Fetch vendors with current filters
@@ -80,6 +85,8 @@ const ManageVendors = () => {
     setQuery("");
     setCategory("");
     setVerified("");
+    setState("");
+    setInstitution("");
     setDebouncedQuery("");
   }, []);
 
@@ -198,6 +205,37 @@ const ManageVendors = () => {
               <option value="">All Verification</option>
               <option value="true">Verified</option>
               <option value="false">Unverified</option>
+            </select>
+
+            <select
+              value={state}
+              onChange={(e) => setState(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+            >
+              <option value="">All States</option>
+              {nigeriaStates.map((stateOption) => (
+                <option key={stateOption} value={stateOption}>
+                  {stateOption}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={institution}
+              onChange={(e) => setInstitution(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+              disabled={!state}
+            >
+              <option value="">All Institutions</option>
+              {state && nigeriaInstitutions[state] ? (
+                nigeriaInstitutions[state].map((institutionOption) => (
+                  <option key={institutionOption} value={institutionOption}>
+                    {institutionOption}
+                  </option>
+                ))
+              ) : (
+                <option disabled>Select a state first</option>
+              )}
             </select>
 
             <button

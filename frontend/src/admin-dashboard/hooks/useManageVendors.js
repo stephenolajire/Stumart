@@ -19,6 +19,8 @@ export const useVendors = (filters = {}) => {
       if (filters.query) params.append("query", filters.query);
       if (filters.category) params.append("category", filters.category);
       if (filters.verified) params.append("verified", filters.verified);
+      if (filters.state) params.append("state", filters.state);
+      if (filters.institution) params.append("institution", filters.institution);
 
       if (params.toString()) {
         url += `?${params.toString()}`;
