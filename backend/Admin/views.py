@@ -196,12 +196,26 @@ class VendorsAPIView(APIView):
     permission_classes = [IsAdminUser]
     
     def get(self, request):
+        from django.db.models import Count
+        import logging
+        
+        logger = logging.getLogger(__name__)
+        
         query = request.query_params.get('query', '')
         category = request.query_params.get('category', '')
         verified = request.query_params.get('verified', '')
+        state = request.query_params.get('state', '')
+        institution = request.query_params.get('institution', '')
         
-        # Use select_related to fetch user data efficiently
-        vendors = Vendor.objects.select_related('user').all()
+        # Debug logging
+        logger.info(f"Filters: category={category}, query={query}, verified={verified}, state={state}, institution={institution}")
+        
+        # Build base queryset with optimized queries
+        vendors = Vendor.objects.select_related('user').annotate(
+            total_products=Count('user__products', distinct=True)
+        ).all()
+        
+        logger.info(f"Total vendors before filters: {vendors.count()}")
         
         if query:
             vendors = vendors.filter(
@@ -212,15 +226,28 @@ class VendorsAPIView(APIView):
             )
         
         if category:
-            vendors = vendors.filter(business_category=category)
+            vendors = vendors.filter(business_category=category.lower())
+            logger.info(f"Vendors after category filter '{category.lower()}': {vendors.count()}")
             
         if verified:
             is_verified = verified.lower() == 'true'
             # Filter by user's verification status
             vendors = vendors.filter(user__is_verified=is_verified)
+        
+        if state:
+            vendors = vendors.filter(user__state=state)
+        
+        if institution:
+            vendors = vendors.filter(user__institution=institution)
+            
+        logger.info(f"Final vendor count: {vendors.count()}")
             
         vendor_data = []
         for vendor in vendors:
+            # Get total sales with optimized query
+            total_sales = OrderItem.objects.filter(vendor=vendor).aggregate(
+                total=Sum('price'))['total'] or 0
+            
             vendor_dict = {
                 'id': vendor.id,
                 'user_id': vendor.user.id,
@@ -238,18 +265,18 @@ class VendorsAPIView(APIView):
                 'date_joined': vendor.user.date_joined,
                 'user_name': f"{vendor.user.first_name} {vendor.user.last_name}",
                 'phone_number': vendor.user.phone_number,
-                'state':vendor.user.state,
-                'institution':vendor.user.institution
+                'state': vendor.user.state,
+                'institution': vendor.user.institution,
+                'total_products': vendor.total_products,
+                'total_sales': total_sales
             }
             
-            # Get total products
-            vendor_dict['total_products'] = Product.objects.filter(vendor=vendor.user).count()
-            
-            # Get total sales
-            vendor_dict['total_sales'] = OrderItem.objects.filter(vendor=vendor).aggregate(
-                total=Sum('price'))['total'] or 0
-            
             vendor_data.append(vendor_dict)
+        
+        # Debug: include available categories and counts
+        from django.db.models import Count as CountFunc
+        category_counts = Vendor.objects.values('business_category').annotate(count=CountFunc('id')).order_by('-count')
+        logger.info(f"Available categories in DB: {list(category_counts)}")
             
         return Response(vendor_data)
     
