@@ -1,4 +1,3 @@
-// OrderHistory.jsx
 import React, { useState, useRef, useContext } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useReactToPrint } from "react-to-print";
@@ -8,7 +7,27 @@ import { Link } from "react-router-dom";
 import { GlobalContext } from "../constant/GlobalContext";
 import Spinner from "../components/Spinner";
 import ReviewModal from "../components/ReviewModal";
-import { FaArrowLeft } from "react-icons/fa";
+import {
+  FaArrowLeft,
+  FaBox,
+  FaMapMarkerAlt,
+  FaUser,
+  FaEnvelope,
+  FaPhone,
+  FaShoppingBag,
+  FaCheckCircle,
+  FaTimes,
+  FaChevronDown,
+  FaChevronUp,
+  FaStar,
+  FaCheck,
+  FaClock,
+  FaTruck,
+  FaExclamationTriangle,
+  FaCreditCard,
+  FaCalendar,
+  FaDollarSign,
+} from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 
@@ -24,7 +43,6 @@ const OrderHistory = () => {
   const { isAuthenticated } = useContext(GlobalContext);
   const queryClient = useQueryClient();
 
-  // Query for fetching orders
   const {
     data: orders = [],
     isLoading: loading,
@@ -37,13 +55,12 @@ const OrderHistory = () => {
       return response.data;
     },
     enabled: isAuthenticated,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     retry: 2,
     refetchOnWindowFocus: false,
   });
 
-  // Mutation for marking order as delivered
   const markAsDeliveredMutation = useMutation({
     mutationFn: async (orderId) => {
       const response = await api.post(`confirm/${orderId}/`, {
@@ -52,13 +69,12 @@ const OrderHistory = () => {
       return response.data;
     },
     onSuccess: (data, orderId) => {
-      // Update the cache optimistically
       queryClient.setQueryData(["orders"], (oldOrders) => {
         if (!oldOrders) return oldOrders;
         return oldOrders.map((order) =>
           order.order_number === orderId
             ? { ...order, order_status: "DELIVERED" }
-            : order
+            : order,
         );
       });
 
@@ -66,6 +82,7 @@ const OrderHistory = () => {
         icon: "success",
         text: "Thank you for your patronage!",
         title: "Order Delivered",
+        confirmButtonColor: "#111827",
       });
     },
     onError: (error) => {
@@ -73,45 +90,33 @@ const OrderHistory = () => {
       Swal.fire({
         icon: "error",
         title: "Status Error",
-        text: "Order status failed, pls try again later",
+        text: "Order status failed, please try again later",
+        confirmButtonColor: "#111827",
       });
     },
   });
 
-  // Mutation for canceling order
-  const cancelOrderMutation = useMutation({
-    mutationFn: async (orderId) => {
-      const response = await api.post(`orders/${orderId}/cancel/`);
+  const initializePaymentMutation = useMutation({
+    mutationFn: async (paymentData) => {
+      const response = await api.post("payment/initialize/", paymentData);
       return response.data;
     },
-    onSuccess: (data, orderId) => {
-      // Update the cache optimistically
-      queryClient.setQueryData(["orders"], (oldOrders) => {
-        if (!oldOrders) return oldOrders;
-        return oldOrders.map((order) =>
-          order.id === orderId ? { ...order, order_status: "CANCELLED" } : order
-        );
-      });
-
-      Swal.fire({
-        icon: "success",
-        title: "Order Cancelled",
-        text: "Your order has been cancelled successfully",
-      });
+    onSuccess: (data) => {
+      window.location.href = data.authorization_url;
     },
     onError: (error) => {
-      console.error("Error cancelling order:", error);
+      console.error("Payment initialization error:", error);
       Swal.fire({
         icon: "error",
-        title: "Cancellation Failed",
+        title: "Payment Error",
         text:
           error.response?.data?.message ||
-          "Failed to cancel order. Please try again later.",
+          "Failed to initialize payment. Please try again.",
+        confirmButtonColor: "#111827",
       });
     },
   });
 
-  // Mutation for submitting reviews
   const submitReviewMutation = useMutation({
     mutationFn: async ({ orderId, reviews }) => {
       const order = orders.find((o) => o.id === orderId);
@@ -121,13 +126,11 @@ const OrderHistory = () => {
         throw new Error("This order doesn't have a picker assigned yet.");
       }
 
-      // Get unique vendors from order items
       const uniqueVendors = new Set();
       order.order_items?.forEach((item) => {
         uniqueVendors.add(item.vendor_id);
       });
 
-      // Submit review for each unique vendor with the same picker
       const reviewPromises = Array.from(uniqueVendors).map((vendorId) =>
         api.post(`submit-reviews/`, {
           order_id: orderId,
@@ -137,18 +140,17 @@ const OrderHistory = () => {
           vendor_comment: reviews.vendor.comment,
           picker_rating: reviews.picker.rating,
           picker_comment: reviews.picker.comment,
-        })
+        }),
       );
 
       await Promise.all(reviewPromises);
       return { uniqueVendorsCount: uniqueVendors.size };
     },
     onSuccess: (data, { orderId }) => {
-      // Update the cache optimistically
       queryClient.setQueryData(["orders"], (oldOrders) => {
         if (!oldOrders) return oldOrders;
         return oldOrders.map((order) =>
-          order.id === orderId ? { ...order, reviewed: true } : order
+          order.id === orderId ? { ...order, reviewed: true } : order,
         );
       });
 
@@ -159,6 +161,7 @@ const OrderHistory = () => {
           data.uniqueVendorsCount > 1
             ? `Reviews submitted for ${data.uniqueVendorsCount} vendors and 1 picker.`
             : "Reviews submitted successfully!",
+        confirmButtonColor: "#111827",
       });
     },
     onError: (error) => {
@@ -170,6 +173,7 @@ const OrderHistory = () => {
           error.response?.data?.error ||
           error.message ||
           "Please try again later",
+        confirmButtonColor: "#111827",
       });
     },
   });
@@ -182,25 +186,18 @@ const OrderHistory = () => {
     markAsDeliveredMutation.mutate(orderId);
   };
 
-  const handleCancelOrder = async (orderId) => {
+  const handleContinuePayment = async (order) => {
     try {
-      // Show confirmation dialog first
-      const result = await Swal.fire({
-        title: "Cancel Order?",
-        text: "Are you sure you want to cancel this order? This action cannot be undone.",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "var(--error)",
-        cancelButtonColor: "var(--neutral-gray-400)",
-        confirmButtonText: "Yes, cancel order",
-        cancelButtonText: "No, keep order",
-      });
+      localStorage.setItem("order_id", order.id);
 
-      if (result.isConfirmed) {
-        cancelOrderMutation.mutate(orderId);
-      }
+      initializePaymentMutation.mutate({
+        order_id: order.id,
+        email: order.shipping.email,
+        amount: order.total * 100,
+        callback_url: `${window.location.origin}/payment/verify/`,
+      });
     } catch (error) {
-      console.error("Error in cancel order handler:", error);
+      console.error("Error in continue payment handler:", error);
     }
   };
 
@@ -213,26 +210,47 @@ const OrderHistory = () => {
         onSuccess: () => {
           setReviewOrder(null);
         },
-      }
+      },
     );
   };
 
-  const getStatusClass = (status) => {
+  const getStatusConfig = (status) => {
     switch (status.toUpperCase()) {
       case "PENDING":
-        return "bg-yellow-100 text-yellow-800";
+        return {
+          class: "bg-yellow-100 text-yellow-700 border-yellow-200",
+          icon: <FaClock className="w-3 h-3" />,
+        };
       case "PROCESSING":
-        return "bg-blue-100 text-blue-800";
+        return {
+          class: "bg-blue-100 text-blue-700 border-blue-200",
+          icon: <FaTruck className="w-3 h-3" />,
+        };
       case "SHIPPED":
-        return "bg-indigo-100 text-indigo-800";
+        return {
+          class: "bg-indigo-100 text-indigo-700 border-indigo-200",
+          icon: <FaTruck className="w-3 h-3" />,
+        };
       case "DELIVERED":
-        return "bg-green-100 text-green-800";
+        return {
+          class: "bg-green-100 text-green-700 border-green-200",
+          icon: <FaCheck className="w-3 h-3" />,
+        };
       case "CANCELLED":
-        return "bg-red-100 text-red-800";
+        return {
+          class: "bg-red-100 text-red-700 border-red-200",
+          icon: <FaTimes className="w-3 h-3" />,
+        };
       case "COMPLETED":
-        return "bg-purple-100 text-purple-800";
+        return {
+          class: "bg-purple-100 text-purple-700 border-purple-200",
+          icon: <FaCheckCircle className="w-3 h-3" />,
+        };
       default:
-        return "bg-gray-100 text-gray-800";
+        return {
+          class: "bg-gray-100 text-gray-700 border-gray-200",
+          icon: <FaClock className="w-3 h-3" />,
+        };
     }
   };
 
@@ -245,7 +263,6 @@ const OrderHistory = () => {
     }).format(date);
   };
 
-  // Fix: Create a separate print handler for each order
   const handlePrint = (orderId) => {
     const printHandler = useReactToPrint({
       content: () => printRefs.current[orderId],
@@ -253,7 +270,6 @@ const OrderHistory = () => {
     printHandler();
   };
 
-  // Pagination logic
   const indexOfLastOrder = currentPage * ordersPerPage;
   const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
   const currentOrders = orders?.slice(indexOfFirstOrder, indexOfLastOrder);
@@ -263,7 +279,7 @@ const OrderHistory = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center pt-40">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 pt-28">
         <Spinner />
       </div>
     );
@@ -271,10 +287,15 @@ const OrderHistory = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-lg shadow-md">
-          <h2 className="text-lg font-semibold mb-2">Error</h2>
-          <p>{error.message || "An error occurred while fetching orders"}</p>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 pt-28">
+        <div className="bg-white border border-gray-200 rounded-xl p-6 max-w-md text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <FaExclamationTriangle className="w-8 h-8 text-red-600" />
+          </div>
+          <h2 className="text-lg font-semibold text-gray-900 mb-2">Error</h2>
+          <p className="text-sm text-gray-600">
+            {error.message || "An error occurred while fetching orders"}
+          </p>
         </div>
       </div>
     );
@@ -282,369 +303,328 @@ const OrderHistory = () => {
 
   if (orders.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center bg-white rounded-lg shadow-lg p-8 max-w-md mx-4">
-          <div className="mb-6">
-            <div className="w-24 h-24 mx-auto mb-4 bg-yellow-100 rounded-full flex items-center justify-center">
-              <svg
-                className="w-12 h-12 text-yellow-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
-                />
-              </svg>
-            </div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">
-              No Orders Yet
-            </h2>
-            <p className="text-gray-600 mb-6">
-              You haven't placed any orders yet. Start shopping to see your
-              orders here!
-            </p>
-            <Link
-              to="/products"
-              className="inline-block bg-yellow-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-yellow-600 transition-colors duration-200 shadow-md"
-            >
-              Shop Now
-            </Link>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 pt-28">
+        <div className="text-center bg-white rounded-xl border border-gray-200 p-8 max-w-md">
+          <div className="w-20 h-20 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+            <FaShoppingBag className="w-10 h-10 text-gray-400" />
           </div>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+            No Orders Yet
+          </h2>
+          <p className="text-sm sm:text-base text-gray-600 mb-6">
+            You haven't placed any orders yet. Start shopping to see your orders
+            here!
+          </p>
+          <Link
+            to="/products"
+            className="inline-block bg-gray-900 text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors text-sm"
+          >
+            Shop Now
+          </Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-13 px-4">
+    <div className="min-h-screen bg-gray-50 pt-28 md:pt-4 pb-10 px-4 sm:px-6">
       <Header title="Order History" />
 
-      <div className="w-full mx-auto space-y-6">
-        {currentOrders.map((order) => (
-          <div
-            key={order.order_number}
-            className="bg-white rounded-lg shadow-md overflow-hidden"
-          >
+      <div className="w-full mx-auto space-y-4">
+        {currentOrders.map((order) => {
+          const statusConfig = getStatusConfig(order.order_status);
+
+          return (
             <div
-              className="p-6 cursor-pointer hover:bg-gray-50 transition-colors duration-200"
-              onClick={() => toggleOrderDetails(order.order_number)}
+              key={order.order_number}
+              className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow"
             >
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="font-medium text-gray-700">Order #:</span>
-                    <span className="text-yellow-600 font-semibold">
-                      {order.order_number}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="font-medium text-gray-700">Date:</span>
-                    <span className="text-gray-600">
-                      {formatDate(order.created_at)}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex flex-col md:flex-row md:items-center gap-4">
-                  <div
-                    className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${getStatusClass(
-                      order.order_status
-                    )}`}
-                  >
-                    {order.order_status}
-                  </div>
-                  <div className="text-right">
-                    <span className="text-sm font-medium text-gray-700">
-                      Total:{" "}
-                    </span>
-                    <span className="text-lg font-bold text-yellow-600">
-                      ₦{order.total.toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex justify-center md:justify-end">
-                  <div className="w-8 h-8 flex items-center justify-center bg-yellow-100 rounded-full text-yellow-600 font-bold text-lg">
-                    {expandedOrder === order.order_number ? "−" : "+"}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {expandedOrder === order.order_number && (
+              {/* Order Header - Always Visible */}
               <div
-                className="border-t border-gray-200 p-6 bg-gray-50"
-                ref={(el) => (printRefs.current[order.order_number] = el)}
+                className="p-5 cursor-pointer hover:bg-gray-50 transition-colors"
+                onClick={() => toggleOrderDetails(order.order_number)}
               >
-                {/* Shipping Details */}
-                <div className="bg-white rounded-lg p-4 mb-6">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                    <svg
-                      className="w-5 h-5 mr-2 text-yellow-500"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                    </svg>
-                    Shipping Details
-                  </h3>
-                  <div className="grid md:grid-cols-2 gap-3 text-sm">
-                    <div>
-                      <span className="font-medium text-gray-700">Name: </span>
-                      <span className="text-gray-600">
-                        {order.shipping.first_name} {order.shipping.last_name}
-                      </span>
+                <div className="flex items-center justify-between gap-4">
+                  {/* Left: Order Info */}
+                  <div className="flex items-center gap-4 flex-1 min-w-0">
+                    <div className="hidden sm:flex w-12 h-12 bg-gray-900 rounded-lg items-center justify-center flex-shrink-0">
+                      <FaBox className="w-6 h-6 text-white" />
                     </div>
-                    <div>
-                      <span className="font-medium text-gray-700">Email: </span>
-                      <span className="text-gray-600">
-                        {order.shipping.email}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-700">Phone: </span>
-                      <span className="text-gray-600">
-                        {order.shipping.phone}
-                      </span>
-                    </div>
-                    <div className="md:col-span-2">
-                      <span className="font-medium text-gray-700">
-                        Address:{" "}
-                      </span>
-                      <span className="text-gray-600">
-                        {order.shipping.address}
-                      </span>
-                    </div>
-                    {order.shipping.room_number && (
-                      <div>
-                        <span className="font-medium text-gray-700">
-                          Room/Apt:{" "}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-semibold text-gray-900 text-sm sm:text-base truncate">
+                          #{order.order_number}
                         </span>
-                        <span className="text-gray-600">
-                          {order.shipping.room_number}
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium border ${statusConfig.class}`}
+                        >
+                          {statusConfig.icon}
+                          <span className="hidden sm:inline">
+                            {order.order_status}
+                          </span>
                         </span>
                       </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Order Items */}
-                <div className="bg-white rounded-lg p-4 mb-6">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                    <svg
-                      className="w-5 h-5 mr-2 text-yellow-500"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                      />
-                    </svg>
-                    Order Items
-                  </h3>
-                  <div className="space-y-4">
-                    {order.order_items &&
-                      order.order_items.map((item) => (
-                        <div
-                          key={item.id}
-                          className="flex gap-4 p-3 border rounded-lg bg-gray-50"
-                        >
-                          <div className="flex-shrink-0">
-                            {item.product.image ? (
-                              <img
-                                src={item.product.image}
-                                alt={item.product.name}
-                                className="w-16 h-16 object-cover rounded-md"
-                              />
-                            ) : (
-                              <div className="w-16 h-16 bg-gray-200 rounded-md flex items-center justify-center text-xs text-gray-500">
-                                No Image
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="flex-grow">
-                            <h4 className="font-semibold text-gray-800 mb-1">
-                              {item.product.name}
-                            </h4>
-                            <p className="text-sm text-yellow-600 mb-2">
-                              Sold by: {item.vendor}
-                            </p>
-                            {item.size && (
-                              <p className="text-sm text-gray-600">
-                                Size: {item.size}
-                              </p>
-                            )}
-                            {item.color && (
-                              <p className="text-sm text-gray-600">
-                                Color: {item.color}
-                              </p>
-                            )}
-                            <div className="flex justify-between items-center mt-2">
-                              <p className="font-semibold text-yellow-600">
-                                ₦{item.price.toFixed(2)}
-                              </p>
-                              <p className="text-sm text-gray-600">
-                                Qty: {item.quantity}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                </div>
-
-                {/* Order Summary */}
-                <div className="bg-white rounded-lg p-4 mb-6">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                    Order Summary
-                  </h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Subtotal:</span>
-                      <span className="text-gray-800">
-                        ₦{order.subtotal.toFixed(2)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Shipping:</span>
-                      <span className="text-gray-800">
-                        ₦{order.shipping_fee.toFixed(2)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Tax:</span>
-                      <span className="text-gray-800">
-                        ₦{order.tax.toFixed(2)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between border-t pt-2 mt-2">
-                      <span className="font-semibold text-gray-800">
-                        Total:
-                      </span>
-                      <span className="font-bold text-yellow-600 text-lg">
-                        ₦{order.total.toFixed(2)}
-                      </span>
+                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <FaCalendar className="w-3 h-3" />
+                        <span>{formatDate(order.created_at)}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Order Actions */}
-                <div className="flex flex-wrap gap-3">
-                  {order.order_status.toUpperCase() === "COMPLETED" &&
-                    (order.reviewed ? (
-                      <span className="inline-flex items-center px-4 py-2 bg-green-100 text-green-800 text-sm font-medium rounded-lg">
-                        <svg
-                          className="w-4 h-4 mr-2"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        Reviewed
-                      </span>
-                    ) : (
-                      <button
-                        className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                        onClick={() => setReviewOrder(order)}
-                        disabled={submitReviewMutation.isPending}
-                      >
-                        {submitReviewMutation.isPending
-                          ? "Submitting..."
-                          : "Write Review"}
-                      </button>
-                    ))}
-
-                  {order.order_status.toUpperCase() === "DELIVERED" &&
-                    !order.confirm && (
-                      <button
-                        className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                        onClick={() => handleMarkAsDelivered(order.id)}
-                        disabled={markAsDeliveredMutation.isPending}
-                      >
-                        {markAsDeliveredMutation.isPending
-                          ? "Confirming..."
-                          : "Confirm"}
-                      </button>
-                    )}
-
-                  {order.order_status.toUpperCase() === "PENDING" && (
-                    <button
-                      className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                      onClick={() => handleCancelOrder(order.id)}
-                      disabled={cancelOrderMutation.isPending}
-                    >
-                      {cancelOrderMutation.isPending
-                        ? "Cancelling..."
-                        : "Cancel Order"}
-                    </button>
-                  )}
+                  {/* Right: Amount & Expand */}
+                  <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
+                    <div className="text-right">
+                      <div className="text-xs text-gray-500 mb-0.5">Total</div>
+                      <div className="font-bold text-gray-900 text-base sm:text-lg">
+                        ₦{order.total.toLocaleString()}
+                      </div>
+                    </div>
+                    <div className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full text-gray-700 hover:bg-gray-200 transition-colors">
+                      {expandedOrder === order.order_number ? (
+                        <FaChevronUp className="w-4 h-4" />
+                      ) : (
+                        <FaChevronDown className="w-4 h-4" />
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
-            )}
-          </div>
-        ))}
+
+              {/* Order Details - Expandable */}
+              {expandedOrder === order.order_number && (
+                <div
+                  className="border-t border-gray-200 bg-gray-50"
+                  ref={(el) => (printRefs.current[order.order_number] = el)}
+                >
+                  <div className="p-5 grid lg:grid-cols-3 gap-4">
+                    {/* Left Column - Shipping & Items */}
+                    <div className="lg:col-span-2 space-y-4">
+                      {/* Shipping Details */}
+                      <div className="bg-white rounded-lg border border-gray-200 p-4">
+                        <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                          <FaMapMarkerAlt className="w-4 h-4 text-gray-600" />
+                          Shipping Details
+                        </h3>
+                        <div className="grid sm:grid-cols-2 gap-2 text-xs">
+                          <div>
+                            <span className="text-gray-500">Name:</span>
+                            <span className="ml-2 text-gray-900 font-medium">
+                              {order.shipping.first_name}{" "}
+                              {order.shipping.last_name}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-gray-500">Phone:</span>
+                            <span className="ml-2 text-gray-900 font-medium">
+                              {order.shipping.phone}
+                            </span>
+                          </div>
+                          <div className="sm:col-span-2">
+                            <span className="text-gray-500">Email:</span>
+                            <span className="ml-2 text-gray-900 font-medium break-all">
+                              {order.shipping.email}
+                            </span>
+                          </div>
+                          <div className="sm:col-span-2">
+                            <span className="text-gray-500">Address:</span>
+                            <span className="ml-2 text-gray-900 font-medium break-words">
+                              {order.shipping.address}
+                              {order.shipping.room_number &&
+                                ` (Room: ${order.shipping.room_number})`}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Order Items */}
+                      <div className="bg-white rounded-lg border border-gray-200 p-4">
+                        <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                          <FaBox className="w-4 h-4 text-gray-600" />
+                          Items ({order.order_items?.length || 0})
+                        </h3>
+                        <div className="space-y-3">
+                          {order.order_items &&
+                            order.order_items.map((item) => (
+                              <div
+                                key={item.id}
+                                className="flex gap-3 pb-3 border-b border-gray-100 last:border-0 last:pb-0"
+                              >
+                                <div className="flex-shrink-0">
+                                  {item.product.image ? (
+                                    <img
+                                      src={item.product.image}
+                                      alt={item.product.name}
+                                      className="w-14 h-14 object-cover rounded-md"
+                                    />
+                                  ) : (
+                                    <div className="w-14 h-14 bg-gray-100 rounded-md flex items-center justify-center">
+                                      <FaBox className="w-6 h-6 text-gray-400" />
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="font-medium text-gray-900 text-sm mb-1 line-clamp-1">
+                                    {item.product.name}
+                                  </h4>
+                                  <p className="text-xs text-gray-500 mb-1">
+                                    By: {item.vendor}
+                                  </p>
+                                  <div className="flex items-center justify-between">
+                                    <div className="text-xs text-gray-600">
+                                      {item.size && (
+                                        <span>Size: {item.size}</span>
+                                      )}
+                                      {item.size && item.color && (
+                                        <span className="mx-1">•</span>
+                                      )}
+                                      {item.color && (
+                                        <span>Color: {item.color}</span>
+                                      )}
+                                    </div>
+                                    <div className="text-xs font-medium text-gray-900">
+                                      Qty: {item.quantity}
+                                    </div>
+                                  </div>
+                                  <div className="mt-1 font-semibold text-gray-900 text-sm">
+                                    ₦{item.price.toLocaleString()}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right Column - Summary & Actions */}
+                    <div className="space-y-4">
+                      {/* Order Summary */}
+                      <div className="bg-white rounded-lg border border-gray-200 p-4">
+                        <h3 className="text-sm font-semibold text-gray-900 mb-3">
+                          Summary
+                        </h3>
+                        <div className="space-y-2 text-xs">
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Subtotal</span>
+                            <span className="text-gray-900 font-medium">
+                              ₦{order.subtotal.toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Shipping</span>
+                            <span className="text-gray-900 font-medium">
+                              ₦{order.shipping_fee.toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Tax</span>
+                            <span className="text-gray-900 font-medium">
+                              ₦{order.tax.toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="flex justify-between border-t border-gray-200 pt-2 mt-2">
+                            <span className="font-semibold text-gray-900">
+                              Total
+                            </span>
+                            <span className="font-bold text-gray-900 text-base">
+                              ₦{order.total.toLocaleString()}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="space-y-2">
+                        {order.order_status.toUpperCase() === "COMPLETED" &&
+                          (order.reviewed ? (
+                            <div className="flex items-center justify-center gap-2 px-4 py-2.5 bg-green-50 text-green-700 text-xs font-medium rounded-lg border border-green-200">
+                              <FaCheckCircle className="w-4 h-4" />
+                              Reviewed
+                            </div>
+                          ) : (
+                            <button
+                              className="w-full flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 text-white px-4 py-2.5 rounded-lg font-medium transition-colors disabled:opacity-50 text-xs"
+                              onClick={() => setReviewOrder(order)}
+                              disabled={submitReviewMutation.isPending}
+                            >
+                              <FaStar className="w-4 h-4" />
+                              {submitReviewMutation.isPending
+                                ? "Submitting..."
+                                : "Write Review"}
+                            </button>
+                          ))}
+
+                        {order.order_status.toUpperCase() === "DELIVERED" &&
+                          !order.confirm && (
+                            <button
+                              className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors disabled:opacity-50 text-xs"
+                              onClick={() => handleMarkAsDelivered(order.id)}
+                              disabled={markAsDeliveredMutation.isPending}
+                            >
+                              <FaCheck className="w-4 h-4" />
+                              {markAsDeliveredMutation.isPending
+                                ? "Confirming..."
+                                : "Confirm Delivery"}
+                            </button>
+                          )}
+
+                        {order.order_status.toUpperCase() === "PENDING" && (
+                          <button
+                            className="w-full flex items-center justify-center gap-2 bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors disabled:opacity-50 text-xs"
+                            onClick={() => handleContinuePayment(order)}
+                            disabled={initializePaymentMutation.isPending}
+                          >
+                            <FaCreditCard className="w-4 h-4" />
+                            {initializePaymentMutation.isPending
+                              ? "Processing..."
+                              : "Continue Payment"}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
-      {/* Pagination Component */}
+      {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center mt-8 space-x-2">
+        <div className="flex items-center justify-center mt-8 gap-2">
           <button
             onClick={() => paginate(currentPage - 1)}
             disabled={currentPage === 1}
-            className="px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+            className="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            &laquo; Prev
+            Prev
           </button>
 
-          <div className="flex space-x-1">
+          <div className="flex gap-2">
             {Array.from({ length: totalPages }, (_, i) => i + 1).map(
               (number) => (
                 <button
                   key={number}
                   onClick={() => paginate(number)}
-                  className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
+                  className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                     currentPage === number
-                      ? "bg-yellow-500 text-white"
-                      : "bg-white text-gray-700 border border-gray-300 hover:bg-yellow-50 hover:text-yellow-600"
+                      ? "bg-gray-900 text-white"
+                      : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
                   }`}
                 >
                   {number}
                 </button>
-              )
+              ),
             )}
           </div>
 
           <button
             onClick={() => paginate(currentPage + 1)}
             disabled={currentPage === totalPages}
-            className="px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+            className="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            Next &raquo;
+            Next
           </button>
         </div>
       )}

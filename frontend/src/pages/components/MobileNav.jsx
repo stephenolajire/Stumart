@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect, useRef } from "react";
 import {
   Menu,
   Search,
@@ -26,8 +26,14 @@ const MobileNav = () => {
   const [openMenu, setOpenMenu] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
 
+  const dropdownRef = useRef(null);
+
   const toggleMenu = () => {
     setOpenMenu(!openMenu);
+  };
+
+  const handleDropdownLinkClick = () => {
+    setAccountDropdownOpen(false);
   };
 
   const { isAuthenticated, clearCache, useCart } = useContext(GlobalContext);
@@ -36,6 +42,25 @@ const MobileNav = () => {
   const count = cartData?.count || 0;
 
   const navigate = useNavigate();
+
+  // Click outside handler
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setAccountDropdownOpen(false);
+      }
+    };
+
+    // Add event listener when dropdown is open
+    if (accountDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    // Cleanup
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [accountDropdownOpen]);
 
   const handleLogout = () => {
     localStorage.removeItem("access");
@@ -133,11 +158,11 @@ const MobileNav = () => {
   return (
     <header className="bg-white border-b border-gray-200 shadow-sm lg:hidden">
       {/* Top Banner - Mobile Optimized */}
-      <div className="bg-gradient-to-r from-purple-600 to-yellow-500 text-white text-xs py-2 px-4">
+      <div className="bg-linear-to-r from-purple-600 to-yellow-500 text-white text-xs py-2 px-4">
         <div className="flex items-center justify-between">
           {/* Left side - Promo */}
           <div className="flex items-center space-x-1.5">
-            <Zap className="w-3.5 h-3.5 flex-shrink-0" />
+            <Zap className="w-3.5 h-3.5 shrink-0" />
             <span className="font-medium truncate">Up to 50% OFF</span>
           </div>
 
@@ -147,7 +172,7 @@ const MobileNav = () => {
               href="tel:09006000000"
               className="flex items-center space-x-1 hover:opacity-80 transition-opacity"
             >
-              <Phone className="w-3.5 h-3.5 flex-shrink-0" />
+              <Phone className="w-3.5 h-3.5 shrink-0" />
               <span className="hidden sm:inline text-xs">0900 600 0000</span>
             </a>
             <div className="flex items-center space-x-1">
@@ -179,7 +204,7 @@ const MobileNav = () => {
           {/* Action Buttons */}
           <div className="flex items-center space-x-2">
             {/* User Account */}
-            <div className="relative">
+            <div className="relative" ref={dropdownRef}>
               <div
                 className="flex items-center space-x-2 cursor-pointer hover:text-yellow-500 transition-colors"
                 onClick={() => setAccountDropdownOpen(!accountDropdownOpen)}
@@ -203,6 +228,7 @@ const MobileNav = () => {
                     </div>
                     <Link
                       to="/profile"
+                      onClick={handleDropdownLinkClick}
                       className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                     >
                       <User className="w-4 h-4 mr-3" />
@@ -210,6 +236,7 @@ const MobileNav = () => {
                     </Link>
                     <Link
                       to="/order-history"
+                      onClick={handleDropdownLinkClick}
                       className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                     >
                       <Package className="w-4 h-4 mr-3" />
@@ -217,6 +244,7 @@ const MobileNav = () => {
                     </Link>
                     <Link
                       to="#"
+                      onClick={handleDropdownLinkClick}
                       className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                     >
                       <Heart className="w-4 h-4 mr-3" />
@@ -226,6 +254,7 @@ const MobileNav = () => {
                       <div>
                         <Link
                           to="/messages"
+                          onClick={handleDropdownLinkClick}
                           className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                         >
                           <MessageCircle className="w-4 h-4 mr-3" />
@@ -233,7 +262,10 @@ const MobileNav = () => {
                         </Link>
                         <Link
                           to="/"
-                          onClick={handleLogout}
+                          onClick={() => {
+                            handleDropdownLinkClick();
+                            handleLogout();
+                          }}
                           className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                         >
                           <LogOut className="w-4 h-4 mr-3" />
@@ -244,6 +276,7 @@ const MobileNav = () => {
                       <div>
                         <Link
                           to="/login"
+                          onClick={handleDropdownLinkClick}
                           className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                         >
                           <LogIn className="w-4 h-4 mr-3" />
@@ -252,6 +285,7 @@ const MobileNav = () => {
                         <div className="border-t border-gray-100 mt-2">
                           <Link
                             to="/register"
+                            onClick={handleDropdownLinkClick}
                             className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                           >
                             <LogOut className="w-4 h-4 mr-3" />
@@ -270,7 +304,7 @@ const MobileNav = () => {
               <button className="relative p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors duration-200">
                 <ShoppingCart className="w-6 h-6" />
                 {/* Cart Badge */}
-                <span className="absolute top-[-1px] right-[1px] bg-yellow-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                <span className="absolute -top-px right-px bg-yellow-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
                   {count}
                 </span>
               </button>

@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useRef, useEffect } from "react";
 import {
   Search,
   User,
@@ -29,6 +29,10 @@ const Navigation = () => {
   const [searchParams, setSearchParams] = useState("");
   const [isSearching, setIsSearching] = useState(false);
 
+  // Add refs for dropdowns
+  const accountDropdownRef = useRef(null);
+  const quickLinksDropdownRef = useRef(null);
+
   const { isAuthenticated, useCart, clearCache } = useContext(GlobalContext);
 
   const navigate = useNavigate();
@@ -36,6 +40,54 @@ const Navigation = () => {
   // Use the TanStack Query hook for cart data
   const { data: cartData } = useCart();
   const count = cartData?.count || 0;
+
+  // Click outside handler for account dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        accountDropdownRef.current &&
+        !accountDropdownRef.current.contains(event.target)
+      ) {
+        setAccountDropdownOpen(false);
+      }
+    };
+
+    if (accountDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [accountDropdownOpen]);
+
+  // Click outside handler for quick links dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        quickLinksDropdownRef.current &&
+        !quickLinksDropdownRef.current.contains(event.target)
+      ) {
+        setQuickLinksDropdownOpen(false);
+      }
+    };
+
+    if (quickLinksDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [quickLinksDropdownOpen]);
+
+  const handleAccountLinkClick = () => {
+    setAccountDropdownOpen(false);
+  };
+
+  const handleQuickLinkClick = () => {
+    setQuickLinksDropdownOpen(false);
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("access");
@@ -81,7 +133,7 @@ const Navigation = () => {
             },
           },
         });
-        window.location.reload()
+        window.location.reload();
       } else if (response.data.status === "not_found") {
         // Handle no results found
         navigate("/search-results", {
@@ -132,7 +184,7 @@ const Navigation = () => {
   return (
     <div className="hidden lg:block flex-1 w-full">
       {/* Top Banner */}
-      <div className="bg-gradient-to-r from-purple-600 to-yellow-500 text-white text-sm py-2 px-10 w-[calc(100%-250px)] ">
+      <div className="bg-linear-to-r from-purple-600 to-yellow-500 text-white text-sm py-2 px-10 w-[calc(100%-250px)] ">
         <div className="flex justify-between items-center w-full mx-auto">
           <div className="flex items-center space-x-6">
             <div className="flex items-center space-x-2">
@@ -205,14 +257,14 @@ const Navigation = () => {
           {/* Right Side Menu */}
           <div className="flex items-center space-x-6">
             {/* Account Dropdown */}
-            <div className="relative">
+            <div className="relative" ref={accountDropdownRef}>
               <div
                 className="flex items-center space-x-2 cursor-pointer hover:text-yellow-500 transition-colors"
                 onClick={() => setAccountDropdownOpen(!accountDropdownOpen)}
               >
                 <User className="w-5 h-5" />
                 <span className="text-base">Account</span>
-                <div className="w-3 h-3 border-b-2 border-r-2 border-gray-400 transform rotate-45 translate-y-[-2px]"></div>
+                <div className="w-3 h-3 border-b-2 border-r-2 border-gray-400 transform rotate-45 -translate-y-0.5"></div>
               </div>
 
               {accountDropdownOpen && (
@@ -226,6 +278,7 @@ const Navigation = () => {
                     </div>
                     <Link
                       to="/profile"
+                      onClick={handleAccountLinkClick}
                       className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                     >
                       <User className="w-4 h-4 mr-3" />
@@ -233,6 +286,7 @@ const Navigation = () => {
                     </Link>
                     <Link
                       to="/order-history"
+                      onClick={handleAccountLinkClick}
                       className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                     >
                       <Package className="w-4 h-4 mr-3" />
@@ -240,6 +294,7 @@ const Navigation = () => {
                     </Link>
                     <Link
                       to="#"
+                      onClick={handleAccountLinkClick}
                       className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                     >
                       <Heart className="w-4 h-4 mr-3" />
@@ -249,6 +304,7 @@ const Navigation = () => {
                       <div>
                         <Link
                           to="/messages"
+                          onClick={handleAccountLinkClick}
                           className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                         >
                           <MessageCircle className="w-4 h-4 mr-3" />
@@ -256,7 +312,10 @@ const Navigation = () => {
                         </Link>
                         <Link
                           to="/"
-                          onClick={handleLogout}
+                          onClick={() => {
+                            handleAccountLinkClick();
+                            handleLogout();
+                          }}
                           className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                         >
                           <LogOut className="w-4 h-4 mr-3" />
@@ -267,6 +326,7 @@ const Navigation = () => {
                       <div>
                         <Link
                           to="/login"
+                          onClick={handleAccountLinkClick}
                           className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                         >
                           <LogIn className="w-4 h-4 mr-3" />
@@ -275,6 +335,7 @@ const Navigation = () => {
                         <div className="border-t border-gray-100 mt-2">
                           <Link
                             to="/register"
+                            onClick={handleAccountLinkClick}
                             className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                           >
                             <LogOut className="w-4 h-4 mr-3" />
@@ -289,7 +350,7 @@ const Navigation = () => {
             </div>
 
             {/* Quick Links Dropdown */}
-            <div className="relative">
+            <div className="relative" ref={quickLinksDropdownRef}>
               <div
                 className="flex items-center space-x-2 cursor-pointer hover:text-yellow-500 transition-colors"
                 onClick={() =>
@@ -298,7 +359,7 @@ const Navigation = () => {
               >
                 <HelpCircle className="w-5 h-5" />
                 <span className="text-base">Quick Links</span>
-                <div className="w-3 h-3 border-b-2 border-r-2 border-gray-400 transform rotate-45 translate-y-[-2px]"></div>
+                <div className="w-3 h-3 border-b-2 border-r-2 border-gray-400 transform rotate-45 -translate-y-0.5"></div>
               </div>
 
               {quickLinksDropdownOpen && (
@@ -306,6 +367,7 @@ const Navigation = () => {
                   <div className="py-2">
                     <Link
                       to="/about"
+                      onClick={handleQuickLinkClick}
                       className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                     >
                       <Headphones className="w-4 h-4 mr-3" />
@@ -313,6 +375,7 @@ const Navigation = () => {
                     </Link>
                     <Link
                       to="/rider"
+                      onClick={handleQuickLinkClick}
                       className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                     >
                       <Truck className="w-4 h-4 mr-3" />
@@ -320,6 +383,7 @@ const Navigation = () => {
                     </Link>
                     <Link
                       to="/vendors"
+                      onClick={handleQuickLinkClick}
                       className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                     >
                       <Gift className="w-4 h-4 mr-3" />
@@ -328,6 +392,7 @@ const Navigation = () => {
 
                     <Link
                       to="/contact"
+                      onClick={handleQuickLinkClick}
                       className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                     >
                       <Phone className="w-4 h-4 mr-3" />
