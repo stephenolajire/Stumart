@@ -16,6 +16,7 @@ from io import BytesIO
 from django.http import HttpResponse
 from decimal import Decimal
 import logging
+from .utils import send_admin_notifications
 
 from payment.payment_client import AutomatedPayoutService
 logger = logging.getLogger(__name__)
@@ -521,18 +522,18 @@ class PaystackPaymentVerifyView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, *args, **kwargs):
+        order_number = None  # Initialize outside try block
+        
         try:
             reference = request.query_params.get('reference')
-            cart_code = request.query_params.get('cart_code')  # Get cart_code from query params
+            cart_code = request.query_params.get('cart_code')
             
-            # Check if reference is valid
             if not reference:
                 return Response({
                     'status': 'failed',
                     'message': 'Reference parameter is required'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
-            # Get transaction first to check if already processed
             transaction = Transaction.objects.filter(transaction_id=reference).first()
             
             if not transaction:
@@ -541,15 +542,13 @@ class PaystackPaymentVerifyView(APIView):
                     'message': 'Transaction not found'
                 }, status=status.HTTP_404_NOT_FOUND)
                 
-            # Idempotency check - if transaction is already completed, don't process again
             if transaction.status == 'COMPLETED':
                 return Response({
                     'status': 'success',
                     'message': 'Payment already verified',
-                    # 'order_number': order.order_number
+                    'order_number': transaction.order.order_number
                 }, status=status.HTTP_200_OK)
             
-            # Only verify with Paystack if transaction hasn't been completed
             url = f"https://api.paystack.co/transaction/verify/{reference}"
             headers = {
                 "Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}",
@@ -573,19 +572,17 @@ class PaystackPaymentVerifyView(APIView):
                     'message': 'Payment failed or was canceled'
                 }, status=status.HTTP_400_BAD_REQUEST)
 
-            # Payment was successful - use transaction to prevent race conditions
             from django.db import transaction as db_transaction
             
             with db_transaction.atomic():
-                # Lock the transaction record for update
                 transaction_obj = Transaction.objects.select_for_update().get(id=transaction.id)
                 
-                # Double-check transaction status after lock
                 if transaction_obj.status == 'COMPLETED':
+                    order_number = transaction_obj.order.order_number
                     return Response({
                         'status': 'success',
                         'message': 'Payment already verified',
-                        'order_number': order.order_number
+                        'order_number': order_number
                     }, status=status.HTTP_200_OK)
                 
                 transaction_obj.status = 'COMPLETED'
@@ -594,7 +591,6 @@ class PaystackPaymentVerifyView(APIView):
 
                 order = transaction_obj.order
                 
-                # Check if order is already paid
                 if order.order_status != 'PAID':
                     order.order_status = 'PAID'
                     order.save()
@@ -604,27 +600,22 @@ class PaystackPaymentVerifyView(APIView):
                 vendors_to_notify = set()
                 notified_vendors = set()
 
-                # First, collect all the vendors to avoid the join error
                 for item in order_items:
                     if hasattr(item, 'vendor') and item.vendor is not None:
                         vendors_to_notify.add(item.vendor)
                         
-                        # Add to vendor wallet totals
                         item_total = item.price * item.quantity
                         if item.vendor.id in vendor_totals:
                             vendor_totals[item.vendor.id] += item_total
                         else:
                             vendor_totals[item.vendor.id] = item_total
 
-                # Process product stock updates with improved error handling
                 for item in order_items:
                     product = item.product
                     
-                    # Update main product stock
                     product.in_stock = max(product.in_stock - item.quantity, 0)
                     product.save()
 
-                    # Update size stock if applicable
                     if hasattr(item, 'size') and item.size:
                         try:
                             size_obj = ProductSize.objects.get(product=product, size=item.size)
@@ -632,14 +623,12 @@ class PaystackPaymentVerifyView(APIView):
                             size_obj.save()
                             logger.info(f"Updated size inventory for product {product.id}, size {item.size}, new quantity: {size_obj.quantity}")
                             
-                            # Check if out of stock notification is needed
                             if size_obj.quantity == 0 and hasattr(item, 'vendor') and item.vendor is not None:
                                 if item.vendor not in notified_vendors:
                                     notified_vendors.add(item.vendor)
                         except ProductSize.DoesNotExist:
                             logger.warning(f"Size {item.size} not found for product {product.id}")
                     
-                    # Update color stock if applicable
                     if hasattr(item, 'color') and item.color:
                         try:
                             color_obj = ProductColor.objects.get(product=product, color=item.color)
@@ -649,7 +638,6 @@ class PaystackPaymentVerifyView(APIView):
                         except ProductColor.DoesNotExist:
                             logger.warning(f"Color {item.color} not found for product {product.id}")
                 
-                # Send out of stock notifications
                 for vendor in notified_vendors:
                     try:
                         send_mail(
@@ -666,46 +654,20 @@ class PaystackPaymentVerifyView(APIView):
                     except Exception as e:
                         logger.error(f"Failed to send out-of-stock email to vendor {vendor.id}: {str(e)}")
 
-                # Update vendor wallets - with better error handling
-                # for vendor_id, amount in vendor_totals.items():
-                #     try:
-                #         vendor = Vendor.objects.get(id=vendor_id)
-                #         wallet, created = Wallet.objects.get_or_create(
-                #             vendor=vendor,
-                #             defaults={'balance': 0}
-                #         )
-                #         wallet.balance += amount
-                #         wallet.save()
-                #         logger.info(f"Updated wallet for vendor {vendor_id}, new balance: {wallet.balance}")
-                #     except Vendor.DoesNotExist:
-                #         logger.error(f"Vendor with ID {vendor_id} not found when processing payment")
-                #         continue
-
-                # Send order notifications to all vendors - improved implementation
                 for vendor in vendors_to_notify:
                     try:
-                        # Filter items for this specific vendor
                         vendor_items = []
-                        vendor_total = 0  # Initialize total for this vendor
+                        vendor_total = 0
                         
                         for item in order_items:
                             if hasattr(item, 'vendor') and item.vendor is not None and item.vendor.id == vendor.id:
-                                # Ensure price is a valid number
                                 item_price = item.price if item.price is not None else 0
-                                    
-                                # Calculate the total for each item
                                 item_subtotal = item_price * item.quantity
-                                
-                                # Add calculated subtotal as a property to the item for template use
                                 item.subtotal = item_subtotal
-                                
-                                # Add to vendor total
                                 vendor_total += item_subtotal
-                                
                                 vendor_items.append(item)
                         
                         if vendor_items:
-                            # Create complete context for template
                             vendor_context = {
                                 "order": order,
                                 "vendor_items": vendor_items,
@@ -715,32 +677,28 @@ class PaystackPaymentVerifyView(APIView):
                                 "dashboard_url": f"{settings.FRONTEND_URL}/vendor/dashboard/orders/{order.order_number}"
                             }
                             
-                            # Render HTML email template
                             vendor_html_content = render_to_string("email/ordered.html", vendor_context)
                             
-                            # Generate PDF with WeasyPrint
                             pdf_buffer = BytesIO()
                             HTML(string=vendor_html_content).write_pdf(pdf_buffer)
-                            pdf_buffer.seek(0)  # Reset buffer position to the beginning
+                            pdf_buffer.seek(0)
 
-                            # Email buyer receipt
-                            email_subject = f"Your Order Receipt - #{order.order_number}"
+                            email_subject = f"New Order Notification - #{order.order_number}"
                             email = EmailMultiAlternatives(
                                 subject=email_subject,
-                                body="Your order receipt is attached as a PDF.",
+                                body="You have received a new order. Details are attached as a PDF.",
                                 from_email=settings.DEFAULT_FROM_EMAIL,
                                 to=[vendor.user.email],
                             )
                             email.attach_alternative(vendor_html_content, "text/html")
-                            email.attach(f"receipt_{order.order_number}.pdf", pdf_buffer.getvalue(), "application/pdf")
+                            email.attach(f"order_{order.order_number}.pdf", pdf_buffer.getvalue(), "application/pdf")
                             email.send()
                             
                             logger.info(f"Order notification sent to vendor {vendor.id} for order {order.order_number}")
                     except Exception as e:
                         logger.error(f"Error sending notification to vendor {vendor.id}: {str(e)}", exc_info=True)
-                        continue  # Continue with other vendors even if one fails
+                        continue
 
-                # Delete the cart after successful payment
                 if cart_code:
                     try:
                         cart = Cart.objects.get(cart_code=cart_code)
@@ -751,14 +709,9 @@ class PaystackPaymentVerifyView(APIView):
                     except Exception as e:
                         logger.error(f"Error deleting cart {cart_code}: {str(e)}")
 
-                # Prepare receipt PDF for the customer
                 try:
-                    # Process order items to add total
                     for item in order_items:
-                        # Ensure price is a valid number
                         item_price = item.price if item.price is not None else 0
-                        
-                        # Calculate the total for each item
                         item.total = item_price * item.quantity
                     
                     context = {
@@ -769,12 +722,10 @@ class PaystackPaymentVerifyView(APIView):
 
                     html_content = render_to_string("email/receipts.html", context)
 
-                    # Generate PDF with WeasyPrint
                     pdf_buffer = BytesIO()
                     HTML(string=html_content).write_pdf(pdf_buffer)
-                    pdf_buffer.seek(0)  # Reset buffer position to the beginning
+                    pdf_buffer.seek(0)
 
-                    # Email buyer receipt
                     email_subject = f"Your Order Receipt - #{order.order_number}"
                     email = EmailMultiAlternatives(
                         subject=email_subject,
@@ -790,10 +741,19 @@ class PaystackPaymentVerifyView(APIView):
                 except Exception as e:
                     logger.error(f"Error with receipt generation or sending: {str(e)}", exc_info=True)
 
+                try:
+                    send_admin_notifications(order, order_items)
+                except Exception as e:
+                    logger.error(f"Error sending admin notifications: {str(e)}", exc_info=True)
+
+                # Store order_number before exiting atomic block
+                order_number = order.order_number
+
+            # Now outside the atomic block, use the stored order_number
             return Response({
                 'status': 'success',
                 'message': 'Payment verified successfully',
-                'order_number': order.order_number
+                'order_number': order_number
             }, status=status.HTTP_200_OK)
 
         except Exception as e:

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Order Receipt</title>
+    <title>New Order - Admin Notification</title>
     <style>
         * {
             margin: 0;
@@ -34,35 +34,27 @@
         }
         
         .shop-name {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: bold;
-            letter-spacing: 2px;
-            margin-bottom: 5px;
-        }
-        
-        .shop-tagline {
-            font-size: 10px;
-            color: #666;
-            margin-bottom: 12px;
-            letter-spacing: 0.5px;
-        }
-        
-        .receipt-title {
-            font-size: 14px;
-            font-weight: bold;
-            margin-top: 10px;
             letter-spacing: 1px;
+            margin-bottom: 8px;
         }
         
-        .success-badge {
+        .notification-badge {
             background-color: #000;
             color: #fff;
             padding: 4px 12px;
-            font-size: 10px;
+            font-size: 11px;
             font-weight: bold;
             display: inline-block;
-            margin-top: 10px;
+            margin-top: 8px;
             letter-spacing: 0.5px;
+        }
+        
+        .header-text {
+            font-size: 11px;
+            color: #666;
+            margin-top: 5px;
         }
         
         .receipt-section {
@@ -73,22 +65,20 @@
         .section-title {
             font-weight: bold;
             margin-bottom: 8px;
-            font-size: 11px;
+            font-size: 13px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            color: #000;
         }
         
         .info-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 5px;
-            line-height: 1.4;
+            margin-bottom: 6px;
+            line-height: 1.5;
         }
         
         .info-label {
             color: #666;
-            font-size: 11px;
         }
         
         .info-value {
@@ -96,7 +86,6 @@
             text-align: right;
             max-width: 60%;
             word-wrap: break-word;
-            font-size: 11px;
         }
         
         .divider {
@@ -114,8 +103,8 @@
         }
         
         .item-row {
-            margin-bottom: 15px;
-            padding-bottom: 10px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
             border-bottom: 1px dotted #ccc;
         }
         
@@ -123,95 +112,65 @@
             border-bottom: none;
         }
         
-        .item-name {
+        .item-header {
             font-weight: bold;
             margin-bottom: 4px;
             font-size: 12px;
         }
         
         .item-details {
-            font-size: 10px;
+            font-size: 11px;
             color: #666;
-            margin-bottom: 6px;
-            line-height: 1.3;
+            margin-bottom: 4px;
         }
         
         .item-pricing {
             display: flex;
             justify-content: space-between;
-            font-size: 11px;
-            margin-top: 4px;
-        }
-        
-        .qty-price {
-            color: #666;
-        }
-        
-        .item-total {
-            font-weight: bold;
+            font-size: 12px;
+            margin-top: 6px;
         }
         
         .totals-section {
             margin-top: 20px;
             padding-top: 15px;
-            border-top: 1px dashed #333;
+            border-top: 2px dashed #333;
         }
         
         .total-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 6px;
-            font-size: 11px;
-        }
-        
-        .total-label {
-            text-transform: uppercase;
-        }
-        
-        .total-row.subtotal {
-            padding-bottom: 8px;
+            margin-bottom: 8px;
+            font-size: 12px;
         }
         
         .total-row.grand-total {
-            font-size: 15px;
+            font-size: 16px;
             font-weight: bold;
-            margin-top: 10px;
-            padding-top: 10px;
+            margin-top: 12px;
+            padding-top: 12px;
             border-top: 2px solid #000;
         }
         
-        .thank-you {
+        .receipt-footer {
             text-align: center;
-            margin: 20px 0;
-            padding: 15px 0;
+            margin-top: 25px;
+            padding-top: 20px;
             border-top: 2px dashed #333;
-            border-bottom: 2px dashed #333;
-        }
-        
-        .thank-you-text {
-            font-size: 13px;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        
-        .thank-you-subtext {
-            font-size: 10px;
+            font-size: 11px;
             color: #666;
         }
         
-        .contact-section {
-            text-align: center;
-            margin-top: 15px;
-            font-size: 10px;
-            color: #666;
-            line-height: 1.5;
-        }
-        
-        .contact-section .contact-title {
+        .footer-note {
+            margin-bottom: 8px;
             font-weight: bold;
             color: #000;
-            margin-bottom: 5px;
-            font-size: 11px;
+        }
+        
+        .timestamp {
+            font-size: 10px;
+            margin-top: 15px;
+            color: #999;
         }
         
         .barcode {
@@ -236,21 +195,6 @@
             font-size: 10px;
             letter-spacing: 2px;
             margin-top: 5px;
-            color: #666;
-        }
-        
-        .receipt-footer {
-            text-align: center;
-            margin-top: 20px;
-            padding-top: 15px;
-            border-top: 1px dashed #999;
-            font-size: 9px;
-            color: #999;
-            line-height: 1.5;
-        }
-        
-        .footer-line {
-            margin-bottom: 3px;
         }
         
         @media print {
@@ -271,24 +215,24 @@
         <!-- Header -->
         <div class="receipt-header">
             <div class="shop-name">STUMART</div>
-            <div class="shop-tagline">YOUR CAMPUS MARKETPLACE</div>
-            <div class="receipt-title">SALES RECEIPT</div>
-            <div class="success-badge">PAID</div>
+            <div class="header-text">ADMIN NOTIFICATION</div>
+            <div class="notification-badge">NEW ORDER</div>
         </div>
         
         <!-- Order Info -->
         <div class="receipt-section">
+            <div class="section-title">Order Details</div>
             <div class="info-row">
-                <span class="info-label">Receipt No:</span>
+                <span class="info-label">Order No:</span>
                 <span class="info-value">{{ order.order_number }}</span>
             </div>
             <div class="info-row">
                 <span class="info-label">Date:</span>
-                <span class="info-value">{{ order.created_at|date:"M d, Y" }}</span>
+                <span class="info-value">{{ order.created_at|date:"M d, Y h:i A" }}</span>
             </div>
             <div class="info-row">
-                <span class="info-label">Time:</span>
-                <span class="info-value">{{ order.created_at|date:"h:i A" }}</span>
+                <span class="info-label">Status:</span>
+                <span class="info-value">{{ order.order_status }}</span>
             </div>
             <div class="info-row">
                 <span class="info-label">Payment:</span>
@@ -300,7 +244,7 @@
         
         <!-- Customer Info -->
         <div class="receipt-section">
-            <div class="section-title">Customer Details</div>
+            <div class="section-title">Customer</div>
             <div class="info-row">
                 <span class="info-label">Name:</span>
                 <span class="info-value">{{ order.first_name }} {{ order.last_name }}</span>
@@ -313,13 +257,19 @@
                 <span class="info-label">Phone:</span>
                 <span class="info-value">{{ order.phone }}</span>
             </div>
+            {% if order.user.institution %}
+            <div class="info-row">
+                <span class="info-label">Institution:</span>
+                <span class="info-value">{{ order.user.institution }}</span>
+            </div>
+            {% endif %}
         </div>
         
         <div class="divider"></div>
         
-        <!-- Shipping Address -->
+        <!-- Delivery Address -->
         <div class="receipt-section">
-            <div class="section-title">Shipping Address</div>
+            <div class="section-title">Delivery</div>
             <div class="info-row">
                 <span class="info-label">Address:</span>
                 <span class="info-value">{{ order.address }}</span>
@@ -336,20 +286,22 @@
         
         <!-- Items -->
         <div class="items-section">
-            <div class="section-title">Items Purchased</div>
+            <div class="section-title">Items Ordered</div>
             {% for item in order_items %}
             <div class="item-row">
-                <div class="item-name">{{ item.product.name }}</div>
-                {% if item.size or item.color %}
+                <div class="item-header">{{ item.product.name }}</div>
                 <div class="item-details">
+                    Vendor: {{ item.vendor.business_name|default:"N/A" }}
+                    {% if item.size or item.color %}
+                    <br>
                     {% if item.size %}Size: {{ item.size }}{% endif %}
                     {% if item.size and item.color %} | {% endif %}
                     {% if item.color %}Color: {{ item.color }}{% endif %}
+                    {% endif %}
                 </div>
-                {% endif %}
                 <div class="item-pricing">
-                    <span class="qty-price">{{ item.quantity }} x ₦{{ item.price|floatformat:2 }}</span>
-                    <span class="item-total">₦{{ item.total|floatformat:2 }}</span>
+                    <span>{{ item.quantity }} x ₦{{ item.price|floatformat:2 }}</span>
+                    <span><strong>₦{{ item.total|floatformat:2 }}</strong></span>
                 </div>
             </div>
             {% endfor %}
@@ -359,35 +311,22 @@
         
         <!-- Totals -->
         <div class="totals-section">
-            <div class="total-row subtotal">
-                <span class="total-label">Subtotal:</span>
+            <div class="total-row">
+                <span>Subtotal:</span>
                 <span>₦{{ order.subtotal|floatformat:2 }}</span>
             </div>
             <div class="total-row">
-                <span class="total-label">Shipping:</span>
+                <span>Shipping:</span>
                 <span>₦{{ order.shipping_fee|floatformat:2 }}</span>
             </div>
             <div class="total-row">
-                <span class="total-label">Tax:</span>
+                <span>Tax:</span>
                 <span>₦{{ order.tax|floatformat:2 }}</span>
             </div>
             <div class="total-row grand-total">
-                <span class="total-label">TOTAL:</span>
+                <span>TOTAL:</span>
                 <span>₦{{ order.total|floatformat:2 }}</span>
             </div>
-        </div>
-        
-        <!-- Thank You -->
-        <div class="thank-you">
-            <div class="thank-you-text">THANK YOU FOR YOUR PURCHASE!</div>
-            <div class="thank-you-subtext">We appreciate your business</div>
-        </div>
-        
-        <!-- Contact Info -->
-        <div class="contact-section">
-            <div class="contact-title">NEED HELP?</div>
-            <div>Email: support@stumart.com</div>
-            <div>Phone: +234 123 456 7890</div>
         </div>
         
         <!-- Barcode -->
@@ -398,9 +337,13 @@
         
         <!-- Footer -->
         <div class="receipt-footer">
-            <div class="footer-line">This is a computer-generated receipt</div>
-            <div class="footer-line">Valid without signature</div>
-            <div class="footer-line">© {{ current_year }} Stumart. All Rights Reserved</div>
+            <div class="footer-note">ADMIN NOTIFICATION</div>
+            <div>This order requires your attention</div>
+            <div>Monitor in admin dashboard</div>
+            <div class="timestamp">
+                Generated: {{ current_year }}<br>
+                Stumart © All Rights Reserved
+            </div>
         </div>
     </div>
 </body>

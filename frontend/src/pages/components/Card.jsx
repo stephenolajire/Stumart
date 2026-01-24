@@ -44,7 +44,7 @@ const Card = ({ products }) => {
             {/* Discount Badge */}
             {discountPercentage && (
               <div className="absolute top-3 left-3 z-20">
-                <div className="bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                <div className="bg-linear-to-r from-red-500 to-red-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
                   {discountPercentage}% OFF
                 </div>
               </div>

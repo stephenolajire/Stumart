@@ -7,7 +7,7 @@ const CategoryHeader = ({name}) => {
       <div>
         <h2 className="md:text-3xl text-2xl font-bold text-gray-900 mb-2">
           {name} <span className="text-yellow-500">|</span>
-          <span className="bg-gradient-to-r from-yellow-500 to-yellow-500 bg-clip-text text-transparent ml-2">
+          <span className="bg-linear-to-r from-yellow-500 to-yellow-500 bg-clip-text text-transparent ml-2">
             Category
           </span>
         </h2>

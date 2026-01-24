@@ -25,10 +25,7 @@ class DeliveryOpportunity(models.Model):
     delivery_confirmation_code = models.CharField(max_length=100, blank=True, null=True, unique=True)
     customer_confirmation_code = models.CharField(max_length=100, blank=True, null=True, unique=True)
 
-    # For company riders (they don't have User accounts)
     company_rider = models.ForeignKey(CompanyRider, null=True, blank=True, on_delete=models.SET_NULL, related_name='delivery_opportunities')
-    
-    # For regular/student pickers (they have User accounts)
     user_picker = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='delivery_opportunities')
     
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
@@ -36,12 +33,12 @@ class DeliveryOpportunity(models.Model):
     accepted_at = models.DateTimeField(null=True, blank=True)
     expires_at = models.DateTimeField()
     
-    # Additional details when accepted
     accepted_rider_name = models.CharField(max_length=150, blank=True)
     accepted_rider_phone = models.CharField(max_length=20, blank=True)
     pickup_time = models.CharField(max_length=100, blank=True)
     
     class Meta:
+        db_table = 'order_deliveryopportunity'  # ADD THIS LINE
         ordering = ['-created_at']
         indexes = [
             models.Index(fields=['unique_code']),

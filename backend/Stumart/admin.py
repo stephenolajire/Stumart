@@ -62,6 +62,9 @@ from .models import Order, OrderItem, Transaction
 from django.contrib import messages
 from django.db import transaction
 
+from django.contrib import admin, messages
+from django.db import transaction
+
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     list_display = ['order_number', 'user', 'first_name', 'last_name', 'email', 'total', 'order_status', 'created_at', 'confirm', 'picker', 'packed']
@@ -69,40 +72,19 @@ class OrderAdmin(admin.ModelAdmin):
     search_fields = ['order_number', 'email', 'first_name', 'last_name']
     readonly_fields = ['order_number', 'created_at']
 
-    def delete_model(self, request, obj):
-        """Override delete to handle delivery opportunities"""
-        try:
-            with transaction.atomic():
-                # Delete delivery opportunities first
-                delivery_count = obj.delivery_opportunities.count()
-                obj.delivery_opportunities.all().delete()
-                
-                # Now delete the order
-                obj.delete()
-                
-                messages.success(
-                    request, 
-                    f"Order {obj.order_number} and {delivery_count} delivery opportunities deleted."
-                )
-        except Exception as e:
-            messages.error(request, f"Error deleting order: {str(e)}")
-    
     def delete_queryset(self, request, queryset):
-        """Handle bulk deletion"""
+        """Handle bulk deletion with proper cascade"""
         try:
             with transaction.atomic():
-                total_opportunities = 0
-                for order in queryset:
-                    count = order.delivery_opportunities.count()
-                    total_opportunities += count
-                    order.delivery_opportunities.all().delete()
-                
                 order_count = queryset.count()
-                queryset.delete()
+                
+                # Django will now handle cascading deletes automatically
+                # because it can see the delivery opportunities
+                deleted_count, details = queryset.delete()
                 
                 messages.success(
                     request, 
-                    f"{order_count} orders and {total_opportunities} delivery opportunities deleted."
+                    f"Successfully deleted {order_count} orders and related records."
                 )
         except Exception as e:
             messages.error(request, f"Error in bulk deletion: {str(e)}")
@@ -161,3 +143,5 @@ class VendorReviewAdmin(admin.ModelAdmin):
 
 admin.site.register(AddProductVideo)
 admin.site.register(RegisterVideo)
+
+    

@@ -534,7 +534,7 @@ const Checkout = () => {
                         htmlFor="room"
                         className="block text-sm font-medium text-gray-700 mb-2"
                       >
-                        Room Number
+                        Delivery Address
                       </label>
                       <input
                         type="text"
@@ -563,7 +563,7 @@ const Checkout = () => {
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="flex-1 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]"
+                    className="flex-1 bg-linear-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]"
                   >
                     {isLoading ? (
                       <span className="flex items-center justify-center">
@@ -593,7 +593,7 @@ const Checkout = () => {
                     className="border-b border-gray-100 pb-4 last:border-b-0 last:pb-0"
                   >
                     <div className="flex items-start space-x-4">
-                      <div className="relative flex-shrink-0">
+                      <div className="relative shrink-0">
                         <img
                           src={item.product_image}
                           alt={item.product_name}

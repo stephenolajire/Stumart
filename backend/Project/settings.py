@@ -479,3 +479,7 @@ CRONJOBS = [
 # Add command prefix for easier identification
 CRONTAB_COMMAND_PREFIX = 'DJANGO_SETTINGS_MODULE=stumart.settings'
 
+import os
+
+ADMIN_EMAILS = [email.strip() for email in os.environ.get('ADMIN_EMAILS', '').split(',') if email.strip()]
+

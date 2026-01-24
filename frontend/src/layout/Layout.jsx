@@ -88,22 +88,25 @@ const Layout = () => {
 
       {/* Learn More Button */}
       <button
-        className="bg-green-500 fixed bottom-22 lg:bottom-20 right-[1rem] lg:right-[1.5rem] w-[3.5rem] h-[3.5rem] rounded-full flex items-center justify-center "
+        className="bg-green-500 fixed bottom-22 lg:bottom-20 right-4 lg:right-6 w-14 h-14 rounded-full flex items-center justify-center "
         onClick={toggleModal}
         aria-label="Learn how to use platform"
       >
-        <FaPlayCircle size={24} className="text-white"/>
+        <FaPlayCircle size={24} className="text-white" />
       </button>
 
       {/* Selection Modal */}
       {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center p-[1.5rem] z-100000" onClick={toggleModal}>
+        <div
+          className="fixed inset-0 flex items-center justify-center p-6 z-100000"
+          onClick={toggleModal}
+        >
           <div
-            className='bg-white rounded-[1.1rem] relative w-full max-w-[75rem] shadow-sm shadow-gray-500'
+            className="bg-white rounded-[1.1rem] relative w-full max-w-300 shadow-sm shadow-gray-500"
             onClick={(e) => e.stopPropagation()}
           >
             <button
-              className='absolute top-[1.1rem] right-[1.1rem] text-amber-700 text-lg cursor-pointer padding-[0.3rem]'
+              className="absolute top-[1.1rem] right-[1.1rem] text-amber-700 text-lg cursor-pointer padding-[0.3rem]"
               onClick={toggleModal}
               aria-label="Close selection"
             >
