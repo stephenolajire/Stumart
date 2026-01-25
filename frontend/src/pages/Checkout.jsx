@@ -50,7 +50,7 @@ const Checkout = () => {
     const currentHour = now.getHours();
     const currentMinute = now.getMinutes();
 
-    const DELIVERY_START_HOUR = 7; // 7 AM
+    const DELIVERY_START_HOUR = 8; // 8 AM
     const DELIVERY_END_HOUR = 18; // 6 PM (18:00)
 
     // Check if current time is within delivery hours
