@@ -204,6 +204,7 @@ class ClearCartView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+
 class CartItemsView(APIView):
     permission_classes = [AllowAny]
 
@@ -265,15 +266,80 @@ class CartItemsView(APIView):
                 sub_total = Decimal("0.00")
                 vendor_count = 0
 
-            # NEW SHIPPING FEE LOGIC
+            # Import the Order app's models
+            from order.models import Vendor as OrderVendor, School
+
+            # NEW SHIPPING FEE LOGIC WITH DYNAMIC PRICING
             if vendor_count == 0:
                 shipping_fee = Decimal("0.00")
-            elif vendor_count == 1:
-                shipping_fee = Decimal("500.00")
-            elif 2 <= vendor_count < 4:
-                shipping_fee = Decimal("600.00")
-            else:  # vendor_count >= 4
-                shipping_fee = Decimal("800.00")
+            else:
+                # Try to find a vendor with a registered delivery fee
+                base_delivery_fee = None
+                
+                for item in cart_items:
+                    if item.product and item.product.vendor:
+                        vendor_user = item.product.vendor  # This is a User object
+                        
+                        # Check if this user has a vendor profile
+                        if not hasattr(vendor_user, 'vendor_profile'):
+                            continue
+                        
+                        user_vendor = vendor_user.vendor_profile  # Get the actual Vendor object
+                        business_name = user_vendor.business_name
+                        institution = vendor_user.institution  # Institution is on User model
+                        
+                        # Check if this vendor belongs to the Order app's School/Vendor system
+                        try:
+                            # First, check if the school exists
+                            school = School.objects.filter(name__iexact=institution).first()
+                            
+                            if school:
+                                # Then check if vendor is registered in this school
+                                order_vendor = OrderVendor.objects.filter(
+                                    school=school,
+                                    business_name__iexact=business_name,
+                                    is_active=True
+                                ).first()
+                                
+                                if order_vendor:
+                                    # Vendor belongs to the school system, use their delivery fee
+                                    base_delivery_fee = order_vendor.delivery_fee
+                                    print(f"Found registered vendor: {business_name} in {school.name} with fee: {base_delivery_fee}")
+                                    break  # Found a registered vendor, use their fee
+                                else:
+                                    print(f"Vendor {business_name} found in User app but not registered in school {school.name}")
+                            else:
+                                print(f"School {institution} not found in Order app")
+                                
+                        except Exception as e:
+                            print(f"Error checking vendor registration: {e}")
+                            import traceback
+                            print(traceback.format_exc())
+                            continue
+                
+                # Calculate shipping fee based on vendor count
+                if base_delivery_fee:
+                    # Use vendor's registered delivery fee as base
+                    if vendor_count == 1:
+                        shipping_fee = base_delivery_fee
+                    elif vendor_count == 2:
+                        shipping_fee = base_delivery_fee + Decimal("100.00")
+                    elif vendor_count == 3:
+                        shipping_fee = base_delivery_fee + Decimal("200.00")
+                    else:  # vendor_count >= 4
+                        shipping_fee = base_delivery_fee + Decimal("300.00")
+                    
+                    print(f"Using registered delivery fee: base={base_delivery_fee}, final={shipping_fee}")
+                else:
+                    # Fallback to hardcoded pricing if no vendor found in school system
+                    if vendor_count == 1:
+                        shipping_fee = Decimal("500.00")
+                    elif 2 <= vendor_count < 4:
+                        shipping_fee = Decimal("600.00")
+                    else:  # vendor_count >= 4
+                        shipping_fee = Decimal("800.00")
+                    
+                    print(f"Using fallback pricing: {shipping_fee} (no vendor registered in school system)")
 
             # FLAT TAX RATE
             tax = Decimal("100.00")

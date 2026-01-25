@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { GlobalContext, useArea } from "../constant/GlobalContext";
 import { useNavigate } from "react-router-dom";
@@ -27,7 +27,6 @@ const Checkout = () => {
   const queryClient = useQueryClient();
 
   const { data: areaData, isLoading: areaLoading } = useArea();
-  // console.log("Area Data:", areaData);
 
   // Get cart data using the hook from context
   const {
@@ -44,6 +43,82 @@ const Checkout = () => {
     tax: 0,
     total: 0,
   };
+
+  // Check delivery time availability
+  const checkDeliveryTimeAvailability = () => {
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+
+    const DELIVERY_START_HOUR = 7; // 7 AM
+    const DELIVERY_END_HOUR = 18; // 6 PM (18:00)
+
+    // Check if current time is within delivery hours
+    if (currentHour >= DELIVERY_START_HOUR && currentHour < DELIVERY_END_HOUR) {
+      return { available: true };
+    }
+
+    // Before 7 AM
+    if (currentHour < DELIVERY_START_HOUR) {
+      const hoursUntilStart = DELIVERY_START_HOUR - currentHour;
+      const minutesUntilStart = 60 - currentMinute;
+
+      let timeMessage;
+      if (hoursUntilStart === 1 && minutesUntilStart < 60) {
+        const totalMinutes = minutesUntilStart;
+        timeMessage = `${totalMinutes} minute${totalMinutes !== 1 ? "s" : ""}`;
+      } else if (hoursUntilStart > 1) {
+        const adjustedHours =
+          minutesUntilStart === 60 ? hoursUntilStart : hoursUntilStart - 1;
+        timeMessage = `${adjustedHours} hour${adjustedHours !== 1 ? "s" : ""} and ${minutesUntilStart} minute${minutesUntilStart !== 1 ? "s" : ""}`;
+      } else {
+        timeMessage = `${minutesUntilStart} minute${minutesUntilStart !== 1 ? "s" : ""}`;
+      }
+
+      return {
+        available: false,
+        type: "before",
+        message: `Our delivery riders are not available yet. Please come back in ${timeMessage}.`,
+        title: "Too Early for Delivery",
+      };
+    }
+
+    // After 6 PM
+    if (currentHour >= DELIVERY_END_HOUR) {
+      return {
+        available: false,
+        type: "after",
+        message:
+          "Our delivery riders are no longer available for today. Please come back tomorrow after 7:00 AM.",
+        title: "Delivery Hours Ended",
+      };
+    }
+
+    return { available: true };
+  };
+
+  // Show delivery time alert on component mount
+  useEffect(() => {
+    const deliveryCheck = checkDeliveryTimeAvailability();
+
+    if (!deliveryCheck.available) {
+      Swal.fire({
+        icon: "warning",
+        title: deliveryCheck.title,
+        text: deliveryCheck.message,
+        confirmButtonText: "Understood",
+        confirmButtonColor: "#EAB308",
+        allowOutsideClick: false,
+        customClass: {
+          popup: "delivery-time-alert",
+        },
+      }).then((result) => {
+        if (result.isConfirmed) {
+          navigate(-1);
+        }
+      });
+    }
+  }, []);
 
   // Create order mutation
   const createOrderMutation = useMutation({
@@ -127,12 +202,12 @@ const Checkout = () => {
     if (areaId) {
       // Find selected area and set address
       const selectedArea = areaData.find(
-        (area) => area.id.toString() === areaId
+        (area) => area.id.toString() === areaId,
       );
       if (selectedArea) {
         setFormData({
           ...formData,
-          address: selectedArea.name, // Assuming area has a 'name' field
+          address: selectedArea.name,
         });
       }
     } else {
@@ -223,6 +298,19 @@ const Checkout = () => {
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Check delivery time before submitting
+    const deliveryCheck = checkDeliveryTimeAvailability();
+    if (!deliveryCheck.available) {
+      Swal.fire({
+        icon: "warning",
+        title: deliveryCheck.title,
+        text: deliveryCheck.message,
+        confirmButtonText: "Understood",
+        confirmButtonColor: "#EAB308",
+      });
+      return;
+    }
 
     // Validate cart
     if (!cartItems.length) {
@@ -337,11 +425,45 @@ const Checkout = () => {
     );
   }
 
+  // Get delivery status for display
+  const deliveryStatus = checkDeliveryTimeAvailability();
+
   return (
     <div className="h-auto bg-gray-50 py-4 mt-38 lg:mt-0">
       {/* <Header title="Checkout" /> */}
 
       <div className="w-full mx-auto px-4 md:px-8">
+        {/* Delivery Hours Info Banner */}
+        <div className="mb-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg">
+          <div className="flex items-start">
+            <div className="shrink-0">
+              <svg
+                className="h-5 w-5 text-blue-500"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-blue-700">
+                <strong>Delivery Hours:</strong> Our riders are available from
+                7:00 AM to 6:00 PM daily.
+                {deliveryStatus.available && (
+                  <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    ✓ Available Now
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Checkout form */}
           <div className="lg:col-span-2">
@@ -599,7 +721,7 @@ const Checkout = () => {
                           alt={item.product_name}
                           className="w-16 h-16 object-cover rounded-lg"
                           onError={(e) => {
-                            e.target.src = "/placeholder-image.png"; // Add fallback image
+                            e.target.src = "/placeholder-image.png";
                           }}
                         />
                         <span className="absolute -top-2 -right-2 bg-yellow-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-medium">
