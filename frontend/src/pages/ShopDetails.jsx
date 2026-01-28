@@ -100,7 +100,7 @@ const ShopDetails = () => {
         </Link> */}
 
         {/* Shop Header Section */}
-        <div className="bg-linear-to-r from-gray-900 via-gray-800 to-gray-900 p-6 sm:p-8 mb-8 border border-gray-800">
+        <div className="bg-linear-to-r mt-38 lg:mt-0 from-gray-900 via-gray-800 to-gray-900 p-6 sm:p-8 mb-8 border border-gray-800">
           <div className="mb-4">
             <span className="inline-block bg-yellow-500 text-gray-900 py-1.5 px-4 rounded-lg text-sm font-bold uppercase tracking-wide">
               {details?.business_category}
