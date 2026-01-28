@@ -17,6 +17,7 @@ from django.http import HttpResponse
 from decimal import Decimal
 import logging
 from .utils import send_admin_notifications
+from order.util.notifications_utils import send_order_notifications
 
 from payment.payment_client import AutomatedPayoutService
 logger = logging.getLogger(__name__)
@@ -588,7 +589,7 @@ class PaystackPaymentVerifyView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, *args, **kwargs):
-        order_number = None  # Initialize outside try block
+        order_number = None
         
         try:
             reference = request.query_params.get('reference')
@@ -676,6 +677,7 @@ class PaystackPaymentVerifyView(APIView):
                         else:
                             vendor_totals[item.vendor.id] = item_total
 
+                # Update inventory
                 for item in order_items:
                     product = item.product
                     
@@ -704,6 +706,7 @@ class PaystackPaymentVerifyView(APIView):
                         except ProductColor.DoesNotExist:
                             logger.warning(f"Color {item.color} not found for product {product.id}")
                 
+                # Send out-of-stock emails to vendors
                 for vendor in notified_vendors:
                     try:
                         send_mail(
@@ -720,6 +723,7 @@ class PaystackPaymentVerifyView(APIView):
                     except Exception as e:
                         logger.error(f"Failed to send out-of-stock email to vendor {vendor.id}: {str(e)}")
 
+                # Send vendor order notification emails with PDF
                 for vendor in vendors_to_notify:
                     try:
                         vendor_items = []
@@ -765,6 +769,7 @@ class PaystackPaymentVerifyView(APIView):
                         logger.error(f"Error sending notification to vendor {vendor.id}: {str(e)}", exc_info=True)
                         continue
 
+                # Delete cart after successful payment
                 if cart_code:
                     try:
                         cart = Cart.objects.get(cart_code=cart_code)
@@ -775,6 +780,7 @@ class PaystackPaymentVerifyView(APIView):
                     except Exception as e:
                         logger.error(f"Error deleting cart {cart_code}: {str(e)}")
 
+                # Send customer receipt email with PDF
                 try:
                     for item in order_items:
                         item_price = item.price if item.price is not None else 0
@@ -807,10 +813,21 @@ class PaystackPaymentVerifyView(APIView):
                 except Exception as e:
                     logger.error(f"Error with receipt generation or sending: {str(e)}", exc_info=True)
 
+                # Send admin email notifications
                 try:
                     send_admin_notifications(order, order_items)
                 except Exception as e:
                     logger.error(f"Error sending admin notifications: {str(e)}", exc_info=True)
+
+                # ==========================================
+                # NEW: Send SMS/WhatsApp notifications via Termii
+                # ==========================================
+                try:
+                    send_order_notifications(order, order_items)
+                    logger.info(f"Termii SMS notifications sent for order {order.order_number}")
+                except Exception as e:
+                    logger.error(f"Error sending Termii notifications: {str(e)}", exc_info=True)
+                    # Don't fail the whole transaction if SMS fails
 
                 # Store order_number before exiting atomic block
                 order_number = order.order_number

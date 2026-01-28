@@ -483,3 +483,6 @@ import os
 
 ADMIN_EMAILS = [email.strip() for email in os.environ.get('ADMIN_EMAILS', '').split(',') if email.strip()]
 
+
+ADMIN_PHONE_NUMBERS = [phone.strip() for phone in os.environ.get('ADMIN_PHONE_NUMBERS', '').split(',') if phone.strip()]
+

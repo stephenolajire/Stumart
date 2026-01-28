@@ -6,18 +6,14 @@ import React, {
   memo,
   useMemo,
 } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   GlobalContext,
   useShops,
   useShopsBySchool,
-  useProductSearch,
 } from "../constant/GlobalContext";
-import styles from "../css/Home.module.css";
-import { MEDIA_BASE_URL } from "../constant/api";
 import { nigeriaInstitutions } from "../constant/data";
 import Spinner from "../components/Spinner";
-import ThemeToggle from "../components/ThemeToggle";
 import SEO from "../components/Metadata";
 import {
   FaBook,
@@ -26,14 +22,11 @@ import {
   FaTshirt,
   FaDesktop,
   FaHome,
-  FaPlane,
   FaTablet,
   FaSearch,
   FaMapMarkerAlt,
   FaStar,
-  FaUniversity,
   FaStore,
-  FaChevronRight,
   FaFilter,
   FaTimes,
   FaClock,
@@ -41,116 +34,61 @@ import {
 } from "react-icons/fa";
 import Swal from "sweetalert2";
 import debounce from "lodash/debounce";
-import ourwife from "../assets/our-wife.jpg";
-import abu from "../assets/abu.jpg";
-import james from "../assets/james.jpg";
+import Hero from "./components/Hero";
+import ShopCard from "./components/ShopCard";
 
 // Categories with icons
 const categories = [
   { id: 0, name: "All", icon: <FaStore /> },
-  { id: 1, name: "Books", icon: <FaBook /> },
   { id: 2, name: "Food", icon: <FaUtensils /> },
+  { id: 1, name: "Books", icon: <FaBook /> },
   { id: 3, name: "Technology", icon: <FaLaptop /> },
   { id: 4, name: "Fashion", icon: <FaTshirt /> },
   { id: 5, name: "Accessories", icon: <FaDesktop /> },
   { id: 6, name: "Home", icon: <FaHome /> },
   { id: 7, name: "Electronics", icon: <FaTablet /> },
-  { id: 8, name: "Other", icon: <FaSearch /> },
+  // { id: 8, name: "Other", icon: <FaSearch /> },
 ];
 
-// Featured deals data (previously in Promotion component)
-const promotions = [
-  {
-    id: 1,
-    title: "Back to School Sale!",
-    description: "Get 20% off on all stationery items",
-    link: "/products",
-    gradient: "primary",
-    image: ourwife,
-  },
-  {
-    id: 2,
-    title: "Food Festival Week",
-    description: "Amazing deals on campus restaurants",
-    link: "/products",
-    gradient: "secondary",
-    image: abu,
-  },
-  {
-    id: 3,
-    title: "Tech Gadget Fair",
-    description: "Latest gadgets at student-friendly prices",
-    link: "/products",
-    gradient: "tertiary",
-    image: james,
-  },
-];
-
-// Move constants outside component
 const SHOPS_PER_PAGE = 18;
 
-// Separate components
+// Category Card Component
 const CategoryCard = memo(({ category, isActive, onClick }) => (
   <button
-    className={`${styles.categoryCard} ${
-      isActive ? styles.activeCategory : ""
-    }`}
+    className={`
+      flex flex-col items-center justify-center gap-3 p-6 rounded-xl
+      transition-all duration-300 ease-in-out
+      border-2 ${
+        isActive
+          ? "border-yellow-500 bg-yellow-500 text-black shadow-lg shadow-yellow-500/20"
+          : "border-gray-200 bg-white text-gray-700 hover:border-yellow-500 hover:bg-gray-50"
+      }
+      group cursor-pointer
+    `}
     onClick={() => onClick(category.name.toLowerCase())}
   >
-    <div className={styles.categoryIcon}>{category.icon}</div>
-    <span className={styles.categoryName}>{category.name}</span>
+    <div
+      className={`
+      text-3xl transition-transform duration-300
+      ${isActive ? "scale-110" : "group-hover:scale-110"}
+    `}
+    >
+      {category.icon}
+    </div>
+    <span className="text-sm font-semibold tracking-wide">{category.name}</span>
   </button>
 ));
 
-const ShopCard = memo(({ shop }) => (
-  <div className={styles.shopCard}>
-    <Link to={`/shop/${shop.id}`} className={styles.shopLink}>
-      <div className={styles.shopImage}>
-        <img
-          src={`${MEDIA_BASE_URL}${shop.shop_image}`}
-          alt={shop.business_name}
-        />
-      </div>
-      <div className={styles.shopDetails}>
-        <h3 className={styles.shopName}>{shop.business_name}</h3>
-        <div className={styles.shopMeta}>
-          <span className={styles.shopCategory}>{shop.business_category}</span>
-          <div className={styles.shopRating}>
-            <FaStar className={styles.starIcon} />
-            <span>{shop.rating}</span>
-          </div>
-        </div>
-        <div className={styles.shopLocation}>
-          <FaMapMarkerAlt className={styles.locationIcon} />
-          <span>{shop.user.institution}</span>
-        </div>
-        <div className={styles.shopDelivery}>
-          <FaClock className={styles.clockIcon} />
-          <span>15-30 mins</span>
-        </div>
-        <button className={styles.viewShopButton}>
-          <FaShoppingCart /> Shop Now
-        </button>
-      </div>
-    </Link>
-  </div>
-));
-
 const Home = memo(() => {
-  // Get authentication data from GlobalContext
   const { isAuthenticated } = useContext(GlobalContext);
   const navigate = useNavigate();
 
-  // Use TanStack Query hooks
   const {
     data: allShopsData,
     isLoading: allShopsLoading,
     error: allShopsError,
   } = useShops();
-  const { searchResults, searchProducts, isSearching, searchError } =
-    useProductSearch();
 
-  // Consolidated state
   const [filters, setFilters] = useState({
     category: "all",
     state: "",
@@ -163,7 +101,6 @@ const Home = memo(() => {
     displayMode: "allShops",
   });
 
-  // UI state
   const [uiState, setUiState] = useState({
     productName: "",
     isInitialized: false,
@@ -173,10 +110,8 @@ const Home = memo(() => {
     currentPage: 1,
   });
 
-  // Constants
   const institution = localStorage.getItem("institution");
 
-  // Use the school-specific hook when needed
   const {
     data: schoolShopsData,
     isLoading: schoolShopsLoading,
@@ -184,16 +119,13 @@ const Home = memo(() => {
     refetch: refetchSchoolShops,
   } = useShopsBySchool(filters.school);
 
-  // Get all states from Nigeria institutions
   const states = useMemo(() => Object.keys(nigeriaInstitutions), []);
 
-  // Compute available schools when state changes
   const availableSchools = useMemo(() => {
     if (!filters.state) return [];
     return nigeriaInstitutions[filters.state] || [];
   }, [filters.state]);
 
-  // Filter function - memoized to prevent recreating on every render
   const applyFilters = useCallback((shops, category) => {
     if (!shops || !Array.isArray(shops)) return [];
     if (category === "all") return shops;
@@ -201,14 +133,13 @@ const Home = memo(() => {
     return shops.filter(
       (shop) =>
         shop.business_category &&
-        shop.business_category.toLowerCase() === category.toLowerCase()
+        shop.business_category.toLowerCase() === category.toLowerCase(),
     );
   }, []);
 
   const visibleShops = useMemo(() => {
-    // Filter out "others" before paginating
     return shopState.filteredShops?.filter(
-      (shop) => shop.business_category !== "others"
+      (shop) => shop.business_category !== "others",
     );
   }, [shopState.filteredShops]);
 
@@ -223,7 +154,6 @@ const Home = memo(() => {
     return visibleShops?.slice(indexOfFirstShop, indexOfLastShop);
   }, [visibleShops, uiState.currentPage]);
 
-  // Format category name - memoized helper function
   const formatCategoryName = useCallback((category) => {
     if (category === "all") return "All";
     return category
@@ -232,7 +162,6 @@ const Home = memo(() => {
       .join(" ");
   }, []);
 
-  // Format title based on current selections
   const getTitle = useCallback(() => {
     const formattedCategory = formatCategoryName(filters.category);
 
@@ -241,8 +170,8 @@ const Home = memo(() => {
         `Shops in ${filters.school}`
       ) : (
         <span>
-          <span className={styles.highlightCategory}>{formattedCategory}</span>{" "}
-          Shops in {filters.school}
+          <span className="text-yellow-500">{formattedCategory}</span> Shops in{" "}
+          {filters.school}
         </span>
       );
     } else {
@@ -250,8 +179,7 @@ const Home = memo(() => {
         "Featured Shops"
       ) : (
         <span>
-          <span className={styles.highlightCategory}>{formattedCategory}</span>{" "}
-          Shops
+          <span className="text-yellow-500">{formattedCategory}</span> Shops
         </span>
       );
     }
@@ -262,7 +190,6 @@ const Home = memo(() => {
     formatCategoryName,
   ]);
 
-  // Format the no results message
   const getNoResultsMessage = useCallback(() => {
     const formattedCategory = formatCategoryName(filters.category);
 
@@ -282,19 +209,6 @@ const Home = memo(() => {
     formatCategoryName,
   ]);
 
-  // Promotion carousel timer
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setUiState((prev) => ({
-        ...prev,
-        currentPromoIndex: (prev.currentPromoIndex + 1) % promotions.length,
-      }));
-    }, 5000);
-
-    return () => clearInterval(timer);
-  }, []);
-
-  // Handle school shops data when it changes
   useEffect(() => {
     if (schoolShopsData && filters.school) {
       setShopState((prev) => ({
@@ -306,14 +220,12 @@ const Home = memo(() => {
     }
   }, [schoolShopsData, filters.school, filters.category, applyFilters]);
 
-  // Debounced filter update function - properly memoized
   const debouncedFilterUpdate = useMemo(
     () =>
       debounce(async (newFilters) => {
         try {
           if (newFilters.school) {
-            // The useShopsBySchool hook will handle fetching automatically
-            // when filters.school changes
+            // Hook handles fetching
           } else {
             setShopState((prev) => ({
               ...prev,
@@ -325,38 +237,31 @@ const Home = memo(() => {
           console.error("Error updating filters:", error);
         }
       }, 500),
-    [applyFilters, allShopsData]
+    [applyFilters, allShopsData],
   );
 
-  // Clean up debounce on unmount
   useEffect(() => {
     return () => {
       debouncedFilterUpdate.cancel();
     };
   }, [debouncedFilterUpdate]);
 
-  // MAIN INITIALIZATION EFFECT - consolidated from multiple effects
   useEffect(() => {
     const initializeData = async () => {
       if (uiState.isInitialized) return;
 
       try {
         if (isAuthenticated && institution) {
-          // Find user's state
           const userState = Object.keys(nigeriaInstitutions).find((state) =>
-            nigeriaInstitutions[state].includes(institution)
+            nigeriaInstitutions[state].includes(institution),
           );
 
-          // Update filters with user's institution
           setFilters((prev) => ({
             ...prev,
             state: userState || "",
             school: institution,
           }));
-
-          // The useShopsBySchool hook will automatically fetch when school changes
         } else {
-          // Not authenticated, show all shops
           setShopState((prev) => ({
             ...prev,
             filteredShops: applyFilters(allShopsData, filters.category),
@@ -364,14 +269,12 @@ const Home = memo(() => {
           }));
         }
 
-        // Mark initialization as complete
         setUiState((prev) => ({
           ...prev,
           isInitialized: true,
         }));
       } catch (error) {
         console.error("Error initializing data:", error);
-        // Fall back to all shops on error
         setShopState((prev) => ({
           ...prev,
           filteredShops: applyFilters(allShopsData, filters.category),
@@ -385,7 +288,6 @@ const Home = memo(() => {
       }
     };
 
-    // Only initialize if we have shop data or if we're not loading
     if (allShopsData || !allShopsLoading) {
       initializeData();
     }
@@ -399,7 +301,6 @@ const Home = memo(() => {
     uiState.isInitialized,
   ]);
 
-  // Apply category filter when it changes
   useEffect(() => {
     if (uiState.isInitialized && filters.category.toLowerCase() !== "other") {
       const currentShops =
@@ -412,7 +313,6 @@ const Home = memo(() => {
         filteredShops: applyFilters(currentShops, filters.category),
       }));
 
-      // Reset to first page when filters change
       setUiState((prev) => ({
         ...prev,
         currentPage: 1,
@@ -427,7 +327,6 @@ const Home = memo(() => {
     applyFilters,
   ]);
 
-  // Request to switch institutions confirmation
   const requestInstitutionSwitch = useCallback(() => {
     if (isAuthenticated && institution && uiState.isLockedToInstitution) {
       Swal.fire({
@@ -437,8 +336,8 @@ const Home = memo(() => {
         showCancelButton: true,
         confirmButtonText: "Yes, show me other institutions",
         cancelButtonText: "No, stay at my institution",
-        confirmButtonColor: "#3085d6",
-        cancelButtonColor: "#d33",
+        confirmButtonColor: "#eab308",
+        cancelButtonColor: "#374151",
       }).then((result) => {
         if (result.isConfirmed) {
           setUiState((prev) => ({
@@ -446,7 +345,6 @@ const Home = memo(() => {
             isLockedToInstitution: false,
           }));
 
-          // Reset state but keep the current institution as the default
           setFilters((prev) => ({
             ...prev,
             state: "",
@@ -467,23 +365,10 @@ const Home = memo(() => {
     return false;
   }, [isAuthenticated, institution, uiState.isLockedToInstitution]);
 
-  // CONSOLIDATED EVENT HANDLERS
-
-  // Handle filter changes
-  const handleFilterChange = useCallback(
-    (name, value) => {
-      setFilters((prev) => ({ ...prev, [name]: value }));
-      debouncedFilterUpdate({ ...filters, [name]: value });
-    },
-    [filters, debouncedFilterUpdate]
-  );
-
-  // Handle school selection submission
   const handleSchoolSubmit = useCallback(
     async (e) => {
       e?.preventDefault();
 
-      // Check if user is trying to change institution while being locked
       if (
         isAuthenticated &&
         institution &&
@@ -497,7 +382,6 @@ const Home = memo(() => {
 
       if (filters.school) {
         try {
-          // The useShopsBySchool hook will automatically refetch when filters.school changes
           await refetchSchoolShops();
         } catch (error) {
           console.error("Error fetching shops by school:", error);
@@ -516,29 +400,26 @@ const Home = memo(() => {
       filters.school,
       refetchSchoolShops,
       requestInstitutionSwitch,
-    ]
+    ],
   );
 
-  // Handle category change with navigation to Other Services
   const handleCategoryChange = useCallback(
     (category) => {
       setFilters((prev) => ({ ...prev, category }));
 
-      // Navigate to Other Services page if "Other" is selected
       if (category.toLowerCase() === "other") {
         if (shopState.displayMode === "schoolShops" && filters.school) {
           navigate(
-            `/other-services?school=${encodeURIComponent(filters.school)}`
+            `/other-services?school=${encodeURIComponent(filters.school)}`,
           );
         } else {
           navigate("/other-services");
         }
       }
     },
-    [navigate, shopState.displayMode, filters.school]
+    [navigate, shopState.displayMode, filters.school],
   );
 
-  // Reset school filter
   const handleResetFilter = useCallback(() => {
     if (isAuthenticated && institution && uiState.isLockedToInstitution) {
       const switched = requestInstitutionSwitch();
@@ -567,86 +448,6 @@ const Home = memo(() => {
     requestInstitutionSwitch,
   ]);
 
-  // Handle product search using TanStack Query searchProducts function
-  const handleProductSearch = useCallback(
-    async (e) => {
-      e.preventDefault();
-      if (!uiState.productName.trim()) return;
-
-      if (
-        isAuthenticated &&
-        institution &&
-        uiState.isLockedToInstitution &&
-        filters.school &&
-        filters.school !== institution
-      ) {
-        const switched = requestInstitutionSwitch();
-        if (switched) return;
-      }
-
-      try {
-        const searchParams = {
-          productName: uiState.productName,
-          ...(filters.school && { institution: filters.school }),
-          ...(filters.state && { state: filters.state }),
-        };
-
-        // Use the TanStack Query mutation
-        searchProducts(searchParams);
-
-        // The searchProducts mutation will handle success/error states
-        // We'll handle navigation in a separate effect that watches searchResults
-      } catch (error) {
-        console.error("Search error:", error);
-        Swal.fire({
-          icon: "error",
-          title: "Search Error",
-          text: "An error occurred while searching. Please try again.",
-        });
-      }
-    },
-    [
-      uiState.productName,
-      uiState.isLockedToInstitution,
-      isAuthenticated,
-      institution,
-      filters.school,
-      filters.state,
-      requestInstitutionSwitch,
-      searchProducts,
-    ]
-  );
-
-  // Handle search results
-  useEffect(() => {
-    if (searchResults && searchResults.length > 0) {
-      navigate("/search", {
-        state: {
-          products: searchResults,
-          searchParams: {
-            productName: uiState.productName,
-            school: filters.school,
-            state: filters.state,
-          },
-        },
-      });
-    } else if (searchError) {
-      Swal.fire({
-        icon: "info",
-        title: "No Products Found",
-        text: `No products matching "${uiState.productName}" found in the selected location.`,
-      });
-    }
-  }, [
-    searchResults,
-    searchError,
-    navigate,
-    uiState.productName,
-    filters.school,
-    filters.state,
-  ]);
-
-  // Handle state selection
   const handleStateChange = useCallback(
     (e) => {
       const newState = e.target.value;
@@ -663,10 +464,9 @@ const Home = memo(() => {
       institution,
       uiState.isLockedToInstitution,
       requestInstitutionSwitch,
-    ]
+    ],
   );
 
-  // Handle school selection
   const handleSchoolChange = useCallback(
     (e) => {
       const newSchool = e.target.value;
@@ -688,113 +488,45 @@ const Home = memo(() => {
       institution,
       uiState.isLockedToInstitution,
       requestInstitutionSwitch,
-    ]
+    ],
   );
 
-  // Toggle filters visibility
   const toggleFilters = useCallback(() => {
     setUiState((prev) => ({ ...prev, showFilters: !prev.showFilters }));
   }, []);
 
-  // Pagination handler
   const paginate = useCallback((pageNumber) => {
     setUiState((prev) => ({ ...prev, currentPage: pageNumber }));
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
-  // Determine loading state
   const isLoading = allShopsLoading || (filters.school && schoolShopsLoading);
   const hasError = allShopsError || schoolShopsError;
 
-  // UI COMPONENTS SECTION
   return (
-    <main className={styles.homeContainer}>
+    <main className="min-h-screen bg-white">
       <SEO
         title="Home - Stumart | Campus Marketplace"
         description="StuMart - Your Campus Marketplace. Connect with student vendors, enjoy fast delivery, and access campus-specific products. Shop smart with secure payments, real-time chat, and reliable campus delivery services. Join the leading student e-commerce platform today!"
         keywords="campus marketplace, student e-commerce, university shopping, campus delivery, student vendors, campus business, student marketplace, university E-commerce, campus food delivery, student services, campus shopping, university marketplace, student business platform, campus delivery service, student entrepreneurship"
         url="/"
       />
-      {/* Hero Banner Section with Search */}
-      <div className={styles.heroGrid}>
-        <div className={styles.heroForms}>
-          <form onSubmit={handleProductSearch} className={styles.searchBar}>
-            <input
-              type="text"
-              value={uiState.productName}
-              onChange={(e) =>
-                setUiState((prev) => ({ ...prev, productName: e.target.value }))
-              }
-              placeholder="Search for product / shop"
-              className={styles.searchInput}
-            />
-            <button
-              type="submit"
-              className={styles.searchButton}
-              disabled={!uiState.productName.trim() || isSearching}
-            >
-              {isSearching ? "..." : <FaSearch />}
-            </button>
-          </form>
-          <ThemeToggle />
-        </div>
-      </div>
-      {/* Featured Deals Carousel */}
-      <section className={styles.featuredDeals}>
-        <div className={styles.sectionHeader}>
-          <h2>Featured Deals</h2>
-          <Link to="/products" className={styles.viewAll}>
-            View All Products
-            <FaChevronRight />
-          </Link>
-        </div>
 
-        <div className={styles.dealsCarousel}>
-          <div
-            className={styles.dealCard}
-            style={{
-              backgroundImage: `url(${
-                promotions[uiState.currentPromoIndex].image
-              })`,
-              backgroundSize: "cover",
-              backgroundRepeat: "no-repeat",
-              height: "100%",
-              width: "100%",
-            }}
-          >
-            <h3>{promotions[uiState.currentPromoIndex].title}</h3>
-            <p>{promotions[uiState.currentPromoIndex].description}</p>
-            <Link
-              to={promotions[uiState.currentPromoIndex].link}
-              className={styles.dealButton}
-            >
-              Shop Now
-            </Link>
-          </div>
-
-          <div className={styles.carouselDots}>
-            {promotions.map((_, index) => (
-              <button
-                key={index}
-                className={`${styles.dot} ${
-                  index === uiState.currentPromoIndex ? styles.activeDot : ""
-                }`}
-                onClick={() =>
-                  setUiState((prev) => ({ ...prev, currentPromoIndex: index }))
-                }
-                aria-label={`View promotion ${index + 1}`}
-              />
-            ))}
-          </div>
-        </div>
+      {/* Hero Section */}
+      <section className="mt-8">
+        <Hero />
       </section>
+
       {/* Categories Section */}
-      <section className={styles.categories}>
-        <div className={styles.sectionHeader}>
-          <h2>Shop By Category</h2>
+      <section className="py-16  px-4 lg:px-0 max-w-7xl mx-auto bg-white">
+        <div className="mb-10">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+            Shop By <span className="text-yellow-500">Category</span>
+          </h2>
+          <div className="h-1 w-24 bg-yellow-500 rounded-full"></div>
         </div>
 
-        <div className={styles.categoryGrid}>
+        <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-4">
           {categories.map((category) => (
             <CategoryCard
               key={category.id}
@@ -805,23 +537,39 @@ const Home = memo(() => {
           ))}
         </div>
       </section>
-      {/* Filter and Sort Section */}
-      <section className={styles.filterSection}>
-        <div className={styles.filterBar}>
-          <div className={styles.filterHeader}>
-            <h2>{getTitle()}</h2>
-            <button onClick={toggleFilters} className={styles.filterToggle}>
-              {uiState.showFilters ? <FaTimes /> : <FaFilter />}{" "}
-              {uiState.showFilters ? "Hide Filter" : "Filter by school"}
+
+      {/* Filter Section */}
+      <section className="py-4 max-w-7xl mx-auto px-4 lg:px-0">
+        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+          {/* Filter Header */}
+          <div className="flex items-center justify-between p-6 border-b border-gray-200">
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
+              {getTitle()}
+            </h2>
+            <button
+              onClick={toggleFilters}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-yellow-500 text-gray-700 hover:text-black rounded-lg transition-all duration-300 font-medium"
+            >
+              {uiState.showFilters ? <FaTimes /> : <FaFilter />}
+              <span className="hidden sm:inline">
+                {uiState.showFilters ? "Hide Filter" : "Filter by school"}
+              </span>
             </button>
           </div>
 
+          {/* Advanced Filters */}
           {uiState.showFilters && (
-            <div className={styles.advancedFilters}>
-              <form className={styles.filterForm} onSubmit={handleSchoolSubmit}>
-                <div className={styles.filterGrid}>
-                  <div className={styles.filterGroup}>
-                    <label htmlFor="state-select">State:</label>
+            <div className="p-6 bg-gray-50">
+              <form onSubmit={handleSchoolSubmit}>
+                <div className="grid md:grid-cols-2 gap-6 mb-6">
+                  {/* State Select */}
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="state-select"
+                      className="block text-sm font-semibold text-gray-700"
+                    >
+                      State
+                    </label>
                     <select
                       id="state-select"
                       value={filters.state}
@@ -831,7 +579,7 @@ const Home = memo(() => {
                         institution &&
                         uiState.isLockedToInstitution
                       }
-                      className={styles.formSelect}
+                      className="w-full px-4 py-3 bg-white border border-gray-300 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     >
                       <option value="">-- Select State --</option>
                       {states.map((state) => (
@@ -842,8 +590,14 @@ const Home = memo(() => {
                     </select>
                   </div>
 
-                  <div className={styles.filterGroup}>
-                    <label htmlFor="school-select">Institution:</label>
+                  {/* Institution Select */}
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="school-select"
+                      className="block text-sm font-semibold text-gray-700"
+                    >
+                      Institution
+                    </label>
                     <select
                       id="school-select"
                       value={filters.school}
@@ -854,7 +608,7 @@ const Home = memo(() => {
                           uiState.isLockedToInstitution) ||
                         !filters.state
                       }
-                      className={styles.formSelect}
+                      className="w-full px-4 py-3 bg-white border border-gray-300 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     >
                       <option value="">-- Select School --</option>
                       {availableSchools.map((school, index) => (
@@ -866,12 +620,13 @@ const Home = memo(() => {
                   </div>
                 </div>
 
-                <div className={styles.filterButtons}>
+                {/* Filter Buttons */}
+                <div className="flex flex-wrap gap-3">
                   {filters.school && (
                     <button
                       type="button"
                       onClick={handleSchoolSubmit}
-                      className={styles.applyButton}
+                      className="px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-black font-semibold rounded-lg transition-colors duration-300"
                     >
                       View Shops
                     </button>
@@ -881,7 +636,7 @@ const Home = memo(() => {
                     <button
                       type="button"
                       onClick={handleResetFilter}
-                      className={styles.resetButton}
+                      className="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition-colors duration-300"
                     >
                       Reset Filters
                     </button>
@@ -892,19 +647,25 @@ const Home = memo(() => {
           )}
         </div>
       </section>
+
       {/* Shops Grid Section */}
-      <section className={styles.shopsSection}>
+      <section className="py-12 max-w-7xl mx-auto px-4 lg:px-0">
         {isLoading && !uiState.isInitialized ? (
-          <div className={styles.loadingContainer}>
+          <div className="flex items-center justify-center py-20">
             <Spinner />
           </div>
         ) : hasError ? (
-          <div className={styles.errorContainer}>
-            <p>No Verified shops found in the selected school.</p>
+          <div className="text-center py-20">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-gray-100 rounded-full mb-6">
+              <FaStore className="text-4xl text-gray-400" />
+            </div>
+            <p className="text-xl text-gray-600">
+              No Verified shops found in the selected school.
+            </p>
           </div>
         ) : shopState.filteredShops && shopState.filteredShops.length > 0 ? (
           <>
-            <div className={styles.shopsGrid}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
               {currentShops.map((shop) => (
                 <ShopCard key={shop.id} shop={shop} />
               ))}
@@ -912,19 +673,18 @@ const Home = memo(() => {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className={styles.pagination}>
+              <div className="flex items-center justify-center gap-2 mt-12">
                 <button
                   onClick={() => paginate(uiState.currentPage - 1)}
                   disabled={uiState.currentPage === 1}
-                  className={styles.pageButton}
+                  className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-yellow-500 hover:text-black hover:border-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-medium"
                 >
                   Prev
                 </button>
 
-                <div className={styles.pageNumbers}>
+                <div className="flex items-center gap-2">
                   {Array.from({ length: totalPages }, (_, i) => i + 1)
                     .filter((num) => {
-                      // Show first page, last page, current page and pages around current
                       return (
                         num === 1 ||
                         num === totalPages ||
@@ -934,15 +694,18 @@ const Home = memo(() => {
                     .map((number, index, array) => (
                       <React.Fragment key={number}>
                         {index > 0 && array[index - 1] !== number - 1 && (
-                          <span className={styles.pageDots}>...</span>
+                          <span className="text-gray-400 px-2">...</span>
                         )}
                         <button
                           onClick={() => paginate(number)}
-                          className={`${styles.pageNumber} ${
-                            uiState.currentPage === number
-                              ? styles.activePage
-                              : ""
-                          }`}
+                          className={`
+                            px-4 py-2 rounded-lg font-medium transition-all duration-300
+                            ${
+                              uiState.currentPage === number
+                                ? "bg-yellow-500 text-black scale-110 shadow-lg shadow-yellow-500/30"
+                                : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                            }
+                          `}
                         >
                           {number}
                         </button>
@@ -953,7 +716,7 @@ const Home = memo(() => {
                 <button
                   onClick={() => paginate(uiState.currentPage + 1)}
                   disabled={uiState.currentPage === totalPages}
-                  className={styles.pageButton}
+                  className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-yellow-500 hover:text-black hover:border-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-medium"
                 >
                   Next
                 </button>
@@ -961,15 +724,19 @@ const Home = memo(() => {
             )}
           </>
         ) : (
-          <div className={styles.noResults}>
-            <FaStore className={styles.noResultsIcon} />
-            <p>{getNoResultsMessage()}</p>
+          <div className="text-center py-20">
+            <div className="inline-flex items-center justify-center w-24 h-24 bg-gray-100 rounded-full mb-6">
+              <FaStore className="text-5xl text-gray-400" />
+            </div>
+            <p className="text-2xl text-gray-700 mb-6">
+              {getNoResultsMessage()}
+            </p>
             {(filters.state ||
               filters.school ||
               filters.category !== "all") && (
               <button
                 onClick={handleResetFilter}
-                className={styles.resetFiltersButton}
+                className="px-8 py-4 bg-yellow-500 hover:bg-yellow-600 text-black font-bold rounded-lg transition-colors duration-300"
               >
                 Switch Institution
               </button>

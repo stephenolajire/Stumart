@@ -56,6 +56,7 @@ import json
 from .models import Conversation, Message, MessageReadStatus, ServiceApplication
 
 class SpecificVendorProductsView(APIView):
+    serializers_class = ProductSerializer
     def get(self, request, id):
         try:
             vendor = get_object_or_404(Vendor, id=id)
@@ -90,6 +91,7 @@ class SpecificVendorProductsView(APIView):
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class VendorsBySchoolView(APIView):
+    serializer_class = VendorSerializer
     def get(self, request):
         school_name = request.query_params.get("school", None)
 
@@ -141,6 +143,7 @@ class VendorsBySchoolView(APIView):
 
 
 class VendorsByOtherView(APIView):
+    serializer_class = VendorSerializer
     def get(self, request):
         category = request.query_params.get("business_category", None)
         specific_category = request.query_params.get("specific_category", None)
@@ -188,6 +191,7 @@ class VendorsByOtherView(APIView):
 
         
 class VendorsByOtherandSchoolView(APIView):
+    serializer_class = VendorSerializer
     def get(self, request):
         try:
             category = request.query_params.get("business_category", None)
@@ -287,6 +291,7 @@ class VendorsByOtherandSchoolView(APIView):
         return queryset
         
 class ProductView(APIView):
+    serializer_class = ProductSerializer
     def get(self, request, id):
         try:
             product = (
