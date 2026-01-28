@@ -140,7 +140,11 @@ function App() {
             {/* Public Pages with Main Layout */}
             <Route path="/" element={<Layout />}>
               {/* Public routes - no protection */}
-              <Route index element={<Home />} />
+              <Route index element={
+                  <ProtectedRoute allowedRoles={["student"]}>
+                    <Home />
+                  </ProtectedRoute>
+                } />
               <Route path="about" element={<About />} />
               <Route path="vendors" element={<Vendors />} />
               <Route path="rider" element={<Rider />} />
