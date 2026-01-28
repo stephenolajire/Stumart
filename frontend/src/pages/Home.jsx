@@ -170,7 +170,7 @@ const Home = memo(() => {
         `All Vendors in ${filters.school}`
       ) : (
         <span>
-          <span className="text-yellow-500">{formattedCategory}</span> Shops in{" "}
+          <span className="text-yellow-500">{formattedCategory}</span> Vendors in{" "}
           {filters.school}
         </span>
       );
