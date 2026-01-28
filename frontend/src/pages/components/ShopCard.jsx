@@ -40,16 +40,16 @@ const ShopCard = memo(({ shop }) => (
         </div>
 
         {/* Delivery Time */}
-        <div className="flex items-center gap-2 text-gray-600 text-sm">
+        {/* <div className="flex items-center gap-2 text-gray-600 text-sm">
           <FaClock className="text-yellow-500 shrink-0" />
-          {/* <span>15-30 mins</span> */}
-        </div>
+          <span>15-30 mins</span>
+        </div> */}
 
         {/* Shop Now Button */}
-        <button className="w-full mt-4 px-4 py-3 bg-yellow-500 hover:bg-yellow-600 text-black font-semibold rounded-lg transition-colors duration-300 flex items-center justify-center gap-2">
+        {/* <button className="w-full mt-4 px-4 py-3 bg-yellow-500 hover:bg-yellow-600 text-black font-semibold rounded-lg transition-colors duration-300 flex items-center justify-center gap-2">
           <FaShoppingCart />
           <span>Shop Now</span>
-        </button>
+        </button> */}
       </div>
     </Link>
   </div>

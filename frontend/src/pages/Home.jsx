@@ -167,7 +167,7 @@ const Home = memo(() => {
 
     if (shopState.displayMode === "schoolShops") {
       return filters.category === "all" ? (
-        `Shops in ${filters.school}`
+        `All Vendors in ${filters.school}`
       ) : (
         <span>
           <span className="text-yellow-500">{formattedCategory}</span> Shops in{" "}
@@ -539,11 +539,11 @@ const Home = memo(() => {
       </section>
 
       {/* Filter Section */}
-      <section className="py-4 max-w-7xl mx-auto px-4 lg:px-0">
+      <section className="max-w-7xl mx-auto px-4 lg:px-0">
         <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
           {/* Filter Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200">
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
+            <h2 className="text-xl md:text-3xl font-bold text-gray-900">
               {getTitle()}
             </h2>
             <button
