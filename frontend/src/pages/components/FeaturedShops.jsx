@@ -152,7 +152,7 @@ const FeaturedShops = ({
                 </div>
 
                 {/* Cards Container - Horizontal scroll on mobile, Grid on desktop */}
-                <div className="w-full overflow-x-auto sm:overflow-x-visible px-4 sm:px-0 pb-2">
+                <div className="w-full overflow-x-auto sm:overflow-x-visible px-4 sm:px-0 pb-2 hide-scrollbar">
                   <div
                     className="flex sm:grid sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 hide-scrollbar"
                     // style={{ minWidth: "max-content" }}
