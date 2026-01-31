@@ -166,24 +166,22 @@ const Hero = () => {
                 <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent"></div>
 
                 {/* Mobile Content - Only show on small screens */}
-                <div className="absolute bottom-6 left-6 right-6 lg:hidden">
-                  <div className="bg-surface/95 backdrop-blur-sm rounded-2xl p-4">
-                    <h3 className="text-text-primary font-bold text-lg mb-1">
+
+                <div className="absolute bottom-4 left-0 right-0 flex justify-center lg:hidden">
+                  <div className="bg-surface/95 backdrop-blur-sm rounded-xl p-3 mx-4 w-fit max-w-[calc(100%-2rem)]">
+                    <h3 className="text-text-primary font-bold text-base mb-1 line-clamp-1">
                       {currentProduct.name}
                     </h3>
-                    <p className="text-text-secondary text-sm mb-2">
+                    <p className="text-text-secondary text-xs mb-2 text-center">
                       {currentProduct.vendor_name}
                     </p>
-                    <p className="text-text-secondary text-sm mb-2 font-medium">
-                      {currentProduct.vendor_institution}
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-primary font-bold text-lg">
+                    <div className="flex items-center justify-between gap-4">
+                      <span className="text-primary font-bold text-base whitespace-nowrap">
                         ₦{parseInt(currentProduct.price).toLocaleString()}
                       </span>
                       <div className="flex items-center space-x-1">
-                        <Star className="w-4 h-4 text-primary fill-current" />
-                        <span className="text-text-secondary text-sm">
+                        <Star className="w-3.5 h-3.5 text-primary fill-current" />
+                        <span className="text-text-secondary text-xs">
                           {currentProduct.vendor_rating}
                         </span>
                       </div>
