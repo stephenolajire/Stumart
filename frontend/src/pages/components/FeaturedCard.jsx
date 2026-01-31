@@ -18,7 +18,7 @@ const FeaturedCard = ({ shop }) => {
   return (
     <div
       onClick={handleClick}
-      className="cursor-pointer group shrink-0 w-60 sm:w-auto"
+      className="cursor-pointer group shrink-0 w-50 sm:w-auto"
     >
       {/* Shop Card */}
       <div
@@ -27,7 +27,7 @@ const FeaturedCard = ({ shop }) => {
                     hover:-translate-y-1 h-full"
       >
         {/* Shop Image */}
-        <div className="relative h-40 overflow-hidden bg-surface-tertiary">
+        <div className="relative h-35 overflow-hidden bg-surface-tertiary">
           <img
             src={shop.shop_image ? `${MEDIA_BASE_URL}${shop.shop_image}` : "/placeholder-shop.jpg"}
             alt={shop.business_name}
@@ -61,7 +61,7 @@ const FeaturedCard = ({ shop }) => {
         <div className="p-3">
           {/* Shop Name */}
           <h3
-            className="text-xl font-bold text-text-primary mb-2 line-clamp-1 
+            className="text-base font-bold text-text-primary mb-2 line-clamp-1 
                        group-hover:text-primary transition-colors"
           >
             {shop.business_name}
@@ -70,7 +70,7 @@ const FeaturedCard = ({ shop }) => {
           {/* School */}
           <div className="flex items-start gap-1 mb-2">
             {/* <MapPin size={12} className="text-primary mt-0.5 shrink-0" /> */}
-            <p className="text-base text-text-secondary line-clamp-2 leading-tight">
+            <p className="text-[13px] text-text-secondary line-clamp-2 leading-tight">
               {shop.user?.institution || "University"}
             </p>
           </div>
