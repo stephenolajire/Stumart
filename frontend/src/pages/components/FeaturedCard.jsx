@@ -1,6 +1,7 @@
 import React from "react";
 import { MapPin, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { MEDIA_BASE_URL } from "../../constant/api";
 
 const FeaturedCard = ({ shop }) => {
   const navigate = useNavigate();
@@ -28,7 +29,7 @@ const FeaturedCard = ({ shop }) => {
         {/* Shop Image */}
         <div className="relative h-40 overflow-hidden bg-surface-tertiary">
           <img
-            src={shop.user?.image_url || "/placeholder-shop.jpg"}
+            src={shop.shop_image ? `${MEDIA_BASE_URL}${shop.shop_image}` : "/placeholder-shop.jpg"}
             alt={shop.business_name}
             className="w-full h-full object-cover transition-transform duration-500 
                      group-hover:scale-110"

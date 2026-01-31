@@ -5,7 +5,7 @@ import FeaturedShops from "../components/FeaturedShops";
 
 const Landing = () => {
   return (
-    <main className="mt-7 overflow-x-hidden w-screen">
+    <main className="mt-7 overflow-x-hidden w-screen lg:w-[calc(100vw-272px)]">
       <section>
         <Hero />
       </section>

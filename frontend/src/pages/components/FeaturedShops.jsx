@@ -35,6 +35,8 @@ const FeaturedShops = ({
     propIsLoading !== undefined ? propIsLoading : contextIsLoading;
   const error = propError || contextError;
 
+  console.log(shopsData)
+
   useEffect(() => {
     if (shouldFetchData && institution && refetch) {
       refetch();
