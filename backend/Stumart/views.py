@@ -55,25 +55,41 @@ from django.core.paginator import Paginator
 import json
 from .models import Conversation, Message, MessageReadStatus, ServiceApplication
 
+from django.core.paginator import Paginator
+
 class SpecificVendorProductsView(APIView):
-    serializers_class = ProductSerializer
+    serializer_class = ProductSerializer
+
     def get(self, request, id):
         try:
             vendor = get_object_or_404(Vendor, id=id)
             products = Product.objects.filter(vendor=vendor.user)
-            serializer = ProductSerializer(products, many=True)
+
+            # Pagination
+            page = int(request.query_params.get("page", 1))
+            page_size = int(request.query_params.get("page_size", 20))
+            paginator = Paginator(products, page_size)
+
+            try:
+                paginated_products = paginator.page(page)
+            except Exception:
+                return Response(
+                    {"error": "Invalid page number"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
             # Vendor Details
             business_data = {
                 "business_name": vendor.business_name,
                 "shop_image": request.build_absolute_uri(vendor.shop_image.url) if vendor.shop_image else None,
                 "business_category": vendor.business_category,
-                "business_description":vendor.business_description,
+                "business_description": vendor.business_description,
                 "rating": vendor.rating
             }
 
-            serializer = ProductSerializer(products, many=True, context={'request': request})
+            serializer = ProductSerializer(paginated_products, many=True, context={'request': request})
             product_data = serializer.data
+
             # Remove 'in_stock' if business category is 'food'
             if vendor.business_category and vendor.business_category.lower() == "food":
                 for product in product_data:
@@ -82,64 +98,21 @@ class SpecificVendorProductsView(APIView):
             return Response(
                 {
                     "vendor_details": business_data,
-                    "products": product_data
+                    "products": product_data,
+                    "pagination": {
+                        "current_page": paginated_products.number,
+                        "total_pages": paginator.num_pages,
+                        "total_products": paginator.count,
+                        "has_next": paginated_products.has_next(),
+                        "has_previous": paginated_products.has_previous(),
+                        "page_size": page_size,
+                    }
                 },
                 status=status.HTTP_200_OK
             )
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-class VendorsBySchoolView(APIView):
-    serializer_class = VendorSerializer
-    def get(self, request):
-        school_name = request.query_params.get("school", None)
-
-        if not school_name:
-            return Response(
-                {"error": "School name is required"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        try:
-            # Get users associated with the institution
-            users = User.objects.filter(institution__iexact=school_name)
-            
-            if not users.exists():
-                return Response(
-                    {"error": "No users found for this institution"},
-                    status=status.HTTP_404_NOT_FOUND
-                )
-            
-            # Get vendors linked to those users and apply KYC filtering
-            vendors = Vendor.objects.filter(user__in=users).distinct()
-            vendors = self._apply_kyc_filtering(vendors)
-            
-            if not vendors.exists():
-                return Response(
-                    {"error": "No vendors found for this institution"},
-                    status=status.HTTP_404_NOT_FOUND
-                )
-            
-            # Serialize and return vendor data
-            serializer = VendorSerializer(vendors, many=True)
-            
-            return Response(serializer.data, status=status.HTTP_200_OK)
-
-        except Exception as e:
-            return Response(
-                {"error": "An unexpected error occurred. Please try again."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-    
-    def _apply_kyc_filtering(self, queryset):
-        """
-        Filter out vendors whose KYC is not approved.
-        Only show vendors with approved KYC status.
-        """
-        queryset = queryset.filter(user__kyc__verification_status='approved')
-        print(f"After KYC filtering (approved vendors only): {queryset.count()}")
-        return queryset
 
 
 class VendorsByOtherView(APIView):

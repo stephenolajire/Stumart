@@ -1,20 +1,32 @@
-import React from 'react';
-import { useTheme } from '../constant/ThemeContext';
-import { FaSun, FaMoon } from 'react-icons/fa';
-import styles from '../css/ThemeToggle.module.css';
+// ThemeToggle.jsx
+import React from "react";
+import { Sun, Moon } from "lucide-react";
+import { useTheme } from "../context/ThemeContext";
 
 const ThemeToggle = () => {
   const { theme, toggleTheme } = useTheme();
 
   return (
-    <button 
-      className={styles.themeToggle}
+    <button
       onClick={toggleTheme}
-      aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+      className="relative bg-surface border border-border p-2 rounded-radius-lg hover:bg-surface-hover transition-colors w-10 h-10 flex items-center justify-center"
+      aria-label="Toggle theme"
     >
-      {theme === 'light' ? <FaMoon /> : <FaSun />}
+      <Sun
+        className={`absolute h-5 w-5 text-text-primary transition-all duration-300 ${
+          theme === "dark"
+            ? "rotate-90 scale-0 opacity-0"
+            : "rotate-0 scale-100 opacity-100"
+        }`}
+      />
+      <Moon
+        className={`absolute h-5 w-5 text-text-primary transition-all duration-300 ${
+          theme === "dark"
+            ? "rotate-0 scale-100 opacity-100"
+            : "-rotate-90 scale-0 opacity-0"
+        }`}
+      />
     </button>
   );
-};
-
+}
 export default ThemeToggle;

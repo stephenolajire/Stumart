@@ -9,7 +9,7 @@ export const GlobalContext = createContext();
 const queryKeys = {
   shops: ["shops"],
   shopsBySchool: (school) => ["shops", "by-school", school],
-  products: (shopId) => ["products", shopId],
+  products: (shopId, page) => ["products", shopId, page],
   product: (productId) => ["product", productId],
   allProducts: (filters, viewMode, isAuth) => [
     "all-products",
@@ -19,11 +19,11 @@ const queryKeys = {
   orders: ["orders"],
   search: (params) => ["search", params],
   videos: ["videos"],
-  category:["category"],
-  allfive:["allfive"],
-  allriders:["allriders"],
-  pickerDashboard:["pickerDashboard"],
-  allAvailableDeliveries:["allAvailableDeliveries"],
+  category: ["category"],
+  allfive: ["allfive"],
+  allriders: ["allriders"],
+  pickerDashboard: ["pickerDashboard"],
+  allAvailableDeliveries: ["allAvailableDeliveries"],
   allMyDeliveries: (activeTab) => ["allMyDeliveries", activeTab],
 };
 
@@ -96,14 +96,17 @@ export const useShopsBySchool = (schoolName) => {
   });
 };
 
-export const useProducts = (shopId) => {
+export const useProducts = (shopId, page = 1, pageSize = 20) => {
   return useQuery({
-    queryKey: queryKeys.products(shopId),
+    queryKey: queryKeys.products(shopId, page), // page MUST be here
     queryFn: async () => {
-      const response = await api.get(`vendor-products/${shopId}`);
+      const response = await api.get(`vendor-products/${shopId}`, {
+        params: { page, page_size: pageSize }, // page MUST be passed here
+      });
       return {
-        products: response.data.products || response.data,
+        products: response.data.products || [],
         details: response.data.vendor_details || {},
+        pagination: response.data.pagination || {},
       };
     },
     enabled: !!shopId,
@@ -111,6 +114,7 @@ export const useProducts = (shopId) => {
     gcTime: 15 * 60 * 1000,
     retry: 2,
     refetchOnWindowFocus: false,
+    placeholderData: (previousData) => previousData, // keeps old page visible while new one loads
   });
 };
 

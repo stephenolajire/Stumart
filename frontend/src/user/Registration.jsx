@@ -620,7 +620,7 @@ const Signup = () => {
 
   return (
     <div className="min-h-screen bg-linear-to-br from-yellow-50 via-orange-50 to-yellow-50 py-8 px-4">
-      <div className="max-w-2xl mx-auto">
+      <div className="w-full max-w-[600px] mx-auto">
         <form
           onSubmit={handleSubmit}
           className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden"

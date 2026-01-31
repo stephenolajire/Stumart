@@ -9,6 +9,7 @@ import CompanyLayout from "./company/CompanyLayout";
 
 // Public Pages
 import Landing from "./pages/landing/Landing";
+import AllVendorsCategory from "./pages/AllVendorsCategory";
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Contact from "./pages/ContactUs";
@@ -102,331 +103,347 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <GlobalProvider>
-        <Router>
-          <ScrollToTop />
-          <Routes>
-            {/* =================== PUBLIC ROUTES =================== */}
+        <ThemeProvider>
+          <Router>
+            <ScrollToTop />
+            <Routes>
+              {/* =================== PUBLIC ROUTES =================== */}
 
-            {/* Authentication Routes */}
+              {/* Authentication Routes */}
 
-            <Route
-              path="/delivery-details/:uniqueCode"
-              element={<DeliveryDetails />}
-            />
-            <Route
-              path="/confirm-delivery/:deliveryCode"
-              element={<DeliveryConfirmation />}
-            />
-            <Route
-              path="/accept-delivery/:uniqueCode"
-              element={<AcceptDelivery />}
-            />
+              <Route
+                path="/delivery-details/:uniqueCode"
+                element={<DeliveryDetails />}
+              />
+              <Route
+                path="/confirm-delivery/:deliveryCode"
+                element={<DeliveryConfirmation />}
+              />
+              <Route
+                path="/accept-delivery/:uniqueCode"
+                element={<AcceptDelivery />}
+              />
 
-            <Route
-              path="/confirm-order-received/:customerConfirmationCode"
-              element={<CustomerOrderConfirmation />}
-            />
+              <Route
+                path="/confirm-order-received/:customerConfirmationCode"
+                element={<CustomerOrderConfirmation />}
+              />
 
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Signup />} />
-            <Route path="/company-signup" element={<CompanyRegistration />} />
-            <Route path="/verify-email" element={<VerifyEmail />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Signup />} />
+              <Route path="/company-signup" element={<CompanyRegistration />} />
+              <Route path="/verify-email" element={<VerifyEmail />} />
 
-            {/* Forgot Password Flow */}
-            <Route path="/forgot-password" element={<RequestOTPForm />} />
-            <Route path="/verify-otp" element={<VerifyOTPForm />} />
-            <Route path="/reset-password" element={<SetNewPasswordForm />} />
+              {/* Forgot Password Flow */}
+              <Route path="/forgot-password" element={<RequestOTPForm />} />
+              <Route path="/verify-otp" element={<VerifyOTPForm />} />
+              <Route path="/reset-password" element={<SetNewPasswordForm />} />
 
-            {/* Public Pages with Main Layout */}
-            <Route path="/" element={<Layout />}>
-              {/* Public routes - no protection */}
-              <Route index element={
-                  <ProtectedRoute allowedRoles={["student"]}>
-                    <Home />
-                  </ProtectedRoute>
-                } />
-              <Route path="about" element={<About />} />
-              <Route path="vendors" element={<Vendors />} />
-              <Route path="rider" element={<Rider />} />
-              <Route path="contact" element={<Contact />} />
+              {/* Public Pages with Main Layout */}
+              <Route path="/" element={<Layout />}>
+                {/* Public routes - no protection */}
+                <Route
+                  index
+                  element={
+                    <ProtectedRoute allowedRoles={["student"]}>
+                      <Landing />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="about" element={<About />} />
+                <Route path="vendors" element={<Vendors />} />
+                <Route path="rider" element={<Rider />} />
+                <Route path="contact" element={<Contact />} />
 
-              {/* Protected routes - student only */}
-              <Route
-                path="shop/:shopId"
-                element={
-                  <ProtectedRoute allowedRoles={["student"]}>
-                    <ShopDetails />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="product/:productId"
-                element={
-                  <ProtectedRoute allowedRoles={["student"]}>
-                    <ProductDetails />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="other-services"
-                element={
-                  <ProtectedRoute allowedRoles={["student"]}>
-                    <OtherService />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="search-results"
-                element={
-                  <ProtectedRoute allowedRoles={["student"]}>
-                    <SearchPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="category"
-                element={
-                  <ProtectedRoute allowedRoles={["student"]}>
-                    <Category />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="products"
-                element={
-                  <ProtectedRoute allowedRoles={["student"]}>
-                    <AllProducts />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="subscription-plans"
-                element={
-                  <ProtectedRoute allowedRoles={["student"]}>
-                    <SubscriptionPlans />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="service-application-success/:serviceId"
-                element={
-                  <ProtectedRoute allowedRoles={["student"]}>
-                    <ServiceApplicationSuccess />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="payment/verify"
-                element={
-                  <ProtectedRoute allowedRoles={["student"]}>
-                    <PaymentVerification />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="orders/:orderNumber"
-                element={
-                  <ProtectedRoute allowedRoles={["student"]}>
-                    <OrderDetails />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="chatbot"
-                element={
-                  <ProtectedRoute allowedRoles={["student"]}>
-                    <Chatbot />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="shopping-cart"
-                element={
-                  <ProtectedRoute allowedRoles={["student"]}>
-                    <ShoppingCart />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="checkout"
-                element={
-                  <ProtectedRoute allowedRoles={["student"]}>
-                    <Checkout />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="order-history"
-                element={
-                  <ProtectedRoute allowedRoles={["student"]}>
-                    <OrderHistory />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="profile"
-                element={
-                  <ProtectedRoute allowedRoles={["student"]}>
-                    <StudentProfile />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="service"
-                element={
-                  <ProtectedRoute allowedRoles={["student"]}>
-                    <Service />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="messages"
-                element={
-                  <ProtectedRoute allowedRoles={["student"]}>
-                    <Message />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="service-application/:serviceId"
-                element={
-                  <ProtectedRoute allowedRoles={["student"]}>
-                    <ServiceApplication />
-                  </ProtectedRoute>
-                }
-              />
-            </Route>
+                {/* Protected routes - student only */}
+                <Route
+                  path="shop/:shopId"
+                  element={
+                    <ProtectedRoute allowedRoles={["student"]}>
+                      <ShopDetails />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="product/:productId"
+                  element={
+                    <ProtectedRoute allowedRoles={["student"]}>
+                      <ProductDetails />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="shops"
+                  element={
+                    <ProtectedRoute allowedRoles={["student"]}>
+                      <AllVendorsCategory />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="other-services"
+                  element={
+                    <ProtectedRoute allowedRoles={["student"]}>
+                      <OtherService />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="search-results"
+                  element={
+                    <ProtectedRoute allowedRoles={["student"]}>
+                      <SearchPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="category"
+                  element={
+                    <ProtectedRoute allowedRoles={["student"]}>
+                      <Category />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="products"
+                  element={
+                    <ProtectedRoute allowedRoles={["student"]}>
+                      <AllProducts />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="subscription-plans"
+                  element={
+                    <ProtectedRoute allowedRoles={["student"]}>
+                      <SubscriptionPlans />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="service-application-success/:serviceId"
+                  element={
+                    <ProtectedRoute allowedRoles={["student"]}>
+                      <ServiceApplicationSuccess />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="payment/verify"
+                  element={
+                    <ProtectedRoute allowedRoles={["student"]}>
+                      <PaymentVerification />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="orders/:orderNumber"
+                  element={
+                    <ProtectedRoute allowedRoles={["student"]}>
+                      <OrderDetails />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="chatbot"
+                  element={
+                    <ProtectedRoute allowedRoles={["student"]}>
+                      <Chatbot />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="shopping-cart"
+                  element={
+                    <ProtectedRoute allowedRoles={["student"]}>
+                      <ShoppingCart />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="checkout"
+                  element={
+                    <ProtectedRoute allowedRoles={["student"]}>
+                      <Checkout />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="order-history"
+                  element={
+                    <ProtectedRoute allowedRoles={["student"]}>
+                      <OrderHistory />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="profile"
+                  element={
+                    <ProtectedRoute allowedRoles={["student"]}>
+                      <StudentProfile />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="service"
+                  element={
+                    <ProtectedRoute allowedRoles={["student"]}>
+                      <Service />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="messages"
+                  element={
+                    <ProtectedRoute allowedRoles={["student"]}>
+                      <Message />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="service-application/:serviceId"
+                  element={
+                    <ProtectedRoute allowedRoles={["student"]}>
+                      <ServiceApplication />
+                    </ProtectedRoute>
+                  }
+                />
+              </Route>
 
-            {/* =================== SHARED PROTECTED ROUTES (All Authenticated Users) =================== */}
-            <Route
-              path="/verify-account"
-              element={
-                <ProtectedRoute>
-                  <KYCVerification />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/kyc-status"
-              element={
-                <ProtectedRoute>
-                  <KYCStatus />
-                </ProtectedRoute>
-              }
-            />
+              {/* =================== SHARED PROTECTED ROUTES (All Authenticated Users) =================== */}
+              <Route
+                path="/verify-account"
+                element={
+                  <ProtectedRoute>
+                    <KYCVerification />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/kyc-status"
+                element={
+                  <ProtectedRoute>
+                    <KYCStatus />
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* =================== VENDOR PROTECTED ROUTES =================== */}
-            <Route
-              path="/vendor-dashboard"
-              element={
-                <ProtectedRoute allowedRoles={["vendor"]}>
-                  <VendorDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/add-product"
-              element={
-                <ProtectedRoute allowedRoles={["vendor"]}>
-                  <AddProduct />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/other-dashboard"
-              element={
-                <ProtectedRoute allowedRoles={["vendor"]}>
-                  <OtherDashboard />
-                </ProtectedRoute>
-              }
-            />
+              {/* =================== VENDOR PROTECTED ROUTES =================== */}
+              <Route
+                path="/vendor-dashboard"
+                element={
+                  <ProtectedRoute allowedRoles={["vendor"]}>
+                    <VendorDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/add-product"
+                element={
+                  <ProtectedRoute allowedRoles={["vendor"]}>
+                    <AddProduct />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/other-dashboard"
+                element={
+                  <ProtectedRoute allowedRoles={["vendor"]}>
+                    <OtherDashboard />
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* =================== PICKER PROTECTED ROUTES (Both picker and student_picker) =================== */}
-            <Route
-              path="/picker"
-              element={
-                <ProtectedRoute allowedRoles={["picker", "student_picker"]}>
-                  <DashboardLayout />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/picker/dashboard"
-              element={
-                <ProtectedRoute allowedRoles={["picker", "student_picker"]}>
-                  <HomePage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/picker/available-orders"
-              element={
-                <ProtectedRoute allowedRoles={["picker", "student_picker"]}>
-                  <AvailableOrders />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/picker/my-deliveries"
-              element={
-                <ProtectedRoute allowedRoles={["picker", "student_picker"]}>
-                  <MyDeliveries />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/earnings"
-              element={
-                <ProtectedRoute allowedRoles={["picker", "student_picker"]}>
-                  <Earnings />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/delivery-detail/:orderId"
-              element={
-                <ProtectedRoute allowedRoles={["picker", "student_picker"]}>
-                  <DeliveryDetail />
-                </ProtectedRoute>
-              }
-            />
+              {/* =================== PICKER PROTECTED ROUTES (Both picker and student_picker) =================== */}
+              <Route
+                path="/picker"
+                element={
+                  <ProtectedRoute allowedRoles={["picker", "student_picker"]}>
+                    <DashboardLayout />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/picker/dashboard"
+                element={
+                  <ProtectedRoute allowedRoles={["picker", "student_picker"]}>
+                    <HomePage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/picker/available-orders"
+                element={
+                  <ProtectedRoute allowedRoles={["picker", "student_picker"]}>
+                    <AvailableOrders />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/picker/my-deliveries"
+                element={
+                  <ProtectedRoute allowedRoles={["picker", "student_picker"]}>
+                    <MyDeliveries />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/earnings"
+                element={
+                  <ProtectedRoute allowedRoles={["picker", "student_picker"]}>
+                    <Earnings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/delivery-detail/:orderId"
+                element={
+                  <ProtectedRoute allowedRoles={["picker", "student_picker"]}>
+                    <DeliveryDetail />
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* =================== ADMIN PROTECTED ROUTES =================== */}
-            <Route
-              path="/admin-dashboard/*"
-              element={
-                <ProtectedRoute allowedRoles={["admin"]}>
-                  <AdminDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/vendor-products/:vendorId"
-              element={
-                <ProtectedRoute allowedRoles={["admin"]}>
-                  <VendorProducts />
-                </ProtectedRoute>
-              }
-            />
+              {/* =================== ADMIN PROTECTED ROUTES =================== */}
+              <Route
+                path="/admin-dashboard/*"
+                element={
+                  <ProtectedRoute allowedRoles={["admin"]}>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/vendor-products/:vendorId"
+                element={
+                  <ProtectedRoute allowedRoles={["admin"]}>
+                    <VendorProducts />
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* =================== COMPANY PROTECTED ROUTES =================== */}
-            <Route
-              path="/company/"
-              element={
-                <ProtectedRoute allowedRoles={["company"]}>
-                  <CompanyLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<DeliveryPartnerDashboard />} />
-              <Route path="picker" element={<ManagePickersInterface />} />
-              <Route path="analytics" element={<AnalyticsReportsInterface />} />
-              <Route path="order" element={<OrderAssignmentInterface />} />
-              <Route path="deliveries" element={<CDeliveries />} />
-              <Route path="withdrawal" element={<WithdrawalDashboard />} />
-            </Route>
-          </Routes>
-        </Router>
+              {/* =================== COMPANY PROTECTED ROUTES =================== */}
+              <Route
+                path="/company/"
+                element={
+                  <ProtectedRoute allowedRoles={["company"]}>
+                    <CompanyLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<DeliveryPartnerDashboard />} />
+                <Route path="picker" element={<ManagePickersInterface />} />
+                <Route
+                  path="analytics"
+                  element={<AnalyticsReportsInterface />}
+                />
+                <Route path="order" element={<OrderAssignmentInterface />} />
+                <Route path="deliveries" element={<CDeliveries />} />
+                <Route path="withdrawal" element={<WithdrawalDashboard />} />
+              </Route>
+            </Routes>
+          </Router>
+        </ThemeProvider>
       </GlobalProvider>
 
       {/* <ReactQueryDevtools initialIsOpen={false} /> */}

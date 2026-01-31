@@ -215,8 +215,8 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-orange-50 to-yellow-50 flex items-center justify-center px-4 py-8">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+    <div className="min-h-screen bg-linear-to-br from-yellow-50 via-orange-50 to-yellow-50 flex items-center justify-center px-4 py-8">
+      <div className="w-full max-w-[500px] bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
         {/* Logo Section */}
         <div className="text-center pt-8 pb-6 px-6">
           <div className="w-16 h-16 mx-auto mb-4 bg-black rounded-full flex items-center justify-center">

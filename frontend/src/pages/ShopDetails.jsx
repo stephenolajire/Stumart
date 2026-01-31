@@ -1,5 +1,5 @@
-import { useContext } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useContext, useState, useMemo } from "react";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import {
   FaBuilding,
   FaStar,
@@ -10,12 +10,72 @@ import { GlobalContext } from "../constant/GlobalContext";
 import Spinner from "../components/Spinner";
 import Header from "../components/Header";
 import Card from "./components/Card";
+import Pagination from "./components/Pagination";
+import PriceFilter from "./components/PriceFilter";
 
 const ShopDetails = () => {
   const { shopId } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { useProducts } = useContext(GlobalContext);
+  const [priceRange, setPriceRange] = useState({ min: 0, max: Infinity });
 
-  const { data: productsData, isLoading, isError, error } = useProducts(shopId);
+  // Page is driven by the URL — no useState needed
+  const page = Number(searchParams.get("page")) || 1;
+
+  const {
+    data: productsData,
+    isLoading,
+    isError,
+    error,
+  } = useProducts(shopId, page);
+
+  // Safely extract data with fallbacks — no early returns before hooks
+  const products = productsData?.products || [];
+  const details = productsData?.details || {};
+  const pagination = productsData?.pagination || {};
+
+  // Derive min and max prices from all products on the current page
+  const { minPrice, maxPrice } = useMemo(() => {
+    if (!Array.isArray(products) || products.length === 0) {
+      return { minPrice: 0, maxPrice: 0 };
+    }
+    const prices = products.map((p) => {
+      const price = parseFloat(p.price);
+      const promo = parseFloat(p.promotion_price);
+      return promo > 0 && promo < price ? promo : price;
+    });
+    return {
+      minPrice: Math.floor(Math.min(...prices)),
+      maxPrice: Math.ceil(Math.max(...prices)),
+    };
+  }, [products]);
+
+  // Filter products client-side by selected price range
+  const filteredProducts = useMemo(() => {
+    if (!Array.isArray(products)) return [];
+    return products.filter((p) => {
+      const price = parseFloat(p.price);
+      const promo = parseFloat(p.promotion_price);
+      const effectivePrice = promo > 0 && promo < price ? promo : price;
+      return (
+        effectivePrice >= priceRange.min && effectivePrice <= priceRange.max
+      );
+    });
+  }, [products, priceRange]);
+
+  // Called when user drags the slider — resets page to 1
+  const handlePriceChange = (newRange) => {
+    setPriceRange(newRange);
+    setSearchParams({ page: 1 });
+  };
+
+  // Called internally by PriceFilter when it syncs to new min/max props
+  // Does NOT reset the page — just updates the filter range silently
+  const handlePriceReset = (newRange) => {
+    setPriceRange(newRange);
+  };
+
+  // --- Early returns AFTER all hooks ---
 
   if (isLoading) {
     return (
@@ -59,12 +119,9 @@ const ShopDetails = () => {
     );
   }
 
-  const { products, details } = productsData;
-
   if (!Array.isArray(products) || products.length === 0) {
     return (
       <div className="w-full min-h-screen bg-gray-50 pt-28">
-        {/* <Header /> */}
         <div className="w-full min-h-[50vh] flex flex-col justify-center items-center p-4">
           <div className="max-w-md mx-auto bg-white rounded-xl border border-gray-200 p-12 text-center">
             <div className="text-6xl mb-6"></div>
@@ -90,15 +147,6 @@ const ShopDetails = () => {
   return (
     <div className="w-full min-h-screen bg-gray-50 pb-10">
       <div className="w-full mx-auto">
-        {/* Back Button */}
-        {/* <Link
-          to="/shops"
-          className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 text-sm font-medium"
-        >
-          <FaArrowLeft className="w-4 h-4" />
-          Back to Shops
-        </Link> */}
-
         {/* Shop Header Section */}
         <div className="bg-linear-to-r mt-38 lg:mt-0 from-gray-900 via-gray-800 to-gray-900 p-6 sm:p-8 mb-8 border border-gray-800">
           <div className="mb-4">
@@ -135,17 +183,66 @@ const ShopDetails = () => {
           </div>
         </div>
 
-        {/* Products Section */}
-        <div className="mb-6 px-6">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">
-            Available Products
-          </h2>
-          <div className="w-20 h-1 bg-gray-900 rounded-full"></div>
+        {/* Products Header + Price Filter */}
+        <div className="px-6 mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">
+                Available Products
+              </h2>
+              <div className="w-20 h-1 bg-gray-900 rounded-full"></div>
+            </div>
+
+            {/* Product count */}
+            {pagination?.total_products > 0 && (
+              <span className="text-sm text-gray-500">
+                {filteredProducts.length} of {pagination.total_products} product
+                {pagination.total_products !== 1 ? "s" : ""}
+              </span>
+            )}
+          </div>
+
+          {/* Price Filter — only show if there's a meaningful range */}
+          {minPrice < maxPrice && (
+            <div className="mt-4">
+              <PriceFilter
+                minPrice={minPrice}
+                maxPrice={maxPrice}
+                onChange={handlePriceChange}
+                onReset={handlePriceReset}
+              />
+            </div>
+          )}
         </div>
 
+        {/* Product Grid */}
         <div className="px-6">
-          <Card products={products} />
+          {filteredProducts.length > 0 ? (
+            <Card products={filteredProducts} />
+          ) : (
+            <div className="max-w-md mx-auto bg-white rounded-xl border border-gray-200 p-10 text-center mt-8">
+              <div className="text-5xl mb-4">💰</div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">
+                No products in this range
+              </h3>
+              <p className="text-gray-500 text-sm">
+                Try adjusting the price filter to see more products.
+              </p>
+            </div>
+          )}
         </div>
+
+        {/* Pagination */}
+        {pagination?.total_pages > 1 && (
+          <Pagination
+            currentPage={page}
+            totalPages={pagination.total_pages}
+            onPageChange={(newPage) => {
+              setSearchParams({ page: newPage });
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+          />
+        )}
       </div>
     </div>
   );

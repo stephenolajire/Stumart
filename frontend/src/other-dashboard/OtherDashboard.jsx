@@ -6,7 +6,7 @@ import Reviews from "./Reviews";
 import Settings from "./Settings";
 import Message from "./VendorMessages";
 import Subscriptions from "./Subscriptions";
-import ThemeToggle from "../components/ThemeToggle";
+// import ThemeToggle from "../components/ThemeToggle";
 import { Menu, X } from "lucide-react";
 
 const OtherDashboard = ({ vendor }) => {
@@ -50,9 +50,9 @@ const OtherDashboard = ({ vendor }) => {
       </div>
 
       {/* Theme Toggle - Fixed Position */}
-      <div className="fixed bottom-8 right-8 z-50">
+      {/* <div className="fixed bottom-8 right-8 z-50">
         <ThemeToggle />
-      </div>
+      </div> */}
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto bg-gray-50">

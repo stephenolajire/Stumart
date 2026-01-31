@@ -12,7 +12,7 @@ import Swal from "sweetalert2";
 import Inventory from "./Inventory";
 import Settings from "./Settings";
 import vendorApi from "../user/services/vendorApi";
-import ThemeToggle from "../components/ThemeToggle";
+// import ThemeToggle from "../components/ThemeToggle";
 import WithdrawalDashboard from "../withdrawal/WithdrawalDashboard";
 
 const VendorDashboard = () => {
