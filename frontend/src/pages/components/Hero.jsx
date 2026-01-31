@@ -175,6 +175,9 @@ const Hero = () => {
                     <p className="text-text-secondary text-xs mb-2 text-center">
                       {currentProduct.vendor_name}
                     </p>
+                    <p className="text-text-secondary text-sm mb-2 font-medium">
+                      {currentProduct.vendor_institution}
+                    </p>
                     <div className="flex items-center justify-between gap-4">
                       <span className="text-primary font-bold text-base whitespace-nowrap">
                         ₦{parseInt(currentProduct.price).toLocaleString()}
