@@ -89,7 +89,25 @@ const VendorHeroSection = ({ category }) => {
 
       {/* Content */}
       <div className="relative h-full max-w-7xl mx-auto px-4 flex flex-col justify-center items-center text-center">
-        <div className="animate-fade-in">
+        {/* Category Badge */}
+        <div
+          className="inline-flex items-center gap-2 px-6 py-3 bg-white/20 
+                          backdrop-blur-sm border-2 border-white/30 rounded-full"
+        >
+          <svg
+            className="w-5 h-5 text-white"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path
+              fillRule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+              clipRule="evenodd"
+            />
+          </svg>
+          <span className="text-white font-semibold capitalize">{category} Category</span>
+        </div>
+        <div className="">
           <h1
             className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-4 
                          drop-shadow-lg"
@@ -98,31 +116,11 @@ const VendorHeroSection = ({ category }) => {
           </h1>
           <p
             className="text-lg sm:text-xl md:text-2xl text-white/90 mb-6 
-                        drop-shadow-md max-w-2xl"
+                        drop-shadow-md"
           >
-            {hero.subtitle}
+            {/* {hero.subtitle} */}
+            Explore the best {category.toLowerCase()} vendors on campus
           </p>
-
-          {/* Category Badge */}
-          <div
-            className="inline-flex items-center gap-2 px-6 py-3 bg-white/20 
-                          backdrop-blur-sm border-2 border-white/30 rounded-full"
-          >
-            <svg
-              className="w-5 h-5 text-white"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path
-                fillRule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                clipRule="evenodd"
-              />
-            </svg>
-            <span className="text-white font-semibold">
-              {category} Category
-            </span>
-          </div>
         </div>
       </div>
 

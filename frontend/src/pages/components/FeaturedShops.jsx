@@ -105,13 +105,13 @@ const FeaturedShops = ({
         {/* Main Title */}
         <div className="mb-8 px-4">
           <div className="text-center max-w-3xl mx-auto">
-            <h1 className="text-3xl md:text-4xl font-bold text-text-primary mb-3">
+            <h1 className="text-2xl md:text-4xl font-bold text-text-primary mb-3">
               Featured <span className="text-primary">Vendors</span>
             </h1>
-            <p className="text-base text-text-secondary">
+            {/* <p className="text-base text-text-secondary">
               Discover amazing student-run businesses across different
               categories
-            </p>
+            </p> */}
             {displaySchool && (
               <p className="text-base text-text-tertiary mt-2">
                 Showing vendors at {displaySchool}
@@ -141,9 +141,9 @@ const FeaturedShops = ({
                     onClick={() =>
                       (window.location.href = `/shops?category=${categoryData.category_name}`)
                     }
-                    className="flex items-center gap-2 px-4 py-2 bg-surface hover:bg-primary 
-                               text-text-primary hover:text-text-inverse border-2 border-border 
-                               hover:border-primary rounded-xl transition-all duration-200 
+                    className="flex items-center gap-2 
+                               text-text-primary
+                               rounded-xl transition-all duration-200 
                                font-semibold text-sm"
                   >
                     <span>View All</span>

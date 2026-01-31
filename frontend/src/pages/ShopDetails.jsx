@@ -121,9 +121,9 @@ const ShopDetails = () => {
 
   if (!Array.isArray(products) || products.length === 0) {
     return (
-      <div className="w-full min-h-screen bg-gray-50 pt-28">
+      <div className="w-full min-h-screen bg-gray-50 pt-20">
         <div className="w-full min-h-[50vh] flex flex-col justify-center items-center p-4">
-          <div className="max-w-md mx-auto bg-white rounded-xl border border-gray-200 p-12 text-center">
+          <div className="mx-auto bg-white rounded-xl border border-gray-200 p-12 text-center">
             <div className="text-6xl mb-6"></div>
             <h2 className="text-xl font-bold text-gray-900 mb-4">
               No Products Available

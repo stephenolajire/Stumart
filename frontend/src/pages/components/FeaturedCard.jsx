@@ -18,7 +18,7 @@ const FeaturedCard = ({ shop }) => {
   return (
     <div
       onClick={handleClick}
-      className="cursor-pointer group shrink-0 w-50 sm:w-auto"
+      className="cursor-pointer group shrink-0 w-48 sm:w-auto"
     >
       {/* Shop Card */}
       <div
