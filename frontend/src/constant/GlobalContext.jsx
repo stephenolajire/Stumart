@@ -1,5 +1,10 @@
 import { createContext, useState, useEffect, useCallback, use } from "react";
-import { useQuery, useMutation, useQueryClient, Query } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  Query,
+} from "@tanstack/react-query";
 import api from "./api";
 import { jwtDecode } from "jwt-decode";
 
@@ -135,7 +140,7 @@ export const useProduct = (productId) => {
 export const useAllProducts = (
   filters = {},
   viewMode = "school",
-  isAuthenticated = false
+  isAuthenticated = false,
 ) => {
   return useQuery({
     queryKey: queryKeys.allProducts(filters, viewMode, isAuthenticated),
@@ -183,7 +188,7 @@ export const useAllProducts = (
                 id: product.vendor_id,
                 name: product.vendor_name,
               },
-            ])
+            ]),
         ).values(),
       ];
 
@@ -454,7 +459,7 @@ export const useProductCategory = (filters) => {
       console.log(
         "Category products fetched successfully:",
         data?.data?.results?.length || 0,
-        "products"
+        "products",
       );
       console.log("Page info:", {
         count: data?.data?.count,
@@ -535,7 +540,6 @@ export const usePickerDashboard = () => {
   });
 };
 
-
 export const useAllMyDeliveries = (activeTab) => {
   // console.log("Active Tab for Deliveries:", activeTab);
   return useQuery({
@@ -573,7 +577,7 @@ export const GlobalProvider = ({ children }) => {
         queryClient.removeQueries({ queryKey: ["videos"] });
       }
     },
-    [queryClient]
+    [queryClient],
   );
 
   const prefetchShops = useCallback(() => {
