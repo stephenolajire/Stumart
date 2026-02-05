@@ -37,6 +37,7 @@ const ShoppingCart = () => {
   } = useCart();
 
   const { removeFromCart, updateCartItem } = useCartMutations();
+  console.log("Cart Data:", cartData);
 
   // Extract cart data with defaults
   const cartItems = cartData?.items || [];
@@ -44,6 +45,7 @@ const ShoppingCart = () => {
     subTotal: 0,
     shippingFee: 0,
     tax: 0,
+    takeaway: 0,
     total: 0,
   };
 
@@ -63,7 +65,7 @@ const ShoppingCart = () => {
       const response = await api.put(
         `update-cart-item/${itemId}/`,
         { quantity: newQuantity },
-        { params }
+        { params },
       );
       return response.data;
     },
@@ -410,6 +412,14 @@ const ShoppingCart = () => {
                     <span>Service Charge</span>
                     <span>₦{formatPrice(cartSummary.tax)}</span>
                   </div>
+
+                  {/* Conditionally show takeaway fee only if it's greater than 0 */}
+                  {cartSummary.takeaway > 0 && (
+                    <div className="flex justify-between text-gray-600">
+                      <span>Takeaway Fee</span>
+                      <span>₦{formatPrice(cartSummary.takeaway)}</span>
+                    </div>
+                  )}
 
                   <hr className="my-4" />
 

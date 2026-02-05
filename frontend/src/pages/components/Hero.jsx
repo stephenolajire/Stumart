@@ -168,17 +168,17 @@ const Hero = () => {
                 {/* Mobile Content - Only show on small screens */}
 
                 <div className="absolute bottom-4 left-0 right-0 flex justify-center lg:hidden">
-                  <div className="bg-surface/95 backdrop-blur-sm rounded-xl p-3 mx-4 w-fit max-w-[calc(100%-2rem)]">
-                    <h3 className="text-text-primary font-bold text-base mb-1 line-clamp-1">
+                  <div className="bg-surface/95 backdrop-blur-sm rounded-xl p-1 mx-2 w-full flex flex-col ">
+                    <h3 className="text-text-primary text-center font-bold text-base mb-1 line-clamp-1">
                       {currentProduct.name}
                     </h3>
-                    <p className="text-text-secondary text-xs mb-2 text-center">
-                      {currentProduct.vendor_name}
-                    </p>
-                    <p className="text-text-secondary text-xs mb-2 text-center">
+                    {/* <p className="text-text-secondary text-xs mb-2 text-center">
                       {currentProduct.vendor_institution}
-                    </p>
-                    <div className="flex items-center justify-between gap-4">
+                      </p> */}
+                    <div className="flex items-center justify-between px-4">
+                      <p className="text-text-secondary text-xs text-center">
+                        {currentProduct.vendor_name}
+                      </p>
                       <span className="text-primary font-bold text-base whitespace-nowrap">
                         ₦{parseInt(currentProduct.price).toLocaleString()}
                       </span>

@@ -142,81 +142,36 @@ function App() {
               {/* Public Pages with Main Layout */}
               <Route path="/" element={<Layout />}>
                 {/* Public routes - no protection */}
-                <Route
-                  index
-                  element={
-                    <ProtectedRoute allowedRoles={["student"]}>
-                      <Landing />
-                    </ProtectedRoute>
-                  }
-                />
+                <Route index element={<Landing />} />
                 <Route path="about" element={<About />} />
                 <Route path="vendors" element={<Vendors />} />
                 <Route path="rider" element={<Rider />} />
                 <Route path="contact" element={<Contact />} />
 
-                {/* Protected routes - student only */}
-                <Route
-                  path="shop/:shopId"
-                  element={
-                    <ProtectedRoute allowedRoles={["student"]}>
-                      <ShopDetails />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="product/:productId"
-                  element={
-                    <ProtectedRoute allowedRoles={["student"]}>
-                      <ProductDetails />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="shops"
-                  element={
-                    <ProtectedRoute allowedRoles={["student"]}>
-                      <AllVendorsCategory />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="other-services"
-                  element={
-                    <ProtectedRoute allowedRoles={["student"]}>
-                      <OtherService />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="search-results"
-                  element={
-                    <ProtectedRoute allowedRoles={["student"]}>
-                      <SearchPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="category"
-                  element={
-                    <ProtectedRoute allowedRoles={["student"]}>
-                      <Category />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="products"
-                  element={
-                    <ProtectedRoute allowedRoles={["student"]}>
-                      <AllProducts />
-                    </ProtectedRoute>
-                  }
-                />
+                {/* Browsing/Viewing routes - now public (no authentication required) */}
+                <Route path="shop/:shopId" element={<ShopDetails />} />
+                <Route path="product/:productId" element={<ProductDetails />} />
+                <Route path="shops" element={<AllVendorsCategory />} />
+                <Route path="other-services" element={<OtherService />} />
+                <Route path="search-results" element={<SearchPage />} />
+                <Route path="category" element={<Category />} />
+                <Route path="products" element={<AllProducts />} />
+                <Route path="service/:serviceId" element={<Service />} />
+
+                {/* Protected routes - require student authentication for transactions/personal actions */}
                 <Route
                   path="subscription-plans"
                   element={
                     <ProtectedRoute allowedRoles={["student"]}>
                       <SubscriptionPlans />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="service-application/:serviceId"
+                  element={
+                    <ProtectedRoute allowedRoles={["student"]}>
+                      <ServiceApplication />
                     </ProtectedRoute>
                   }
                 />
@@ -285,26 +240,10 @@ function App() {
                   }
                 />
                 <Route
-                  path="service"
-                  element={
-                    <ProtectedRoute allowedRoles={["student"]}>
-                      <Service />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
                   path="messages"
                   element={
                     <ProtectedRoute allowedRoles={["student"]}>
                       <Message />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="service-application/:serviceId"
-                  element={
-                    <ProtectedRoute allowedRoles={["student"]}>
-                      <ServiceApplication />
                     </ProtectedRoute>
                   }
                 />

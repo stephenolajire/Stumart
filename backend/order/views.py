@@ -252,7 +252,7 @@ class CartItemsView(APIView):
             # FINAL SINGLE QUERY: bring items + stats
             cart_items = (
                 base_qs
-                .select_related("product", "product__vendor")
+                .select_related("product", "product__vendor", "product__vendor__vendor_profile")
                 .annotate(
                     vendor_count=Subquery(vendor_subquery),
                     sub_total=Subquery(subtotal_subquery),
@@ -334,18 +334,45 @@ class CartItemsView(APIView):
                 else:
                     # Fallback to hardcoded pricing if no vendor found in school system
                     if vendor_count == 1:
-                        shipping_fee = Decimal("500.00")
-                    elif 2 <= vendor_count < 4:
-                        shipping_fee = Decimal("600.00")
-                    else:  # vendor_count >= 4
                         shipping_fee = Decimal("800.00")
+                    elif 2 <= vendor_count < 4:
+                        shipping_fee = Decimal("1000.00")
+                    else:  # vendor_count >= 4
+                        shipping_fee = Decimal("1100.00")
                     
                     print(f"Using fallback pricing: {shipping_fee} (no vendor registered in school system)")
 
             # FLAT TAX RATE
             tax = Decimal("100.00")
             
-            total = sub_total + shipping_fee + tax
+            # Takeaway fee only applies to food orders
+            takeaway = Decimal("0.00")
+            has_food_items = False
+            
+            # CORRECTED LOGIC: Check each item's vendor's business_category
+            for item in cart_items:
+                if item.product and item.product.vendor:
+                    vendor_user = item.product.vendor  # This is a User object
+                    
+                    # Check if this user has a vendor profile
+                    if hasattr(vendor_user, 'vendor_profile'):
+                        vendor_profile = vendor_user.vendor_profile  # Get the Vendor object
+                        
+                        # Check if this vendor sells food
+                        # Note: business_category might be case-sensitive, so use .lower()
+                        if vendor_profile.business_category and vendor_profile.business_category.lower() == 'food':
+                            has_food_items = True
+                            print(f"Found food vendor: {vendor_profile.business_name}")
+                            break  # Found food item, no need to check further
+            
+            # Apply takeaway fee only if cart contains food items
+            if has_food_items:
+                takeaway = Decimal("300.00")
+                print(f"Applying takeaway fee: {takeaway}")
+            else:
+                print("No food items in cart, takeaway fee = 0")
+            
+            total = sub_total + shipping_fee + tax + takeaway
 
             # Serialize AFTER the single query (no extra DB hits)
             serializer = CartItemSerializer(cart_items, many=True)
@@ -356,6 +383,7 @@ class CartItemsView(APIView):
                     "sub_total": sub_total,
                     "shipping_fee": shipping_fee,
                     "tax": tax,
+                    "takeaway": takeaway,
                     "total": total,
                     "count": len(cart_items),
                 },
@@ -369,7 +397,6 @@ class CartItemsView(APIView):
                 {"error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-
 
 class CreateOrderView(APIView):
     permission_classes = [AllowAny]  # Or IsAuthenticated if you require login

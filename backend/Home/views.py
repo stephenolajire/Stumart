@@ -439,30 +439,35 @@ class VendorsBySchoolView(APIView):
     def get(self, request):
         school_name = request.query_params.get("school", None)
 
-        if not school_name:
-            return Response(
-                {"error": "School name is required"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
         try:
+            # Determine cache key and filter conditions based on school parameter
+            if school_name:
+                cache_key = f'vendors_by_school_{school_name.lower().replace(" ", "_")}'
+                school_filter = Q(user__institution__iexact=school_name)
+                response_school = school_name
+            else:
+                cache_key = 'vendors_all_schools'
+                school_filter = Q()  # Empty Q object means no filtering
+                response_school = 'All Schools'
+            
             # Try to get from cache first
-            cache_key = f'vendors_by_school_{school_name.lower().replace(" ", "_")}'
             cached_data = cache.get(cache_key)
             
             if cached_data:
                 return Response({
                     'status': 'success',
                     'data': cached_data,
+                    'school': response_school,
                     'cached': True
                 }, status=status.HTTP_200_OK)
 
-            # Get all unique business categories for this school (excluding 'others')
+            # Get all unique business categories (excluding 'others')
+            # Apply school filter if school_name was provided
             categories = (
                 Vendor.objects
                 .filter(
-                    user__institution__iexact=school_name,
-                    user__kyc__verification_status='approved'  # Add this
+                    school_filter,
+                    user__kyc__verification_status='approved'
                 )
                 .exclude(business_category__in=['others', 'Others'])
                 .values_list('business_category', flat=True)
@@ -484,12 +489,13 @@ class VendorsBySchoolView(APIView):
             response_data = OrderedDict()
 
             for category in categories_list:
-                # Get all approved vendors in this category and school
+                # Get all approved vendors in this category
+                # Apply school filter if school_name was provided
                 vendors = (
                     Vendor.objects
                     .select_related('user', 'user__kyc')
                     .filter(
-                        user__institution__iexact=school_name,
+                        school_filter,
                         user__kyc__verification_status='approved',
                         business_category__iexact=category
                     )
@@ -525,8 +531,13 @@ class VendorsBySchoolView(APIView):
                     }
 
             if not response_data:
+                error_message = (
+                    f"No vendors found for {school_name}" 
+                    if school_name 
+                    else "No vendors found"
+                )
                 return Response(
-                    {"error": "No vendors found for this institution"},
+                    {"error": error_message},
                     status=status.HTTP_404_NOT_FOUND
                 )
 
@@ -536,7 +547,7 @@ class VendorsBySchoolView(APIView):
             return Response({
                 'status': 'success',
                 'data': response_data,
-                'school': school_name,
+                'school': response_school,
                 'cached': False
             }, status=status.HTTP_200_OK)
 

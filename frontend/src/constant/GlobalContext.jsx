@@ -80,15 +80,14 @@ export const useShops = () => {
 
 export const useShopsBySchool = (schoolName) => {
   return useQuery({
-    queryKey: queryKeys.shopsBySchool(schoolName),
+    queryKey: queryKeys.shopsBySchool(schoolName || "all"),
     queryFn: async () => {
-      if (!schoolName) return [];
       const response = await api.get("shops-by-school/", {
-        params: { school: schoolName },
+        params: schoolName ? { school: schoolName } : {},
       });
       return response.data || [];
     },
-    enabled: !!schoolName,
+    enabled: true, // Always enabled now
     staleTime: 10 * 60 * 1000,
     gcTime: 15 * 60 * 1000,
     retry: 2,
@@ -222,6 +221,7 @@ export const useCart = () => {
           shippingFee: response.data.shipping_fee || 0,
           tax: response.data.tax || 0,
           total: response.data.total || 0,
+          takeaway: response.data.takeaway || 0,
         },
         count: response.data.count || 0,
       };

@@ -41,6 +41,7 @@ const Checkout = () => {
     subTotal: 0,
     shippingFee: 0,
     tax: 0,
+    takeaway: 0,
     total: 0,
   };
 
@@ -351,6 +352,7 @@ const Checkout = () => {
       subtotal: cartSummary.subTotal,
       shipping_fee: cartSummary.shippingFee,
       tax: cartSummary.tax,
+      takeaway: cartSummary.takeaway,
       total: cartSummary.total,
       // Add area_id if selected
       ...(selectedAreaId && { area_id: selectedAreaId }),
@@ -770,6 +772,15 @@ const Checkout = () => {
                     {formatCurrency(cartSummary.tax)}
                   </span>
                 </div>
+                {/* Conditionally show takeaway fee only if it's greater than 0 */}
+                {cartSummary.takeaway > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Takeaway Fee</span>
+                    <span className="font-medium text-gray-900">
+                      {formatCurrency(cartSummary.takeaway)}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between text-lg font-bold text-gray-900 pt-3 border-t border-gray-200">
                   <span>Total</span>
                   <span className="text-yellow-600">
