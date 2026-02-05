@@ -461,20 +461,62 @@ class VendorsBySchoolView(APIView):
                     'cached': True
                 }, status=status.HTTP_200_OK)
 
-            # Get all unique business categories (excluding 'others')
-            # Apply school filter if school_name was provided
-            categories = (
+            # OPTIMIZED: Fetch ALL vendors with products in ONE query with annotations
+            from django.db.models import Exists, OuterRef
+            from Stumart.models import Product
+            
+            # Subquery to check if vendor's user has products
+            has_products = Exists(
+                Product.objects.filter(vendor_id=OuterRef('user_id'))
+            )
+            
+            all_vendors = (
                 Vendor.objects
+                .select_related('user', 'user__kyc')
                 .filter(
                     school_filter,
                     user__kyc__verification_status='approved'
                 )
                 .exclude(business_category__in=['others', 'Others'])
-                .values_list('business_category', flat=True)
-                .distinct()
+                .annotate(has_products=has_products)
+                .filter(has_products=True)
+                .only(
+                    # Vendor fields
+                    'id', 'business_name', 'business_category', 
+                    'business_description', 'shop_image', 'rating',
+                    'total_ratings', 'is_verified', 'user_id',
+                    # User fields
+                    'user__id', 'user__email', 'user__institution',
+                    'user__phone_number', 'user__state',
+                    # KYC fields
+                    'user__kyc__verification_status'
+                )
             )
-
-            categories_list = list(categories)
+            
+            # Convert to list once
+            vendors_list = list(all_vendors)
+            
+            if not vendors_list:
+                error_message = (
+                    f"No vendors found for {school_name}" 
+                    if school_name 
+                    else "No vendors found"
+                )
+                return Response(
+                    {"error": error_message},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # Group vendors by category in Python (faster than multiple DB queries)
+            from collections import defaultdict
+            vendors_by_category = defaultdict(list)
+            
+            for vendor in vendors_list:
+                category = vendor.business_category
+                vendors_by_category[category].append(vendor)
+            
+            # Get sorted categories
+            categories_list = list(vendors_by_category.keys())
             
             # Custom sorting: Food first, then alphabetically
             def sort_categories(category):
@@ -489,57 +531,19 @@ class VendorsBySchoolView(APIView):
             response_data = OrderedDict()
 
             for category in categories_list:
-                # Get all approved vendors in this category
-                # Apply school filter if school_name was provided
-                vendors = (
-                    Vendor.objects
-                    .select_related('user', 'user__kyc')
-                    .filter(
-                        school_filter,
-                        user__kyc__verification_status='approved',
-                        business_category__iexact=category
-                    )
-                    .only(
-                        # Vendor fields
-                        'id', 'business_name', 'business_category', 
-                        'business_description', 'shop_image', 'rating',
-                        'total_ratings', 'is_verified', 'user_id',
-                        # User fields
-                        'user__id', 'user__email', 'user__institution',
-                        'user__phone_number', 'user__state',
-                        # KYC fields
-                        'user__kyc__verification_status'
-                    )
-                )
-
-                # Convert to list for random selection
-                vendors_list = list(vendors)
+                category_vendors = vendors_by_category[category]
+                total_count = len(category_vendors)
                 
-                # Only add category if it has vendors
-                if vendors_list:
-                    # Get total count before random selection
-                    total_count = len(vendors_list)
-                    
-                    selected_vendors = random.sample(vendors_list, min(5, len(vendors_list)))
-                    serializer = VendorSerializer(selected_vendors, many=True)
-                    
-                    response_data[category] = {
-                        'category_name': category,
-                        'vendors': serializer.data,
-                        'total_vendors': total_count,
-                        'returned_count': len(selected_vendors)
-                    }
-
-            if not response_data:
-                error_message = (
-                    f"No vendors found for {school_name}" 
-                    if school_name 
-                    else "No vendors found"
-                )
-                return Response(
-                    {"error": error_message},
-                    status=status.HTTP_404_NOT_FOUND
-                )
+                # Random selection
+                selected_vendors = random.sample(category_vendors, min(5, total_count))
+                serializer = VendorSerializer(selected_vendors, many=True)
+                
+                response_data[category] = {
+                    'category_name': category,
+                    'vendors': serializer.data,
+                    'total_vendors': total_count,
+                    'returned_count': len(selected_vendors)
+                }
 
             # Cache the result for 5 minutes
             cache.set(cache_key, response_data, 300)
