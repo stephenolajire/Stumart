@@ -430,27 +430,26 @@ class CategoryLastFiveView(APIView):
                 'message': 'Failed to fetch category products',
                 'detail': str(e) if settings.DEBUG else 'Internal server error'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+
 
 
 class VendorsBySchoolView(APIView):
     serializer_class = VendorSerializer
+    permission_classes = [AllowAny]
     
     def get(self, request):
         school_name = request.query_params.get("school", None)
 
         try:
-            # Determine cache key and filter conditions based on school parameter
             if school_name:
                 cache_key = f'vendors_by_school_{school_name.lower().replace(" ", "_")}'
                 school_filter = Q(user__institution__iexact=school_name)
                 response_school = school_name
             else:
                 cache_key = 'vendors_all_schools'
-                school_filter = Q()  # Empty Q object means no filtering
+                school_filter = Q()
                 response_school = 'All Schools'
             
-            # Try to get from cache first
             cached_data = cache.get(cache_key)
             
             if cached_data:
@@ -461,39 +460,37 @@ class VendorsBySchoolView(APIView):
                     'cached': True
                 }, status=status.HTTP_200_OK)
 
-            # OPTIMIZED: Fetch ALL vendors with products in ONE query with annotations
-            from django.db.models import Exists, OuterRef
             from Stumart.models import Product
             
-            # Subquery to check if vendor's user has products
-            has_products = Exists(
-                Product.objects.filter(vendor_id=OuterRef('user_id'))
+            vendor_user_ids_with_products = set(
+                Product.objects.values_list('vendor_id', flat=True).distinct()
             )
+            
+            if not vendor_user_ids_with_products:
+                return Response(
+                    {"error": "No vendors with products found"},
+                    status=status.HTTP_404_NOT_FOUND
+                )
             
             all_vendors = (
                 Vendor.objects
                 .select_related('user', 'user__kyc')
                 .filter(
                     school_filter,
+                    user_id__in=vendor_user_ids_with_products,
                     user__kyc__verification_status='approved'
                 )
                 .exclude(business_category__in=['others', 'Others'])
-                .annotate(has_products=has_products)
-                .filter(has_products=True)
                 .only(
-                    # Vendor fields
                     'id', 'business_name', 'business_category', 
                     'business_description', 'shop_image', 'rating',
                     'total_ratings', 'is_verified', 'user_id',
-                    # User fields
                     'user__id', 'user__email', 'user__institution',
                     'user__phone_number', 'user__state',
-                    # KYC fields
                     'user__kyc__verification_status'
                 )
             )
             
-            # Convert to list once
             vendors_list = list(all_vendors)
             
             if not vendors_list:
@@ -507,18 +504,14 @@ class VendorsBySchoolView(APIView):
                     status=status.HTTP_404_NOT_FOUND
                 )
             
-            # Group vendors by category in Python (faster than multiple DB queries)
-            from collections import defaultdict
             vendors_by_category = defaultdict(list)
             
             for vendor in vendors_list:
                 category = vendor.business_category
                 vendors_by_category[category].append(vendor)
             
-            # Get sorted categories
             categories_list = list(vendors_by_category.keys())
             
-            # Custom sorting: Food first, then alphabetically
             def sort_categories(category):
                 if category.lower() == 'food':
                     return (0, category.lower())
@@ -527,15 +520,17 @@ class VendorsBySchoolView(APIView):
             
             categories_list.sort(key=sort_categories)
 
-            # Use OrderedDict to maintain insertion order
             response_data = OrderedDict()
 
             for category in categories_list:
                 category_vendors = vendors_by_category[category]
                 total_count = len(category_vendors)
                 
-                # Random selection
-                selected_vendors = random.sample(category_vendors, min(5, total_count))
+                if total_count > 5:
+                    selected_vendors = random.sample(category_vendors, 5)
+                else:
+                    selected_vendors = category_vendors
+                    
                 serializer = VendorSerializer(selected_vendors, many=True)
                 
                 response_data[category] = {
@@ -545,7 +540,6 @@ class VendorsBySchoolView(APIView):
                     'returned_count': len(selected_vendors)
                 }
 
-            # Cache the result for 5 minutes
             cache.set(cache_key, response_data, 300)
 
             return Response({
@@ -556,8 +550,18 @@ class VendorsBySchoolView(APIView):
             }, status=status.HTTP_200_OK)
 
         except Exception as e:
-            logger.error(f"Error in VendorsBySchoolView: {str(e)}", exc_info=True)
+            logger.error(
+                f"Error in VendorsBySchoolView: {str(e)}", 
+                exc_info=True,
+                extra={'school': school_name, 'authenticated': request.user.is_authenticated}
+            )
+            
+            is_staff = request.user.is_authenticated and request.user.is_staff
+            
             return Response(
-                {"error": "An unexpected error occurred. Please try again."},
+                {
+                    "error": "An unexpected error occurred. Please try again later.",
+                    "message": str(e) if is_staff else None
+                },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
