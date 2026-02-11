@@ -398,8 +398,17 @@ class CartItemsView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from django.db import transaction
+from decimal import Decimal
+import uuid
+
+
 class CreateOrderView(APIView):
-    permission_classes = [AllowAny]  # Or IsAuthenticated if you require login
+    permission_classes = [IsAuthenticated] 
 
     def post(self, request, *args, **kwargs):
         try:
@@ -423,6 +432,15 @@ class CreateOrderView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
+            # Get referral code if provided (optional)
+            referral_code = data.get('referral_code', '').strip()
+            
+            # Validate referral code if provided (you can add validation logic here later)
+            if referral_code:
+                # Optional: You can validate the referral code exists here
+                # For now, we'll just accept any non-empty string
+                referral_code = referral_code.upper()  # Normalize to uppercase
+
             # Use transaction to ensure data consistency
             with transaction.atomic():
                 # Create order with user information
@@ -439,7 +457,9 @@ class CreateOrderView(APIView):
                     tax=Decimal(data.get('tax')),
                     total=Decimal(data.get('total')),
                     order_status='PENDING',
-                    order_number=f"ORD-{uuid.uuid4().hex[:8].upper()}"
+                    order_number=f"ORD-{uuid.uuid4().hex[:8].upper()}",
+                    # NEW: Add referral code if provided
+                    referral_code=referral_code if referral_code else None
                 )
 
                 # Create order items for each cart item
@@ -465,11 +485,17 @@ class CreateOrderView(APIView):
                         size=cart_item.size if hasattr(cart_item, 'size') else None
                     )
 
-            return Response({
+            response_data = {
                 'order_id': order.id,
                 'order_number': order.order_number,
                 'message': 'Order created successfully. Proceed to payment.'
-            }, status=status.HTTP_201_CREATED)
+            }
+            
+            # Include referral code in response if it was used
+            if referral_code:
+                response_data['referral_code_applied'] = referral_code
+
+            return Response(response_data, status=status.HTTP_201_CREATED)
 
         except Exception as e:
             import traceback

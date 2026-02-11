@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'wallet',
     'django_crontab',
     'Stumart.apps.StumartConfig',
+    'referral'
     # 'silk',
 ]
 

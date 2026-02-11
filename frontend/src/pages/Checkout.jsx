@@ -15,6 +15,7 @@ const Checkout = () => {
     phone: "",
     address: "",
     room: "",
+    referralCode: "", // NEW: Referral code field
     saveInfo: false,
   });
 
@@ -130,6 +131,14 @@ const Checkout = () => {
     onSuccess: (data) => {
       // Store order ID
       localStorage.setItem("order_id", data.order_id);
+
+      // Show success message if referral code was applied
+      if (data.referral_code_applied) {
+        console.log(
+          `Referral code ${data.referral_code_applied} applied successfully!`,
+        );
+      }
+
       // Initiate payment
       initializePayment({
         order_id: data.order_id,
@@ -358,6 +367,10 @@ const Checkout = () => {
       ...(selectedAreaId && { area_id: selectedAreaId }),
       // Add vendors information if available
       ...(cartData?.vendors && { vendors: cartData.vendors }),
+      // NEW: Add referral code if provided (optional)
+      ...(formData.referralCode.trim() && {
+        referral_code: formData.referralCode.trim().toUpperCase(),
+      }),
     };
 
     // Create order
@@ -432,8 +445,6 @@ const Checkout = () => {
 
   return (
     <div className="h-auto bg-gray-50 py-4 mt-38 lg:mt-0">
-      {/* <Header title="Checkout" /> */}
-
       <div className="w-full mx-auto px-4 md:px-8">
         {/* Delivery Hours Info Banner */}
         <div className="mb-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg">
@@ -552,6 +563,35 @@ const Checkout = () => {
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
                       />
                     </div>
+                  </div>
+
+                  {/* NEW: Referral Code Input */}
+                  <div className="mt-6">
+                    <label
+                      htmlFor="referralCode"
+                      className="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Referral Code{" "}
+                      <span className="text-gray-500 font-normal">
+                        (Optional)
+                      </span>
+                    </label>
+                    <input
+                      type="text"
+                      id="referralCode"
+                      name="referralCode"
+                      value={formData.referralCode}
+                      onChange={handleInputChange}
+                      placeholder="Enter referral code"
+                      disabled={isLoading}
+                      maxLength={20}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed uppercase"
+                      style={{ textTransform: "uppercase" }}
+                    />
+                    <p className="mt-2 text-sm text-gray-500">
+                      Have a referral code? Enter it here to support your
+                      referrer!
+                    </p>
                   </div>
                 </div>
 

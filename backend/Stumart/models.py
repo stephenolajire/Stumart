@@ -236,19 +236,34 @@ class Order(models.Model):
     phone = models.CharField(max_length=15)
     address = models.TextField()
     room_number = models.CharField(max_length=100, blank=True, null=True)
+    
+    # Financial fields
     subtotal = models.DecimalField(max_digits=10, decimal_places=2)
     shipping_fee = models.DecimalField(max_digits=10, decimal_places=2)
     tax = models.DecimalField(max_digits=10, decimal_places=2)
     takeaway = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     total = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    # Order status and tracking
     order_status = models.CharField(max_length=20, default='PENDING')
     created_at = models.DateTimeField(auto_now_add=True)
+    
+    # Picker and company information
     picker = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE, related_name="picker")
     confirm = models.BooleanField(default=False, blank=True, null=True)
     packed = models.BooleanField(default=False, blank=True, null=True)
     reviewed = models.BooleanField(default=False)
     company_picker = models.BooleanField(default=False, blank=True, null=True)
     company_picker_email = models.EmailField(blank=True, null=True)
+    
+    # NEW: Referral code field (optional)
+    referral_code = models.CharField(
+        max_length=20, 
+        blank=True, 
+        null=True,
+        db_index=True,
+        help_text="Referral code used for this order"
+    )
 
     class Meta:
         indexes = [
@@ -257,6 +272,8 @@ class Order(models.Model):
             models.Index(fields=['-created_at'], name='order_date_idx'),
             models.Index(fields=['order_status', '-created_at'], name='order_status_date'),
             models.Index(fields=['picker'], name='order_picker_idx'),
+            # NEW: Index for referral code queries
+            models.Index(fields=['referral_code', '-created_at'], name='order_referral_idx'),
         ]
 
     def __str__(self):

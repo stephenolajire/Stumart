@@ -63,6 +63,7 @@ import DeliveryDetail from "./picker-dashboard/DeliveryDetail";
 // Admin Dashboard
 import AdminDashboard from "./admin-dashboard/AdminDashboard";
 import VendorProducts from "./admin-dashboard/VendorProducts";
+import ReferralPage from "./admin-dashboard/ReferralPage";
 
 // Company Dashboard Pages
 import DeliveryPartnerDashboard from "./company/CDashboard";

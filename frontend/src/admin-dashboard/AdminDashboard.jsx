@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { FaBars, FaTimes, FaUser } from "react-icons/fa";
-import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import DashboardHome from "./DashboardHome";
 import ManageUsers from "./ManageUsers";
@@ -12,83 +12,33 @@ import Payments from "./Payments";
 import VendorWallets from "./VendorWallets";
 import KYCVerification from "./KYCVerification";
 import Utilities from "./Utilities";
+import ReferralManagement from "./ReferralPage";
 
 const AdminDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const navigate = useNavigate();
   const location = useLocation();
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
 
-  // Determine active tab based on current route
-  const getActiveTab = () => {
-    const path = location.pathname;
-    if (path.includes("/vendors")) return "vendors";
-    if (path.includes("/users")) return "users";
-    if (path.includes("/pickers")) return "pickers";
-    if (path.includes("/orders")) return "orders";
-    if (path.includes("/payments")) return "payments";
-    if (path.includes("/kyc")) return "kyc";
-    if (path.includes("/utilities")) return "utilities";
-    return "dashboard";
-  };
-
-  const handleTabChange = (tabId) => {
-    switch (tabId) {
-      case "dashboard":
-        navigate("/admin-dashboard");
-        break;
-      case "users":
-        navigate("/admin-dashboard/users");
-        break;
-      case "vendors":
-        navigate("/admin-dashboard/vendors");
-        break;
-      case "pickers":
-        navigate("/admin-dashboard/pickers");
-        break;
-      case "orders":
-        navigate("/admin-dashboard/orders");
-        break;
-      case "payments":
-        navigate("/admin-dashboard/payments");
-        break;
-      case "kyc":
-        navigate("/admin-dashboard/kyc");
-        break;
-      case "utilities":
-        navigate("/admin-dashboard/utilities");
-        break;
-      default:
-        navigate("/admin-dashboard");
-    }
-  };
-
+  // Get page title based on current route
   const getPageTitle = () => {
-    const activeTab = getActiveTab();
     const path = location.pathname;
 
-    // Check for specific nested routes
-    if (path.includes("/orders/") && path !== "/admin-dashboard/orders") {
-      return "Order Details";
-    }
-    if (path.includes("/payments/vendor-wallets")) {
-      return "Vendor Wallets";
-    }
+    if (path === "/admin-dashboard") return "Dashboard";
+    if (path.includes("/orders/")) return "Order Details";
+    if (path.includes("/payments/vendor-wallets")) return "Vendor Wallets";
+    if (path.includes("/users")) return "Manage Users";
+    if (path.includes("/vendors")) return "Manage Vendors";
+    if (path.includes("/pickers")) return "Manage Pickers";
+    if (path.includes("/orders")) return "Orders";
+    if (path.includes("/payments")) return "Payments";
+    if (path.includes("/kyc")) return "KYC Verification";
+    if (path.includes("/utilities")) return "Utilities";
+    if (path.includes("/referrals")) return "Referral Management";
 
-    const titles = {
-      dashboard: "Dashboard",
-      users: "Manage Users",
-      vendors: "Manage Vendors",
-      pickers: "Manage Pickers",
-      orders: "Orders",
-      payments: "Payments",
-      kyc: "KYC Verification",
-      utilities: "Utilities",
-    };
-    return titles[activeTab] || "Dashboard";
+    return "Dashboard";
   };
 
   return (
@@ -98,12 +48,7 @@ const AdminDashboard = () => {
         className={`${sidebarOpen ? "translate-x-0" : "-translate-x-full"} 
         fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}
       >
-        <Sidebar
-          activeTab={getActiveTab()}
-          setActiveTab={handleTabChange}
-          isOpen={sidebarOpen}
-          toggleSidebar={toggleSidebar}
-        />
+        <Sidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
       </div>
 
       {/* Overlay for mobile */}
@@ -115,15 +60,12 @@ const AdminDashboard = () => {
       )}
 
       {/* Main Content */}
-      <div
-        className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${
-          sidebarOpen ? "lg:ml-0" : "lg:ml-0"
-        }`}
-      >
+      <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Bar */}
         <div className="bg-white shadow-sm border-b border-gray-200 px-4 py-4 flex items-center justify-between">
           {/* Left side - Menu toggle and title */}
           <div className="flex items-center space-x-4">
+            {/* Mobile menu toggle */}
             <button
               onClick={toggleSidebar}
               className="p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-yellow-500 lg:hidden"
@@ -174,6 +116,7 @@ const AdminDashboard = () => {
               />
               <Route path="kyc" element={<KYCVerification />} />
               <Route path="utilities" element={<Utilities />} />
+              <Route path="referrals" element={<ReferralManagement />} />
             </Routes>
           </div>
         </div>

@@ -10,29 +10,51 @@ import {
   FaChartLine,
   FaSignOutAlt,
 } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 
-const Sidebar = ({ activeTab, setActiveTab, isOpen, toggleSidebar }) => {
-  const menuItems = [
-    { id: "dashboard", label: "Dashboard", icon: <FaChartBar /> },
-    { id: "users", label: "Manage Users", icon: <FaUsers /> },
-    { id: "vendors", label: "Manage Vendors", icon: <FaStore /> },
-    { id: "pickers", label: "Manage Pickers", icon: <FaTruck /> },
-    { id: "orders", label: "Orders", icon: <FaBox /> },
-    { id: "payments", label: "Payments", icon: <FaMoneyBillWave /> },
-    { id: "kyc", label: "KYC Verification", icon: <FaSearch /> },
-    { id: "utilities", label: "Utilities", icon: <FaChartLine /> },
-  ];
-
+const Sidebar = ({ isOpen, toggleSidebar }) => {
   const navigate = useNavigate();
 
-  const handleNavigate = (tabId) => {
-    setActiveTab(tabId);
-    if (window.innerWidth <= 768 && isOpen) {
-      toggleSidebar();
-    }
-  };
+  const menuItems = [
+    { path: "/admin-dashboard", label: "Dashboard", icon: <FaChartBar /> },
+    {
+      path: "/admin-dashboard/users",
+      label: "Manage Users",
+      icon: <FaUsers />,
+    },
+    {
+      path: "/admin-dashboard/vendors",
+      label: "Manage Vendors",
+      icon: <FaStore />,
+    },
+    {
+      path: "/admin-dashboard/pickers",
+      label: "Manage Pickers",
+      icon: <FaTruck />,
+    },
+    { path: "/admin-dashboard/orders", label: "Orders", icon: <FaBox /> },
+    {
+      path: "/admin-dashboard/payments",
+      label: "Payments",
+      icon: <FaMoneyBillWave />,
+    },
+    {
+      path: "/admin-dashboard/kyc",
+      label: "KYC Verification",
+      icon: <FaSearch />,
+    },
+    {
+      path: "/admin-dashboard/utilities",
+      label: "Utilities",
+      icon: <FaChartLine />,
+    },
+    {
+      path: "/admin-dashboard/referrals",
+      label: "Referrals",
+      icon: <FaChartLine />,
+    },
+  ];
 
   const handleLogout = async () => {
     try {
@@ -72,6 +94,13 @@ const Sidebar = ({ activeTab, setActiveTab, isOpen, toggleSidebar }) => {
     }
   };
 
+  const handleLinkClick = () => {
+    // Close sidebar on mobile when clicking a link
+    if (window.innerWidth < 1024 && isOpen) {
+      toggleSidebar();
+    }
+  };
+
   return (
     <div
       className={`h-full bg-white border-r border-gray-200 flex flex-col ${
@@ -104,41 +133,46 @@ const Sidebar = ({ activeTab, setActiveTab, isOpen, toggleSidebar }) => {
       >
         <ul className="space-y-1 px-3">
           {menuItems.map((item) => (
-            <li key={item.id}>
-              <button
-                className={`w-full flex items-center px-3 py-2.5 rounded-lg text-left transition-all duration-200 group relative ${
-                  activeTab === item.id
-                    ? "bg-gray-900 text-white"
-                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                }`}
-                onClick={() => handleNavigate(item.id)}
-                aria-label={item.label}
-                aria-current={activeTab === item.id ? "page" : undefined}
-                type="button"
+            <li key={item.path}>
+              <NavLink
+                to={item.path}
+                end={item.path === "/admin-dashboard"}
+                onClick={handleLinkClick}
+                className={({ isActive }) =>
+                  `w-full flex items-center px-3 py-2.5 rounded-lg transition-all duration-200 group relative ${
+                    isActive
+                      ? "bg-gray-900 text-white"
+                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                  }`
+                }
               >
-                <span
-                  className={`text-base shrink-0 ${
-                    activeTab === item.id
-                      ? "text-white"
-                      : "text-gray-500 group-hover:text-gray-700"
-                  }`}
-                >
-                  {item.icon}
-                </span>
+                {({ isActive }) => (
+                  <>
+                    <span
+                      className={`text-base shrink-0 ${
+                        isActive
+                          ? "text-white"
+                          : "text-gray-500 group-hover:text-gray-700"
+                      }`}
+                    >
+                      {item.icon}
+                    </span>
 
-                {isOpen && (
-                  <span className="ml-3 font-medium text-sm truncate">
-                    {item.label}
-                  </span>
-                )}
+                    {isOpen && (
+                      <span className="ml-3 font-medium text-sm truncate">
+                        {item.label}
+                      </span>
+                    )}
 
-                {/* Tooltip for collapsed state */}
-                {!isOpen && (
-                  <div className="absolute left-full ml-2 px-2.5 py-1.5 bg-gray-900 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 shadow-lg">
-                    {item.label}
-                  </div>
+                    {/* Tooltip for collapsed state */}
+                    {!isOpen && (
+                      <div className="absolute left-full ml-2 px-2.5 py-1.5 bg-gray-900 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 shadow-lg">
+                        {item.label}
+                      </div>
+                    )}
+                  </>
                 )}
-              </button>
+              </NavLink>
             </li>
           ))}
         </ul>
