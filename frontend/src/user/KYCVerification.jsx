@@ -153,7 +153,7 @@ const KYCVerification = () => {
       Swal.fire({
         icon: "error",
         title: "Submission Failed",
-        text: error.response?.data?.message || "Please try again later",
+        text: error.response?.data?.error || "Please try again later",
         confirmButtonColor: "#eab308",
       });
     } finally {
@@ -201,7 +201,7 @@ const KYCVerification = () => {
                     ref={videoRef}
                     autoPlay
                     playsInline
-                    className="w-full max-w-md mx-auto rounded-lg shadow-lg"
+                    className="w-full mx-auto rounded-lg shadow-lg"
                   />
                   <div className="flex justify-center space-x-4">
                     <button
