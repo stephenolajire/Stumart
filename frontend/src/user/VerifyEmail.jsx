@@ -219,7 +219,7 @@ const VerifyEmail = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl w-full space-y-8">
+      <div className="w-full max-w-5xl space-y-8">
         <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-200">
           {/* Header */}
           <div className="text-center mb-8">
