@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import {
   User,
   CreditCard,
@@ -7,8 +6,6 @@ import {
   Building,
   MapPin,
   Truck,
-  ToggleLeft,
-  ToggleRight,
   DollarSign,
   Camera,
   Settings as SettingsIcon,
@@ -19,125 +16,87 @@ import {
   Save,
   Home,
 } from "lucide-react";
-import api from "../constant/api";
+import Swal from "sweetalert2";
+import { usePickerSettings, useUpdatePickerSettings } from "../hooks/usePicker";
 
 const Settings = () => {
-  const [profileData, setProfileData] = useState({
-    first_name: "",
-    last_name: "",
-    email: "",
-    phone_number: "",
-    institution: "",
-    state: "",
-    profile_pic: null,
-    is_available: true,
-    bank_name: "",
-    account_number: "",
-    account_name: "",
-    is_verified: false,
-    // Fields specific to picker type
-    fleet_type: "",
-    hostel_name: "",
-    room_number: "",
-  });
-
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [profileData, setProfileData] = useState(null);
   const [formChanged, setFormChanged] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
   const [userType, setUserType] = useState("");
 
+  const { data: settingsData, isLoading } = usePickerSettings();
+  const { mutate: updateSettings, isPending: isSaving } =
+    useUpdatePickerSettings();
+
   useEffect(() => {
-    const fetchProfileData = async () => {
-      try {
-        setLoading(true);
-        const response = await api.get("settings/", {});
-
-        setProfileData(response.data);
-        setImagePreview(response.data.profile_pic);
-
-        // Determine user type based on data
-        if ("fleet_type" in response.data) {
-          setUserType("picker");
-        } else if ("hostel_name" in response.data) {
-          setUserType("student_picker");
-        }
-
-        setLoading(false);
-      } catch (err) {
-        setError("Failed to load profile data");
-        setLoading(false);
-        console.error(err);
+    if (settingsData) {
+      setProfileData(settingsData);
+      setImagePreview(settingsData.profile_pic);
+      if ("fleet_type" in settingsData) {
+        setUserType("picker");
+      } else if ("hostel_name" in settingsData) {
+        setUserType("student_picker");
       }
-    };
-
-    fetchProfileData();
-  }, []);
+    }
+  }, [settingsData]);
 
   const handleChange = (e) => {
     const { name, value, type, checked, files } = e.target;
 
     if (type === "file") {
-      setProfileData({
-        ...profileData,
-        [name]: files[0],
-      });
-
-      // Create preview URL
+      setProfileData((prev) => ({ ...prev, [name]: files[0] }));
       if (files && files[0]) {
         const reader = new FileReader();
-        reader.onload = (e) => {
-          setImagePreview(e.target.result);
-        };
+        reader.onload = (e) => setImagePreview(e.target.result);
         reader.readAsDataURL(files[0]);
       }
     } else {
-      setProfileData({
-        ...profileData,
+      setProfileData((prev) => ({
+        ...prev,
         [name]: type === "checkbox" ? checked : value,
-      });
+      }));
     }
 
     setFormChanged(true);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    setError("");
-    setSuccess("");
 
-    try {
-      const token = localStorage.getItem("accessToken");
+    const formData = new FormData();
+    Object.keys(profileData).forEach((key) => {
+      if (key === "profile_pic" && typeof profileData[key] === "object") {
+        if (profileData[key]) formData.append(key, profileData[key]);
+      } else if (profileData[key] !== null) {
+        formData.append(key, profileData[key]);
+      }
+    });
 
-      // Create FormData for file upload
-      const formData = new FormData();
-      Object.keys(profileData).forEach((key) => {
-        if (key === "profile_pic" && typeof profileData[key] === "object") {
-          if (profileData[key]) {
-            formData.append(key, profileData[key]);
-          }
-        } else if (profileData[key] !== null) {
-          formData.append(key, profileData[key]);
-        }
-      });
-
-      await axios.patch("/api/picker/settings/", formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
-        },
-      });
-
-      setSuccess("Profile updated successfully");
-      setFormChanged(false);
-    } catch (err) {
-      setError("Failed to update profile");
-      console.error(err);
-    }
+    updateSettings(formData, {
+      onSuccess: () => {
+        setFormChanged(false);
+        Swal.fire({
+          icon: "success",
+          title: "Saved",
+          text: "Profile updated successfully",
+          confirmButtonColor: "#eab308",
+          timer: 2000,
+          showConfirmButton: false,
+        });
+      },
+      onError: () => {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Failed to update profile",
+          confirmButtonColor: "#eab308",
+        });
+      },
+    });
   };
 
-  if (loading) {
+  if (isLoading || !profileData) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -153,7 +112,6 @@ const Settings = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
         <div className="mb-8">
           <div className="flex items-center mb-6">
             <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mr-4">
@@ -170,27 +128,7 @@ const Settings = () => {
           </div>
         </div>
 
-        {/* Error/Success Messages */}
-        {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
-            <div className="flex items-center">
-              <AlertCircle className="w-5 h-5 text-red-600 mr-3" />
-              <p className="text-red-800">{error}</p>
-            </div>
-          </div>
-        )}
-
-        {success && (
-          <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
-            <div className="flex items-center">
-              <CheckCircle className="w-5 h-5 text-green-600 mr-3" />
-              <p className="text-green-800">{success}</p>
-            </div>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Profile Information Section */}
+        <div className="space-y-8">
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
             <div className="bg-gradient-to-r from-yellow-500 to-yellow-600 px-6 py-4">
               <div className="flex items-center">
@@ -202,7 +140,6 @@ const Settings = () => {
             </div>
 
             <div className="p-6">
-              {/* Profile Image */}
               <div className="flex items-center space-x-6 mb-8">
                 <div className="relative">
                   <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100 border-4 border-white shadow-lg">
@@ -222,7 +159,6 @@ const Settings = () => {
                     <Camera className="w-4 h-4 text-white" />
                     <input
                       type="file"
-                      id="profile_pic"
                       name="profile_pic"
                       accept="image/*"
                       onChange={handleChange}
@@ -231,12 +167,9 @@ const Settings = () => {
                   </div>
                 </div>
                 <div>
-                  <label
-                    htmlFor="profile_pic"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
+                  <p className="text-sm font-medium text-gray-700 mb-2">
                     Profile Photo
-                  </label>
+                  </p>
                   <p className="text-sm text-gray-500">
                     Upload a clear photo of yourself. Click the camera icon to
                     change.
@@ -244,19 +177,14 @@ const Settings = () => {
                 </div>
               </div>
 
-              {/* Name Fields */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
-                  <label
-                    htmlFor="first_name"
-                    className="flex items-center text-sm font-medium text-gray-700 mb-2"
-                  >
+                  <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                     <User className="w-4 h-4 mr-2" />
                     First Name
                   </label>
                   <input
                     type="text"
-                    id="first_name"
                     name="first_name"
                     value={profileData.first_name || ""}
                     onChange={handleChange}
@@ -264,18 +192,13 @@ const Settings = () => {
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors"
                   />
                 </div>
-
                 <div>
-                  <label
-                    htmlFor="last_name"
-                    className="flex items-center text-sm font-medium text-gray-700 mb-2"
-                  >
+                  <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                     <User className="w-4 h-4 mr-2" />
                     Last Name
                   </label>
                   <input
                     type="text"
-                    id="last_name"
                     name="last_name"
                     value={profileData.last_name || ""}
                     onChange={handleChange}
@@ -285,18 +208,13 @@ const Settings = () => {
                 </div>
               </div>
 
-              {/* Phone Number */}
               <div className="mb-6">
-                <label
-                  htmlFor="phone_number"
-                  className="flex items-center text-sm font-medium text-gray-700 mb-2"
-                >
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                   <Phone className="w-4 h-4 mr-2" />
                   Phone Number
                 </label>
                 <input
                   type="tel"
-                  id="phone_number"
                   name="phone_number"
                   value={profileData.phone_number || ""}
                   onChange={handleChange}
@@ -305,37 +223,27 @@ const Settings = () => {
                 />
               </div>
 
-              {/* Location Fields */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label
-                    htmlFor="institution"
-                    className="flex items-center text-sm font-medium text-gray-700 mb-2"
-                  >
+                  <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                     <Building className="w-4 h-4 mr-2" />
                     Institution
                   </label>
                   <input
                     type="text"
-                    id="institution"
                     name="institution"
                     value={profileData.institution || ""}
                     readOnly
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed"
                   />
                 </div>
-
                 <div>
-                  <label
-                    htmlFor="state"
-                    className="flex items-center text-sm font-medium text-gray-700 mb-2"
-                  >
+                  <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                     <MapPin className="w-4 h-4 mr-2" />
                     State
                   </label>
                   <input
                     type="text"
-                    id="state"
                     name="state"
                     value={profileData.state || ""}
                     readOnly
@@ -346,7 +254,6 @@ const Settings = () => {
             </div>
           </div>
 
-          {/* Picker-specific fields */}
           {userType === "picker" && (
             <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
               <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4">
@@ -357,35 +264,27 @@ const Settings = () => {
                   </h2>
                 </div>
               </div>
-
               <div className="p-6">
-                <div>
-                  <label
-                    htmlFor="fleet_type"
-                    className="flex items-center text-sm font-medium text-gray-700 mb-2"
-                  >
-                    <Truck className="w-4 h-4 mr-2" />
-                    Fleet Type
-                  </label>
-                  <select
-                    id="fleet_type"
-                    name="fleet_type"
-                    value={profileData.fleet_type || ""}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors"
-                  >
-                    <option value="">Select Fleet Type</option>
-                    <option value="BICYCLE">Bicycle</option>
-                    <option value="MOTORCYCLE">Motorcycle</option>
-                    <option value="CAR">Car</option>
-                    <option value="FOOT">On Foot</option>
-                  </select>
-                </div>
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                  <Truck className="w-4 h-4 mr-2" />
+                  Fleet Type
+                </label>
+                <select
+                  name="fleet_type"
+                  value={profileData.fleet_type || ""}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors"
+                >
+                  <option value="">Select Fleet Type</option>
+                  <option value="BICYCLE">Bicycle</option>
+                  <option value="MOTORCYCLE">Motorcycle</option>
+                  <option value="CAR">Car</option>
+                  <option value="FOOT">On Foot</option>
+                </select>
               </div>
             </div>
           )}
 
-          {/* Student Picker-specific fields */}
           {userType === "student_picker" && (
             <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
               <div className="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4">
@@ -396,38 +295,28 @@ const Settings = () => {
                   </h2>
                 </div>
               </div>
-
               <div className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label
-                      htmlFor="hostel_name"
-                      className="flex items-center text-sm font-medium text-gray-700 mb-2"
-                    >
+                    <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                       <Building className="w-4 h-4 mr-2" />
                       Hostel Name
                     </label>
                     <input
                       type="text"
-                      id="hostel_name"
                       name="hostel_name"
                       value={profileData.hostel_name || ""}
                       onChange={handleChange}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors"
                     />
                   </div>
-
                   <div>
-                    <label
-                      htmlFor="room_number"
-                      className="flex items-center text-sm font-medium text-gray-700 mb-2"
-                    >
+                    <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                       <Home className="w-4 h-4 mr-2" />
                       Room Number
                     </label>
                     <input
                       type="text"
-                      id="room_number"
                       name="room_number"
                       value={profileData.room_number || ""}
                       onChange={handleChange}
@@ -439,7 +328,6 @@ const Settings = () => {
             </div>
           )}
 
-          {/* Availability Settings */}
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
             <div className="bg-gradient-to-r from-orange-500 to-orange-600 px-6 py-4">
               <div className="flex items-center">
@@ -449,16 +337,12 @@ const Settings = () => {
                 </h2>
               </div>
             </div>
-
             <div className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <label
-                    htmlFor="is_available"
-                    className="text-lg font-medium text-gray-900"
-                  >
+                  <p className="text-lg font-medium text-gray-900">
                     Available for Deliveries
-                  </label>
+                  </p>
                   <p className="text-sm text-gray-600 mt-1">
                     Toggle this when you're ready to accept orders
                   </p>
@@ -490,7 +374,6 @@ const Settings = () => {
             </div>
           </div>
 
-          {/* Payment Information */}
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
             <div className="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4">
               <div className="flex items-center">
@@ -500,56 +383,41 @@ const Settings = () => {
                 </h2>
               </div>
             </div>
-
             <div className="p-6 space-y-6">
               <div>
-                <label
-                  htmlFor="bank_name"
-                  className="flex items-center text-sm font-medium text-gray-700 mb-2"
-                >
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                   <Building className="w-4 h-4 mr-2" />
                   Bank Name
                 </label>
                 <input
                   type="text"
-                  id="bank_name"
                   name="bank_name"
                   value={profileData.bank_name || ""}
                   onChange={handleChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors"
                 />
               </div>
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label
-                    htmlFor="account_number"
-                    className="flex items-center text-sm font-medium text-gray-700 mb-2"
-                  >
+                  <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                     <CreditCard className="w-4 h-4 mr-2" />
                     Account Number
                   </label>
                   <input
                     type="text"
-                    id="account_number"
                     name="account_number"
                     value={profileData.account_number || ""}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors"
                   />
                 </div>
-
                 <div>
-                  <label
-                    htmlFor="account_name"
-                    className="flex items-center text-sm font-medium text-gray-700 mb-2"
-                  >
+                  <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
                     <User className="w-4 h-4 mr-2" />
                     Account Name
                   </label>
                   <input
                     type="text"
-                    id="account_name"
                     name="account_name"
                     value={profileData.account_name || ""}
                     onChange={handleChange}
@@ -560,7 +428,6 @@ const Settings = () => {
             </div>
           </div>
 
-          {/* Verification Status */}
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -593,18 +460,26 @@ const Settings = () => {
             </div>
           </div>
 
-          {/* Save Button */}
           <div className="flex justify-end">
             <button
-              type="submit"
-              disabled={!formChanged}
+              onClick={handleSubmit}
+              disabled={!formChanged || isSaving}
               className="inline-flex items-center px-8 py-3 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 active:scale-95"
             >
-              <Save className="w-5 h-5 mr-2" />
-              Save Changes
+              {isSaving ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="w-5 h-5 mr-2" />
+                  Save Changes
+                </>
+              )}
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );

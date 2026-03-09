@@ -48,7 +48,6 @@ class CartItemInline(admin.TabularInline):
 # Cart admin with inline CartItems
 @admin.register(Cart)
 class CartAdmin(admin.ModelAdmin):
-    list_display = ('cart_code', 'created_at')
     inlines = [CartItemInline]
 
 # Optional: if you want to manage CartItems separately too
@@ -143,5 +142,3 @@ class VendorReviewAdmin(admin.ModelAdmin):
 
 admin.site.register(AddProductVideo)
 admin.site.register(RegisterVideo)
-
-    

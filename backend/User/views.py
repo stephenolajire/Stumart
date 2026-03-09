@@ -5,12 +5,29 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from datetime import timedelta
 from rest_framework.decorators import action
 from rest_framework_simplejwt.views import TokenObtainPairView
+from django.db import transaction
 
-from User.paystack_register import PaystackTransferService
+from user.paystack_register import PaystackTransferService
 from .models import *
-from .serializers import *
+from .serializers import (
+    UserSerializer,
+    StudentSerializer,
+    AreaSerializer,
+    CompanySignupSerializer,
+    VendorSerializer,
+    PickerSerializer,
+    StudentPickerSerializer,
+    KYCVerificationSerializer,
+    CustomTokenObtainPairSerializer,
+    SendOTPSerializer,
+    VerifyOTPSerializer,
+    SetNewPasswordSerializer,
+    SubscriptionPlanSerializer,
+    SubscriptionSerializer,
+)
 from django.core.mail import send_mail
 from django.conf import settings
 from .models import OTP
@@ -29,45 +46,32 @@ class BaseAPIView(APIView):
     serializer_class = None
     permission_classes = [AllowAny]
     throttle_classes = [RegisterThrottle]
-    # Flag to determine if this model needs Paystack registration
     requires_paystack = False
 
     def _register_paystack_recipient(self, instance):
-        """
-        Helper method to register Paystack transfer recipient
-        Returns: (success, recipient_code, error_message)
-        """
         try:
-            # Check if instance has required attributes for Paystack
             if not all(hasattr(instance, attr) for attr in ['bank_name', 'account_name', 'account_number']):
                 logger.warning(f"Instance {instance} missing required Paystack attributes")
                 return False, None, "Missing bank details"
-            
-            # Skip if already has recipient code
+
             if hasattr(instance, 'paystack_recipient_code') and instance.paystack_recipient_code:
-                logger.info(f"Instance already has Paystack recipient code")
                 return True, instance.paystack_recipient_code, None
-            
-            # Initialize Paystack service
+
             paystack_service = PaystackTransferService()
-            
-            # Get bank code from bank name
             bank_code = paystack_service.get_bank_code(instance.bank_name)
-            
+
             if not bank_code:
                 error_msg = f"Bank code not found for {instance.bank_name}"
                 logger.warning(error_msg)
                 return False, None, error_msg
-            
-            # Create transfer recipient on Paystack
+
             success, recipient_code, error = paystack_service.create_transfer_recipient(
                 account_name=instance.account_name,
                 account_number=instance.account_number,
                 bank_code=bank_code
             )
-            
+
             if success:
-                # Save recipient code to instance
                 instance.paystack_recipient_code = recipient_code
                 instance.save()
                 logger.info(f"Paystack recipient created: {recipient_code}")
@@ -75,7 +79,7 @@ class BaseAPIView(APIView):
             else:
                 logger.warning(f"Failed to create Paystack recipient: {error}")
                 return False, None, error
-                
+
         except Exception as e:
             error_msg = f"Exception during Paystack registration: {str(e)}"
             logger.error(error_msg)
@@ -86,7 +90,6 @@ class BaseAPIView(APIView):
             instance = get_object_or_404(self.model, pk=pk)
             serializer = self.serializer_class(instance)
             return Response(serializer.data)
-        
         instances = self.model.objects.all()
         serializer = self.serializer_class(instances, many=True)
         return Response(serializer.data)
@@ -95,53 +98,52 @@ class BaseAPIView(APIView):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             try:
-                # Save the instance
-                instance = serializer.save()
-                
-                # Get the user object
-                user = instance.user if hasattr(instance, 'user') else instance
-                
-                # Handle Paystack registration if required
-                paystack_registered = False
-                paystack_error = None
-                
-                if self.requires_paystack:
-                    success, recipient_code, error = self._register_paystack_recipient(instance)
-                    paystack_registered = success
-                    paystack_error = error
-                    
-                    if not success:
-                        logger.warning(f"Paystack registration failed for {user.email}: {error}")
-                
-                # Create OTP and send email
-                otp = OTP.objects.create(user=user)
-                
-                # Prepare email content using template
-                html_message = render_to_string('email/otp.html', {
-                    'user': user,
-                    'otp_code': otp.code,
-                })
-                
-                plain_message = strip_tags(html_message)
-                
-                # Send email
-                send_mail(
-                    subject='Verify your Stumart account',
-                    message=plain_message,
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[user.email],
-                    html_message=html_message,
-                    fail_silently=False,
-                )
-                
-                # Prepare response
+                with transaction.atomic():  # ✅ Wrap everything including OTP creation
+                    instance = serializer.save()
+                    user = instance.user if hasattr(instance, 'user') else instance
+
+                    # Handle Paystack registration if required
+                    paystack_registered = False
+                    paystack_error = None
+
+                    if self.requires_paystack:
+                        success, recipient_code, error = self._register_paystack_recipient(instance)
+                        paystack_registered = success
+                        paystack_error = error
+                        if not success:
+                            logger.warning(f"Paystack registration failed for {user.email}: {error}")
+
+                    # Create OTP inside transaction so if email fails,
+                    # we can catch it and still return success (OTP saved)
+                    otp = OTP.objects.create(user=user)
+
+                # ✅ Email is sent OUTSIDE the transaction so a send failure
+                # does NOT roll back the saved user/profile/OTP
+                try:
+                    html_message = render_to_string('email/otp.html', {
+                        'user': user,
+                        'otp_code': otp.code,
+                    })
+                    plain_message = strip_tags(html_message)
+                    send_mail(
+                        subject='Verify your Stumart account',
+                        message=plain_message,
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        recipient_list=[user.email],
+                        html_message=html_message,
+                        fail_silently=False,
+                    )
+                except Exception as email_error:
+                    # Log the failure but don't crash — user is registered,
+                    # they can request a new OTP via ResendOTPView
+                    logger.error(f"Failed to send verification email to {user.email}: {str(email_error)}")
+
                 response_data = {
                     'message': 'Registration successful. Please check your email for verification code.',
                     'user_id': user.id,
                     'data': serializer.data
                 }
-                
-                # Add Paystack info if applicable
+
                 if self.requires_paystack:
                     response_data['paystack_registered'] = paystack_registered
                     if paystack_error:
@@ -149,9 +151,9 @@ class BaseAPIView(APIView):
                         response_data['paystack_note'] = 'Bank account registration failed. Please verify your bank details and retry later.'
                     else:
                         response_data['paystack_note'] = 'Bank account successfully registered for transfers.'
-                
+
                 return Response(response_data, status=status.HTTP_201_CREATED)
-                
+
             except Exception as e:
                 logger.error(f"Registration error: {str(e)}")
                 return Response({
@@ -202,45 +204,40 @@ class UserAPIView(BaseAPIView):
 class StudentAPIView(BaseAPIView):
     model = Student
     serializer_class = StudentSerializer
-    
+
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             try:
-                # Save the instance
-                instance = serializer.save()
-                
-                # Get the user object
-                user = instance.user if hasattr(instance, 'user') else instance
-                
-                # Create OTP and send email
-                otp = OTP.objects.create(user=user)
-                
-                # Prepare email content using template
-                html_message = render_to_string('email/otp.html', {
-                    'user': user,
-                    'otp_code': otp.code,
-                })
-                
-                plain_message = strip_tags(html_message)
-                
-                # Send email
-                send_mail(
-                    subject='Verify your Stumart account',
-                    message=plain_message,
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[user.email],
-                    html_message=html_message,
-                    fail_silently=False,
-                )
-                
-                # Return success response
+                with transaction.atomic():
+                    instance = serializer.save()
+                    user = instance.user if hasattr(instance, 'user') else instance
+                    otp = OTP.objects.create(user=user)
+
+                # Email outside transaction
+                try:
+                    html_message = render_to_string('email/otp.html', {
+                        'user': user,
+                        'otp_code': otp.code,
+                    })
+                    plain_message = strip_tags(html_message)
+                    send_mail(
+                        subject='Verify your Stumart account',
+                        message=plain_message,
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        recipient_list=[user.email],
+                        html_message=html_message,
+                        fail_silently=False,
+                    )
+                except Exception as email_error:
+                    logger.error(f"Failed to send verification email to {user.email}: {str(email_error)}")
+
                 return Response({
                     'message': 'Student registration successful. Please check your email for verification code.',
                     'user_id': user.id,
                     'data': serializer.data
                 }, status=status.HTTP_201_CREATED)
-                
+
             except Exception as e:
                 logger.error(f"Student registration error: {str(e)}")
                 return Response({
@@ -254,12 +251,10 @@ class StudentAPIView(BaseAPIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request, pk=None):
-        """Override get method for students"""
         if pk:
             student = get_object_or_404(Student, pk=pk)
             serializer = StudentSerializer(student)
             return Response(serializer.data)
-        
         students = Student.objects.all()
         serializer = StudentSerializer(students, many=True)
         return Response(serializer.data)
@@ -399,6 +394,7 @@ class PickerAPIView(BaseAPIView):
 class StudentPickerAPIView(BaseAPIView):
     model = StudentPicker
     serializer_class = StudentPickerSerializer
+    # requires_paystack = True  # ✅ Enable Paystack registration
 
     def get(self, request, pk=None):
         if pk:
@@ -408,13 +404,13 @@ class StudentPickerAPIView(BaseAPIView):
 
         hostel = request.query_params.get('hostel')
         available = request.query_params.get('available')
-        
+
         student_pickers = StudentPicker.objects.all()
         if hostel:
             student_pickers = student_pickers.filter(hostel_name=hostel)
         if available:
             student_pickers = student_pickers.filter(is_available=True)
-            
+
         serializer = StudentPickerSerializer(student_pickers, many=True)
         return Response(serializer.data)
 
@@ -742,12 +738,6 @@ class UpdateStudentProfileView(APIView):
         if 'email' in request.data:
             user_data['email'] = request.data.get('email', user.email)
         
-        # Extract data for student model fields
-        student_data = {
-            'matric_number': request.data.get('matric_number', student.matric_number),
-            'department': request.data.get('department', student.department)
-        }
-        
         
         # Handle profile picture update
         if 'profile_pic' in request.FILES:
@@ -764,13 +754,8 @@ class UpdateStudentProfileView(APIView):
         except PermissionDenied as e:
             # Return 403 for email conflicts
             return Response({"email": [str(e)]}, status=status.HTTP_403_FORBIDDEN)
-        
-        # Update student model
-        student_serializer = StudentSerializer(student, data=student_data, partial=True)
-        if student_serializer.is_valid():
-            student_serializer.save()
-        else:
-            return Response(student_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"error": f"Failed to update user profile: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         # Prepare combined response
         response_data = {
@@ -783,8 +768,6 @@ class UpdateStudentProfileView(APIView):
                 'institution': user.institution,
                 'profile_pic': user.profile_pic.url if user.profile_pic else None
             },
-            'matric_number': student.matric_number,
-            'department': student.department
         }
         
         return Response(response_data)

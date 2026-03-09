@@ -3,8 +3,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from Stumart.models import *
-from Stumart.serializers import *
+from stumart.models import *
+from stumart.serializers import *
 import uuid
 import requests
 import json

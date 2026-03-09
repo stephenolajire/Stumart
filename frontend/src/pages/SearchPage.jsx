@@ -1,19 +1,16 @@
-import { useLocation, useNavigate} from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { FaArrowLeft, FaFilter, FaSearch, FaStore } from "react-icons/fa";
 import { useState, useEffect, useMemo } from "react";
-import Header from "../components/Header";
 import Card from "./components/Card";
 
 const SearchPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { products: initialProducts, searchParams } = location.state || {
-    products: [],
-    searchParams: {},
-  };
 
+  // ✅ Read directly from navigation state — Navigation.jsx already fetched
+  const { searchParams, products: stateProducts = [] } = location.state || {};
+  const initialProducts = stateProducts;
 
-  // Calculate initial min and max from products
   const initialMin =
     initialProducts.length > 0
       ? Math.min(...initialProducts.map((p) => Number(p.price))) || 0
@@ -23,20 +20,20 @@ const SearchPage = () => {
       ? Math.max(...initialProducts.map((p) => Number(p.price))) || 100000
       : 100000;
 
-  const [products, setProducts] = useState(initialProducts);
-  const [priceRange, setPriceRange] = useState([initialMin, initialMax]);
+  const [products, setProducts] = useState([]);
+  const [priceRange, setPriceRange] = useState([0, 100000]);
   const [selectedShop, setSelectedShop] = useState("all");
+  const [progress, setProgress] = useState({ start: 0, end: 100 });
 
-  // Add state for progress tracking
-  const [progress, setProgress] = useState({
-    start: 0,
-    end: 100,
-  });
+  useEffect(() => {
+    if (initialProducts.length > 0) {
+      setProducts(initialProducts);
+      setPriceRange([initialMin, initialMax]);
+    }
+  }, [initialProducts.length]);
 
-  // Get unique shop names from products
   const shopNames = useMemo(() => {
     if (!initialProducts.length) return [{ id: "all", name: "All Shops" }];
-
     const shops = initialProducts.map((product) => ({
       id: product.vendor?.id,
       name: product.vendor_name,
@@ -47,36 +44,11 @@ const SearchPage = () => {
     ];
   }, [initialProducts]);
 
-  // Get unique states and institutions for advanced filtering
-  const availableStates = useMemo(() => {
-    if (!initialProducts.length) return [];
-
-    const states = initialProducts
-      .map((product) => product.vendor?.state)
-      .filter((state) => state)
-      .filter((state, index, arr) => arr.indexOf(state) === index);
-
-    return states;
-  }, [initialProducts]);
-
-  const availableInstitutions = useMemo(() => {
-    if (!initialProducts.length) return [];
-
-    const institutions = initialProducts
-      .map((product) => product.vendor?.institution)
-      .filter((institution) => institution)
-      .filter((institution, index, arr) => arr.indexOf(institution) === index);
-
-    return institutions;
-  }, [initialProducts]);
-
   const handlePriceChange = (newRange) => {
-    // Prevent min from exceeding max
     if (newRange[0] > newRange[1]) return;
 
     setPriceRange(newRange);
 
-    // Calculate progress percentages for the range track
     const totalRange = initialMax - initialMin;
     const startProgress =
       totalRange > 0 ? ((newRange[0] - initialMin) / totalRange) * 100 : 0;
@@ -85,26 +57,19 @@ const SearchPage = () => {
 
     setProgress({ start: startProgress, end: endProgress });
 
-    // Filter products by both price and shop
-    const filtered = (products.length > 0 ? products : initialProducts).filter(
-      (product) => {
-        const price = Number(product.price);
-        const matchesPrice = price >= newRange[0] && price <= newRange[1];
-        const matchesShop =
-          selectedShop === "all" || product.vendor_name === selectedShop;
-        return matchesPrice && matchesShop;
-      }
-    );
+    const filtered = initialProducts.filter((product) => {
+      const price = Number(product.price);
+      const matchesPrice = price >= newRange[0] && price <= newRange[1];
+      const matchesShop =
+        selectedShop === "all" || product.vendor_name === selectedShop;
+      return matchesPrice && matchesShop;
+    });
     setProducts(filtered);
   };
 
-  // Add shop filter handler
   const handleShopFilter = (shopName) => {
     setSelectedShop(shopName);
-
-    const baseProducts =
-      initialProducts.length > 0 ? initialProducts : products;
-    const filtered = baseProducts.filter((product) => {
+    const filtered = initialProducts.filter((product) => {
       const price = Number(product.price);
       const matchesPrice = price >= priceRange[0] && price <= priceRange[1];
       const matchesShop =
@@ -114,7 +79,6 @@ const SearchPage = () => {
     setProducts(filtered);
   };
 
-  // Clear all filters
   const clearAllFilters = () => {
     setProducts(initialProducts);
     setPriceRange([initialMin, initialMax]);
@@ -122,27 +86,54 @@ const SearchPage = () => {
     setProgress({ start: 0, end: 100 });
   };
 
-  // Format price for display
   const formatPrice = (price) => `₦${Number(price).toLocaleString()}`;
 
-  // Show no results message
-  if (
-    (!initialProducts || initialProducts.length === 0) &&
-    !searchParams?.message
-  ) {
+  // ── No state at all ───────────────────────────────────────────
+  if (!location.state || !searchParams) {
     return (
-      <div className="min-h-screen bg-gray-50 pt-19">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <div className="text-center bg-white rounded-xl shadow-lg p-8 max-w-4xl w-full">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            No Search Results
+          </h2>
+          <p className="text-gray-600 mb-6">
+            Please search for a product from the home page.
+          </p>
+          <button
+            onClick={() => navigate("/")}
+            className="inline-flex items-center px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-medium rounded-lg transition-colors"
+          >
+            <FaArrowLeft className="mr-2" /> Back to Home
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── No products found ─────────────────────────────────────────
+  if (initialProducts.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 mt-38 lg:mt-0">
         <div className="w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center py-12">
-            <div className="bg-white rounded-lg shadow-lg p-8 max-w-md mx-auto">
+            <div className="bg-white rounded-lg shadow-lg p-8 max-w-4xl mx-auto">
+              <FaSearch className="w-12 h-12 text-gray-300 mx-auto mb-4" />
               <h2 className="text-2xl font-bold text-gray-900 mb-4">
                 No Products Found
               </h2>
-              <p className="text-gray-600 mb-6">
-                We couldn't find any products matching your search criteria.
+              <p className="text-gray-600 mb-2">
+                We couldn't find any products matching{" "}
+                <span className="font-semibold">
+                  "{searchParams?.productName}"
+                </span>
               </p>
+              {searchParams?.message && (
+                <p className="text-orange-600 text-sm mb-6">
+                  {searchParams.message}
+                </p>
+              )}
               <button
-                className="inline-flex items-center px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-medium rounded-lg transition-colors duration-200"
+                className="inline-flex items-center px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-medium rounded-lg transition-colors"
                 onClick={() => navigate("/")}
               >
                 <FaArrowLeft className="mr-2" /> Back to Home
@@ -154,14 +145,18 @@ const SearchPage = () => {
     );
   }
 
+  // ── Results ───────────────────────────────────────────────────
   return (
     <div className="min-h-screen mt-38 lg:mt-0 bg-gray-50">
       <div className="w-full mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Search meta */}
         <div className="mb-8">
-          {/* <Header title ="" /> */}
           <div className="space-y-2 pt-5">
             <p className="text-gray-600 lg:text-lg text-base">
-              Showing results for "{searchParams?.productName || searchQuery}"
+              Showing results for{" "}
+              <span className="font-semibold">
+                "{searchParams?.productName}"
+              </span>
               {searchParams?.count !== undefined && (
                 <span className="ml-2 text-sm bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
                   {searchParams.count} found
@@ -180,130 +175,116 @@ const SearchPage = () => {
           </div>
         </div>
 
-        {/* Filters Section */}
-        {initialProducts.length > 0 && (
-          <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Filters */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Shop filter */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                <FaFilter className="mr-2 text-yellow-500" />
+                Filter by Shop
+              </h3>
+              <select
+                value={selectedShop}
+                onChange={(e) => handleShopFilter(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 bg-white text-gray-900 shadow-sm transition-colors"
+              >
+                {shopNames.map((shop) => (
+                  <option key={shop.id} value={shop.name}>
+                    {shop.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Price range filter */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Price Range Filter
+              </h3>
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                  <FaFilter className="mr-2 text-yellow-500" />
-                  Filter by Shop
-                </h3>
-                <select
-                  value={selectedShop}
-                  onChange={(e) => handleShopFilter(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 bg-white text-gray-900 shadow-sm transition-colors duration-200"
+                <div className="flex justify-between items-center text-sm font-medium text-gray-700">
+                  <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full">
+                    {formatPrice(priceRange[0])}
+                  </span>
+                  <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full">
+                    {formatPrice(priceRange[1])}
+                  </span>
+                </div>
+                <div
+                  className="relative h-6 range-progress range-progress-start"
+                  style={{
+                    "--range-progress": `${progress.end}%`,
+                    "--range-progress-start": `${progress.start}%`,
+                  }}
                 >
-                  {shopNames.map((shop) => (
-                    <option key={shop.id} value={shop.name}>
-                      {shop.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Price Range Filter
-                </h3>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center text-sm font-medium text-gray-700">
-                    <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full">
-                      {formatPrice(priceRange[0])}
-                    </span>
-                    <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full">
-                      {formatPrice(priceRange[1])}
-                    </span>
-                  </div>
+                  <div className="absolute top-1/2 left-0 right-0 h-2 bg-gray-200 rounded-full transform -translate-y-1/2" />
                   <div
-                    className="relative h-6 range-progress range-progress-start"
+                    className="absolute top-1/2 h-2 bg-yellow-500 rounded-full transform -translate-y-1/2"
                     style={{
-                      "--range-progress": `${progress.end}%`,
-                      "--range-progress-start": `${progress.start}%`,
+                      left: `${progress.start}%`,
+                      width: `${progress.end - progress.start}%`,
                     }}
-                  >
-                    {/* Track */}
-                    <div className="absolute top-1/2 left-0 right-0 h-2 bg-gray-200 rounded-full transform -translate-y-1/2"></div>
-
-                    {/* Active range */}
-                    <div
-                      className="absolute top-1/2 h-2 bg-yellow-500 rounded-full transform -translate-y-1/2"
-                      style={{
-                        left: `${progress.start}%`,
-                        width: `${progress.end - progress.start}%`,
-                      }}
-                    ></div>
-
-                    {/* Min slider */}
-                    <input
-                      type="range"
-                      min={initialMin}
-                      max={initialMax}
-                      value={priceRange[0]}
-                      onChange={(e) =>
-                        handlePriceChange([
-                          Number(e.target.value),
-                          priceRange[1],
-                        ])
-                      }
-                      className="absolute top-1/2 left-0 right-0 w-full h-2 bg-transparent appearance-none cursor-pointer transform -translate-y-1/2 range-slider range-slider-min"
-                    />
-
-                    {/* Max slider */}
-                    <input
-                      type="range"
-                      min={initialMin}
-                      max={initialMax}
-                      value={priceRange[1]}
-                      onChange={(e) =>
-                        handlePriceChange([
-                          priceRange[0],
-                          Number(e.target.value),
-                        ])
-                      }
-                      className="absolute top-1/2 left-0 right-0 w-full h-2 bg-transparent appearance-none cursor-pointer transform -translate-y-1/2 range-slider range-slider-max"
-                    />
-                  </div>
+                  />
+                  <input
+                    type="range"
+                    min={initialMin}
+                    max={initialMax}
+                    value={priceRange[0]}
+                    onChange={(e) =>
+                      handlePriceChange([Number(e.target.value), priceRange[1]])
+                    }
+                    className="absolute top-1/2 left-0 right-0 w-full h-2 bg-transparent appearance-none cursor-pointer transform -translate-y-1/2 range-slider range-slider-min"
+                  />
+                  <input
+                    type="range"
+                    min={initialMin}
+                    max={initialMax}
+                    value={priceRange[1]}
+                    onChange={(e) =>
+                      handlePriceChange([priceRange[0], Number(e.target.value)])
+                    }
+                    className="absolute top-1/2 left-0 right-0 w-full h-2 bg-transparent appearance-none cursor-pointer transform -translate-y-1/2 range-slider range-slider-max"
+                  />
                 </div>
               </div>
             </div>
-
-            {/* Clear filters button */}
-            <div className="mt-6 pt-4 border-t border-gray-200">
-              <button
-                onClick={clearAllFilters}
-                className="inline-flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors duration-200"
-              >
-                Clear All Filters
-              </button>
-            </div>
           </div>
-        )}
 
-        {/* Results Section */}
+          <div className="mt-6 pt-4 border-t border-gray-200">
+            <button
+              onClick={clearAllFilters}
+              className="inline-flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors"
+            >
+              Clear All Filters
+            </button>
+          </div>
+        </div>
+
+        {/* Product grid */}
         <div className="pb-12">
           {products.length > 0 ? (
             <Card products={products} />
           ) : (
             <div className="text-center py-12">
-              <div className="bg-white rounded-lg shadow-lg p-8 max-w-md mx-auto">
+              <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-4xl mx-auto">
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">
                   No products match your filters
                 </h3>
                 <p className="text-gray-600 mb-6">
-                  Try adjusting your search criteria or clearing the filters to
-                  see more results.
+                  Try adjusting your filters or clearing them to see more
+                  results.
                 </p>
                 <div className="space-y-3">
                   <button
                     onClick={clearAllFilters}
-                    className="w-full px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-medium rounded-lg transition-colors duration-200"
+                    className="w-full px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-medium rounded-lg transition-colors"
                   >
                     Clear All Filters
                   </button>
                   <button
                     onClick={() => navigate("/")}
-                    className="w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors duration-200 inline-flex items-center justify-center"
+                    className="w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors inline-flex items-center justify-center"
                   >
                     <FaArrowLeft className="mr-2" /> Back to Home
                   </button>

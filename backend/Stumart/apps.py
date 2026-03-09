@@ -4,7 +4,7 @@ import os
 
 class StumartConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'Stumart'
+    name = 'stumart'
 
     def ready(self):
         """Start scheduler when Django starts"""

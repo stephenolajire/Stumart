@@ -19,8 +19,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.utils.html import strip_tags
 
-from User.models import User, Vendor, Picker, StudentPicker, KYCVerification, Student
-from User.serializers import UserSerializer  # Assuming you have serializers
+from user.models import User, Vendor, Picker, StudentPicker, KYCVerification, Student
+from user.serializers import UserSerializer  # Assuming you have serializers
 
 
 class DownloadUsersListView(APIView):

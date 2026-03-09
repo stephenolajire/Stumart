@@ -4,7 +4,7 @@ Place this file in: User/management/commands/register_recipients.py
 """
 
 from django.core.management.base import BaseCommand
-from User.paystack_register import register_existing_recipients
+from user.paystack_register import register_existing_recipients
 import logging
 
 logger = logging.getLogger(__name__)

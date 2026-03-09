@@ -94,7 +94,7 @@ const Payments = () => {
     <div className="py-6 bg-gray-50 min-h-screen">
       {/* Header Section */}
       <div className="mb-8">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col  md:flex-row items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
             <h2 className="text-3xl font-bold text-gray-900">
               Payment Transactions

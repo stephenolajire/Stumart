@@ -4,9 +4,11 @@ import Swal from "sweetalert2";
 import api from "../constant/api";
 import { GlobalContext } from "../constant/GlobalContext";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { useQueryClient } from "@tanstack/react-query";
 
 const Login = () => {
   const location = useLocation();
+  const queryClient = useQueryClient();
   const from = location.state?.from?.pathname || "/";
 
   const { auth } = useContext(GlobalContext);
@@ -68,6 +70,7 @@ const Login = () => {
         subscription,
         institution,
       } = response.data;
+      queryClient.invalidateQueries({ queryKey: ["vendors-by-school"] });
 
       console.log(response.data);
 
@@ -315,14 +318,14 @@ const Login = () => {
               {isLoading
                 ? "Logging in..."
                 : throttleWaitTime > 0
-                ? `Wait ${throttleWaitTime}s`
-                : "Login"}
+                  ? `Wait ${throttleWaitTime}s`
+                  : "Login"}
             </button>
 
             <div className="text-center text-sm text-gray-600 mt-6">
               Don't have an account?{" "}
               <NavLink
-                to="/register"
+                to="/signup"
                 className="text-yellow-600 hover:text-yellow-700 font-medium transition-colors duration-200"
               >
                 Register here

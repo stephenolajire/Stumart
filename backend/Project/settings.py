@@ -1,5 +1,3 @@
-
-
 from pathlib import Path
 from decouple import config
 import os
@@ -40,26 +38,28 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'rest_framework',
     'drf_spectacular',
-    'User',
-    # 'Stumart',
-    'Vendor',
-    'Picker',
+    'user',
+    # 'stumart',
+    'vendor',
+    'picker',
     'cloudinary_storage',
     'cloudinary',
-    'Admin',
-    'Other',
-    'Chatbot',
-    'Chat',
-    'Utilities',
-    'Home',
+    'adminn',
+    'other',
+    'chatbot',
+    'chat',
+    'utilities',
+    'home',
     'company',
     'django_filters',
     'order',
     'payment',
     'wallet',
     'django_crontab',
-    'Stumart.apps.StumartConfig',
-    'referral'
+    'stumart.apps.StumartConfig',
+    'referral',
+    'cart',
+    'bookmark',
     # 'silk',
 ]
 
@@ -72,8 +72,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'User.middlewares.SubscriptionMiddleware',
+    'user.middlewares.SubscriptionMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    'middleware.NoCacheMiddleware',
     # 'silk.middleware.SilkyMiddleware',
 ]
 
@@ -101,12 +102,12 @@ WSGI_APPLICATION = 'Project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
 
 # DATABASES = {
 #     'default': {
@@ -119,14 +120,14 @@ WSGI_APPLICATION = 'Project.wsgi.application'
 #     }
 # }
 
-DATABASES = {
-    'default': dj_database_url.config(
-        default=config("DATABASE_URL"),
-        conn_max_age=600,
-        conn_health_checks=True,
-        ssl_require=True
-    )
-}
+# DATABASES = {
+#     'default': dj_database_url.config(
+#         default=config("DATABASE_URL"),
+#         conn_max_age=600,
+#         conn_health_checks=True,
+#         ssl_require=True
+#     )
+# }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -256,14 +257,14 @@ REST_FRAMEWORK = {
         'password_reset': '3/minute',
         'register': '3/hour',
     },
-    'EXCEPTION_HANDLER': 'User.utils.custom_exception_handler',
+    'EXCEPTION_HANDLER': 'user.utils.custom_exception_handler',
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
 # drf-spectacular configuration for Swagger/OpenAPI
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'StuMart API',
-    'DESCRIPTION': 'StuMart E-Commerce Platform API Documentation',
+    'TITLE': 'stumart API',
+    'DESCRIPTION': 'stumart E-Commerce Platform API Documentation',
     'VERSION': '1.0.0',
     'SERVE_PERMISSIONS': ['rest_framework.permissions.AllowAny'],
     'SCHEMA_PATH_PREFIX': r'/api',
@@ -271,7 +272,7 @@ SPECTACULAR_SETTINGS = {
     'ENUM_ADD_EXPLICIT_BLANK_CHOICE': False,
 }
 
-AUTH_USER_MODEL = "User.User"
+AUTH_USER_MODEL = "user.User"
 
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': config('CLOUD_NAME'),
@@ -403,9 +404,9 @@ LOGGING = {
 
 
 JAZZMIN_SETTINGS = {
-    'site_title': 'Stumart Admin',
-    'site_header': 'Stumart Admin Page',
-    'welcome_sign': 'Welcome to My Stumart Admin',
+    'site_title': 'stumart Admin',
+    'site_header': 'stumart Admin Page',
+    'welcome_sign': 'Welcome to My stumart Admin',
     "site_logo": "../stumart.jpeg",
     "login_logo": "../stumart.jpeg",
     "site_logo_classes": "img-circle",
@@ -486,4 +487,3 @@ ADMIN_EMAILS = [email.strip() for email in os.environ.get('ADMIN_EMAILS', '').sp
 
 
 ADMIN_PHONE_NUMBERS = [phone.strip() for phone in os.environ.get('ADMIN_PHONE_NUMBERS', '').split(',') if phone.strip()]
-

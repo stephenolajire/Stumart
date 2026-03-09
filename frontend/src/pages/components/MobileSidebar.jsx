@@ -33,6 +33,7 @@ const SidebarNavigation = ({ close, openMenu }) => {
       easing: "ease-in-out",
       offset: 100,
     });
+    
   }, []);
 
   const helpItems = [{ id: "help", label: "NEED HELP?", hasChevron: true }];

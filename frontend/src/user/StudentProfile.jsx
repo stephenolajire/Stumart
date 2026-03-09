@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   FaUser,
   FaEdit,
@@ -13,59 +12,28 @@ import {
   FaCheckCircle,
   FaCamera,
 } from "react-icons/fa";
-import api from "../constant/api";
+import {
+  useGetStudentDetails,
+  useUpdateStudentProfile,
+} from "../hooks/useUser"; // adjust path
 
 const StudentProfile = () => {
-  const queryClient = useQueryClient();
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState({});
   const [newProfilePic, setNewProfilePic] = useState(null);
 
+  // ── Query ──────────────────────────────────────────────
   const {
     data: profile,
     isLoading,
     error: queryError,
     isError,
-  } = useQuery({
-    queryKey: ["studentProfile"],
-    queryFn: async () => {
-      const response = await api.get("student-details/");
-      return response.data;
-    },
-    staleTime: 5 * 60 * 1000,
-    cacheTime: 10 * 60 * 1000,
-    onSuccess: (data) => {
-      setFormData({
-        first_name: data.user.first_name,
-        last_name: data.user.last_name,
-        phone_number: data.user.phone_number,
-        state: data.user.state,
-        institution: data.user.institution,
-        matric_number: data.matric_number,
-        department: data.department,
-      });
-    },
-  });
+  } = useGetStudentDetails();
 
-  const updateProfileMutation = useMutation({
-    mutationFn: async (updateData) => {
-      const response = await api.patch("update-student-profile/", updateData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-      return response.data;
-    },
-    onSuccess: (data) => {
-      queryClient.setQueryData(["studentProfile"], data);
-      setEditMode(false);
-      setNewProfilePic(null);
-    },
-    onError: (error) => {
-      console.error("Error updating profile:", error);
-    },
-  });
+  // ── Mutation ───────────────────────────────────────────
+  const updateProfileMutation = useUpdateStudentProfile();
 
+  // Sync formData when profile loads or edit mode is cancelled
   React.useEffect(() => {
     if (profile && !editMode) {
       setFormData({
@@ -74,12 +42,11 @@ const StudentProfile = () => {
         phone_number: profile.user.phone_number,
         state: profile.user.state,
         institution: profile.user.institution,
-        matric_number: profile.matric_number,
-        department: profile.department,
       });
     }
   }, [profile, editMode]);
 
+  // ── Handlers ───────────────────────────────────────────
   const handleEdit = () => setEditMode(true);
 
   const handleCancel = () => {
@@ -92,35 +59,38 @@ const StudentProfile = () => {
         phone_number: profile.user.phone_number,
         state: profile.user.state,
         institution: profile.user.institution,
-        matric_number: profile.matric_number,
-        department: profile.department,
+        // matric_number: profile.matric_number,
+        // department: profile.department,
       });
     }
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleProfilePicChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      setNewProfilePic(e.target.files[0]);
-    }
+    if (e.target.files?.[0]) setNewProfilePic(e.target.files[0]);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     const updateData = new FormData();
-    Object.keys(formData).forEach((key) => {
-      updateData.append(key, formData[key]);
+    Object.keys(formData).forEach((key) =>
+      updateData.append(key, formData[key]),
+    );
+    if (newProfilePic) updateData.append("profile_pic", newProfilePic);
+
+    updateProfileMutation.mutate(updateData, {
+      onSuccess: () => {
+        setEditMode(false);
+        setNewProfilePic(null);
+      },
     });
-    if (newProfilePic) {
-      updateData.append("profile_pic", newProfilePic);
-    }
-    updateProfileMutation.mutate(updateData);
   };
 
+  // ── Early returns ──────────────────────────────────────
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 pt-28">
@@ -162,12 +132,6 @@ const StudentProfile = () => {
             {queryError?.message ||
               "Failed to load profile data. Please try again."}
           </p>
-          <button
-            onClick={() => queryClient.refetchQueries(["studentProfile"])}
-            className="w-full py-3 px-4 bg-gray-900 hover:bg-gray-800 text-white font-semibold rounded-lg transition-colors"
-          >
-            Try Again
-          </button>
         </div>
       </div>
     );
@@ -175,6 +139,7 @@ const StudentProfile = () => {
 
   if (!profile) return null;
 
+  // ── Render ─────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gray-50 pt-28 pb-10 px-4 sm:px-6">
       <div className="max-w-5xl mx-auto">
@@ -225,7 +190,6 @@ const StudentProfile = () => {
           {/* Profile Header */}
           <div className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 px-6 py-8">
             <div className="flex flex-col sm:flex-row items-center gap-6">
-              {/* Profile Image */}
               <div className="relative">
                 {editMode ? (
                   <div className="text-center">
@@ -265,13 +229,11 @@ const StudentProfile = () => {
                 )}
               </div>
 
-              {/* Profile Info */}
               <div className="text-center sm:text-left flex-1">
                 <h3 className="text-2xl sm:text-3xl font-bold text-white mb-1">
                   {profile.user.first_name} {profile.user.last_name}
                 </h3>
                 <p className="text-gray-300 mb-4">{profile.user.email}</p>
-
                 {!editMode && (
                   <button
                     onClick={handleEdit}
@@ -288,7 +250,6 @@ const StudentProfile = () => {
           {/* Profile Content */}
           <div className="p-6">
             {editMode ? (
-              /* Edit Form */
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Personal Information */}
                 <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
@@ -377,7 +338,7 @@ const StudentProfile = () => {
                         placeholder="Enter institution"
                       />
                     </div>
-                    <div>
+                    {/* <div>
                       <label className="block text-sm font-medium text-gray-300 mb-2">
                         Matric Number
                       </label>
@@ -385,7 +346,6 @@ const StudentProfile = () => {
                         type="text"
                         name="matric_number"
                         value={formData.matric_number || ""}
-                        onChange={handleChange}
                         readOnly
                         className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 text-gray-400 rounded-lg cursor-not-allowed"
                         placeholder="Matric number"
@@ -404,7 +364,7 @@ const StudentProfile = () => {
                         className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
                         placeholder="Enter department"
                       />
-                    </div>
+                    </div> */}
                   </div>
                 </div>
 
@@ -412,14 +372,14 @@ const StudentProfile = () => {
                 <div className="flex flex-col sm:flex-row gap-3 pt-4">
                   <button
                     type="submit"
-                    disabled={updateProfileMutation.isLoading}
+                    disabled={updateProfileMutation.isPending}
                     className={`flex-1 py-3 px-6 rounded-lg font-semibold transition-all ${
-                      updateProfileMutation.isLoading
+                      updateProfileMutation.isPending
                         ? "bg-gray-400 cursor-not-allowed text-white"
                         : "bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white"
                     }`}
                   >
-                    {updateProfileMutation.isLoading ? (
+                    {updateProfileMutation.isPending ? (
                       <div className="flex items-center justify-center gap-2">
                         <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                         <span>Saving...</span>
@@ -434,7 +394,7 @@ const StudentProfile = () => {
                   <button
                     type="button"
                     onClick={handleCancel}
-                    disabled={updateProfileMutation.isLoading}
+                    disabled={updateProfileMutation.isPending}
                     className="flex-1 py-3 px-6 rounded-lg font-semibold border-2 border-gray-300 text-gray-700 hover:bg-gray-50 transition-all disabled:opacity-50"
                   >
                     <div className="flex items-center justify-center gap-2">
@@ -445,7 +405,6 @@ const StudentProfile = () => {
                 </div>
               </form>
             ) : (
-              /* Profile Details View */
               <div className="space-y-6">
                 {/* Personal Information */}
                 <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
@@ -492,7 +451,7 @@ const StudentProfile = () => {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3 p-3 bg-gray-800 rounded-lg border border-gray-700">
+                      {/* <div className="flex items-center gap-3 p-3 bg-gray-800 rounded-lg border border-gray-700">
                         <FaGraduationCap className="w-5 h-5 text-gray-400" />
                         <div>
                           <p className="text-xs text-gray-400">Department</p>
@@ -500,9 +459,9 @@ const StudentProfile = () => {
                             {profile.department}
                           </p>
                         </div>
-                      </div>
+                      </div> */}
                     </div>
-                    <div className="flex items-center gap-3 p-3 bg-gray-800 rounded-lg border border-gray-700">
+                    {/* <div className="flex items-center gap-3 p-3 bg-gray-800 rounded-lg border border-gray-700">
                       <FaIdCard className="w-5 h-5 text-yellow-500" />
                       <div>
                         <p className="text-xs text-gray-400">Matric Number</p>
@@ -510,7 +469,7 @@ const StudentProfile = () => {
                           {profile.matric_number || "Not provided"}
                         </p>
                       </div>
-                    </div>
+                    </div> */}
                   </div>
                 </div>
 

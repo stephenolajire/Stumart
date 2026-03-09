@@ -53,7 +53,7 @@ class WithdrawalRequest(models.Model):
     )
     
     related_order = models.ForeignKey(
-        'Stumart.Order',
+        'stumart.Order',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

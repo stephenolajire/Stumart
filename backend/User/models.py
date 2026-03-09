@@ -50,7 +50,7 @@ class User(AbstractUser):
     email = models.EmailField(_('email address'), unique=True)
     phone_number = models.CharField(max_length=15, unique=True)
     user_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES)
-    residence = models.CharField(max_length=20, choices=RESIDENCE_CHOICES, default=" ")
+    # residence = models.CharField(max_length=20, choices=RESIDENCE_CHOICES, default=" ")
     profile_pic = CloudinaryField('profile_pics/', null=True, blank=True)
     state = models.CharField(max_length=50)
     first_name = models.CharField(max_length=200)
@@ -86,8 +86,8 @@ class User(AbstractUser):
 
 class Student(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='student_profile')
-    matric_number = models.CharField(max_length=20, blank=True)
-    department = models.CharField(max_length=100)
+    # matric_number = models.CharField(max_length=20, blank=True)
+    # department = models.CharField(max_length=100)
     # level = models.CharField(max_length=20)
 
     def __str__(self):
@@ -262,11 +262,16 @@ class StudentPicker(models.Model):
     bank_name = models.CharField(max_length=100)
     account_number = models.CharField(max_length=10)
     account_name = models.CharField(max_length=100)
-    paystack_recipient_code = models.CharField(max_length=100, blank=True, null=True)  # ADD THIS
-    
+    paystack_recipient_code = models.CharField(max_length=100, blank=True, null=True)
+    preferred_vendors = models.ManyToManyField(        # ← ADD THIS
+        'Vendor',
+        blank=True,
+        related_name='student_pickers'
+    )
+
     class Meta:
         indexes = [
-            models.Index(fields=['paystack_recipient_code']),  # ADD THIS
+            models.Index(fields=['paystack_recipient_code']),
         ]
 
     def __str__(self):
@@ -367,6 +372,10 @@ class KYCVerification(models.Model):
             self.verification_date = timezone.now()
             self.user.is_verified = True
             self.user.save()
+            # Also update vendor is_verified
+            if hasattr(self.user, 'vendor_profile'):
+                self.user.vendor_profile.is_verified = True
+                self.user.vendor_profile.save()
         super().save(*args, **kwargs)
 
 

@@ -39,12 +39,6 @@ const Overview = ({ stats }) => {
           icon={<FaBoxes className="text-orange-500" />}
           color="orange"
         />
-        {/* <StatCard
-          title="Pending Reviews"
-          value={stats.pendingReviews || 0}
-          icon={<FaStar className="text-cyan-500" />}
-          color="cyan"
-        /> */}
       </div>
 
       {/* Charts Row */}

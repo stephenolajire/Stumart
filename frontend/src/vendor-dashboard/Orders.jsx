@@ -7,11 +7,13 @@ import {
   FaClock,
   FaCheckCircle,
 } from "react-icons/fa";
-import api from "../constant/api";
 import Swal from "sweetalert2";
 import PickerDetailsModal from "./PickerDetailsModal";
+import { useAssignedPicker } from "../hooks/useVendor";
+import { usePackOrder } from "../hooks/useOrder";
+import { VENDOR_KEYS } from "../hooks/useVendor";
+import { useQueryClient } from "@tanstack/react-query";
 
-// Configure toast notification
 const Toast = Swal.mixin({
   toast: true,
   position: "top-right",
@@ -24,57 +26,65 @@ const Toast = Swal.mixin({
   },
 });
 
-const Orders = ({ orders, onOrderUpdate }) => {
+const Orders = ({ orders }) => {
   const [filterStatus, setFilterStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [loadingOrders, setLoadingOrders] = useState(new Set());
-  const [selectedPicker, setSelectedPicker] = useState(null);
-  // Replace the single loading state with a Set to track multiple loading states
-  const [loadingPickerDetails, setLoadingPickerDetails] = useState(new Set());
+  const [selectedPickerOrderId, setSelectedPickerOrderId] = useState(null);
 
-  console.log("Orders component rendered with orders:", orders);
+  const queryClient = useQueryClient();
 
-  // Extract the orders array from the response object
-  const ordersArray = orders?.orders || [];
+  const {
+    mutate: packOrder,
+    isPending: isPackingOrder,
+    variables: packingVariables,
+  } = usePackOrder();
 
-  const packedOrders = async (orderId) => {
-    setLoadingOrders((prev) => new Set([...prev, orderId]));
+  const {
+    data: pickerData,
+    isLoading: isLoadingPicker,
+    isError: isPickerError,
+  } = useAssignedPicker(selectedPickerOrderId, {
+    enabled: !!selectedPickerOrderId,
+  });
 
-    try {
-      const response = await api.post("pack-order/", { order_id: orderId });
+  const ordersArray = orders?.orders ?? orders ?? [];
 
-      if (response.status === 200) {
-        Toast.fire({
-          icon: "success",
-          title: "Order packed successfully",
-        });
+  const handlePickerDetailsClick = (orderId) => {
+    setSelectedPickerOrderId(orderId);
+  };
 
-        // Call parent component's update function if provided
-        if (onOrderUpdate) {
-          onOrderUpdate();
-        }
-      } else {
-        throw new Error("Failed to pack order");
-      }
-    } catch (error) {
-      console.error("Error packing order:", error);
+  React.useEffect(() => {
+    if (isPickerError && selectedPickerOrderId) {
       Toast.fire({
         icon: "error",
-        title: "Failed to pack order",
+        title: "Failed to load picker details",
         text: "Please try again",
       });
-    } finally {
-      setLoadingOrders((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(orderId);
-        return newSet;
-      });
+      setSelectedPickerOrderId(null);
     }
+  }, [isPickerError, selectedPickerOrderId]);
+
+  const handlePackOrder = (orderId) => {
+    packOrder(
+      { order_id: orderId },
+      {
+        onSuccess: () => {
+          Toast.fire({ icon: "success", title: "Order packed successfully" });
+          queryClient.invalidateQueries({ queryKey: VENDOR_KEYS.orders() });
+        },
+        onError: () => {
+          Toast.fire({
+            icon: "error",
+            title: "Failed to pack order",
+            text: "Please try again",
+          });
+        },
+      },
+    );
   };
 
   const getOrderStatusClass = (status) => {
     if (!status) return "bg-gray-100 text-gray-800";
-
     switch (status.toLowerCase()) {
       case "delivered":
         return "bg-green-100 text-green-800";
@@ -86,6 +96,10 @@ const Orders = ({ orders, onOrderUpdate }) => {
         return "bg-purple-100 text-purple-800";
       case "pending":
         return "bg-orange-100 text-orange-800";
+      case "in_transit":
+        return "bg-indigo-100 text-indigo-800";
+      case "completed":
+        return "bg-green-100 text-green-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -93,15 +107,15 @@ const Orders = ({ orders, onOrderUpdate }) => {
 
   const getStatusIcon = (status) => {
     if (!status) return <FaClock />;
-
     switch (status.toLowerCase()) {
       case "delivered":
-        return <FaCheckCircle />;
       case "paid":
+      case "completed":
         return <FaCheckCircle />;
       case "processing":
         return <FaBox />;
       case "shipped":
+      case "in_transit":
         return <FaShippingFast />;
       case "pending":
         return <FaClock />;
@@ -111,7 +125,6 @@ const Orders = ({ orders, onOrderUpdate }) => {
   };
 
   const getCustomerName = (order) => {
-    // Handle both shipping object format and direct format
     if (order.shipping?.first_name && order.shipping?.last_name) {
       return `${order.shipping.first_name} ${order.shipping.last_name}`;
     }
@@ -133,7 +146,8 @@ const Orders = ({ orders, onOrderUpdate }) => {
   });
 
   const getActionButton = (order) => {
-    const isLoading = loadingOrders.has(order.id);
+    const isThisOrderPacking =
+      isPackingOrder && packingVariables?.order_id === order.id;
     const isPending = order.order_status?.toLowerCase() === "pending";
 
     if (order.packed) {
@@ -153,15 +167,15 @@ const Orders = ({ orders, onOrderUpdate }) => {
         className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors duration-200 ${
           isPending
             ? "bg-gray-100 text-gray-500 cursor-not-allowed"
-            : isLoading
-            ? "bg-yellow-300 text-yellow-800 cursor-wait"
-            : "bg-yellow-500 hover:bg-yellow-600 text-white"
+            : isThisOrderPacking
+              ? "bg-yellow-300 text-yellow-800 cursor-wait"
+              : "bg-yellow-500 hover:bg-yellow-600 text-white"
         }`}
-        onClick={() => packedOrders(order.id)}
-        disabled={isLoading || isPending}
+        onClick={() => handlePackOrder(order.id)}
+        disabled={isThisOrderPacking || isPending}
         title={isPending ? "Cannot pack pending orders" : ""}
       >
-        {isLoading ? (
+        {isThisOrderPacking ? (
           <>
             <div className="inline-block animate-spin rounded-full h-3 w-3 border-b-2 border-yellow-800 mr-1"></div>
             Packing...
@@ -181,44 +195,10 @@ const Orders = ({ orders, onOrderUpdate }) => {
     );
   };
 
-  // Update the handlePickerDetailsClick function
-  const handlePickerDetailsClick = async (orderId) => {
-    try {
-      // Add this order to loading set
-      setLoadingPickerDetails((prev) => new Set([...prev, orderId]));
-
-      const response = await api.get(`assigned/picker/`, {
-        params: { order_id: orderId },
-      });
-
-      if (response.status === 200) {
-        setSelectedPicker(response.data);
-      } else {
-        throw new Error("Failed to fetch picker details");
-      }
-    } catch (error) {
-      console.error("Error fetching picker details:", error);
-      Toast.fire({
-        icon: "error",
-        title: "Failed to load picker details",
-        text: error.response?.data?.message || "Please try again",
-      });
-    } finally {
-      // Remove this order from loading set
-      setLoadingPickerDetails((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(orderId);
-        return newSet;
-      });
-    }
-  };
-
   return (
     <div className="space-y-6">
-      {/* Header with Filters */}
       <div className="bg-white rounded-lg shadow-lg p-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          {/* Filter Dropdown */}
           <select
             className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 bg-white text-gray-700"
             value={filterStatus}
@@ -229,10 +209,11 @@ const Orders = ({ orders, onOrderUpdate }) => {
             <option value="paid">Paid</option>
             <option value="processing">Processing</option>
             <option value="shipped">Shipped</option>
+            <option value="in_transit">In Transit</option>
             <option value="delivered">Delivered</option>
+            <option value="completed">Completed</option>
           </select>
 
-          {/* Search Input */}
           <div className="relative flex-1 md:max-w-md">
             <FaSearch
               className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
@@ -249,7 +230,6 @@ const Orders = ({ orders, onOrderUpdate }) => {
         </div>
       </div>
 
-      {/* Orders Table */}
       <div className="bg-white rounded-lg shadow-lg overflow-hidden">
         {filteredOrders.length === 0 ? (
           <div className="p-12 text-center">
@@ -321,9 +301,7 @@ const Orders = ({ orders, onOrderUpdate }) => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getOrderStatusClass(
-                          order.order_status
-                        )}`}
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getOrderStatusClass(order.order_status)}`}
                       >
                         <span className="mr-1">
                           {getStatusIcon(order.order_status)}
@@ -339,9 +317,13 @@ const Orders = ({ orders, onOrderUpdate }) => {
                         <button
                           className="inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white text-sm font-medium rounded-md transition-colors duration-200"
                           onClick={() => handlePickerDetailsClick(order.id)}
-                          disabled={loadingPickerDetails.has(order.id)}
+                          disabled={
+                            isLoadingPicker &&
+                            selectedPickerOrderId === order.id
+                          }
                         >
-                          {loadingPickerDetails.has(order.id) ? (
+                          {isLoadingPicker &&
+                          selectedPickerOrderId === order.id ? (
                             <>
                               <div className="inline-block animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
                               Loading...
@@ -367,10 +349,10 @@ const Orders = ({ orders, onOrderUpdate }) => {
         )}
       </div>
 
-      {selectedPicker && (
+      {pickerData && selectedPickerOrderId && (
         <PickerDetailsModal
-          picker={selectedPicker}
-          onClose={() => setSelectedPicker(null)}
+          picker={pickerData}
+          onClose={() => setSelectedPickerOrderId(null)}
         />
       )}
     </div>
