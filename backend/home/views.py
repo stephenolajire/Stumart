@@ -230,11 +230,17 @@ class ProductCategoryView(APIView):
             if gender and gender in ['men', 'women', 'unisex', 'kids']:
                 queryset = queryset.filter(gender=gender)
 
-            # Apply school filtering based on authentication
+            # Apply school/location filtering based on authentication
             if request.user.is_authenticated:
+                # When a specific vendor is requested, skip institution filter
                 if not vendor_id:
-                    queryset = queryset.filter(vendor__institution__iexact=request.user.institution)
+                    user_institution = request.user.institution
+                    if user_institution and user_institution.strip():
+                        queryset = queryset.filter(
+                            vendor__institution__iexact=user_institution.strip()
+                        )
             else:
+                # Unauthenticated: filter by state or school if provided
                 if state:
                     queryset = queryset.filter(vendor__state__iexact=state)
                 if school:

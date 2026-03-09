@@ -4,18 +4,22 @@ from .views import (
     BookmarkToggleView,
     BookmarkStatusView,
     BookmarkRemoveView,
+    VendorBookmarkListView,
+    VendorBookmarkToggleView,
+    VendorBookmarkStatusView,
+    VendorBookmarkRemoveView,
 )
 
 urlpatterns = [
-    # GET  → list all user bookmarks
-    path("bookmarks/",                          BookmarkListView.as_view(),   name="bookmark-list"),
-
-    # POST → toggle bookmark on / off
-    path("bookmarks/toggle/",                   BookmarkToggleView.as_view(), name="bookmark-toggle"),
-
-    # GET  → check bookmark status for a single product (?product_id=)
-    path("bookmarks/status/",                   BookmarkStatusView.as_view(), name="bookmark-status"),
-
-    # DELETE → remove a specific bookmark
+    # ── Product Bookmarks ──────────────────────────────────────────────────────
+    path("bookmarks/", BookmarkListView.as_view(), name="bookmark-list"),
+    path("bookmarks/toggle/", BookmarkToggleView.as_view(), name="bookmark-toggle"),
+    path("bookmarks/status/", BookmarkStatusView.as_view(), name="bookmark-status"),
     path("bookmarks/<int:bookmark_id>/remove/", BookmarkRemoveView.as_view(), name="bookmark-remove"),
+
+    # ── Vendor Bookmarks ───────────────────────────────────────────────────────
+    path("bookmarks/vendors/", VendorBookmarkListView.as_view(), name="vendor-bookmark-list"),
+    path("bookmarks/vendors/toggle/", VendorBookmarkToggleView.as_view(), name="vendor-bookmark-toggle"),
+    path("bookmarks/vendors/status/", VendorBookmarkStatusView.as_view(), name="vendor-bookmark-status"),
+    path("bookmarks/vendors/<int:bookmark_id>/remove/", VendorBookmarkRemoveView.as_view(), name="vendor-bookmark-remove"),
 ]

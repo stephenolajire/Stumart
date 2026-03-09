@@ -86,9 +86,6 @@ class User(AbstractUser):
 
 class Student(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='student_profile')
-    # matric_number = models.CharField(max_length=20, blank=True)
-    # department = models.CharField(max_length=100)
-    # level = models.CharField(max_length=20)
 
     def __str__(self):
         return f"Student: {self.user.email}"

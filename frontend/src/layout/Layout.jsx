@@ -2,9 +2,9 @@ import React, { useState, useContext, useMemo } from "react";
 // import Navigation from "../components/nav/Navigation";
 import Footer from "../components/nav/Footer";
 import { Outlet } from "react-router-dom";
-import { FaPlayCircle, FaTimes, FaComments } from "react-icons/fa";
-import Chatbot from "../chatbot/Chatbot";
-import styles from "../css/Layout.module.css";
+// import { FaPlayCircle, FaTimes, FaComments } from "react-icons/fa";
+// import Chatbot from "../chatbot/Chatbot";
+// import styles from "../css/Layout.module.css";
 import { GlobalContext } from "../constant/GlobalContext";
 import Navigation from "../pages/components/DesktopNav";
 import Sidebar from "../pages/components/Sidebar";
@@ -17,52 +17,52 @@ const Layout = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
 
   // Use TanStack Query hook for videos
-  const { useVideos } = useContext(GlobalContext);
-  const {
-    data: videos = {},
-    isLoading: videosLoading,
-    isError: videosError,
-    error: videosErrorDetails,
-  } = useVideos();
+  // const { useVideos } = useContext(GlobalContext);
+  // const {
+  //   data: videos = {},
+  //   isLoading: videosLoading,
+  //   isError: videosError,
+  //   error: videosErrorDetails,
+  // } = useVideos();
 
-  const toggleModal = () => {
-    setShowModal(!showModal);
-    if (showVideoModal) setShowVideoModal(false);
-  };
+  // const toggleModal = () => {
+  //   setShowModal(!showModal);
+  //   if (showVideoModal) setShowVideoModal(false);
+  // };
 
-  const toggleChat = () => setIsChatOpen(!isChatOpen);
+  // const toggleChat = () => setIsChatOpen(!isChatOpen);
 
-  const handleVideoSelect = (video) => {
-    setSelectedVideo(video);
-    setShowModal(false);
-    setShowVideoModal(true);
-  };
+  // const handleVideoSelect = (video) => {
+  //   setSelectedVideo(video);
+  //   setShowModal(false);
+  //   setShowVideoModal(true);
+  // };
 
   // Memoize video options to avoid unnecessary recalculations
-  const videoOptions = useMemo(() => {
-    if (!videos.register_video && !videos.product_video) {
-      return [];
-    }
+  // const videoOptions = useMemo(() => {
+  //   if (!videos.register_video && !videos.product_video) {
+  //     return [];
+  //   }
 
-    return [
-      {
-        title: "Register as Vendor",
-        video: videos.register_video?.video_secure_url,
-      },
-      {
-        title: "Register as Picker",
-        video: videos.register_video?.video_secure_url,
-      },
-      {
-        title: "Register as Customer",
-        video: videos.register_video?.video_secure_url,
-      },
-      {
-        title: "Add Product Tutorial",
-        video: videos.product_video?.video_secure_url,
-      },
-    ].filter((option) => option.video); // Filter out options without video URLs
-  }, [videos]);
+  //   return [
+  //     {
+  //       title: "Register as Vendor",
+  //       video: videos.register_video?.video_secure_url,
+  //     },
+  //     {
+  //       title: "Register as Picker",
+  //       video: videos.register_video?.video_secure_url,
+  //     },
+  //     {
+  //       title: "Register as Customer",
+  //       video: videos.register_video?.video_secure_url,
+  //     },
+  //     {
+  //       title: "Add Product Tutorial",
+  //       video: videos.product_video?.video_secure_url,
+  //     },
+  //   ].filter((option) => option.video); // Filter out options without video URLs
+  // }, [videos]);
 
   return (
     <div className="hide-scrollbar">
@@ -84,19 +84,19 @@ const Layout = () => {
         <Footer />
       </div>
 
-      <Chatbot />
+      {/* <Chatbot /> */}
 
       {/* Learn More Button */}
-      <button
+      {/* <button
         className="bg-green-500 fixed bottom-22 lg:bottom-20 right-4 lg:right-6 w-14 h-14 rounded-full flex items-center justify-center "
         onClick={toggleModal}
         aria-label="Learn how to use platform"
       >
         <FaPlayCircle size={24} className="text-white" />
-      </button>
+      </button> */}
 
       {/* Selection Modal */}
-      {showModal && (
+      {/* {showModal && (
         <div
           className="fixed inset-0 flex items-center justify-center p-6 z-100000"
           onClick={toggleModal}
@@ -135,10 +135,10 @@ const Layout = () => {
             </div>
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Video Modal */}
-      {showVideoModal && selectedVideo && (
+      {/* {showVideoModal && selectedVideo && (
         <div
           className={styles.modalOverlay}
           onClick={() => setShowVideoModal(false)}
@@ -162,7 +162,7 @@ const Layout = () => {
             </div>
           </div>
         </div>
-      )}
+      )} */}
     </div>
   );
 };
