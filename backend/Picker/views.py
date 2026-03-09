@@ -8,51 +8,41 @@ import random
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from datetime import timedelta
-from Stumart.models import Order, OrderItem, Transaction
-from User.models import User, Picker, StudentPicker, KYCVerification, Vendor, Company, CompanyRider
-from .serializers import *
+from stumart.models import Order, OrderItem, Transaction, PickerReview
+from user.models import User, Picker, StudentPicker, KYCVerification, Vendor, Company, CompanyRider
+from .serializers import OrderItemSerializer, OrderSerializer, OrderDetailSerializer
 from wallet.models import PickerWalletAccount, VendorWallets, CompanyWallet
 from django.conf import settings
 from django.core.mail import send_mail
 from decimal import Decimal
 import logging
-from User.models import Vendor
 from django.db import transaction
-from Stumart.models import PickerReview
-from Stumart.serializers import PickerReviewSerializer
+from stumart.models import PickerReview
+from stumart.serializers import PickerReviewSerializer
 from rest_framework import generics
 
 logger = logging.getLogger(__name__)
 
 class PickerDashboardView(APIView):
-    """
-    API view for picker dashboard home page, showing overview statistics
-    Support for picker, student_picker, and company user types
-    """
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
         user = request.user
 
-        # Check if the user is a picker, student picker, or company
         if user.user_type not in ['picker', 'student_picker', 'company']:
             return Response({"error": "Only pickers and companies can access this dashboard"}, 
                             status=status.HTTP_403_FORBIDDEN)
 
-        # Handle company user type
         if user.user_type == 'company':
             return self.get_company_dashboard_data(user)
         
-        # Handle picker and student_picker user types (existing logic)
         return self.get_picker_dashboard_data(user)
 
     def get_picker_dashboard_data(self, user):
-        """Get dashboard data for picker and student_picker user types"""
-        # Get picker model based on user type with proper error handling
         try:
             if user.user_type == 'picker':
                 picker_profile = user.picker_profile
-            else:  # student_picker
+            else:
                 picker_profile = user.student_picker_profile
         except (User.picker_profile.RelatedObjectDoesNotExist, 
                 User.student_picker_profile.RelatedObjectDoesNotExist):
@@ -61,7 +51,6 @@ class PickerDashboardView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # ✅ Get available orders count (packed orders ready for pickup)
         available_orders = Order.objects.filter(
             id__in=OrderItem.objects.filter(
                 vendor__user__institution=user.institution,
@@ -70,7 +59,6 @@ class PickerDashboardView(APIView):
             ).values_list('order_id', flat=True).distinct()
         ).count()
 
-        # ✅ Active deliveries
         active_delivery_ids = OrderItem.objects.filter(
             order__order_status='IN_TRANSIT',
             order__picker=user,
@@ -79,18 +67,17 @@ class PickerDashboardView(APIView):
 
         active_deliveries = Order.objects.filter(id__in=active_delivery_ids).count()
 
-        # ✅ Total earnings (shipping fees for completed deliveries)
         try:
-            wallet = PickerWalletAccount.objects.get(picker=user)
-            total_earnings = wallet.amount if wallet.amount else 0
+            if user.user_type == 'picker':
+                wallet = PickerWalletAccount.objects.get(picker=user.picker_profile)
+                total_earnings = wallet.amount if wallet.amount else 0
+            else:
+                total_earnings = 0
         except PickerWalletAccount.DoesNotExist:
-            # No wallet exists for this user yet
             total_earnings = 0
 
-        # ✅ Recent Orders
         recent_orders = self.get_recent_orders_for_picker(user)
 
-        # ✅ Final Response for picker/student_picker
         response_data = {
             'stats': {
                 'availableOrders': available_orders,
@@ -104,7 +91,6 @@ class PickerDashboardView(APIView):
         return Response(response_data)
 
     def get_company_dashboard_data(self, user):
-        """Get dashboard data for company user type using CompanyRider statistics"""
         try:
             company_profile = user.company_profile
         except User.company_profile.RelatedObjectDoesNotExist:
@@ -113,47 +99,30 @@ class PickerDashboardView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # Get all riders belonging to this company
         company_riders = CompanyRider.objects.filter(company=company_profile)
-
-        # ✅ Available orders count (orders in company's delivery areas)
-        # Get areas that this company serves
         company_areas = company_profile.delivery_areas.all()
         
-        # Find orders in company's delivery areas that are packed and ready
         available_orders = Order.objects.filter(
             id__in=OrderItem.objects.filter(
                 vendor__user__institution=user.institution,
                 order__packed=True,
                 order__order_status='PAID'
             ).values_list('order_id', flat=True).distinct(),
-            # You might need to add area filtering based on your address structure
-            # For now, using institution as proxy
         ).count()
 
-        # ✅ Active deliveries (orders assigned to company riders)
         active_delivery_ids = OrderItem.objects.filter(
             order__order_status='IN_TRANSIT',
-            order__company_picker=True,  # Orders assigned to company
+            order__company_picker=True,
             vendor__user__institution=user.institution
         ).values_list('order_id', flat=True).distinct()
 
         active_deliveries = Order.objects.filter(id__in=active_delivery_ids).count()
 
-        # ✅ Total earnings (sum of all riders' earnings)
-        total_earnings = company_riders.aggregate(
-            total=Sum('total_earnings')
-        )['total'] or 0
+        total_earnings = company_riders.aggregate(total=Sum('total_earnings'))['total'] or 0
+        avg_rating = company_riders.aggregate(avg_rating=Avg('rating'))['avg_rating'] or 0
 
-        # ✅ Company rating (average of all riders' ratings)
-        avg_rating = company_riders.aggregate(
-            avg_rating=Avg('rating')
-        )['avg_rating'] or 0
-
-        # ✅ Recent Orders for company
         recent_orders = self.get_recent_orders_for_company(user, company_profile)
 
-        # ✅ Additional company-specific stats
         rider_stats = {
             'total_riders': company_riders.count(),
             'active_riders': company_riders.filter(status='active').count(),
@@ -164,7 +133,6 @@ class PickerDashboardView(APIView):
             )['total'] or 0
         }
 
-        # Top performing rider
         top_rider = company_riders.filter(
             completed_deliveries__gt=0
         ).order_by('-rating', '-completed_deliveries').first()
@@ -178,7 +146,6 @@ class PickerDashboardView(APIView):
                 'total_earnings': float(top_rider.total_earnings)
             }
 
-        # ✅ Final Response for company
         response_data = {
             'stats': {
                 'availableOrders': available_orders,
@@ -198,10 +165,8 @@ class PickerDashboardView(APIView):
         return Response(response_data)
 
     def get_recent_orders_for_picker(self, user):
-        """Get recent orders for individual pickers"""
         recent_orders = []
 
-        # Available Orders (packed and ready for pickup)
         available_order_ids = OrderItem.objects.filter(
             order__packed=True,
             vendor__user__institution=user.institution,
@@ -224,7 +189,6 @@ class PickerDashboardView(APIView):
                 'type': 'available'
             })
 
-        # Active Orders (IN_TRANSIT) for this picker
         active_order_ids = OrderItem.objects.filter(
             order__order_status='IN_TRANSIT',
             order__picker=user,
@@ -247,15 +211,12 @@ class PickerDashboardView(APIView):
                 'type': 'active'
             })
 
-        # Sort by most recent and limit to 5
         recent_orders = sorted(recent_orders, key=lambda x: x['id'], reverse=True)[:5]
         return recent_orders
 
     def get_recent_orders_for_company(self, user, company_profile):
-        """Get recent orders for company (orders in their delivery areas)"""
         recent_orders = []
 
-        # Available Orders in company's delivery areas
         available_order_ids = OrderItem.objects.filter(
             order__packed=True,
             vendor__user__institution=user.institution,
@@ -279,7 +240,6 @@ class PickerDashboardView(APIView):
                 'assigned_rider': None
             })
 
-        # Active Orders assigned to company riders
         active_order_ids = OrderItem.objects.filter(
             order__order_status='IN_TRANSIT',
             order__company_picker=True,
@@ -294,7 +254,6 @@ class PickerDashboardView(APIView):
                 if order.order_items.exists() else "Unknown"
             )
             
-            # Try to find the assigned rider (you might need to add a field to track this)
             assigned_rider = None
             if order.company_picker_email:
                 try:
@@ -316,10 +275,79 @@ class PickerDashboardView(APIView):
                 'assigned_rider': assigned_rider
             })
 
-        # Sort by most recent and limit to 5
         recent_orders = sorted(recent_orders, key=lambda x: x['id'], reverse=True)[:5]
         return recent_orders
 
+
+class EarningsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        period = request.query_params.get('period', 'week')
+
+        if user.user_type not in ['picker', 'student_picker']:
+            return Response({"error": "Only pickers can access this page"},
+                            status=status.HTTP_403_FORBIDDEN)
+
+        now = timezone.now()
+        if period == 'week':
+            start_date = now - timedelta(days=7)
+        elif period == 'month':
+            start_date = now - timedelta(days=30)
+        elif period == 'year':
+            start_date = now - timedelta(days=365)
+        else:
+            start_date = None
+
+        base_query = Order.objects.filter(picker=user)
+        if start_date:
+            base_query = base_query.filter(created_at__gte=start_date)
+
+        earnings_data = base_query.aggregate(
+            total_earnings=Sum('shipping_fee'),
+            order_count=Count('id')
+        )
+
+        try:
+            if user.user_type == 'picker':
+                wallet = PickerWalletAccount.objects.get(picker=user.picker_profile)
+                amount = wallet.amount if wallet.amount else 0
+            else:
+                amount = 0
+        except PickerWalletAccount.DoesNotExist:
+            amount = 0
+
+        daily_earnings = []
+        if period in ['week', 'month']:
+            days_back = 7 if period == 'week' else 30
+
+            for i in range(days_back, -1, -1):
+                day = now - timedelta(days=i)
+                day_start = day.replace(hour=0, minute=0, second=0, microsecond=0)
+                day_end = day.replace(hour=23, minute=59, second=59, microsecond=999999)
+
+                day_total = base_query.filter(
+                    created_at__range=(day_start, day_end)
+                ).aggregate(
+                    daily_total=Sum('shipping_fee')
+                )['daily_total'] or 0
+
+                daily_earnings.append({
+                    'date': day_start.strftime('%Y-%m-%d'),
+                    'amount': float(day_total)
+                })
+
+        response_data = {
+            'wallet_balance': float(amount),
+            'total_earnings': float(earnings_data['total_earnings'] or 0),
+            'order_count': earnings_data['order_count'] or 0,
+            'average_per_order': float(earnings_data['total_earnings'] / earnings_data['order_count']) if earnings_data['order_count'] else 0,
+            'period': period,
+            'daily_earnings': daily_earnings
+        }
+
+        return Response(response_data)
 
 
 class AvailableOrdersView(APIView):
@@ -590,9 +618,14 @@ class EarningsView(APIView):
             order_count=Count('id')
         )
 
-        # Wallet balance
-        wallet = PickerWalletAccount.objects.get(picker=user)
-        amount = wallet.amount
+        try:
+            if user.user_type == 'picker':
+                wallet = PickerWalletAccount.objects.get(picker=user.picker_profile)
+            else:
+                wallet = PickerWalletAccount.objects.get(picker=user.student_picker_profile)
+            total_earnings = wallet.amount if wallet.amount else 0
+        except PickerWalletAccount.DoesNotExist:
+            total_earnings = 0
 
         # Daily earnings breakdown
         daily_earnings = []

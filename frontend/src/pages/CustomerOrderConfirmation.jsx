@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   Package,
   MapPin,
@@ -23,6 +23,7 @@ const CustomerOrderConfirmation = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [confirmed, setConfirmed] = useState(false);
+  const navigate = useNavigate();
 
   // Extract customer confirmation code from URL parameter or fallback to manual entry
   useEffect(() => {
@@ -44,7 +45,7 @@ const CustomerOrderConfirmation = () => {
     try {
       const customer_confirmation_code = code;
       const response = await api.get(
-        `customer/confirm-order/${customer_confirmation_code}/`
+        `order/delivery/customer-confirm/${customer_confirmation_code}/`,
       );
       const data = response.data;
 
@@ -54,6 +55,9 @@ const CustomerOrderConfirmation = () => {
           setConfirmed(true);
           setSuccess("This order has already been confirmed. Thank you!");
         }
+        setTimeout(() => {
+          navigate("/order-history");
+        }, 5000);
       } else {
         setError(data.error || "Failed to fetch order details");
       }
@@ -71,7 +75,7 @@ const CustomerOrderConfirmation = () => {
     setError("");
 
     try {
-      const response = await api.post("customer/confirm-order/", {
+      const response = await api.post("order/delivery/customer-confirm/", {
         customer_confirmation_code: customerCode,
       });
 
@@ -79,7 +83,7 @@ const CustomerOrderConfirmation = () => {
 
       if (response.status === 200) {
         setSuccess(
-          "Thank you for confirming your order! Payment has been processed to all parties."
+          "Thank you for confirming your order! Payment has been processed to all parties.",
         );
         setConfirmed(true);
         setOrderData((prev) => ({
@@ -217,8 +221,8 @@ const CustomerOrderConfirmation = () => {
                         orderData.order_status === "COMPLETED"
                           ? "bg-green-100 text-green-800"
                           : orderData.order_status === "DELIVERED"
-                          ? "bg-blue-100 text-blue-800"
-                          : "bg-yellow-100 text-yellow-800"
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-yellow-100 text-yellow-800"
                       }`}
                     >
                       {orderData.order_status}
@@ -463,29 +467,6 @@ const CustomerOrderConfirmation = () => {
             )}
 
             {/* Already Confirmed Message */}
-            {orderData.already_confirmed && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
-                <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-green-800 mb-2">
-                  Order Already Confirmed
-                </h3>
-                <p className="text-green-700 mb-4">
-                  Thank you! You have already confirmed receipt of this order.
-                </p>
-                <div className="bg-white rounded-lg p-4 border border-green-100">
-                  <p className="text-green-800 font-medium mb-2">
-                    What happens next:
-                  </p>
-                  <ul className="text-green-700 text-sm space-y-1 list-disc list-inside text-left">
-                    <li>Payment has been released to vendors</li>
-                    <li>Delivery partner has been compensated</li>
-                    <li>
-                      You can leave reviews for vendors and delivery service
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            )}
 
             {/* Cannot Confirm Message */}
             {!orderData.can_confirm && !orderData.already_confirmed && (
@@ -511,26 +492,6 @@ const CustomerOrderConfirmation = () => {
             )}
 
             {/* Call to Action for Reviews */}
-            {confirmed && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
-                <Star className="w-12 h-12 text-blue-500 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-blue-800 mb-2">
-                  Share Your Experience
-                </h3>
-                <p className="text-blue-700 mb-4">
-                  Help other customers by rating your experience with the
-                  vendors and delivery service.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                  <button className="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors">
-                    Rate Vendors
-                  </button>
-                  <button className="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors">
-                    Rate Delivery
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
         )}
       </div>

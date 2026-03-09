@@ -8,14 +8,12 @@ import {
   AlertCircle,
   Loader2,
   Package,
-  Calendar,
   ArrowLeft,
   Send,
 } from "lucide-react";
 import api from "../constant/api";
 import Swal from "sweetalert2";
 
-// Create toast mixin configuration
 const Toast = Swal.mixin({
   toast: true,
   position: "top-right",
@@ -32,119 +30,58 @@ const AcceptDelivery = () => {
   const { uniqueCode } = useParams();
   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState({
-    rider_name: "",
-    rider_phone: "",
-    pickup_time: "ASAP",
-  });
+  // ✅ Only pickup_time needed from the form now
+  const [pickupTime, setPickupTime] = useState("ASAP");
   const [opportunity, setOpportunity] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
-  const [validationErrors, setValidationErrors] = useState({});
 
   useEffect(() => {
-    if (uniqueCode) {
-      fetchOpportunityDetails();
-    }
+    if (uniqueCode) fetchOpportunityDetails();
   }, [uniqueCode]);
 
   const fetchOpportunityDetails = async () => {
     try {
       setIsLoading(true);
-      const response = await api.get(`delivery-details/${uniqueCode}/`);
+      const response = await api.get(`order/delivery/accept/${uniqueCode}/`);
       setOpportunity(response.data);
       setError(null);
 
-      // Check if opportunity can still be accepted
       if (!response.data.can_accept) {
         setError(
           response.data.status === "accepted"
             ? "This delivery has already been accepted by another rider"
             : response.data.status === "expired"
-            ? "This delivery opportunity has expired"
-            : "This delivery is no longer available"
+              ? "This delivery opportunity has expired"
+              : "This delivery is no longer available",
         );
       }
-    } catch (error) {
-      console.error("Error fetching opportunity details:", error);
+    } catch (err) {
       setError(
-        error.response?.data?.error ||
-          "Failed to load delivery details. Please check the link and try again."
+        err.response?.data?.error ||
+          "Failed to load delivery details. Please check the link and try again.",
       );
     } finally {
       setIsLoading(false);
     }
   };
 
-  const validateForm = () => {
-    const errors = {};
-
-    if (!formData.rider_name.trim()) {
-      errors.rider_name = "Rider name is required";
-    }
-
-    if (!formData.rider_phone.trim()) {
-      errors.rider_phone = "Phone number is required";
-    } else if (
-      !/^[\+]?[1-9][\d]{0,15}$/.test(
-        formData.rider_phone.replace(/[\s\-\(\)]/g, "")
-      )
-    ) {
-      errors.rider_phone = "Please enter a valid phone number";
-    }
-
-    if (!formData.pickup_time.trim()) {
-      errors.pickup_time = "Pickup time is required";
-    }
-
-    setValidationErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-
-    // Clear validation error for this field
-    if (validationErrors[name]) {
-      setValidationErrors((prev) => ({
-        ...prev,
-        [name]: null,
-      }));
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!validateForm()) {
-      Toast.fire({
-        icon: "error",
-        title: "Form Validation Error",
-        text: "Please fill in all required fields correctly",
-      });
-      return;
-    }
 
     try {
       setIsSubmitting(true);
 
-      const response = await api.post("accept-delivery/", {
+      // ✅ Only send unique_code and pickup_time — backend derives everything else
+      const response = await api.post("order/delivery/accept/", {
         unique_code: uniqueCode,
-        rider_name: formData.rider_name.trim(),
-        rider_phone: formData.rider_phone.trim(),
-        pickup_time: formData.pickup_time.trim(),
+        pickup_time: pickupTime,
       });
 
       if (response.data.success) {
         setSuccess(true);
-
-        // Show success message with details
         Swal.fire({
           icon: "success",
           title: "Delivery Accepted Successfully!",
@@ -157,8 +94,8 @@ const AcceptDelivery = () => {
               ${
                 response.data.other_opportunities_cancelled > 0
                   ? `<p class="text-sm text-gray-600 mt-2">
-                  ${response.data.other_opportunities_cancelled} other opportunities were cancelled
-                </p>`
+                      ${response.data.other_opportunities_cancelled} other opportunities were cancelled
+                    </p>`
                   : ""
               }
             </div>
@@ -167,29 +104,18 @@ const AcceptDelivery = () => {
           confirmButtonText: "View My Deliveries",
           allowOutsideClick: false,
         }).then((result) => {
-          if (result.isConfirmed) {
-            navigate("/");
-          }
-        });
-      } else {
-        Toast.fire({
-          icon: "error",
-          title: "Acceptance Failed",
-          text: response.data.message || "Failed to accept delivery",
+          if (result.isConfirmed) navigate("/");
         });
       }
-    } catch (error) {
-      console.error("Error accepting delivery:", error);
-
+    } catch (err) {
       let errorMessage = "Failed to accept delivery. Please try again.";
-
-      if (error.response?.status === 409) {
+      if (err.response?.status === 409) {
         errorMessage =
           "This delivery has already been accepted by another rider";
-      } else if (error.response?.status === 410) {
+      } else if (err.response?.status === 410) {
         errorMessage = "This delivery opportunity has expired";
-      } else if (error.response?.data?.error) {
-        errorMessage = error.response.data.error;
+      } else if (err.response?.data?.error) {
+        errorMessage = err.response.data.error;
       }
 
       Toast.fire({
@@ -202,15 +128,14 @@ const AcceptDelivery = () => {
     }
   };
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleString("en-US", {
+  const formatDate = (dateString) =>
+    new Date(dateString).toLocaleString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
     });
-  };
 
   if (isLoading) {
     return (
@@ -228,7 +153,7 @@ const AcceptDelivery = () => {
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="max-w-md mx-auto text-center">
+        <div className="max-w-4xl mx-auto text-center">
           <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <AlertCircle className="w-12 h-12 text-red-600" />
           </div>
@@ -258,7 +183,7 @@ const AcceptDelivery = () => {
   if (success) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="max-w-md mx-auto text-center">
+        <div className="max-w-4xl mx-auto text-center">
           <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle className="w-12 h-12 text-green-600" />
           </div>
@@ -288,13 +213,11 @@ const AcceptDelivery = () => {
     );
   }
 
-  if (!opportunity || !opportunity.can_accept) {
-    return null;
-  }
+  if (!opportunity?.can_accept) return null;
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <button
@@ -304,7 +227,6 @@ const AcceptDelivery = () => {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Details
           </button>
-
           <div className="flex items-center mb-6">
             <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mr-4">
               <Package className="w-6 h-6 text-green-600" />
@@ -320,12 +242,11 @@ const AcceptDelivery = () => {
           </div>
         </div>
 
-        {/* Order Summary Card */}
+        {/* Order Summary */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 mb-8">
           <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4 rounded-t-2xl">
             <h2 className="text-xl font-semibold text-white">Order Summary</h2>
           </div>
-
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div>
@@ -360,78 +281,39 @@ const AcceptDelivery = () => {
           </div>
         </div>
 
-        {/* Acceptance Form */}
+        {/* ✅ Picker Info Card — shown from API response, not user input */}
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 mb-8">
+          <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 px-6 py-4 rounded-t-2xl">
+            <h2 className="text-xl font-semibold text-white">Your Details</h2>
+          </div>
+          <div className="p-6 space-y-3 text-sm">
+            <div className="flex items-center text-gray-700">
+              <User className="w-4 h-4 mr-3 text-indigo-500" />
+              <span className="font-medium mr-2">Name:</span>
+              {opportunity.picker_info.name}
+            </div>
+            <div className="flex items-center text-gray-700">
+              <Phone className="w-4 h-4 mr-3 text-indigo-500" />
+              <span className="font-medium mr-2">Phone:</span>
+              {opportunity.picker_info.phone}
+            </div>
+            <div className="flex items-center text-gray-700">
+              <Package className="w-4 h-4 mr-3 text-indigo-500" />
+              <span className="font-medium mr-2">Type:</span>
+              {opportunity.picker_info.type.replace("_", " ")}
+            </div>
+          </div>
+        </div>
+
+        {/* Acceptance Form — only pickup_time */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100">
           <div className="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4 rounded-t-2xl">
             <h2 className="text-xl font-semibold text-white">
-              Acceptance Details
+              Confirm Acceptance
             </h2>
           </div>
-
           <div className="p-6">
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Rider Name */}
-              <div>
-                <label
-                  htmlFor="rider_name"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  <User className="w-4 h-4 inline mr-2" />
-                  Rider Name *
-                </label>
-                <input
-                  type="text"
-                  id="rider_name"
-                  name="rider_name"
-                  value={formData.rider_name}
-                  onChange={handleInputChange}
-                  placeholder="Enter your full name"
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors ${
-                    validationErrors.rider_name
-                      ? "border-red-300 bg-red-50"
-                      : "border-gray-300"
-                  }`}
-                  disabled={isSubmitting}
-                />
-                {validationErrors.rider_name && (
-                  <p className="mt-1 text-sm text-red-600 flex items-center">
-                    <AlertCircle className="w-4 h-4 mr-1" />
-                    {validationErrors.rider_name}
-                  </p>
-                )}
-              </div>
-
-              {/* Rider Phone */}
-              <div>
-                <label
-                  htmlFor="rider_phone"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  <Phone className="w-4 h-4 inline mr-2" />
-                  Phone Number *
-                </label>
-                <input
-                  type="tel"
-                  id="rider_phone"
-                  name="rider_phone"
-                  value={formData.rider_phone}
-                  onChange={handleInputChange}
-                  placeholder="e.g., +234 801 234 5678"
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors ${
-                    validationErrors.rider_phone
-                      ? "border-red-300 bg-red-50"
-                      : "border-gray-300"
-                  }`}
-                  disabled={isSubmitting}
-                />
-                {validationErrors.rider_phone && (
-                  <p className="mt-1 text-sm text-red-600 flex items-center">
-                    <AlertCircle className="w-4 h-4 mr-1" />
-                    {validationErrors.rider_phone}
-                  </p>
-                )}
-              </div>
-
               {/* Pickup Time */}
               <div>
                 <label
@@ -439,19 +321,14 @@ const AcceptDelivery = () => {
                   className="block text-sm font-medium text-gray-700 mb-2"
                 >
                   <Clock className="w-4 h-4 inline mr-2" />
-                  Expected Pickup Time *
+                  Expected Pickup Time
                 </label>
                 <select
                   id="pickup_time"
-                  name="pickup_time"
-                  value={formData.pickup_time}
-                  onChange={handleInputChange}
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors ${
-                    validationErrors.pickup_time
-                      ? "border-red-300 bg-red-50"
-                      : "border-gray-300"
-                  }`}
+                  value={pickupTime}
+                  onChange={(e) => setPickupTime(e.target.value)}
                   disabled={isSubmitting}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-colors"
                 >
                   <option value="ASAP">ASAP (As Soon As Possible)</option>
                   <option value="Within 15 minutes">Within 15 minutes</option>
@@ -460,18 +337,12 @@ const AcceptDelivery = () => {
                   <option value="Within 2 hours">Within 2 hours</option>
                   <option value="Later today">Later today</option>
                 </select>
-                {validationErrors.pickup_time && (
-                  <p className="mt-1 text-sm text-red-600 flex items-center">
-                    <AlertCircle className="w-4 h-4 mr-1" />
-                    {validationErrors.pickup_time}
-                  </p>
-                )}
               </div>
 
               {/* Important Notice */}
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                 <div className="flex items-start">
-                  <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5 mr-3 flex-shrink-0" />
+                  <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5 mr-3 shrink-0" />
                   <div className="text-sm text-yellow-800">
                     <h4 className="font-medium mb-1">Important Notice</h4>
                     <ul className="list-disc list-inside space-y-1">
@@ -490,7 +361,7 @@ const AcceptDelivery = () => {
                 </div>
               </div>
 
-              {/* Submit Button */}
+              {/* Actions */}
               <div className="flex space-x-4">
                 <button
                   type="button"
@@ -500,7 +371,6 @@ const AcceptDelivery = () => {
                 >
                   Cancel
                 </button>
-
                 <button
                   type="submit"
                   disabled={isSubmitting}
@@ -523,7 +393,7 @@ const AcceptDelivery = () => {
           </div>
         </div>
 
-        {/* Opportunity Expiry Warning */}
+        {/* Expiry Warning */}
         {opportunity && (
           <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex items-center">

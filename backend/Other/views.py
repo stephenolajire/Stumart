@@ -11,8 +11,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from User.models import User, Vendor
-from Stumart.models import ServiceApplication
+from user.models import User, Vendor
+from stumart.models import ServiceApplication
 import calendar
 from django.core.mail import send_mail
 from django.conf import settings

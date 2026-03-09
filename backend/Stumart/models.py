@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator, MaxValueValidator
 User = get_user_model()
 from cloudinary.models import CloudinaryField
-from User.models import Vendor
+from user.models import Vendor
 from django.utils.translation import gettext_lazy as _
 
 class Product(models.Model):
@@ -184,48 +184,53 @@ class ProductColor(models.Model):
 
 
 class Cart(models.Model):
-    """Model for user cart"""
-    cart_code = models.CharField(max_length=100, unique=True, db_index=True)
+    """One cart per authenticated user"""
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="cart",
+        help_text="Each user has exactly one persistent cart",
+        null=True,
+        blank=True
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
-    
+
     class Meta:
         indexes = [
-            models.Index(fields=['cart_code'], name='cart_code_idx'),
-            models.Index(fields=['-created_at'], name='cart_created_idx'),
+            models.Index(fields=["user"], name="cart_user_idx"),
         ]
-    
+
     def __str__(self):
-        return f"{self.cart_code}"
+        return f"Cart({self.user.email})"
 
 
 class CartItem(models.Model):
     """Model for items in the cart"""
     cart = models.ForeignKey(
-        Cart, 
-        on_delete=models.CASCADE, 
-        related_name="items"
+        Cart,
+        on_delete=models.CASCADE,
+        related_name="items",
     )
     product = models.ForeignKey(
-        Product, 
-        on_delete=models.CASCADE, 
-        related_name="cart_items"
+        Product,
+        on_delete=models.CASCADE,
+        related_name="cart_items",
     )
     quantity = models.PositiveIntegerField(default=1)
-    size = models.CharField(max_length=50, blank=True, null=True)
+    size  = models.CharField(max_length=50, blank=True, null=True)
     color = models.CharField(max_length=50, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
-    updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
-    
+    updated_at = models.DateTimeField(auto_now=True,     null=True, blank=True)
+
     class Meta:
         indexes = [
-            models.Index(fields=['cart', 'product'], name='cart_item_lookup'),
-            models.Index(fields=['cart'], name='cart_items_idx'),
+            models.Index(fields=["cart", "product"], name="cart_item_lookup"),
+            models.Index(fields=["cart"],             name="cart_items_idx"),
         ]
-    
+
     def __str__(self):
         return f"{self.product.name}"
-
 
 class Order(models.Model):
     order_number = models.CharField(max_length=20, unique=True, db_index=True)
@@ -236,18 +241,18 @@ class Order(models.Model):
     phone = models.CharField(max_length=15)
     address = models.TextField()
     room_number = models.CharField(max_length=100, blank=True, null=True)
-    
+
     # Financial fields
     subtotal = models.DecimalField(max_digits=10, decimal_places=2)
     shipping_fee = models.DecimalField(max_digits=10, decimal_places=2)
     tax = models.DecimalField(max_digits=10, decimal_places=2)
     takeaway = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     total = models.DecimalField(max_digits=10, decimal_places=2)
-    
+
     # Order status and tracking
     order_status = models.CharField(max_length=20, default='PENDING')
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
     # Picker and company information
     picker = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE, related_name="picker")
     confirm = models.BooleanField(default=False, blank=True, null=True)
@@ -255,14 +260,21 @@ class Order(models.Model):
     reviewed = models.BooleanField(default=False)
     company_picker = models.BooleanField(default=False, blank=True, null=True)
     company_picker_email = models.EmailField(blank=True, null=True)
-    
-    # NEW: Referral code field (optional)
+
+    # Referral code
     referral_code = models.CharField(
-        max_length=20, 
-        blank=True, 
+        max_length=20,
+        blank=True,
         null=True,
         db_index=True,
-        help_text="Referral code used for this order"
+        help_text="Referral code used for this order",
+    )
+
+    # Proximity flag — customer confirms vendor is near their location,
+    # enabling the backend to match a nearby student picker
+    vendor_is_nearby = models.BooleanField(
+        default=False,
+        help_text="Customer indicated the vendor is near their location",
     )
 
     class Meta:
@@ -272,13 +284,15 @@ class Order(models.Model):
             models.Index(fields=['-created_at'], name='order_date_idx'),
             models.Index(fields=['order_status', '-created_at'], name='order_status_date'),
             models.Index(fields=['picker'], name='order_picker_idx'),
-            # NEW: Index for referral code queries
             models.Index(fields=['referral_code', '-created_at'], name='order_referral_idx'),
+            models.Index(fields=['vendor_is_nearby', '-created_at'], name='order_nearby_idx'),
         ]
 
     def __str__(self):
         return self.order_number
 
+
+## OrderItem Model (unchanged, included for completeness)
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, related_name='order_items', on_delete=models.CASCADE)
@@ -563,215 +577,3 @@ class AddProductVideo(models.Model):
         if self.file:
             return self.file.url.replace('http://', 'https://')
         return None
-
-
-# Add these models to your stumart/models.py file
-
-class Conversation(models.Model):
-    """Unified conversation model for user-vendor messaging"""
-    
-    # Participants
-    user = models.ForeignKey(
-        User, 
-        on_delete=models.CASCADE, 
-        related_name='user_conversations'
-    )
-    vendor = models.ForeignKey(
-        Vendor, 
-        on_delete=models.CASCADE, 
-        related_name='vendor_conversations'
-    )
-    
-    # Optional: Link to service application if conversation started from an application
-    service_application = models.ForeignKey(
-        ServiceApplication, 
-        on_delete=models.SET_NULL, 
-        null=True, 
-        blank=True,
-        related_name='conversations'
-    )
-    
-    # Optional: Link to specific service/product if needed
-    service_id = models.IntegerField(null=True, blank=True)
-    service_name = models.CharField(max_length=200, null=True, blank=True)
-    
-    # Conversation metadata
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    # Last message info (for quick display in conversation list)
-    last_message = models.TextField(blank=True, null=True)
-    last_message_sender = models.CharField(
-        max_length=10, 
-        choices=[('user', 'User'), ('vendor', 'Vendor')],
-        null=True, 
-        blank=True
-    )
-    last_message_at = models.DateTimeField(null=True, blank=True)
-    
-    # Status
-    is_active = models.BooleanField(default=True)
-    
-    class Meta:
-        unique_together = ('user', 'vendor', 'service_application')
-        ordering = ['-updated_at']
-        indexes = [
-            models.Index(fields=['user', '-updated_at']),
-            models.Index(fields=['vendor', '-updated_at']),
-        ]
-    
-    def __str__(self):
-        return f"Conversation between {self.user.email} and {self.vendor.business_name}"
-    
-    @property
-    def get_other_participant(self, current_user):
-        """Get the other participant in the conversation"""
-        if hasattr(current_user, 'vendor_profile'):
-            return self.user
-        else:
-            return self.vendor
-
-
-class Message(models.Model):
-    """Unified message model for both user and vendor messages"""
-    
-    SENDER_CHOICES = [
-        ('user', 'User'),
-        ('vendor', 'Vendor'),
-    ]
-    
-    conversation = models.ForeignKey(
-        Conversation, 
-        on_delete=models.CASCADE, 
-        related_name='messages'
-    )
-    
-    # Message content
-    content = models.TextField()
-    
-    # Sender information
-    sender_type = models.CharField(max_length=10, choices=SENDER_CHOICES)
-    sender_user = models.ForeignKey(
-        User, 
-        on_delete=models.CASCADE, 
-        null=True, 
-        blank=True,
-        related_name='sent_messages'
-    )
-    sender_vendor = models.ForeignKey(
-        Vendor, 
-        on_delete=models.CASCADE, 
-        null=True, 
-        blank=True,
-        related_name='sent_messages'
-    )
-    
-    # Message metadata
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    # Read status
-    is_read = models.BooleanField(default=False)
-    read_at = models.DateTimeField(null=True, blank=True)
-    
-    # Optional: Message type for future extensions (text, image, file, etc.)
-    message_type = models.CharField(
-        max_length=20, 
-        choices=[('text', 'Text'), ('image', 'Image'), ('file', 'File')],
-        default='text'
-    )
-    
-    class Meta:
-        ordering = ['created_at']
-        indexes = [
-            models.Index(fields=['conversation', 'created_at']),
-            models.Index(fields=['sender_type', 'created_at']),
-        ]
-    
-    def __str__(self):
-        sender_name = self.get_sender_name()
-        return f"Message from {sender_name}: {self.content[:50]}..."
-    
-    def get_sender_name(self):
-        """Get the display name of the message sender"""
-        if self.sender_type == 'user' and self.sender_user:
-            return f"{self.sender_user.first_name} {self.sender_user.last_name}".strip()
-        elif self.sender_type == 'vendor' and self.sender_vendor:
-            return self.sender_vendor.business_name
-        return "Unknown"
-    
-    def save(self, *args, **kwargs):
-        # Ensure sender consistency
-        if self.sender_type == 'user':
-            self.sender_vendor = None
-        elif self.sender_type == 'vendor':
-            self.sender_user = None
-        
-        # Update conversation's last message info
-        is_new = self.pk is None
-        super().save(*args, **kwargs)
-        
-        if is_new:
-            self.conversation.last_message = self.content
-            self.conversation.last_message_sender = self.sender_type
-            self.conversation.last_message_at = self.created_at
-            self.conversation.updated_at = self.created_at
-            self.conversation.save(update_fields=[
-                'last_message', 
-                'last_message_sender', 
-                'last_message_at', 
-                'updated_at'
-            ])
-
-
-class MessageReadStatus(models.Model):
-    """Track read status for each participant"""
-    conversation = models.ForeignKey(
-        Conversation, 
-        on_delete=models.CASCADE, 
-        related_name='read_statuses'
-    )
-    
-    # Reader information
-    reader_type = models.CharField(
-        max_length=10, 
-        choices=[('user', 'User'), ('vendor', 'Vendor')]
-    )
-    reader_user = models.ForeignKey(
-        User, 
-        on_delete=models.CASCADE, 
-        null=True, 
-        blank=True,
-        related_name='message_read_statuses'
-    )
-    reader_vendor = models.ForeignKey(
-        Vendor, 
-        on_delete=models.CASCADE, 
-        null=True, 
-        blank=True,
-        related_name='message_read_statuses'
-    )
-    
-    # Last read message and timestamp
-    last_read_message = models.ForeignKey(
-        Message, 
-        on_delete=models.CASCADE, 
-        null=True, 
-        blank=True
-    )
-    last_read_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        unique_together = ('conversation', 'reader_type', 'reader_user', 'reader_vendor')
-    
-    def __str__(self):
-        reader_name = self.get_reader_name()
-        return f"{reader_name} read status for conversation {self.conversation.id}"
-    
-    def get_reader_name(self):
-        """Get the display name of the reader"""
-        if self.reader_type == 'user' and self.reader_user:
-            return f"{self.reader_user.first_name} {self.reader_user.last_name}".strip()
-        elif self.reader_type == 'vendor' and self.reader_vendor:
-            return self.reader_vendor.business_name
-        return "Unknown"

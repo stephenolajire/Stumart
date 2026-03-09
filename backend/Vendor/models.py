@@ -1,7 +1,7 @@
 from django.db import models
 from django.db.models import Sum, Count
-from User.models import Vendor, User
-from Stumart.models import Product, Order, OrderItem, Transaction
+from user.models import Vendor, User
+from stumart.models import Product, Order, OrderItem, Transaction
 from django.utils import timezone
 from wallet.models import VendorWallets
 

@@ -1,7 +1,7 @@
 # vendor/serializers.py
 from rest_framework import serializers
-from User.models import Vendor
-from Stumart.models import Product, Order, OrderItem, Transaction
+from user.models import Vendor
+from stumart.models import Product, Order, OrderItem, Transaction
 from wallet.models import VendorWallets
 from .models import VendorStats, VendorRevenueData, VendorSalesData, Withdrawal
 from django.contrib.auth import get_user_model

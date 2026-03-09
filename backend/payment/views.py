@@ -16,7 +16,7 @@ import hmac
 logger = logging.getLogger(__name__)
 from .models import WithdrawalRequest
 from wallet.models import WalletTransactionAccount
-from User.models import User
+from user.models import User
 
 from django.core.cache import cache
 from django.conf import settings

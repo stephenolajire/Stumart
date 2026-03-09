@@ -25,6 +25,7 @@ class CreateReferralView(APIView):
     Create a new referral code for a user
     """
     permission_classes = [AllowAny]
+    serializer_class = ReferralCreateSerializer
     
     def post(self, request):
         serializer = ReferralCreateSerializer(data=request.data)
@@ -45,6 +46,7 @@ class CreateReferralView(APIView):
 
 
 class ListAllReferralsView(APIView):
+    serializer_class = ReferralListSerializer
     """
     GET /api/referrals/list/
     Get list of all referrals with statistics (Admin only)
@@ -90,6 +92,7 @@ class ListAllReferralsView(APIView):
 
 
 class GetReferralByCodeView(APIView):
+    serializer_class = ReferralDetailSerializer
     """
     GET /api/referrals/code/<referral_code>/
     Get referral information by referral code
@@ -108,6 +111,7 @@ class GetReferralByCodeView(APIView):
 
 
 class GetReferralByEmailView(APIView):
+    serializer_class = ReferralDetailSerializer
     """
     GET /api/referrals/email/<email>/
     Get referral information by email
@@ -125,6 +129,7 @@ class GetReferralByEmailView(APIView):
 
 
 class ValidateReferralCodeView(APIView):
+    serializer_class = ReferralValidateSerializer
     """
     POST /api/referrals/validate/
     Validate if a referral code exists and is active

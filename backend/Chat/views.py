@@ -1,62 +1,43 @@
-# chat/views.py
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.authentication import TokenAuthentication
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.shortcuts import get_object_or_404
-from django.db.models import Q, Count, Max, Exists, OuterRef
+from django.db.models import Q, Count, Exists, OuterRef
 from django.utils import timezone
-from rest_framework import serializers
-from django.http import JsonResponse
+from drf_spectacular.utils import extend_schema, OpenApiResponse
+import logging
 
-from Stumart.models import (
+from .models import (
     ServiceApplication, Conversation, Message, MessageReadStatus
 )
-from User.models import User, Vendor
+from .serializers import (
+    MessageSerializer, ConversationListSerializer,
+    ServiceApplicationSerializer, SendMessageRequestSerializer,
+    UnreadCountResponseSerializer
+)
 
-
-class MessageSerializer(serializers.ModelSerializer):
-    sender_name = serializers.CharField(source='get_sender_name', read_only=True)
-    created_at = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
-    
-    class Meta:
-        model = Message
-        fields = ['id', 'content', 'sender_type', 'sender_name', 'created_at', 'is_read']
-
-
-class ConversationListSerializer(serializers.Serializer):
-    conversation_id = serializers.IntegerField(source='conversation.id')
-    other_participant_name = serializers.CharField()
-    service_name = serializers.CharField()
-    unread_count = serializers.IntegerField()
-    updated_at = serializers.DateTimeField(source='conversation.updated_at', format='%Y-%m-%d %H:%M:%S')
-
-
-class ServiceApplicationSerializer(serializers.Serializer):
-    application_id = serializers.IntegerField(source='application.id')
-    participant_name = serializers.SerializerMethodField()
-    has_conversation = serializers.BooleanField()
-    can_start_chat = serializers.BooleanField()
-    status = serializers.CharField(source='application.status')
-    created_at = serializers.DateTimeField(source='application.created_at', format='%Y-%m-%d %H:%M:%S')
-    description = serializers.CharField(source='application.description')
-    
-    def get_participant_name(self, obj):
-        return obj.get('applicant_name') or obj.get('vendor_name')
+logger = logging.getLogger(__name__)
 
 
 class ChatListAPIView(APIView):
-    """API endpoint to list all conversations for the current user"""
+    """
+    Chat List API
+    
+    Retrieve all conversations for the current user with unread message counts.
+    Returns different data based on whether the user is a vendor or student.
+    """
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     
+    @extend_schema(
+        description="Retrieve all conversations for the current user"
+    )
     def get(self, request):
         try:
             user = request.user
             
-            # Check if user is authenticated
             if not user or user.is_anonymous:
                 return Response({
                     'error': 'Authentication required',
@@ -65,27 +46,21 @@ class ChatListAPIView(APIView):
                     'user_type': 'student'
                 }, status=status.HTTP_401_UNAUTHORIZED)
             
-            # Determine user type
             is_vendor = hasattr(user, 'vendor_profile') and user.vendor_profile
             
-            # Build base query
             if is_vendor:
                 conversations_query = Conversation.objects.filter(vendor=user.vendor_profile)
-                # Fixed: Changed 'message' to 'messages' to match the model field
                 unread_filter = Q(messages__sender_type='user', messages__is_read=False)
             else:
                 conversations_query = Conversation.objects.filter(user=user)
-                # Fixed: Changed 'message' to 'messages' to match the model field
                 unread_filter = Q(messages__sender_type='vendor', messages__is_read=False)
             
-            # Execute query with annotations
             conversations_data = conversations_query.select_related(
                 'user', 'vendor', 'service_application'
             ).annotate(
                 unread_count=Count('messages', filter=unread_filter)
             ).order_by('-updated_at')
             
-            # Process results
             conversations = []
             for conv in conversations_data:
                 if is_vendor:
@@ -100,10 +75,7 @@ class ChatListAPIView(APIView):
                     'unread_count': conv.unread_count
                 })
             
-            # Serialize the data
             serializer = ConversationListSerializer(conversations, many=True)
-            
-            # Calculate total unread count
             total_unread = sum(conv['unread_count'] for conv in conversations)
             
             return Response({
@@ -113,9 +85,6 @@ class ChatListAPIView(APIView):
             })
             
         except Exception as e:
-            # Log the error for debugging
-            import logging
-            logger = logging.getLogger(__name__)
             logger.error(f"Error in ChatListAPIView: {str(e)}", exc_info=True)
             
             return Response({
@@ -127,15 +96,22 @@ class ChatListAPIView(APIView):
 
 
 class ServiceApplicationsAPIView(APIView):
-    """API endpoint to show service applications for starting conversations"""
+    """
+    Service Applications API
+    
+    Retrieve service applications for starting conversations.
+    Vendors see applications for their services, students see their applications.
+    """
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     
+    @extend_schema(
+        description="Retrieve service applications for starting conversations"
+    )
     def get(self, request):
         try:
             user = request.user
             
-            # Check if user is authenticated
             if not user or user.is_anonymous:
                 return Response({
                     'error': 'Authentication required',
@@ -167,8 +143,7 @@ class ServiceApplicationsAPIView(APIView):
                             'can_start_chat': True
                         })
                 except Exception as e:
-                    # Log the error but don't fail the request
-                    print(f"Error fetching vendor applications: {e}")
+                    logger.error(f"Error fetching vendor applications: {e}")
             else:
                 # Student view - show their applications
                 try:
@@ -191,8 +166,7 @@ class ServiceApplicationsAPIView(APIView):
                             'can_start_chat': app.status in ['accepted', 'pending']
                         })
                 except Exception as e:
-                    # Log the error but don't fail the request
-                    print(f"Error fetching user applications: {e}")
+                    logger.error(f"Error fetching user applications: {e}")
             
             serializer = ServiceApplicationSerializer(applications, many=True)
             
@@ -202,8 +176,6 @@ class ServiceApplicationsAPIView(APIView):
             })
             
         except Exception as e:
-            import logging
-            logger = logging.getLogger(__name__)
             logger.error(f"Error in ServiceApplicationsAPIView: {str(e)}", exc_info=True)
             
             return Response({
@@ -214,22 +186,28 @@ class ServiceApplicationsAPIView(APIView):
 
 
 class StartConversationAPIView(APIView):
-    """API endpoint to start a new conversation from a service application"""
+    """
+    Start Conversation API
+    
+    Start a new conversation from a service application.
+    Both vendors and students can initiate conversations through this endpoint.
+    """
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     
+    @extend_schema(
+        description="Start a new conversation from a service application"
+    )
     def post(self, request, application_id):
         try:
             application = get_object_or_404(ServiceApplication, id=application_id)
             user = request.user
             
-            # Check if user is authenticated
             if not user or user.is_anonymous:
                 return Response({
                     'error': 'Authentication required'
                 }, status=status.HTTP_401_UNAUTHORIZED)
             
-            # Check permissions
             if hasattr(user, 'vendor_profile') and user.vendor_profile:
                 if application.service != user.vendor_profile:
                     return Response(
@@ -247,7 +225,6 @@ class StartConversationAPIView(APIView):
                 other_user = user
                 vendor = application.service
             
-            # Check if conversation already exists
             conversation, created = Conversation.objects.get_or_create(
                 user=other_user if not (hasattr(user, 'vendor_profile') and user.vendor_profile) else application.user,
                 vendor=vendor,
@@ -264,8 +241,6 @@ class StartConversationAPIView(APIView):
             }, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
             
         except Exception as e:
-            import logging
-            logger = logging.getLogger(__name__)
             logger.error(f"Error in StartConversationAPIView: {str(e)}", exc_info=True)
             
             return Response({
@@ -274,22 +249,28 @@ class StartConversationAPIView(APIView):
 
 
 class ConversationDetailAPIView(APIView):
-    """API endpoint for individual conversation details and messages"""
+    """
+    Conversation Detail API
+    
+    Retrieve detailed conversation information including all messages.
+    Automatically marks messages as read for the current user.
+    """
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     
+    @extend_schema(
+        description="Retrieve conversation details and messages"
+    )
     def get(self, request, conversation_id):
         try:
             conversation = get_object_or_404(Conversation, id=conversation_id)
             user = request.user
             
-            # Check if user is authenticated
             if not user or user.is_anonymous:
                 return Response({
                     'error': 'Authentication required'
                 }, status=status.HTTP_401_UNAUTHORIZED)
             
-            # Check permissions and determine participant type
             if hasattr(user, 'vendor_profile') and user.vendor_profile:
                 if conversation.vendor != user.vendor_profile:
                     return Response(
@@ -307,7 +288,6 @@ class ConversationDetailAPIView(APIView):
                 participant_type = 'user'
                 other_participant_name = conversation.vendor.business_name
             
-            # Get messages
             messages_list = Message.objects.filter(
                 conversation=conversation
             ).select_related('sender_user', 'sender_vendor').order_by('created_at')
@@ -340,7 +320,6 @@ class ConversationDetailAPIView(APIView):
                 read_status.last_read_message = messages_list.last()
                 read_status.save()
             
-            # Serialize messages
             message_serializer = MessageSerializer(messages_list, many=True)
             
             return Response({
@@ -352,8 +331,6 @@ class ConversationDetailAPIView(APIView):
             })
             
         except Exception as e:
-            import logging
-            logger = logging.getLogger(__name__)
             logger.error(f"Error in ConversationDetailAPIView: {str(e)}", exc_info=True)
             
             return Response({
@@ -362,22 +339,29 @@ class ConversationDetailAPIView(APIView):
 
 
 class SendMessageAPIView(APIView):
-    """API endpoint to send a message"""
+    """
+    Send Message API
+    
+    Send a message in a conversation.
+    Both vendors and students can send messages.
+    """
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     
+    @extend_schema(
+        request=SendMessageRequestSerializer,
+        description="Send a message in a conversation"
+    )
     def post(self, request, conversation_id):
         try:
             conversation = get_object_or_404(Conversation, id=conversation_id)
             user = request.user
             
-            # Check if user is authenticated
             if not user or user.is_anonymous:
                 return Response({
                     'error': 'Authentication required'
                 }, status=status.HTTP_401_UNAUTHORIZED)
             
-            # Check permissions
             if hasattr(user, 'vendor_profile') and user.vendor_profile:
                 if conversation.vendor != user.vendor_profile:
                     return Response(
@@ -397,15 +381,12 @@ class SendMessageAPIView(APIView):
                 sender_user = user
                 sender_vendor = None
             
-            content = request.data.get('content', '').strip()
+            request_serializer = SendMessageRequestSerializer(data=request.data)
+            if not request_serializer.is_valid():
+                return Response(request_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             
-            if not content:
-                return Response(
-                    {'error': 'Message content is required'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+            content = request_serializer.validated_data['content'].strip()
             
-            # Create message
             message = Message.objects.create(
                 conversation=conversation,
                 content=content,
@@ -414,17 +395,14 @@ class SendMessageAPIView(APIView):
                 sender_vendor=sender_vendor
             )
             
-            # Serialize the message
-            serializer = MessageSerializer(message)
+            message_serializer = MessageSerializer(message)
             
             return Response({
                 'success': True,
-                'message': serializer.data
+                'message': message_serializer.data
             }, status=status.HTTP_201_CREATED)
             
         except Exception as e:
-            import logging
-            logger = logging.getLogger(__name__)
             logger.error(f"Error in SendMessageAPIView: {str(e)}", exc_info=True)
             
             return Response({
@@ -433,22 +411,27 @@ class SendMessageAPIView(APIView):
 
 
 class GetMessagesAPIView(APIView):
-    """API endpoint to get messages for a conversation"""
+    """
+    Get Messages API
+    
+    Retrieve all messages for a specific conversation.
+    """
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     
+    @extend_schema(
+        description="Retrieve all messages for a conversation"
+    )
     def get(self, request, conversation_id):
         try:
             conversation = get_object_or_404(Conversation, id=conversation_id)
             user = request.user
             
-            # Check if user is authenticated
             if not user or user.is_anonymous:
                 return Response({
                     'error': 'Authentication required'
                 }, status=status.HTTP_401_UNAUTHORIZED)
             
-            # Check permissions
             if hasattr(user, 'vendor_profile') and user.vendor_profile:
                 if conversation.vendor != user.vendor_profile:
                     return Response(
@@ -471,8 +454,6 @@ class GetMessagesAPIView(APIView):
             return Response({'messages': serializer.data})
             
         except Exception as e:
-            import logging
-            logger = logging.getLogger(__name__)
             logger.error(f"Error in GetMessagesAPIView: {str(e)}", exc_info=True)
             
             return Response({
@@ -481,15 +462,22 @@ class GetMessagesAPIView(APIView):
 
 
 class UnreadCountAPIView(APIView):
-    """API endpoint to get unread message count"""
+    """
+    Unread Count API
+    
+    Get the total count of unread messages for the current user.
+    """
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     
+    @extend_schema(
+        responses=UnreadCountResponseSerializer,
+        description="Get total unread message count"
+    )
     def get(self, request):
         try:
             user = request.user
             
-            # Check if user is authenticated
             if not user or user.is_anonymous:
                 return Response({
                     'error': 'Authentication required',
@@ -512,8 +500,6 @@ class UnreadCountAPIView(APIView):
             return Response({'unread_count': unread_count})
             
         except Exception as e:
-            import logging
-            logger = logging.getLogger(__name__)
             logger.error(f"Error in UnreadCountAPIView: {str(e)}", exc_info=True)
             
             return Response({

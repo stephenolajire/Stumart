@@ -1,211 +1,176 @@
-// VendorWallets.jsx
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
-import styles from "./css/VendorWallets.module.css";
+import api from "../constant/api";
 
 const VendorWallets = () => {
-  const [wallets, setWallets] = useState([]);
+  const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedWallets, setSelectedWallets] = useState([]);
-  const [processingPayout, setProcessingPayout] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchWallets();
+    fetchTransactions();
   }, []);
 
-  const fetchWallets = async () => {
+  const fetchTransactions = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("/api/admin/payments/vendor-wallets/");
-      setWallets(response.data);
+      const response = await api.get("admin/payments/vendor-wallets/");
+      setTransactions(Array.isArray(response.data) ? response.data : []);
       setError(null);
     } catch (err) {
-      setError("Failed to fetch vendor wallets. Please try again later.");
-      console.error("Error fetching wallets:", err);
+      setError("Failed to fetch transactions. Please try again later.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value);
-  };
+  const filteredTransactions = transactions.filter((tx) => {
+    const customer = tx.customer_name?.toLowerCase() || "";
+    const order = tx.order_number?.toLowerCase() || "";
+    const txId = tx.transaction_id?.toLowerCase() || "";
+    const query = searchQuery.toLowerCase();
+    return (
+      customer.includes(query) || order.includes(query) || txId.includes(query)
+    );
+  });
 
-  const handleSelectWallet = (walletId) => {
-    if (selectedWallets.includes(walletId)) {
-      setSelectedWallets(selectedWallets.filter((id) => id !== walletId));
-    } else {
-      setSelectedWallets([...selectedWallets, walletId]);
-    }
-  };
-
-  const handleSelectAll = (e) => {
-    if (e.target.checked) {
-      setSelectedWallets(filteredWallets.map((wallet) => wallet.id));
-    } else {
-      setSelectedWallets([]);
-    }
-  };
-
-  const handleProcessPayouts = async () => {
-    // This would be implemented based on your backend API
-    setProcessingPayout(true);
-    try {
-      // Example API call - replace with actual endpoint
-      // await axios.post('/api/admin/payments/process-payouts/', { wallet_ids: selectedWallets });
-
-      // For now, just show a success alert
-      setTimeout(() => {
-        alert("Payouts processed successfully!");
-        setSelectedWallets([]);
-        fetchWallets(); // Refresh wallet data
-        setProcessingPayout(false);
-      }, 2000);
-    } catch (err) {
-      setError("Failed to process payouts. Please try again later.");
-      console.error("Error processing payouts:", err);
-      setProcessingPayout(false);
-    }
-  };
-
-  // Filter wallets based on search query
-  const filteredWallets = wallets.filter(
-    (wallet) =>
-      wallet.vendor_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      wallet.vendor_email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      wallet.account_number.includes(searchQuery),
+  const totalAmount = filteredTransactions.reduce(
+    (sum, tx) => sum + (tx.amount || 0),
+    0,
   );
 
-  // Calculate total amount to be paid
-  const totalPayoutAmount = selectedWallets.reduce((total, walletId) => {
-    const wallet = wallets.find((w) => w.id === walletId);
-    return total + (wallet ? wallet.balance : 0);
-  }, 0);
+  const getStatusStyle = (status) => {
+    switch (status) {
+      case "COMPLETED":
+        return "bg-green-100 text-green-800";
+      case "PENDING":
+        return "bg-yellow-100 text-yellow-800";
+      case "FAILED":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
 
   return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="mb-6">
+        <div className="flex items-center gap-4 mb-4">
           <button
             onClick={() => navigate("/admin-dashboard/payments")}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "0.5rem",
-              padding: "0.5rem 1rem",
-              border: "none",
-              background: "none",
-              cursor: "pointer",
-              color: "#666",
-              fontSize: "0.875rem",
-            }}
-            className="hover:text-gray-900"
+            className="inline-flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
           >
-            <FaArrowLeft size={16} />
+            <FaArrowLeft size={14} />
             Back to Payments
           </button>
-          <h3>Vendor Wallets</h3>
+          <h3 className="text-2xl font-bold text-gray-900">
+            Payment Transactions
+          </h3>
         </div>
-        <div className={styles.searchContainer}>
+
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
           <input
             type="text"
-            placeholder="Search by vendor name, email or account number..."
+            placeholder="Search by customer, order number or transaction ID..."
             value={searchQuery}
-            onChange={handleSearchChange}
-            className={styles.searchInput}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full sm:max-w-md px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-gray-900 focus:border-transparent"
           />
+          <div className="text-sm text-gray-600">
+            Total:{" "}
+            <span className="font-bold text-gray-900">
+              ₦{totalAmount.toLocaleString()}
+            </span>
+            {" · "}
+            <span>{filteredTransactions.length} transactions</span>
+          </div>
         </div>
       </div>
 
-      {selectedWallets.length > 0 && (
-        <div className={styles.payoutSection}>
-          <div className={styles.payoutInfo}>
-            <p>
-              Selected: <strong>{selectedWallets.length}</strong> vendors
-            </p>
-            <p>
-              Total Amount:{" "}
-              <strong>₦{totalPayoutAmount.toLocaleString()}</strong>
-            </p>
-          </div>
-          <button
-            className={styles.payoutButton}
-            onClick={handleProcessPayouts}
-            disabled={processingPayout}
-          >
-            {processingPayout ? "Processing..." : "Process Payouts"}
-          </button>
-        </div>
-      )}
-
       {loading ? (
-        <div className={styles.loading}>Loading vendor wallets...</div>
+        <div className="flex items-center justify-center py-16">
+          <p className="text-gray-500">Loading transactions...</p>
+        </div>
       ) : error ? (
-        <div className={styles.error}>{error}</div>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
+          {error}
+        </div>
       ) : (
-        <div className={styles.walletsTable}>
-          <table>
-            <thead>
-              <tr>
-                <th>
-                  <input
-                    type="checkbox"
-                    checked={
-                      selectedWallets.length === filteredWallets.length &&
-                      filteredWallets.length > 0
-                    }
-                    onChange={handleSelectAll}
-                  />
-                </th>
-                <th>Vendor</th>
-                <th>Email</th>
-                <th>Balance</th>
-                <th>Bank Details</th>
-                <th>Last Updated</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredWallets.length > 0 ? (
-                filteredWallets.map((wallet) => (
-                  <tr key={wallet.id}>
-                    <td>
-                      <input
-                        type="checkbox"
-                        checked={selectedWallets.includes(wallet.id)}
-                        onChange={() => handleSelectWallet(wallet.id)}
-                      />
-                    </td>
-                    <td className={styles.vendorName}>{wallet.vendor_name}</td>
-                    <td>{wallet.vendor_email}</td>
-                    <td className={styles.balance}>
-                      ₦{wallet.balance.toLocaleString()}
-                    </td>
-                    <td>
-                      <div className={styles.bankDetails}>
-                        <p>
-                          <strong>{wallet.bank_name}</strong>
-                        </p>
-                        <p>{wallet.account_number}</p>
-                        <p>{wallet.account_name}</p>
-                      </div>
-                    </td>
-                    <td>{new Date(wallet.created_at).toLocaleDateString()}</td>
-                  </tr>
-                ))
-              ) : (
+        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
                 <tr>
-                  <td colSpan="6" className={styles.noWallets}>
-                    No vendor wallets found
-                  </td>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Order
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Customer
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Transaction ID
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Amount
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Method
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Date
+                  </th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredTransactions.length > 0 ? (
+                  filteredTransactions.map((tx) => (
+                    <tr key={tx.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {tx.order_number}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {tx.customer_name}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500 font-mono">
+                        {tx.transaction_id}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                        ₦{tx.amount?.toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        {tx.payment_method}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusStyle(tx.status)}`}
+                        >
+                          {tx.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(tx.created_at).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td
+                      colSpan="7"
+                      className="px-6 py-12 text-center text-gray-500"
+                    >
+                      No transactions found
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

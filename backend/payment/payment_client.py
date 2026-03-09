@@ -52,7 +52,7 @@ class AutomatedPayoutService:
         
         for vendor_id, amount in vendor_payments.items():
             try:
-                from User.models import Vendor
+                from user.models import Vendor
                 vendor = Vendor.objects.get(id=vendor_id)
                 
                 # Check if vendor has bank details

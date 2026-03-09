@@ -44,7 +44,7 @@ const DeliveryConfirmation = () => {
 
     try {
       const response = await api.get(
-        `delivery/confirm/${delivery_confirmation_code}/`
+        `order/delivery/confirm/${delivery_confirmation_code}/`,
       );
       const data = response.data;
 
@@ -67,14 +67,14 @@ const DeliveryConfirmation = () => {
     setError("");
 
     try {
-      const response = await api.post("delivery/confirm/", {
+      const response = await api.post("order/delivery/confirm/", {
         delivery_confirmation_code: deliveryCode,
       });
 
       if (response.status === 200) {
         const data = response.data;
         setSuccess(
-          `Delivery confirmed successfully! Customer confirmation code: ${data.customer_confirmation_code}`
+          `Delivery confirmed successfully! Customer confirmation code: ${data.customer_confirmation_code}`,
         );
         setConfirmed(true);
         setDeliveryData((prev) => ({
@@ -87,7 +87,6 @@ const DeliveryConfirmation = () => {
         const data = response.data;
         setError(data.error || "Failed to confirm delivery");
       }
-
     } catch (err) {
       setError("Network error. Please check your connection.");
     } finally {
@@ -204,8 +203,8 @@ const DeliveryConfirmation = () => {
                         deliveryData.opportunity_status === "completed"
                           ? "bg-green-100 text-green-800"
                           : deliveryData.opportunity_status === "accepted"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : "bg-gray-100 text-gray-800"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-gray-100 text-gray-800"
                       }`}
                     >
                       {deliveryData.opportunity_status.toUpperCase()}

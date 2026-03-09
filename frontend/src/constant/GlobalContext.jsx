@@ -83,22 +83,6 @@ export const useShops = () => {
   });
 };
 
-export const useShopsBySchool = (schoolName) => {
-  return useQuery({
-    queryKey: queryKeys.shopsBySchool(schoolName || "all"),
-    queryFn: async () => {
-      const response = await api.get("shops-by-school/", {
-        params: schoolName ? { school: schoolName } : {},
-      });
-      return response.data || [];
-    },
-    enabled: true, // Always enabled now
-    staleTime: 10 * 60 * 1000,
-    gcTime: 15 * 60 * 1000,
-    retry: 2,
-    refetchOnWindowFocus: false,
-  });
-};
 
 export const useProducts = (shopId, page = 1, pageSize = 20) => {
   return useQuery({
@@ -602,7 +586,7 @@ export const GlobalProvider = ({ children }) => {
 
     // Custom hooks (components will use these directly)
     useShops,
-    useShopsBySchool,
+    // useShopsBySchool,
     useProducts,
     useProduct,
     useAllProducts,

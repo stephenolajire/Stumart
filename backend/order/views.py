@@ -1,3082 +1,1323 @@
-from django.shortcuts import render
-from rest_framework.views import APIView
-from rest_framework.response import Response
+import json
+import logging
+import uuid
+from datetime import timedelta
+from decimal import Decimal
+
+import requests
+from django.conf import settings
+from django.db import transaction
+from django.utils.timezone import now
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from Stumart.models import *
-from Stumart.serializers import *
-import uuid
-import requests
-import json
-from django.conf import settings
-from django.utils.timezone import now
-from django.core.mail import send_mail, EmailMultiAlternatives
-from django.template.loader import render_to_string
-from io import BytesIO
-from django.http import HttpResponse
-from decimal import Decimal
-import logging
-from .utils import send_admin_notifications
-from order.util.notifications_utils import send_order_notifications
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from payment.payment_client import AutomatedPayoutService
-logger = logging.getLogger(__name__)
-from weasyprint import HTML
-from django.template import Context, Template
-from django.shortcuts import get_object_or_404
-from User.models import Vendor
-from rest_framework import generics
-from rest_framework import filters
-from django_filters.rest_framework import DjangoFilterBackend
-from Stumart.paginations import CustomPagination
-from django.db import transaction
-import string
-import random
-from datetime import timedelta
-from wallet.models import *
-from .models import *
-from django.db.models import (
-    F, Sum, Count, Case, When, DecimalField, OuterRef, Subquery, Value, Prefetch,
+from stumart.models import Cart, CartItem, Order, OrderItem, Transaction
+from user.models import User, Vendor
+
+from wallet.models import DeliveryOpportunity
+from .serializers import (
+    AcceptDeliveryGetResponseSerializer,
+    AcceptDeliveryPostResponseSerializer,
+    AcceptDeliveryRequestSerializer,
+    CancelOrderResponseSerializer,
+    ConfirmDeliveryGetResponseSerializer,
+    ConfirmDeliveryPostResponseSerializer,
+    ConfirmDeliveryRequestSerializer,
+    CreateOrderRequestSerializer,
+    CreateOrderResponseSerializer,
+    CustomerConfirmationGetResponseSerializer,
+    CustomerConfirmationPostResponseSerializer,
+    CustomerConfirmationRequestSerializer,
+    OrderDetailResponseSerializer,
+    OrderHistoryItemSerializer,
+    PackOrderRequestSerializer,
+    PackOrderResponseSerializer,
+    PaystackInitializeRequestSerializer,
+    PaystackInitializeResponseSerializer,
+    PaystackVerifyResponseSerializer,
 )
-from decimal import Decimal
-from django.contrib.postgres.aggregates import ArrayAgg, JSONBAgg
-from django.db.models import F, Value, OuterRef, Subquery
-from django.db.models.functions import JSONObject, Coalesce
-from User.models import*
+from .utils import (
+    deduct_inventory,
+    generate_customer_confirmation_code,
+    generate_delivery_confirmation_code,
+    generate_delivery_opportunity_code,
+    process_automated_transfers,
+    restore_inventory,
+    send_admin_delivery_completed_email,
+    send_admin_notifications,               # ← was imported but never used
+    send_admin_transfer_summary_email,
+    send_cancellation_emails,
+    send_cancelled_riders_emails,
+    send_company_rider_opportunity_emails,
+    send_customer_delivery_accepted_email,
+    send_customer_delivery_completed_email,
+    send_customer_order_completed_email,
+    send_customer_receipt_email,
+    send_out_of_stock_emails,
+    send_packing_status_email,
+    send_picker_payout_email,
+    send_regular_picker_opportunity_emails,
+    send_rider_confirmation_link_email,
+    send_vendor_order_emails,
+    send_vendor_payout_email,
+)
+
+logger = logging.getLogger(__name__)
 
 
+# ─────────────────────────────────────────────────────────────
+# SHARED PICKER ROUTING UTILITY
+# ─────────────────────────────────────────────────────────────
 
-# Create your views here.
-class AddToCartView(APIView):
-    permission_classes = [AllowAny]
+def _dispatch_delivery_opportunities(order: Order, vendor: Vendor) -> None:
+    """
+    Replaced with multi-vendor aware dispatch.
+    'vendor' param kept for signature compatibility but we now fetch ALL vendors on the order.
+    """
+    _dispatch_multi_vendor(order)
 
-    def post(self, request, *args, **kwargs):
-        data = request.data
-        product_id = data.get("product_id")
-        quantity = data.get("quantity", 1)
-        size = data.get("size")
-        color = data.get("color")
-        cart_code = data.get("cart_code")
 
-        if not product_id:
-            return Response({"error": "Product is required."}, status=status.HTTP_400_BAD_REQUEST)
+def _dispatch_multi_vendor(order: Order) -> None:
+    """
+    For each vendor in the order, determine the best picker.
 
-        if not cart_code:
-            return Response({"error": "Cart code is required."}, status=status.HTTP_400_BAD_REQUEST)
+    vendor_is_nearby=True:
+        - Find student pickers at the institution who have ALL order vendors
+          in preferred_vendors → assign them the whole order.
+        - If none cover all vendors, find per-vendor student pickers.
+          Vendors not covered by any student picker fall back to
+          regular/company pickers. Admin is notified of the split.
 
-        try:
-            product = Product.objects.get(id=product_id)
-        except Product.DoesNotExist:
-            return Response({"error": "Product not found."}, status=status.HTTP_404_NOT_FOUND)
+    vendor_is_nearby=False:
+        - Company riders → regular pickers (existing logic, whole order).
+    """
+    from stumart.models import OrderItem
 
-        # Check if the product belongs to a fashion business
-        try:
-            vendor_profile = Vendor.objects.get(user=product.vendor)
-            is_fashion = vendor_profile.business_category == 'fashion'
-        except Vendor.DoesNotExist:
-            is_fashion = False
+    order_items  = list(OrderItem.objects.filter(order=order).select_related("vendor", "vendor__user"))
+    order_vendors = list({item.vendor for item in order_items if item.vendor})
 
-        if is_fashion:
-            if product.colors and not color:
-                return Response({"error": "Color is required for this fashion product."}, status=status.HTTP_400_BAD_REQUEST)
-            if product.sizes and not size:
-                return Response({"error": "Size is required for this fashion product."}, status=status.HTTP_400_BAD_REQUEST)
+    if not order_vendors:
+        logger.warning("No vendors found for order %s", order.order_number)
+        return
 
-        # Always use cart_code (no user)
-        cart, _ = Cart.objects.get_or_create(cart_code=cart_code)
+    institution = order_vendors[0].user.institution
+    expires_at  = now() + timedelta(hours=24)
 
-        # Create cart item
-        cart_item = CartItem.objects.create(
-            cart=cart,
-            product=product,
-            quantity=quantity,
-            size=size if is_fashion else None,
-            color=color if is_fashion else None
+    if not order.vendor_is_nearby:
+        # ── Non-nearby: company riders → regular pickers (whole order) ────────
+        _dispatch_fallback_pickers(order, order_vendors[0], institution, expires_at)
+        return
+
+    # ── Nearby: student picker path ───────────────────────────────────────────
+    vendor_ids = [v.id for v in order_vendors]
+
+    # 1. Find student pickers who cover ALL vendors in this order
+    full_coverage_pickers = User.objects.filter(
+        user_type="student_picker",
+        institution=institution,
+        is_active=True,
+        student_picker_profile__is_available=True,
+    )
+    for vid in vendor_ids:
+        full_coverage_pickers = full_coverage_pickers.filter(
+            student_picker_profile__preferred_vendors__id=vid
+        )
+    full_coverage_pickers = full_coverage_pickers.distinct()
+
+    if full_coverage_pickers.exists():
+        # Perfect — one group of pickers handles everything
+        logger.info(
+            "Found %d student picker(s) covering all %d vendors for order %s",
+            full_coverage_pickers.count(), len(order_vendors), order.order_number,
+        )
+        _bulk_create_and_notify(
+            order=order,
+            pickers=full_coverage_pickers,
+            picker_type="student_picker",
+            expires_at=expires_at,
+            rider_type="regular",
+            vendor=order_vendors[0],
+        )
+        return
+
+    # 2. No single picker covers all vendors — do per-vendor matching
+    logger.info(
+        "No student picker covers all vendors for order %s — doing per-vendor split",
+        order.order_number,
+    )
+
+    covered_vendors   = {}   # vendor → queryset of student pickers
+    uncovered_vendors = []   # vendors with no student picker
+
+    for vendor in order_vendors:
+        pickers = User.objects.filter(
+            user_type="student_picker",
+            institution=institution,
+            is_active=True,
+            student_picker_profile__is_available=True,
+            student_picker_profile__preferred_vendors__id=vendor.id,
+        ).distinct()
+
+        if pickers.exists():
+            covered_vendors[vendor] = pickers
+        else:
+            uncovered_vendors.append(vendor)
+
+    # Notify student pickers for vendors they cover
+    for vendor, pickers in covered_vendors.items():
+        _bulk_create_and_notify(
+            order=order,
+            pickers=pickers,
+            picker_type="student_picker",
+            expires_at=expires_at,
+            rider_type="regular",
+            vendor=vendor,
         )
 
-        return Response(CartItemSerializer(cart_item).data, status=status.HTTP_201_CREATED)
-    
+    # Fall back to regular/company pickers for uncovered vendors
+    for vendor in uncovered_vendors:
+        _dispatch_fallback_pickers(order, vendor, institution, expires_at)
 
-# Update Cart Item Quantity
-class UpdateCartItemView(APIView):
-    permission_classes = [AllowAny]
-    
-    def put(self, request, item_id, *args, **kwargs):
+    # Notify admin of the split if there's a mix
+    if covered_vendors and uncovered_vendors:
+        from order.utils import send_admin_split_dispatch_email
         try:
-            cart_item = CartItem.objects.get(id=item_id)
-            
-            # Security check: verify ownership
-            user = request.user
-            cart_code = request.query_params.get('cart_code')
-            
-            if not cart_code or cart_item.cart.cart_code != cart_code:
-                return Response(
-                    {"error": "Invalid cart code."},
-                    status=status.HTTP_403_FORBIDDEN
-                )
-            
-            # Update quantity
-            quantity = request.data.get('quantity')
-            if quantity is not None and int(quantity) > 0:
-                cart_item.quantity = int(quantity)
-                cart_item.save()
-                
-                serializer = CartItemSerializer(cart_item)
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            else:
-                return Response(
-                    {"error": "Invalid quantity."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-                
-        except CartItem.DoesNotExist:
-            return Response(
-                {"error": "Cart item not found."},
-                status=status.HTTP_404_NOT_FOUND
+            send_admin_split_dispatch_email(
+                order=order,
+                covered_vendors=list(covered_vendors.keys()),
+                uncovered_vendors=uncovered_vendors,
             )
-        except Exception as e:
-            return Response(
-                {"error": f"An error occurred: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+        except Exception:
+            logger.exception("Failed to send admin split-dispatch email for order %s", order.order_number)
+
+    # Warn if nothing was covered at all
+    if not covered_vendors and uncovered_vendors:
+        logger.info(
+            "No student pickers found for any vendor in order %s — fully fell back to regular pickers",
+            order.order_number,
+        )
 
 
-# Remove Cart Item
-class RemoveCartItemView(APIView):
-    permission_classes = [AllowAny]
-    
-    def delete(self, request, item_id, *args, **kwargs):
+def _dispatch_fallback_pickers(order: Order, vendor: Vendor, institution: str, expires_at) -> None:
+    """Try company riders first, then regular pickers for a given vendor/institution."""
+    company_users = User.objects.filter(
+        user_type="company",
+        institution=institution,
+        is_active=True,
+    )
+
+    company_riders = []
+    for cu in company_users:
         try:
-            cart_item = CartItem.objects.get(id=item_id)
-            
-            # Security check: verify ownership
-            cart_code = request.query_params.get('cart_code')
-        
-            if not cart_code or cart_item.cart.cart_code != cart_code:
-                return Response(
-                    {"error": "Invalid cart code."},
-                    status=status.HTTP_403_FORBIDDEN
-                )
-            
-            # Delete the cart item
-            cart_item.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-                
-        except CartItem.DoesNotExist:
-            return Response(
-                {"error": "Cart item not found."},
-                status=status.HTTP_404_NOT_FOUND
-            )
-        except Exception as e:
-            return Response(
-                {"error": f"An error occurred: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            company_riders.extend(cu.company_profile.riders.filter(status="active"))
+        except AttributeError:
+            pass
+
+    if company_riders:
+        _bulk_create_and_notify(
+            order=order,
+            pickers=company_riders,
+            picker_type="company_rider",
+            expires_at=expires_at,
+            rider_type="company",
+            vendor=vendor,
+        )
+        return
+
+    regular_pickers = User.objects.filter(
+        user_type="picker",
+        institution=institution,
+        is_active=True,
+    )
+    if regular_pickers.exists():
+        _bulk_create_and_notify(
+            order=order,
+            pickers=regular_pickers,
+            picker_type="regular_picker",
+            expires_at=expires_at,
+            rider_type="regular",
+            vendor=vendor,
+        )
+    else:
+        logger.warning(
+            "No fallback pickers found for vendor %s in institution %s for order %s",
+            vendor.business_name, institution, order.order_number,
+        )
 
 
-# Clear Cart
-class ClearCartView(APIView):
-    permission_classes = [AllowAny]
-    
-    def delete(self, request, *args, **kwargs):
-        try:
-            cart_code = request.query_params.get('cart_code')
-            
-            if not cart_code:
-                return Response(
-                    {"error": "Cart code is required for user."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            cart = Cart.objects.get(cart_code=cart_code)
-            
-            # Delete all cart items
-            CartItem.objects.filter(cart=cart).delete()
-            
-            return Response(status=status.HTTP_204_NO_CONTENT)
-            
-        except Cart.DoesNotExist:
-            return Response(
-                {"error": "Cart not found."},
-                status=status.HTTP_404_NOT_FOUND
-            )
-        except Exception as e:
-            return Response(
-                {"error": f"An error occurred: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+def _bulk_create_and_notify(order, pickers, picker_type, expires_at, rider_type, vendor):
+    """Create DeliveryOpportunity rows in bulk then send emails."""
+    opportunities    = []
+    notification_data = []
+
+    for picker in pickers:
+        prefix = f"CR_{picker.id}" if rider_type == "company" else f"UP_{picker.id}"
+        code   = generate_delivery_opportunity_code(order.id, prefix)
+
+        opp_kwargs = dict(
+            order=order,
+            unique_code=code,
+            expires_at=expires_at,
+            picker_type=picker_type,
+        )
+        if rider_type == "company":
+            opp_kwargs["company_rider"] = picker
+        else:
+            opp_kwargs["user_picker"] = picker
+
+        opportunities.append(DeliveryOpportunity(**opp_kwargs))
+        notification_data.append({
+            "rider" if rider_type == "company" else "picker": picker,
+            "unique_code": code,
+            "acceptance_link": f"{settings.FRONTEND_URL}/accept-delivery/{code}",
+        })
+
+    DeliveryOpportunity.objects.bulk_create(opportunities)
+
+    if rider_type == "company":
+        send_company_rider_opportunity_emails(order, vendor, notification_data)
+    else:
+        send_regular_picker_opportunity_emails(order, vendor, notification_data)
 
 
-class CartItemsView(APIView):
-    permission_classes = [AllowAny]
-
-    def get(self, request, *args, **kwargs):
-        try:
-            cart_code = request.query_params.get("cart_code")
-
-            # 0. Retrieve cart (still 1 ultra-light query)
-            cart = Cart.objects.filter(cart_code=cart_code).first()
-            if not cart:
-                return Response(
-                    {"error": "Cart not found"},
-                    status=status.HTTP_404_NOT_FOUND
-                )
-
-            # QuerySet of all cart items for the cart
-            base_qs = CartItem.objects.filter(cart=cart)
-
-            # Subquery: Count DISTINCT vendors (SQL level)
-            vendor_subquery = (
-                base_qs.values("cart")  # Grouping
-                .annotate(vendor_count=Count("product__vendor", distinct=True))
-                .values("vendor_count")[:1]
-            )
-
-            # Subquery: subtotal calculation inside the DB
-            subtotal_subquery = (
-                base_qs.values("cart")
-                .annotate(
-                    sub_total=Sum(
-                        Case(
-                            When(
-                                product__promotion_price__gt=0,
-                                then=F("product__promotion_price") * F("quantity"),
-                            ),
-                            default=F("product__price") * F("quantity"),
-                            output_field=DecimalField()
-                        )
-                    )
-                )
-                .values("sub_total")[:1]
-            )
-
-            # FINAL SINGLE QUERY: bring items + stats
-            cart_items = (
-                base_qs
-                .select_related("product", "product__vendor", "product__vendor__vendor_profile")
-                .annotate(
-                    vendor_count=Subquery(vendor_subquery),
-                    sub_total=Subquery(subtotal_subquery),
-                )
-            )
-
-            # *Now* we read aggregated values FROM ANY ITEM (same values on all rows)
-            if cart_items:
-                sub_total = cart_items[0].sub_total or Decimal("0.00")
-                vendor_count = cart_items[0].vendor_count
-            else:
-                sub_total = Decimal("0.00")
-                vendor_count = 0
-
-            # Import the Order app's models
-            from order.models import Vendor as OrderVendor, School
-
-            # NEW SHIPPING FEE LOGIC WITH DYNAMIC PRICING
-            if vendor_count == 0:
-                shipping_fee = Decimal("0.00")
-            else:
-                # Try to find a vendor with a registered delivery fee
-                base_delivery_fee = None
-                
-                for item in cart_items:
-                    if item.product and item.product.vendor:
-                        vendor_user = item.product.vendor  # This is a User object
-                        
-                        # Check if this user has a vendor profile
-                        if not hasattr(vendor_user, 'vendor_profile'):
-                            continue
-                        
-                        user_vendor = vendor_user.vendor_profile  # Get the actual Vendor object
-                        business_name = user_vendor.business_name
-                        institution = vendor_user.institution  # Institution is on User model
-                        
-                        # Check if this vendor belongs to the Order app's School/Vendor system
-                        try:
-                            # First, check if the school exists
-                            school = School.objects.filter(name__iexact=institution).first()
-                            
-                            if school:
-                                # Then check if vendor is registered in this school
-                                order_vendor = OrderVendor.objects.filter(
-                                    school=school,
-                                    business_name__iexact=business_name,
-                                    is_active=True
-                                ).first()
-                                
-                                if order_vendor:
-                                    # Vendor belongs to the school system, use their delivery fee
-                                    base_delivery_fee = order_vendor.delivery_fee
-                                    print(f"Found registered vendor: {business_name} in {school.name} with fee: {base_delivery_fee}")
-                                    break  # Found a registered vendor, use their fee
-                                else:
-                                    print(f"Vendor {business_name} found in User app but not registered in school {school.name}")
-                            else:
-                                print(f"School {institution} not found in Order app")
-                                
-                        except Exception as e:
-                            print(f"Error checking vendor registration: {e}")
-                            import traceback
-                            print(traceback.format_exc())
-                            continue
-                
-                # Calculate shipping fee based on vendor count
-                if base_delivery_fee:
-                    # Use vendor's registered delivery fee as base
-                    if vendor_count == 1:
-                        shipping_fee = base_delivery_fee
-                    elif vendor_count == 2:
-                        shipping_fee = base_delivery_fee + Decimal("100.00")
-                    elif vendor_count == 3:
-                        shipping_fee = base_delivery_fee + Decimal("200.00")
-                    else:  # vendor_count >= 4
-                        shipping_fee = base_delivery_fee + Decimal("300.00")
-                    
-                    print(f"Using registered delivery fee: base={base_delivery_fee}, final={shipping_fee}")
-                else:
-                    # Fallback to hardcoded pricing if no vendor found in school system
-                    if vendor_count == 1:
-                        shipping_fee = Decimal("800.00")
-                    elif 2 <= vendor_count < 4:
-                        shipping_fee = Decimal("1000.00")
-                    else:  # vendor_count >= 4
-                        shipping_fee = Decimal("1100.00")
-                    
-                    print(f"Using fallback pricing: {shipping_fee} (no vendor registered in school system)")
-
-            # FLAT TAX RATE
-            tax = Decimal("100.00")
-            
-            # Takeaway fee only applies to food orders
-            takeaway = Decimal("0.00")
-            has_food_items = False
-            
-            # CORRECTED LOGIC: Check each item's vendor's business_category
-            for item in cart_items:
-                if item.product and item.product.vendor:
-                    vendor_user = item.product.vendor  # This is a User object
-                    
-                    # Check if this user has a vendor profile
-                    if hasattr(vendor_user, 'vendor_profile'):
-                        vendor_profile = vendor_user.vendor_profile  # Get the Vendor object
-                        
-                        # Check if this vendor sells food
-                        # Note: business_category might be case-sensitive, so use .lower()
-                        if vendor_profile.business_category and vendor_profile.business_category.lower() == 'food':
-                            has_food_items = True
-                            print(f"Found food vendor: {vendor_profile.business_name}")
-                            break  # Found food item, no need to check further
-            
-            # Apply takeaway fee only if cart contains food items
-            if has_food_items:
-                takeaway = Decimal("300.00")
-                print(f"Applying takeaway fee: {takeaway}")
-            else:
-                print("No food items in cart, takeaway fee = 0")
-            
-            total = sub_total + shipping_fee + tax + takeaway
-
-            # Serialize AFTER the single query (no extra DB hits)
-            serializer = CartItemSerializer(cart_items, many=True)
-
-            return Response(
-                {
-                    "items": serializer.data,
-                    "sub_total": sub_total,
-                    "shipping_fee": shipping_fee,
-                    "tax": tax,
-                    "takeaway": takeaway,
-                    "total": total,
-                    "count": len(cart_items),
-                },
-                status=status.HTTP_200_OK
-            )
-
-        except Exception as e:
-            import traceback
-            print(traceback.format_exc())
-            return Response(
-                {"error": str(e)},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
-from django.db import transaction
-from decimal import Decimal
-import uuid
-
+# ─────────────────────────────────────────────────────────────
+# CREATE ORDER
+# ─────────────────────────────────────────────────────────────
 
 class CreateOrderView(APIView):
-    permission_classes = [IsAuthenticated] 
+    """
+    POST order/create/
+
+    REQUEST  → CreateOrderRequestSerializer
+    RESPONSE → CreateOrderResponseSerializer
+    """
+    permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
+        req = CreateOrderRequestSerializer(data=request.data)
+        if not req.is_valid():
+            return Response(req.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        data = req.validated_data
+        cart_items = CartItem.objects.filter(id__in=data["cart_items"])
+
+        if not cart_items.exists():
+            return Response({"error": "No cart items found."}, status=status.HTTP_400_BAD_REQUEST)
+
+        validation_error = self._validate_cart_categories(cart_items)
+        if validation_error:
+            return Response({"error": validation_error}, status=status.HTTP_400_BAD_REQUEST)
+
+        referral_code = data.get("referral_code", "").upper() or None
+        vendor_is_nearby = data.get("vendor_is_nearby", False)
+
         try:
-            data = request.data
-            user = request.user if request.user.is_authenticated else None
-
-            # Get cart items first to validate categories
-            cart_items = CartItem.objects.filter(id__in=(data.get('cart_items', [])))
-            
-            if not cart_items.exists():
-                return Response(
-                    {"error": "No cart items found"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
-            # Category validation logic
-            category_validation_error = self.validate_cart_categories(cart_items)
-            if category_validation_error:
-                return Response(
-                    {"error": category_validation_error},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
-            # Get referral code if provided (optional)
-            referral_code = data.get('referral_code', '').strip()
-            
-            # Validate referral code if provided (you can add validation logic here later)
-            if referral_code:
-                # Optional: You can validate the referral code exists here
-                # For now, we'll just accept any non-empty string
-                referral_code = referral_code.upper()  # Normalize to uppercase
-
-            # Use transaction to ensure data consistency
             with transaction.atomic():
-                # Create order with user information
                 order = Order.objects.create(
-                    user=user,
-                    first_name=data.get('first_name'),
-                    last_name=data.get('last_name'),
-                    email=data.get('email'),
-                    phone=data.get('phone'),
-                    address=data.get('address'),
-                    room_number=data.get('room_number'),
-                    subtotal=Decimal(data.get('subtotal')),
-                    shipping_fee=Decimal(data.get('shipping_fee')),
-                    tax=Decimal(data.get('tax')),
-                    total=Decimal(data.get('total')),
-                    order_status='PENDING',
+                    user=request.user,
+                    first_name=data["first_name"],
+                    last_name=data["last_name"],
+                    email=data["email"],
+                    phone=data["phone"],
+                    address=data["address"],
+                    room_number=data.get("room_number"),
+                    subtotal=data["subtotal"],
+                    shipping_fee=data["shipping_fee"],
+                    tax=data["tax"],
+                    takeaway=data.get("takeaway", Decimal("0.00")),  # ✅ was missing
+                    total=data["total"],
+                    order_status="PENDING",
                     order_number=f"ORD-{uuid.uuid4().hex[:8].upper()}",
-                    # NEW: Add referral code if provided
-                    referral_code=referral_code if referral_code else None
+                    referral_code=referral_code,
+                    vendor_is_nearby=data.get("vendor_is_nearby", False),  # ✅ was missing
                 )
 
-                # Create order items for each cart item
                 for cart_item in cart_items:
-                    user_vendor = cart_item.product.vendor  # this is a User instance
-
-                    # Try to get the related Vendor instance
-                    vendor_instance = Vendor.objects.filter(user=user_vendor).first()
-
+                    vendor_instance = Vendor.objects.filter(user=cart_item.product.vendor).first()
                     if not vendor_instance:
                         return Response(
-                            {"error": f"No vendor profile found for {user_vendor.email}"},
-                            status=status.HTTP_400_BAD_REQUEST
+                            {"error": f"No vendor profile for {cart_item.product.vendor.email}"},
+                            status=status.HTTP_400_BAD_REQUEST,
                         )
-
                     OrderItem.objects.create(
                         order=order,
                         product=cart_item.product,
                         quantity=cart_item.quantity,
                         price=cart_item.product.price,
                         vendor=vendor_instance,
-                        color=cart_item.color if hasattr(cart_item, 'color') else None,
-                        size=cart_item.size if hasattr(cart_item, 'size') else None
+                        color=cart_item.color,
+                        size=cart_item.size,
                     )
 
             response_data = {
-                'order_id': order.id,
-                'order_number': order.order_number,
-                'message': 'Order created successfully. Proceed to payment.'
+                "order_id": order.id,
+                "order_number": order.order_number,
+                "message": "Order created successfully. Proceed to payment.",
+                "referral_code_applied": referral_code,
             }
-            
-            # Include referral code in response if it was used
-            if referral_code:
-                response_data['referral_code_applied'] = referral_code
-
-            return Response(response_data, status=status.HTTP_201_CREATED)
-
-        except Exception as e:
-            import traceback
-            error_trace = traceback.format_exc()
-            print(f"Error in CreateOrderView: {str(e)}")
-            print(error_trace)
             return Response(
-                {"error": f"An error occurred: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                CreateOrderResponseSerializer(response_data).data,
+                status=status.HTTP_201_CREATED,
             )
 
-    def validate_cart_categories(self, cart_items):
-        
-        has_food_items = False
-        has_non_food_items = False
-        
-        for cart_item in cart_items:
-            # Get the vendor instance for this product
-            vendor_instance = Vendor.objects.filter(user=cart_item.product.vendor).first()
-            
-            if not vendor_instance:
-                continue  # Skip if vendor not found (will be handled later)
-            
-            # Check if this vendor sells food
-            if vendor_instance.business_category == 'food':
-                has_food_items = True
-            else:
-                has_non_food_items = True
-        
-        # If both food and non-food items exist, return error
-        if has_food_items and has_non_food_items:
-            return "Food items cannot be ordered together with other categories. Please place separate orders."
-        
-        return None  # No validation errors
+        except Exception:
+            logger.exception("Error creating order")
+            return Response({"error": "An error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+    @staticmethod
+    def _validate_cart_categories(cart_items):
+        has_food = has_non_food = False
+        for item in cart_items:
+            vendor = Vendor.objects.filter(user=item.product.vendor).first()
+            if not vendor:
+                continue
+            if vendor.business_category == "food":
+                has_food = True
+            else:
+                has_non_food = True
+        if has_food and has_non_food:
+            return "Food items cannot be ordered together with other categories. Please place separate orders."
+        return None
+
+
+# ─────────────────────────────────────────────────────────────
+# PAYMENT — INITIALIZE
+# ─────────────────────────────────────────────────────────────
 
 class PaystackPaymentInitializeView(APIView):
-    permission_classes = [IsAuthenticated]  # Or IsAuthenticated if you require login
-    
+    """
+    POST order/payment/initialize/
+
+    REQUEST  → PaystackInitializeRequestSerializer
+    RESPONSE → PaystackInitializeResponseSerializer
+    """
+    permission_classes = [IsAuthenticated]
+
     def post(self, request, *args, **kwargs):
+        req = PaystackInitializeRequestSerializer(data=request.data)
+        if not req.is_valid():
+            return Response(req.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        data = req.validated_data
+
         try:
-            data = request.data
-            order_id = data.get('order_id')
-            email = data.get('email')
-            amount = data.get('amount')  # amount in kobo (multiply by 100)
-            callback_url = data.get('callback_url')
-            
-            # Get the order
-            order = Order.objects.get(id=order_id)
-            
-            # Validate that all vendors in the order are from the same institution
-            order_items = OrderItem.objects.filter(order=order).select_related('vendor', 'vendor__user')
-            
-            if not order_items.exists():
-                return Response({
-                    'status': 'failed',
-                    'message': 'No items found in the order'
-                }, status=status.HTTP_400_BAD_REQUEST)
-            
-            # Check that all vendors are from the same institution
-            vendor_institutions = set()
-            vendors_by_institution = {}
-            
-            for item in order_items:
-                vendor_institution = item.vendor.user.institution
-                vendor_institutions.add(vendor_institution)
-                
-                # Group vendors by institution for detailed error reporting
-                if vendor_institution not in vendors_by_institution:
-                    vendors_by_institution[vendor_institution] = []
-                
-                vendors_by_institution[vendor_institution].append({
-                    'vendor_name': item.vendor.business_name,
-                    'product_name': item.product.name
-                })
-            
-            # Ensure all vendors are from the same institution
-            if len(vendor_institutions) > 1:
-                return Response({
-                    'status': 'failed',
-                    'message': 'Cannot process payment. All vendors in your order must be from the same institution for delivery purposes.',
-                    'error_details': {
-                        'multiple_institutions_found': list(vendor_institutions),
-                        'vendors_by_institution': vendors_by_institution,
-                        'suggestion': 'Please split your order by institution or remove items from different institutions.'
-                    }
-                }, status=status.HTTP_400_BAD_REQUEST)
-            
-            # If validation passes, proceed with Paystack payment initialization
-            url = "https://api.paystack.co/transaction/initialize"
-            headers = {
-                "Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}",
-                "Content-Type": "application/json"
-            }
-            payload = {
-                "email": email,
-                "amount": amount,
-                "callback_url": callback_url,
-                "reference": f"ORD-{order.order_number}-{uuid.uuid4().hex[:8]}"
-            }
-            
-            response = requests.post(url, headers=headers, data=json.dumps(payload))
-            response_data = response.json()
-            
-            if response_data.get('status'):
-                # Create transaction record
-                transaction = Transaction.objects.create(
-                    order=order,
-                    transaction_id=response_data['data']['reference'],
-                    amount=order.total,
-                    status='PENDING'
-                )
-                
-                return Response({
-                    'status': 'success',
-                    'authorization_url': response_data['data']['authorization_url'],
-                    'reference': response_data['data']['reference'],
-                    'delivery_institution': list(vendor_institutions)[0]  # Single institution for delivery
-                }, status=status.HTTP_200_OK)
-            else:
-                return Response({
-                    'status': 'failed',
-                    'message': response_data.get('message', 'Payment initialization failed')
-                }, status=status.HTTP_400_BAD_REQUEST)
-                
+            order = Order.objects.get(id=data["order_id"])
         except Order.DoesNotExist:
-            return Response({
-                'status': 'failed',
-                'message': 'Order not found'
-            }, status=status.HTTP_404_NOT_FOUND)
-            
-        except Exception as e:
-            import traceback
-            error_trace = traceback.format_exc()
-            print(f"Error in PaystackPaymentInitializeView: {str(e)}")
-            print(error_trace)
+            return Response({"status": "failed", "message": "Order not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        order_items = OrderItem.objects.filter(order=order).select_related("vendor", "vendor__user")
+        if not order_items.exists():
+            return Response({"status": "failed", "message": "No items found in the order."}, status=status.HTTP_400_BAD_REQUEST)
+
+        institutions = {item.vendor.user.institution for item in order_items}
+        if len(institutions) > 1:
+            vendors_by_inst = {}
+            for item in order_items:
+                inst = item.vendor.user.institution
+                vendors_by_inst.setdefault(inst, []).append(
+                    {"vendor_name": item.vendor.business_name, "product_name": item.product.name}
+                )
             return Response(
-                {"error": f"An error occurred: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                {
+                    "status": "failed",
+                    "message": "All vendors must be from the same institution.",
+                    "error_details": {
+                        "multiple_institutions_found": list(institutions),
+                        "vendors_by_institution": vendors_by_inst,
+                        "suggestion": "Split your order by institution.",
+                    },
+                },
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
+        payload = {
+            "email": data["email"],
+            "amount": data["amount"],
+            "callback_url": data["callback_url"],
+            "reference": f"ORD-{order.order_number}-{uuid.uuid4().hex[:8]}",
+        }
+        headers = {
+            "Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}",
+            "Content-Type": "application/json",
+        }
 
+        try:
+            ps_response = requests.post(
+                "https://api.paystack.co/transaction/initialize",
+                headers=headers,
+                data=json.dumps(payload),
+                timeout=30,
+            ).json()
+        except Exception:
+            logger.exception("Paystack API call failed")
+            return Response({"status": "failed", "message": "Payment gateway error."}, status=status.HTTP_502_BAD_GATEWAY)
+
+        if not ps_response.get("status"):
+            return Response(
+                {"status": "failed", "message": ps_response.get("message", "Initialization failed.")},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        Transaction.objects.create(
+            order=order,
+            transaction_id=ps_response["data"]["reference"],
+            amount=order.total,
+            status="PENDING",
+        )
+
+        return Response(
+            PaystackInitializeResponseSerializer({
+                "status": "success",
+                "authorization_url": ps_response["data"]["authorization_url"],
+                "reference": ps_response["data"]["reference"],
+                "delivery_institution": list(institutions)[0],
+            }).data,
+            status=status.HTTP_200_OK,
+        )
+
+
+# ─────────────────────────────────────────────────────────────
+# PAYMENT — VERIFY
+# ─────────────────────────────────────────────────────────────
 class PaystackPaymentVerifyView(APIView):
-    permission_classes = [AllowAny]
+    """
+    GET order/payment/verify/?reference=<ref>
+
+    Requires authentication — cart is identified via request.user.
+    After successful payment, cart items are cleared (cart record kept).
+
+    RESPONSE → PaystackVerifyResponseSerializer
+    """
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        order_number = None
-        
-        try:
-            reference = request.query_params.get('reference')
-            cart_code = request.query_params.get('cart_code')
-            
-            if not reference:
-                return Response({
-                    'status': 'failed',
-                    'message': 'Reference parameter is required'
-                }, status=status.HTTP_400_BAD_REQUEST)
-            
-            transaction = Transaction.objects.filter(transaction_id=reference).first()
-            
-            if not transaction:
-                return Response({
-                    'status': 'failed',
-                    'message': 'Transaction not found'
-                }, status=status.HTTP_404_NOT_FOUND)
-                
-            if transaction.status == 'COMPLETED':
-                return Response({
-                    'status': 'success',
-                    'message': 'Payment already verified',
-                    'order_number': transaction.order.order_number
-                }, status=status.HTTP_200_OK)
-            
-            url = f"https://api.paystack.co/transaction/verify/{reference}"
-            headers = {
-                "Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}",
-                "Content-Type": "application/json"
-            }
+        reference = request.query_params.get("reference")
 
-            response = requests.get(url, headers=headers)
-            response_data = response.json()
-
-            if not response_data.get('status'):
-                return Response({
-                    'status': 'failed',
-                    'message': response_data.get('message', 'Payment verification failed')
-                }, status=status.HTTP_400_BAD_REQUEST)
-
-            if response_data['data']['status'] != 'success':
-                transaction.status = 'FAILED'
-                transaction.save()
-                return Response({
-                    'status': 'failed',
-                    'message': 'Payment failed or was canceled'
-                }, status=status.HTTP_400_BAD_REQUEST)
-
-            from django.db import transaction as db_transaction
-            
-            with db_transaction.atomic():
-                transaction_obj = Transaction.objects.select_for_update().get(id=transaction.id)
-                
-                if transaction_obj.status == 'COMPLETED':
-                    order_number = transaction_obj.order.order_number
-                    return Response({
-                        'status': 'success',
-                        'message': 'Payment already verified',
-                        'order_number': order_number
-                    }, status=status.HTTP_200_OK)
-                
-                transaction_obj.status = 'COMPLETED'
-                transaction_obj.payment_method = 'PAYSTACK'
-                transaction_obj.save()
-
-                order = transaction_obj.order
-                
-                if order.order_status != 'PAID':
-                    order.order_status = 'PAID'
-                    order.save()
-
-                order_items = OrderItem.objects.filter(order=order)
-                vendor_totals = {}
-                vendors_to_notify = set()
-                notified_vendors = set()
-
-                for item in order_items:
-                    if hasattr(item, 'vendor') and item.vendor is not None:
-                        vendors_to_notify.add(item.vendor)
-                        
-                        item_total = item.price * item.quantity
-                        if item.vendor.id in vendor_totals:
-                            vendor_totals[item.vendor.id] += item_total
-                        else:
-                            vendor_totals[item.vendor.id] = item_total
-
-                # Update inventory
-                for item in order_items:
-                    product = item.product
-                    
-                    product.in_stock = max(product.in_stock - item.quantity, 0)
-                    product.save()
-
-                    if hasattr(item, 'size') and item.size:
-                        try:
-                            size_obj = ProductSize.objects.get(product=product, size=item.size)
-                            size_obj.quantity = max(size_obj.quantity - item.quantity, 0)
-                            size_obj.save()
-                            logger.info(f"Updated size inventory for product {product.id}, size {item.size}, new quantity: {size_obj.quantity}")
-                            
-                            if size_obj.quantity == 0 and hasattr(item, 'vendor') and item.vendor is not None:
-                                if item.vendor not in notified_vendors:
-                                    notified_vendors.add(item.vendor)
-                        except ProductSize.DoesNotExist:
-                            logger.warning(f"Size {item.size} not found for product {product.id}")
-                    
-                    if hasattr(item, 'color') and item.color:
-                        try:
-                            color_obj = ProductColor.objects.get(product=product, color=item.color)
-                            color_obj.quantity = max(color_obj.quantity - item.quantity, 0)
-                            color_obj.save()
-                            logger.info(f"Updated color inventory for product {product.id}, color {item.color}, new quantity: {color_obj.quantity}")
-                        except ProductColor.DoesNotExist:
-                            logger.warning(f"Color {item.color} not found for product {product.id}")
-                
-                # Send out-of-stock emails to vendors
-                for vendor in notified_vendors:
-                    try:
-                        send_mail(
-                            subject="Product Out of Stock",
-                            message=(
-                                f"Dear {vendor.business_name},\n\n"
-                                "One or more of your products is now out of stock. "
-                                "Please restock to continue receiving orders."
-                            ),
-                            from_email=settings.DEFAULT_FROM_EMAIL,
-                            recipient_list=[vendor.user.email]
-                        )
-                        logger.info(f"Sent out-of-stock notification to vendor {vendor.id}")
-                    except Exception as e:
-                        logger.error(f"Failed to send out-of-stock email to vendor {vendor.id}: {str(e)}")
-
-                # Send vendor order notification emails with PDF
-                for vendor in vendors_to_notify:
-                    try:
-                        vendor_items = []
-                        vendor_total = 0
-                        
-                        for item in order_items:
-                            if hasattr(item, 'vendor') and item.vendor is not None and item.vendor.id == vendor.id:
-                                item_price = item.price if item.price is not None else 0
-                                item_subtotal = item_price * item.quantity
-                                item.subtotal = item_subtotal
-                                vendor_total += item_subtotal
-                                vendor_items.append(item)
-                        
-                        if vendor_items:
-                            vendor_context = {
-                                "order": order,
-                                "vendor_items": vendor_items,
-                                "vendor": vendor,
-                                "current_year": now().year,
-                                "total": vendor_total,
-                                "dashboard_url": f"{settings.FRONTEND_URL}/vendor/dashboard/orders/{order.order_number}"
-                            }
-                            
-                            vendor_html_content = render_to_string("email/ordered.html", vendor_context)
-                            
-                            pdf_buffer = BytesIO()
-                            HTML(string=vendor_html_content).write_pdf(pdf_buffer)
-                            pdf_buffer.seek(0)
-
-                            email_subject = f"New Order Notification - #{order.order_number}"
-                            email = EmailMultiAlternatives(
-                                subject=email_subject,
-                                body="You have received a new order. Details are attached as a PDF.",
-                                from_email=settings.DEFAULT_FROM_EMAIL,
-                                to=[vendor.user.email],
-                            )
-                            email.attach_alternative(vendor_html_content, "text/html")
-                            email.attach(f"order_{order.order_number}.pdf", pdf_buffer.getvalue(), "application/pdf")
-                            email.send()
-                            
-                            logger.info(f"Order notification sent to vendor {vendor.id} for order {order.order_number}")
-                    except Exception as e:
-                        logger.error(f"Error sending notification to vendor {vendor.id}: {str(e)}", exc_info=True)
-                        continue
-
-                # Delete cart after successful payment
-                if cart_code:
-                    try:
-                        cart = Cart.objects.get(cart_code=cart_code)
-                        cart.delete()
-                        logger.info(f"Deleted cart {cart_code} after successful payment")
-                    except Cart.DoesNotExist:
-                        logger.warning(f"Cart with code {cart_code} not found for deletion after payment")
-                    except Exception as e:
-                        logger.error(f"Error deleting cart {cart_code}: {str(e)}")
-
-                # Send customer receipt email with PDF
-                try:
-                    for item in order_items:
-                        item_price = item.price if item.price is not None else 0
-                        item.total = item_price * item.quantity
-                    
-                    context = {
-                        "order": order,
-                        "order_items": order_items,
-                        "current_year": now().year,
-                    }
-
-                    html_content = render_to_string("email/receipts.html", context)
-
-                    pdf_buffer = BytesIO()
-                    HTML(string=html_content).write_pdf(pdf_buffer)
-                    pdf_buffer.seek(0)
-
-                    email_subject = f"Your Order Receipt - #{order.order_number}"
-                    email = EmailMultiAlternatives(
-                        subject=email_subject,
-                        body="Your order receipt is attached as a PDF.",
-                        from_email=settings.DEFAULT_FROM_EMAIL,
-                        to=[order.email],
-                    )
-                    email.attach_alternative(html_content, "text/html")
-                    email.attach(f"receipt_{order.order_number}.pdf", pdf_buffer.getvalue(), "application/pdf")
-                    email.send()
-                    
-                    logger.info(f"Sent receipt email to customer {order.email} for order {order.order_number}")
-                except Exception as e:
-                    logger.error(f"Error with receipt generation or sending: {str(e)}", exc_info=True)
-
-                # Send admin email notifications
-                try:
-                    send_admin_notifications(order, order_items)
-                except Exception as e:
-                    logger.error(f"Error sending admin notifications: {str(e)}", exc_info=True)
-
-                # ==========================================
-                # NEW: Send SMS/WhatsApp notifications via Termii
-                # ==========================================
-                try:
-                    send_order_notifications(order, order_items)
-                    logger.info(f"Termii SMS notifications sent for order {order.order_number}")
-                except Exception as e:
-                    logger.error(f"Error sending Termii notifications: {str(e)}", exc_info=True)
-                    # Don't fail the whole transaction if SMS fails
-
-                # Store order_number before exiting atomic block
-                order_number = order.order_number
-
-            # Now outside the atomic block, use the stored order_number
-            return Response({
-                'status': 'success',
-                'message': 'Payment verified successfully',
-                'order_number': order_number
-            }, status=status.HTTP_200_OK)
-
-        except Exception as e:
-            logger.error(f"Payment verification error: {str(e)}", exc_info=True)
+        if not reference:
             return Response(
-                {"error": f"An error occurred: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                {"status": "failed", "message": "reference is required."},
+                status=status.HTTP_400_BAD_REQUEST,
             )
-        
+
+        txn = Transaction.objects.filter(transaction_id=reference).first()
+        if not txn:
+            return Response(
+                {"status": "failed", "message": "Transaction not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # ── Already verified — return early ───────────────────────────────────
+        if txn.status == "COMPLETED":
+            return Response(
+                PaystackVerifyResponseSerializer({
+                    "status": "success",
+                    "message": "Payment already verified.",
+                    "order_number": txn.order.order_number,
+                }).data
+            )
+
+        # ── Call Paystack ──────────────────────────────────────────────────────
+        try:
+            ps_response = requests.get(
+                f"https://api.paystack.co/transaction/verify/{reference}",
+                headers={"Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}"},
+                timeout=30,
+            ).json()
+        except Exception:
+            logger.exception("Paystack verify API call failed")
+            return Response(
+                {"status": "failed", "message": "Payment gateway error."},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        if not ps_response.get("status"):
+            return Response(
+                {"status": "failed", "message": ps_response.get("message", "Verification failed.")},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if ps_response["data"]["status"] != "success":
+            txn.status = "FAILED"
+            txn.save()
+            return Response(
+                {"status": "failed", "message": "Payment failed or was cancelled."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        order_number = None
+
+        with transaction.atomic():
+            txn_obj = Transaction.objects.select_for_update().get(id=txn.id)
+
+            # ── Double-check inside lock (concurrent request guard) ───────────
+            if txn_obj.status == "COMPLETED":
+                return Response(
+                    PaystackVerifyResponseSerializer({
+                        "status": "success",
+                        "message": "Payment already verified.",
+                        "order_number": txn_obj.order.order_number,
+                    }).data
+                )
+
+            txn_obj.status = "COMPLETED"
+            txn_obj.payment_method = "PAYSTACK"
+            txn_obj.save()
+
+            order = txn_obj.order
+            if order.order_status != "PAID":
+                order.order_status = "PAID"
+                order.save()
+
+            order_items = list(
+                OrderItem.objects.filter(order=order).select_related(
+                    "product", "vendor", "vendor__user"
+                )
+            )
+
+            # 1. Deduct inventory and notify vendors of out-of-stock items
+            vendors_oos = deduct_inventory(order_items)
+            transaction.on_commit(lambda: send_out_of_stock_emails(vendors_oos))
+
+            # 2. Notify each vendor of their new order
+            transaction.on_commit(lambda: send_vendor_order_emails(order, order_items))
+
+            # 3. Send receipt to the customer
+            transaction.on_commit(lambda: send_customer_receipt_email(order, order_items))
+
+            # 4. Notify all admin users
+            transaction.on_commit(lambda: send_admin_notifications(order, order_items))
+
+            # 5. Send push / in-app notifications
+            from order.util.notifications_utils import send_order_notifications
+            transaction.on_commit(lambda: _safe_call(send_order_notifications, order, order_items))
+
+            # 6. Dispatch delivery opportunities to pickers / riders
+            first_vendor = order_items[0].vendor if order_items else None
+            if first_vendor:
+                transaction.on_commit(
+                    lambda o=order, v=first_vendor: _safe_call(_dispatch_delivery_opportunities, o, v)
+                )
+
+            # 7. Clear the user's cart items so paid products don't reappear.
+            #    We DELETE the items but keep the Cart row itself — the user
+            #    still has a valid (now empty) cart for their next order.
+            try:
+                user_cart = Cart.objects.filter(user=request.user).first()
+                if user_cart:
+                    deleted_count, _ = CartItem.objects.filter(cart=user_cart).delete()
+                    logger.info(
+                        "Cleared %d cart item(s) for user %s after payment ref=%s",
+                        deleted_count,
+                        request.user.email,
+                        reference,
+                    )
+                else:
+                    logger.warning(
+                        "No cart found for user %s after payment ref=%s",
+                        request.user.email,
+                        reference,
+                    )
+            except Exception:
+                logger.exception(
+                    "Failed to clear cart for user %s after payment ref=%s",
+                    request.user.email,
+                    reference,
+                )
+                # Non-fatal — payment is already confirmed, don't fail the response
+
+            order_number = order.order_number
+
+        return Response(
+            PaystackVerifyResponseSerializer({
+                "status": "success",
+                "message": "Payment verified successfully.",
+                "order_number": order_number,
+            }).data,
+            status=status.HTTP_200_OK,
+        )
+
+
+# ─────────────────────────────────────────────────────────────
+# CANCEL ORDER
+# ─────────────────────────────────────────────────────────────
+
 class CancelOrderView(APIView):
     """
-    API endpoint for canceling an order
+    POST order/<order_id>/cancel/
+
+    RESPONSE → CancelOrderResponseSerializer
     """
     permission_classes = [IsAuthenticated]
 
     def post(self, request, order_id):
         try:
-            # Get the order
             order = Order.objects.get(id=order_id)
-
-            # Check if user owns this order
-            if order.user != request.user:
-                return Response({
-                    "status": "error",
-                    "message": "You don't have permission to cancel this order"
-                }, status=status.HTTP_403_FORBIDDEN)
-
-            # Check if order can be cancelled
-            if order.order_status in ['DELIVERED', 'CANCELLED']:
-                return Response({
-                    "status": "error",
-                    "message": f"Order cannot be cancelled because it is {order.order_status}"
-                }, status=status.HTTP_400_BAD_REQUEST)
-
-            # If order is assigned to a picker, check if it's in transit
-            if order.picker and order.order_status == 'IN_TRANSIT':
-                return Response({
-                    "status": "error",
-                    "message": "Order is already in transit and cannot be cancelled"
-                }, status=status.HTTP_400_BAD_REQUEST)
-
-            # Update order status
-            order.order_status = 'CANCELLED'
-            order.save()
-
-            # Restore product inventory
-            order_items = OrderItem.objects.filter(order=order)
-            for item in order_items:
-                product = item.product
-                
-                # Restore main product stock
-                product.in_stock += item.quantity
-                product.save()
-
-                # Restore size stock if applicable
-                if item.size:
-                    try:
-                        size_obj = ProductSize.objects.get(product=product, size=item.size)
-                        size_obj.quantity += item.quantity
-                        size_obj.save()
-                    except ProductSize.DoesNotExist:
-                        pass
-
-                # Restore color stock if applicable
-                if item.color:
-                    try:
-                        color_obj = ProductColor.objects.get(product=product, color=item.color)
-                        color_obj.quantity += item.quantity
-                        color_obj.save()
-                    except ProductColor.DoesNotExist:
-                        pass
-
-            # Send cancellation emails
-            try:
-                # Email to customer
-                send_mail(
-                    subject=f"Order #{order.order_number} Cancelled",
-                    message=(
-                        f"Your order #{order.order_number} has been cancelled.\n\n"
-                        f"Order Total: ₦{order.total}\n"
-                        "If you have any questions, please contact support."
-                    ),
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[order.email],
-                    fail_silently=True
-                )
-
-                # Email to vendors
-                vendors_notified = set()
-                for item in order_items:
-                    vendor = item.vendor
-                    if vendor and vendor.id not in vendors_notified:
-                        send_mail(
-                            subject=f"Order #{order.order_number} Cancelled",
-                            message=(
-                                f"Order #{order.order_number} has been cancelled by the customer.\n\n"
-                                f"Please note that the inventory has been automatically restored."
-                            ),
-                            from_email=settings.DEFAULT_FROM_EMAIL,
-                            recipient_list=[vendor.user.email],
-                            fail_silently=True
-                        )
-                        vendors_notified.add(vendor.id)
-
-            except Exception as e:
-                # Log email sending errors but don't affect the response
-                logger.error(f"Error sending cancellation emails for order {order.order_number}: {str(e)}")
-
-            return Response({
-                "status": "success",
-                "message": "Order cancelled successfully",
-                "order_number": order.order_number
-            }, status=status.HTTP_200_OK)
-
         except Order.DoesNotExist:
-            return Response({
-                "status": "error",
-                "message": "Order not found"
-            }, status=status.HTTP_404_NOT_FOUND)
-        
-        except Exception as e:
-            return Response({
-                "status": "error",
-                "message": f"An error occurred: {str(e)}"
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"status": "error", "message": "Order not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if order.user != request.user:
+            return Response({"status": "error", "message": "Permission denied."}, status=status.HTTP_403_FORBIDDEN)
+
+        if order.order_status in ("DELIVERED", "CANCELLED"):
+            return Response(
+                {"status": "error", "message": f"Order cannot be cancelled (status: {order.order_status})."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if order.picker and order.order_status == "IN_TRANSIT":
+            return Response(
+                {"status": "error", "message": "Order is already in transit."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        order.order_status = "CANCELLED"
+        order.save()
+
+        order_items = OrderItem.objects.filter(order=order)
+        restore_inventory(order_items)
+        send_cancellation_emails(order, order_items)
+
+        return Response(
+            CancelOrderResponseSerializer({
+                "status": "success",
+                "message": "Order cancelled successfully.",
+                "order_number": order.order_number,
+            }).data,
+            status=status.HTTP_200_OK,
+        )
+
+
+# ─────────────────────────────────────────────────────────────
+# ORDER DETAIL
+# ─────────────────────────────────────────────────────────────
 
 class OrderDetailView(APIView):
+    """
+    GET order/<order_number>/
+
+    RESPONSE → OrderDetailResponseSerializer
+    """
+
     def get(self, request, order_number):
-        """Optimized order detail view (MAX 2 queries)."""
+        from django.db.models import Prefetch
+
         try:
-            # Query 1 — Get the order & related picker/user with select_related
             order = (
                 Order.objects
                 .select_related("user", "picker")
                 .prefetch_related(
                     Prefetch(
                         "order_items",
-                        queryset=OrderItem.objects.select_related(
-                            "product", "vendor", "vendor__user"
-                        )
+                        queryset=OrderItem.objects.select_related("product", "vendor", "vendor__user"),
                     )
                 )
                 .get(order_number=order_number)
             )
+        except Order.DoesNotExist:
+            return Response({"error": "Order not found."}, status=status.HTTP_404_NOT_FOUND)
 
-            # Query 2 — Fetch transaction (if exists)
-            transaction = (
-                Transaction.objects.filter(order=order)
-                .values(
-                    "transaction_id", "amount", "status",
-                    "payment_method", "created_at"
-                )
-                .first()
+        txn = (
+            Transaction.objects.filter(order=order)
+            .values("transaction_id", "amount", "status", "payment_method", "created_at")
+            .first()
+        )
+
+        items_data = [
+            {
+                "id": item.id,
+                "product": {
+                    "id": item.product.id,
+                    "name": item.product.name,
+                    "image": str(item.product.image) if item.product.image else None,
+                },
+                "quantity": item.quantity,
+                "price": float(item.price),
+                "size": item.size,
+                "color": item.color,
+                "vendor": item.vendor.user.username if (item.vendor and item.vendor.user) else None,
+            }
+            for item in order.order_items.all()
+        ]
+
+        data = {
+            "id": order.id,
+            "order_number": order.order_number,
+            "first_name": order.first_name,
+            "last_name": order.last_name,
+            "email": order.email,
+            "phone": order.phone,
+            "address": order.address,
+            "room_number": order.room_number,
+            "subtotal": float(order.subtotal),
+            "shipping_fee": float(order.shipping_fee),
+            "tax": float(order.tax),
+            "total": float(order.total),
+            "order_status": order.order_status,
+            "created_at": order.created_at,
+            "order_items": items_data,
+            "transaction": txn,
+        }
+
+        return Response(OrderDetailResponseSerializer(data).data)
+
+
+# ─────────────────────────────────────────────────────────────
+# ORDER HISTORY
+# ─────────────────────────────────────────────────────────────
+
+class OrderHistoryView(APIView):
+    """
+    GET order/history/
+
+    RESPONSE → list of OrderHistoryItemSerializer
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from django.db.models import Prefetch
+
+        orders = (
+            Order.objects.filter(user=request.user)
+            .select_related("picker")
+            .prefetch_related(
+                "order_items__product",
+                "order_items__vendor",
+                "picker__picker_profile",
+                "picker__student_picker_profile",
             )
+            .order_by("-created_at")
+        )
 
-            # Serialize items WITHOUT extra DB queries
-            items_data = [
-                {
+        order_data = []
+        for order in orders:
+            items_data = []
+            for item in order.order_items.all():
+                image_url = request.build_absolute_uri(item.product.image.url) if item.product.image else None
+                items_data.append({
                     "id": item.id,
-                    "product": {
-                        "id": item.product.id,
-                        "name": item.product.name,
-                        "image": str(item.product.image) if item.product.image else None,
-                    },
+                    "product": {"id": item.product.id, "name": item.product.name, "image": image_url},
                     "quantity": item.quantity,
                     "price": float(item.price),
                     "size": item.size,
                     "color": item.color,
-                    "vendor": (
-                        item.vendor.user.username
-                        if item.vendor and item.vendor.user
-                        else None
-                    ),
-                }
-                for item in order.order_items.all()
-            ]
+                    "vendor": item.vendor.business_name if item.vendor else None,
+                    "vendor_id": item.vendor.id if item.vendor else None,
+                })
 
-            # Build response
-            response_data = {
+            picker_info = self._build_picker_info(order)
+
+            order_data.append({
                 "id": order.id,
                 "order_number": order.order_number,
-                "first_name": order.first_name,
-                "last_name": order.last_name,
-                "email": order.email,
-                "phone": order.phone,
-                "address": order.address,
-                "room_number": order.room_number,
                 "subtotal": float(order.subtotal),
                 "shipping_fee": float(order.shipping_fee),
                 "tax": float(order.tax),
                 "total": float(order.total),
                 "order_status": order.order_status,
-                "created_at": order.created_at,
+                "created_at": order.created_at.isoformat(),
+                "reviewed": order.reviewed,
                 "order_items": items_data,
-                "transaction": transaction,
-            }
+                "picker": picker_info,
+                "shipping": {
+                    "first_name": order.first_name, "last_name": order.last_name,
+                    "email": order.email, "phone": order.phone,
+                    "address": order.address, "room_number": order.room_number,
+                },
+            })
 
-            return Response(response_data)
+        return Response(OrderHistoryItemSerializer(order_data, many=True).data)
 
-        except Order.DoesNotExist:
-            return Response({"error": "Order not found"}, status=404)
-
-        except Exception as e:
-            return Response({"error": str(e)}, status=400)
-
-        
-
-class OrderHistoryView(APIView):
-    def get(self, request):
-        """Get all orders for the authenticated user"""
+    @staticmethod
+    def _build_picker_info(order):
+        if not order.picker:
+            return None
+        picker = order.picker
+        name = f"{picker.first_name} {picker.last_name}"
         try:
-            user = request.user
-            
-            # Get all orders for the user with related data to reduce DB queries
-            orders = Order.objects.filter(user=user).select_related('picker').prefetch_related(
-                'order_items__product',
-                'order_items__vendor',
-                'picker__picker_profile',  # Add this to prefetch picker profile
-                'picker__student_picker_profile'  # Add this to prefetch student picker profile
-            ).order_by('-created_at')
-            
-            order_data = []
-            for order in orders:
-                items_data = []
-                for item in order.order_items.all():  # Use prefetched data
-                    image_url = None
-                    if item.product.image:
-                        image_url = request.build_absolute_uri(item.product.image.url)
-                    
-                    product_data = {
-                        'id': item.product.id,
-                        'name': item.product.name,
-                        'image': image_url
-                    }
-                    
-                    # Get picker profile ID based on user type
-                    picker_profile_id = None
-                    picker_type = None
-                    if order.picker:
-                        try:
-                            if hasattr(order.picker, 'picker_profile'):
-                                picker_profile_id = order.picker.picker_profile.id
-                                picker_type = 'picker'
-                            elif hasattr(order.picker, 'student_picker_profile'):
-                                picker_profile_id = order.picker.student_picker_profile.id
-                                picker_type = 'student_picker'
-                        except Exception as e:
-                            print(f"Error getting picker profile: {e}")
-                    
-                    items_data.append({
-                        'id': item.id,
-                        'product': product_data,
-                        'quantity': item.quantity,
-                        'price': float(item.price),
-                        'size': item.size,
-                        'color': item.color,
-                        'vendor': item.vendor.business_name if item.vendor else None,
-                        'vendor_id': item.vendor.id if item.vendor else None,
-                    })
-                
-                # Also add picker info at order level
-                picker_info = None
-                if order.picker:
-                    picker_profile_id = None
-                    picker_type = None
-                    picker_name = f"{order.picker.first_name} {order.picker.last_name}"
-                    
-                    try:
-                        if hasattr(order.picker, 'picker_profile'):
-                            picker_profile_id = order.picker.picker_profile.id
-                            picker_type = 'picker'
-                            picker_info = {
-                                'user_id': order.picker.id,
-                                'profile_id': picker_profile_id,
-                                'name': picker_name,
-                                'type': picker_type,
-                                'fleet_type': order.picker.picker_profile.fleet_type,
-                                'rating': float(order.picker.picker_profile.rating)
-                            }
-                        elif hasattr(order.picker, 'student_picker_profile'):
-                            picker_profile_id = order.picker.student_picker_profile.id
-                            picker_type = 'student_picker'
-                            picker_info = {
-                                'user_id': order.picker.id,
-                                'profile_id': picker_profile_id,
-                                'name': picker_name,
-                                'type': picker_type,
-                                'hostel_name': order.picker.student_picker_profile.hostel_name,
-                                'room_number': order.picker.student_picker_profile.room_number,
-                                'rating': float(order.picker.student_picker_profile.rating)
-                            }
-                    except Exception as e:
-                        print(f"Error getting picker info: {e}")
-                
-                order_data.append({
-                    'id': order.id,
-                    'order_number': order.order_number,
-                    'subtotal': float(order.subtotal),
-                    'shipping_fee': float(order.shipping_fee),
-                    'tax': float(order.tax),
-                    'total': float(order.total),
-                    'order_status': order.order_status,
-                    'created_at': order.created_at.isoformat(),  # Better date formatting
-                    'order_items': items_data,
-                    'picker': picker_info,  # Complete picker information
-                    'reviewed': order.reviewed,
-                    'shipping': {
-                        'address': order.address,
-                        'room_number': order.room_number,
-                        'phone': order.phone,
-                        'email': order.email,
-                        'first_name': order.first_name,
-                        'last_name': order.last_name,
-                    }
-                })
-            
-            return Response(order_data, status=200)
-        
-        except Exception as e:
-            import traceback
-            print(f"Error in OrderHistoryView: {str(e)}")
-            print(traceback.format_exc())  # This will help debug future issues
-            return Response({'error': str(e)}, status=400)
-        
+            if hasattr(picker, "picker_profile"):
+                p = picker.picker_profile
+                return {"user_id": picker.id, "profile_id": p.id, "name": name, "type": "picker",
+                        "fleet_type": p.fleet_type, "rating": float(p.rating)}
+            elif hasattr(picker, "student_picker_profile"):
+                p = picker.student_picker_profile
+                return {"user_id": picker.id, "profile_id": p.id, "name": name, "type": "student_picker",
+                        "hostel_name": p.hostel_name, "room_number": p.room_number, "rating": float(p.rating)}
+        except Exception:
+            logger.exception("Error building picker info for order %s", order.order_number)
+        return None
+
+
+# ─────────────────────────────────────────────────────────────
+# PACK ORDER (Vendor marks their items as packed)
+# ─────────────────────────────────────────────────────────────
 
 class PackOrderView(APIView):
+    """
+    POST order/pack/
+
+    REQUEST  → PackOrderRequestSerializer
+    RESPONSE → PackOrderResponseSerializer
+    """
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        req = PackOrderRequestSerializer(data=request.data)
+        if not req.is_valid():
+            return Response(req.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        order_id = req.validated_data["order_id"]
+
         try:
-            order_id = request.data.get('order_id')
-            if not order_id:
-                return Response({
-                    'error': 'Order ID is required'
-                }, status=status.HTTP_400_BAD_REQUEST)
+            order = Order.objects.get(id=order_id)
+        except Order.DoesNotExist:
+            return Response({"error": "Order not found."}, status=status.HTTP_404_NOT_FOUND)
 
-            # First, check if order exists and user has permission
-            try:
-                order = Order.objects.get(id=order_id)
-            except Order.DoesNotExist:
-                return Response({
-                    'error': 'Order not found'
-                }, status=status.HTTP_404_NOT_FOUND)
+        vendor_items = OrderItem.objects.filter(order_id=order_id, vendor__user=request.user)
+        if not vendor_items.exists():
+            return Response({"error": "No order items found or unauthorised."}, status=status.HTTP_404_NOT_FOUND)
 
-            # Check if vendor has items in this order
-            vendor_order_items = OrderItem.objects.filter(
-                order_id=order_id,
-                vendor__user=request.user
-            )
+        with transaction.atomic():
+            vendor_items = OrderItem.objects.filter(
+                order_id=order_id, vendor__user=request.user
+            ).select_for_update()
+            order = Order.objects.select_for_update().get(id=order_id)
+            vendor_items.update(is_packed=True, packed_at=now())
+            current_vendor = vendor_items.first().vendor
 
-            if not vendor_order_items.exists():
-                return Response({
-                    'error': 'No order items found or unauthorized'
-                }, status=status.HTTP_404_NOT_FOUND)
+        all_packed = not OrderItem.objects.filter(order_id=order_id, is_packed=False).exists()
+        packed_vendors = list(Vendor.objects.filter(orderitem__order_id=order_id, orderitem__is_packed=True).distinct())
+        unpacked_vendors = list(Vendor.objects.filter(orderitem__order_id=order_id, orderitem__is_packed=False).distinct())
 
-            # Now perform the transaction
-            with transaction.atomic():
-                # Re-fetch with select_for_update inside transaction
-                vendor_order_items = OrderItem.objects.filter(
-                    order_id=order_id,
-                    vendor__user=request.user
-                ).select_for_update()
-
-                order = Order.objects.select_for_update().get(id=order_id)
-                
-                # Mark this vendor's items as packed
-                vendor_order_items.update(is_packed=True, packed_at=timezone.now())
-                
-                # Get current vendor info
-                current_vendor = vendor_order_items.first().vendor
-                
-                # Handle packing completion
-                return self.handle_packing_completion(order, current_vendor, order_id)
-
-        except Exception as e:
-            logger.error(f"Error in PackOrderView: {str(e)}", exc_info=True)
-            return Response({
-                'error': f'An error occurred while processing your request. Please try again.'
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-    def handle_packing_completion(self, order, current_vendor, order_id):
-        """Handle packing completion and notifications"""
-        # Check if all vendors have packed their items
-        all_order_items = OrderItem.objects.filter(order_id=order_id)
-        unpacked_items = all_order_items.filter(is_packed=False)
-        
-        all_vendors_packed = not unpacked_items.exists()
-        
-        if all_vendors_packed:
+        if all_packed:
             order.packed = True
             order.save()
-            
-            # Schedule notifications after transaction commits
-            transaction.on_commit(lambda: self.send_customer_notification(order, all_packed=True))
-            transaction.on_commit(lambda: self.notify_pickers(order, current_vendor))
-            
-            return Response({
-                'message': 'All vendors have packed their items. Order is ready for delivery and pickers have been notified.',
-                'order_id': order_id,
-                'all_packed': True,
-                'vendor_packed': current_vendor.business_name
-            }, status=status.HTTP_200_OK)
-        
+            transaction.on_commit(lambda: send_packing_status_email(order, all_packed=True))
+
+            already_accepted = DeliveryOpportunity.objects.filter(
+                order=order, status="accepted"
+            ).exists()
+            if not already_accepted:
+                transaction.on_commit(
+                    lambda o=order, v=current_vendor: _safe_call(_dispatch_delivery_opportunities, o, v)
+                )
+
         else:
-            # Not all vendors have packed yet
-            packed_vendors = self.get_packed_vendors(order_id)
-            unpacked_vendors = self.get_unpacked_vendors(order_id)
-            
-            # Schedule notification after transaction commits
-            transaction.on_commit(lambda: self.send_customer_notification(
-                order, 
-                all_packed=False, 
-                packed_vendor=current_vendor,
-                packed_vendors=packed_vendors,
-                unpacked_vendors=unpacked_vendors
-            ))
-            
-            return Response({
-                'message': f'{current_vendor.business_name} has packed their items. Waiting for other vendors to pack.',
-                'order_id': order_id,
-                'all_packed': False,
-                'vendor_packed': current_vendor.business_name,
-                'packed_vendors': [v.business_name for v in packed_vendors],
-                'unpacked_vendors': [v.business_name for v in unpacked_vendors]
-            }, status=status.HTTP_200_OK)
-
-    def get_packed_vendors(self, order_id):
-        """Get list of vendors who have packed their items"""
-        return Vendor.objects.filter(
-            orderitem__order_id=order_id,
-            orderitem__is_packed=True
-        ).distinct()
-    
-    def get_unpacked_vendors(self, order_id):
-        """Get list of vendors who haven't packed their items yet"""
-        return Vendor.objects.filter(
-            orderitem__order_id=order_id,
-            orderitem__is_packed=False
-        ).distinct()
-
-    def send_customer_notification(self, order, all_packed=False, packed_vendor=None, 
-                                 packed_vendors=None, unpacked_vendors=None):
-        """Send email notification to customer about packing status"""
-        try:
-            if all_packed:
-                subject = f"Order #{order.order_number} Ready for Delivery"
-                message = (
-                    f"Hello {order.first_name},\n\n"
-                    f"Great news! Your order #{order.order_number} has been completely packed "
-                    f"by all vendors and is now ready for delivery.\n\n"
-                    f"Our delivery team has been notified and will contact you soon.\n\n"
-                    f"Thank you for your patronage!"
+            transaction.on_commit(
+                lambda: send_packing_status_email(
+                    order, all_packed=False,
+                    packed_vendors=packed_vendors,
+                    unpacked_vendors=unpacked_vendors,
                 )
-            else:
-                packed_names = [v.business_name for v in packed_vendors] if packed_vendors else []
-                unpacked_names = [v.business_name for v in unpacked_vendors] if unpacked_vendors else []
-                
-                subject = f"Order #{order.order_number} Partially Packed"
-                message = (
-                    f"Hello {order.first_name},\n\n"
-                    f"Your order #{order.order_number} is being prepared.\n\n"
-                    f"✅ Packed by: {', '.join(packed_names)}\n"
-                    f"⏳ Still preparing: {', '.join(unpacked_names)}\n\n"
-                    f"We'll notify you once all items are ready for delivery.\n\n"
-                    f"Thank you for your patience!"
-                )
-
-            send_mail(
-                subject=subject,
-                message=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[order.email],
-                fail_silently=True
             )
-        except Exception as e:
-            logger.error(f"Failed to send customer notification for order {order.order_number}: {str(e)}", exc_info=True)
 
-    def notify_pickers(self, order, vendor):
-        """Notify pickers based on company picker availability"""
-        try:
-            # Get the vendor's institution
-            vendor_institution = vendor.user.institution
-            logger.info(f"Vendor institution: {vendor_institution}")
-            
-            if not vendor_institution:
-                logger.warning(f"Vendor {vendor.business_name} has no institution set")
-                return
-            
-            # Check if there are company pickers in the institution
-            company_users = User.objects.filter(
-                user_type='company',
-                institution=vendor_institution,
-                is_active=True
-            )
-            
-            logger.info(f"Found {company_users.count()} company users in institution {vendor_institution}")
-            
-            if company_users.exists():
-                # If company users exist, get their active riders and notify them
-                company_riders = []
-                
-                for company_user in company_users:
-                    try:
-                        company = company_user.company_profile
-                        active_riders = company.riders.filter(status='active')
-                        company_riders.extend(active_riders)
-                    except AttributeError:
-                        logger.warning(f"Company user {company_user.email} has no company profile")
-                        continue
-                
-                if company_riders:
-                    logger.info(f"Notifying {len(company_riders)} company riders only")
-                    self.create_and_notify_company_riders(order, vendor, company_riders)
-                    return
-                else:
-                    logger.info("Company users exist but no active riders found, falling back to regular pickers")
-            
-            # If no company users or no active riders, notify regular and student pickers
-            target_pickers = User.objects.filter(
-                user_type__in=['picker', 'student_picker'],
-                institution=vendor_institution,
-                is_active=True
-            )
-            
-            if not target_pickers.exists():
-                logger.warning(f"No pickers found in institution {vendor_institution}")
-                return
-            
-            logger.info(f"Notifying {target_pickers.count()} regular/student pickers")
-            self.create_and_notify_regular_pickers(order, vendor, target_pickers)
-            
-        except Exception as e:
-            logger.error(f"Failed to notify pickers for order {order.id}: {str(e)}", exc_info=True)
-
-    def generate_unique_code(self, order_id, picker_identifier):
-        """Generate unique code for delivery opportunity"""
-        # Create a unique code: DEL_[ORDER_ID]_[RANDOM_6_CHARS]
-        random_suffix = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
-        return f"DEL_{order_id}_{random_suffix}"
-
-    def create_and_notify_company_riders(self, order, vendor, company_riders):
-        """Create delivery opportunities for company riders and send notifications"""
-        try:
-            # Set expiration time (24 hours from now)
-            expires_at = timezone.now() + timedelta(hours=24)
-            
-            opportunities = []
-            rider_data = []
-            
-            for rider in company_riders:
-                # Generate unique code for each rider
-                unique_code = self.generate_unique_code(order.id, f"CR_{rider.id}")
-                
-                # Ensure code is truly unique
-                while DeliveryOpportunity.objects.filter(unique_code=unique_code).exists():
-                    unique_code = self.generate_unique_code(order.id, f"CR_{rider.id}")
-                
-                # Create delivery opportunity
-                opportunity = DeliveryOpportunity(
-                    order=order,
-                    unique_code=unique_code,
-                    picker_type='company_rider',
-                    company_rider=rider,
-                    expires_at=expires_at
-                )
-                opportunities.append(opportunity)
-                
-                # Store rider data for email
-                rider_data.append({
-                    'rider': rider,
-                    'unique_code': unique_code,
-                    'acceptance_link': f"{settings.FRONTEND_URL}/accept-delivery/{unique_code}"
-                })
-            
-            # Bulk create opportunities
-            DeliveryOpportunity.objects.bulk_create(opportunities)
-            
-            # Send notification emails
-            self.send_company_rider_notification_emails(order, vendor, rider_data)
-            
-            logger.info(f"Created {len(opportunities)} delivery opportunities for company riders")
-            
-        except Exception as e:
-            logger.error(f"Failed to create company rider opportunities: {str(e)}", exc_info=True)
-
-    def create_and_notify_regular_pickers(self, order, vendor, target_pickers):
-        """Create delivery opportunities for regular pickers and send notifications"""
-        try:
-            # Set expiration time (24 hours from now)
-            expires_at = timezone.now() + timedelta(hours=24)
-            
-            opportunities = []
-            picker_data = []
-            
-            for picker in target_pickers:
-                # Generate unique code for each picker
-                unique_code = self.generate_unique_code(order.id, f"UP_{picker.id}")
-                
-                # Ensure code is truly unique
-                while DeliveryOpportunity.objects.filter(unique_code=unique_code).exists():
-                    unique_code = self.generate_unique_code(order.id, f"UP_{picker.id}")
-                
-                # Create delivery opportunity
-                opportunity = DeliveryOpportunity(
-                    order=order,
-                    unique_code=unique_code,
-                    picker_type='regular_picker' if picker.user_type == 'picker' else 'student_picker',
-                    user_picker=picker,
-                    expires_at=expires_at
-                )
-                opportunities.append(opportunity)
-                
-                # Store picker data for email
-                picker_data.append({
-                    'picker': picker,
-                    'unique_code': unique_code,
-                    'acceptance_link': f"{settings.FRONTEND_URL}/accept-delivery/{unique_code}"
-                })
-            
-            # Bulk create opportunities
-            DeliveryOpportunity.objects.bulk_create(opportunities)
-            
-            # Send notification emails
-            self.send_regular_picker_notification_emails(order, vendor, picker_data)
-            
-            logger.info(f"Created {len(opportunities)} delivery opportunities for regular pickers")
-            
-        except Exception as e:
-            logger.error(f"Failed to create regular picker opportunities: {str(e)}", exc_info=True)
-
-    def send_company_rider_notification_emails(self, order, vendor, rider_data):
-        """Send notification emails to company riders with unique acceptance links"""
-        try:
-            # Get all vendors involved in this order
-            order_vendors = Vendor.objects.filter(
-                orderitem__order=order
-            ).distinct()
-            
-            vendor_names = [v.business_name for v in order_vendors]
-            
-            for data in rider_data:
-                rider = data['rider']
-                unique_code = data['unique_code']
-                acceptance_link = data['acceptance_link']
-                
-                # Build personalized email content
-                subject = f"🚛 URGENT: Delivery Opportunity - Order #{order.order_number}"
-                
-                message = (
-                    f"Hello {rider.name},\n\n"
-                    f"A new delivery opportunity is available for immediate pickup!\n\n"
-                    f"📦 ORDER DETAILS:\n"
-                    f"• Order Number: {order.order_number}\n"
-                    f"• Opportunity Code: {unique_code}\n"
-                    f"• Order Date: {order.created_at.strftime('%Y-%m-%d %H:%M')}\n"
-                    f"• Pickup Location: {', '.join(vendor_names)} at {vendor.user.institution}\n"
-                    f"• Delivery Address: {order.address}\n"
-                    f"• Room Number: {order.room_number or 'Not specified'}\n"
-                    f"• Customer: {order.first_name} {order.last_name} ({order.phone})\n"
-                    f"• Order Value: ₦{order.total}\n\n"
-                    f"🎯 QUICK ACCEPT:\n"
-                    f"Click this link to accept the delivery:\n"
-                    f"{acceptance_link}\n\n"
-                    f"📞 ALTERNATIVE:\n"
-                    f"Reply to this email or call with:\n"
-                    f"• Your name: {rider.name}\n"
-                    f"• Phone: {rider.phone}\n"
-                    f"• Code: {unique_code}\n"
-                    f"• Expected pickup time\n\n"
-                    f"⚠️ This opportunity expires in 24 hours.\n"
-                    f"⏰ First acceptance wins!\n\n"
-                    f"Company: {rider.company.user.first_name} {rider.company.user.last_name}\n"
-                    f"Contact: {rider.company.user.phone_number}\n\n"
-                    f"Best regards,\n"
-                    f"Stumart Team"
-                )
-                
-                # Send individual email to each rider
-                send_mail(
-                    subject=subject,
-                    message=message,
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[rider.email],
-                    fail_silently=False
-                )
-                logger.info(f"Sent delivery opportunity email to rider {rider.name} ({unique_code})")
-            
-        except Exception as e:
-            logger.error(f"Failed to send company rider notification emails: {str(e)}", exc_info=True)
-
-    def send_regular_picker_notification_emails(self, order, vendor, picker_data):
-        """Send notification emails to regular pickers with unique acceptance links"""
-        try:
-            # Get all vendors involved in this order
-            order_vendors = Vendor.objects.filter(
-                orderitem__order=order
-            ).distinct()
-            
-            vendor_names = [v.business_name for v in order_vendors]
-            
-            for data in picker_data:
-                picker = data['picker']
-                unique_code = data['unique_code']
-                acceptance_link = data['acceptance_link']
-                
-                # Build personalized email content
-                subject = f"🚴 New Delivery Opportunity - Order #{order.order_number}"
-                
-                message = (
-                    f"Hello {picker.first_name} {picker.last_name},\n\n"
-                    f"A new delivery opportunity is available at your institution!\n\n"
-                    f"📦 ORDER DETAILS:\n"
-                    f"• Order Number: {order.order_number}\n"
-                    f"• Opportunity Code: {unique_code}\n"
-                    f"• Order Date: {order.created_at.strftime('%Y-%m-%d %H:%M')}\n"
-                    f"• Pickup Location: {', '.join(vendor_names)} at {vendor.user.institution}\n"
-                    f"• Delivery Address: {order.address}\n"
-                    f"• Room Number: {order.room_number or 'Not specified'}\n"
-                    f"• Customer: {order.first_name} {order.last_name} ({order.phone})\n"
-                    f"• Order Value: ₦{order.total}\n\n"
-                    f"🎯 QUICK ACCEPT:\n"
-                    f"Click this link to accept the delivery:\n"
-                    f"{acceptance_link}\n\n"
-                    f"📞 ALTERNATIVE:\n"
-                    f"Reply to this email with:\n"
-                    f"• Your name and contact\n"
-                    f"• Code: {unique_code}\n"
-                    f"• Expected pickup time\n\n"
-                    f"⚠️ This opportunity expires in 24 hours.\n"
-                    f"⏰ First acceptance wins!\n\n"
-                    f"Best regards,\n"
-                    f"Stumart Team"
-                )
-                
-                # Send individual email to each picker
-                send_mail(
-                    subject=subject,
-                    message=message,
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[picker.email],
-                    fail_silently=False
-                )
-                logger.info(f"Sent delivery opportunity email to picker {picker.first_name} {picker.last_name} ({unique_code})")
-            
-        except Exception as e:
-            logger.error(f"Failed to send regular picker notification emails: {str(e)}", exc_info=True)
+        response_data = {
+            "message": (
+                "All vendors packed. Order ready for delivery."
+                if all_packed
+                else f"{current_vendor.business_name} packed. Waiting for other vendors."
+            ),
+            "order_id": order_id,
+            "all_packed": all_packed,
+            "vendor_packed": current_vendor.business_name,
+            "packed_vendors": [v.business_name for v in packed_vendors],
+            "unpacked_vendors": [v.business_name for v in unpacked_vendors],
+        }
+        return Response(PackOrderResponseSerializer(response_data).data, status=status.HTTP_200_OK)
 
 
-logger = logging.getLogger(__name__)
+# ─────────────────────────────────────────────────────────────
+# ACCEPT DELIVERY
+# ─────────────────────────────────────────────────────────────
 
 class AcceptDeliveryView(APIView):
-    permission_classes = [] 
-    
-    def post(self, request):
-        try:
-            unique_code = request.data.get('unique_code')
-            rider_name = request.data.get('rider_name')
-            rider_phone = request.data.get('rider_phone')
-            pickup_time = request.data.get('pickup_time', 'ASAP')
-            
-            # Validate required fields
-            if not all([unique_code, rider_name, rider_phone]):
-                return Response({
-                    'error': 'Missing required fields: unique_code, rider_name, rider_phone'
-                }, status=status.HTTP_400_BAD_REQUEST)
-            
-            with transaction.atomic():
-                try:
-                    # Get the delivery opportunity with select_for_update to prevent race conditions
-                    opportunity = DeliveryOpportunity.objects.select_for_update().get(
-                        unique_code=unique_code
-                    )
-                except DeliveryOpportunity.DoesNotExist:
-                    return Response({
-                        'error': 'Invalid delivery code or opportunity not found'
-                    }, status=status.HTTP_404_NOT_FOUND)
-                
-                # Check if opportunity can still be accepted
-                if not opportunity.can_be_accepted():
-                    if opportunity.status == 'accepted':
-                        return Response({
-                            'error': 'This delivery has already been accepted by another rider',
-                            'message': 'Sorry, someone else got there first!'
-                        }, status=status.HTTP_409_CONFLICT)
-                    elif opportunity.is_expired():
-                        return Response({
-                            'error': 'This delivery opportunity has expired',
-                            'message': 'This opportunity is no longer available'
-                        }, status=status.HTTP_410_GONE)
-                    else:
-                        return Response({
-                            'error': 'This delivery opportunity is no longer available'
-                        }, status=status.HTTP_410_GONE)
-                
-                # Get the order
-                order = opportunity.order
-                
-                # Generate delivery confirmation code
-                delivery_confirmation_code = self.generate_delivery_confirmation_code(order.id)
-                
-                # Update the opportunity
-                opportunity.status = 'accepted'
-                opportunity.accepted_at = timezone.now()
-                opportunity.accepted_rider_name = rider_name
-                opportunity.accepted_rider_phone = rider_phone
-                opportunity.pickup_time = pickup_time
-                opportunity.delivery_confirmation_code = delivery_confirmation_code
-                opportunity.save()
-                
-                # Update the order based on picker type
-                if opportunity.picker_type == 'company_rider':
-                    # Company rider acceptance
-                    order.company_picker = True
-                    order.company_picker_email = opportunity.company_rider.email
-                    order.picker = None  # Company riders don't have User accounts
-                    order.order_status = 'IN_TRANSIT'
-                    
-                    logger.info(f"Order {order.order_number} accepted by company rider: {rider_name}")
-                    
-                else:
-                    # Regular or student picker acceptance
-                    order.company_picker = False
-                    order.company_picker_email = None
-                    order.picker = opportunity.user_picker
-                    order.order_status = 'IN_TRANSIT'
-                    
-                    logger.info(f"Order {order.order_number} accepted by user picker: {rider_name}")
-                
-                order.save()
-                
-                # Cancel all other pending opportunities for this order
-                cancelled_count = self.cancel_other_opportunities(order, opportunity)
-                
-                # Send notifications after transaction commits
-                transaction.on_commit(lambda: self.send_acceptance_notifications(
-                    order, opportunity, rider_name, rider_phone, pickup_time, delivery_confirmation_code
-                ))
-                
-                if cancelled_count > 0:
-                    transaction.on_commit(lambda: self.notify_other_riders_cancelled(
-                        order, opportunity, cancelled_count
-                    ))
-                
-                return Response({
-                    'success': True,
-                    'message': f'Delivery accepted successfully by {rider_name}',
-                    'order_number': order.order_number,
-                    'pickup_time': pickup_time,
-                    'rider_name': rider_name,
-                    'rider_phone': rider_phone,
-                    'is_company_rider': opportunity.picker_type == 'company_rider',
-                    'other_opportunities_cancelled': cancelled_count,
-                    'delivery_confirmation_code': delivery_confirmation_code
-                }, status=status.HTTP_200_OK)
-                
-        except Exception as e:
-            logger.error(f"Error in AcceptDeliveryView: {str(e)}", exc_info=True)
-            return Response({
-                'error': 'An error occurred while processing your request. Please try again.'
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
-    def generate_delivery_confirmation_code(self, order_id):
-        """Generate unique delivery confirmation code"""
-        # Create a unique code: CONF_[ORDER_ID]_[RANDOM_UUID]
-        confirmation_code = f"CONF_{order_id}_{str(uuid.uuid4())[:8].upper()}"
-        
-        # Ensure code is truly unique
-        while DeliveryOpportunity.objects.filter(delivery_confirmation_code=confirmation_code).exists():
-            confirmation_code = f"CONF_{order_id}_{str(uuid.uuid4())[:8].upper()}"
-        
-        return confirmation_code
-    
-    def generate_delivery_code(self, order_id):
-        """Generate unique delivery code"""
-        # Create a unique code: DEL_[ORDER_ID]_[RANDOM_UUID]
-        delivery_code = f"DEL_{order_id}_{str(uuid.uuid4())[:8].upper()}"
-        
-        # Ensure code is truly unique
-        while DeliveryOpportunity.objects.filter(delivery_code=delivery_code).exists():
-            delivery_code = f"DEL_{order_id}_{str(uuid.uuid4())[:8].upper()}"
-        
-        return delivery_code
+    """
+    GET  order/delivery/accept/<unique_code>/  → delivery opportunity details
+    POST order/delivery/accept/               → accept the opportunity
 
-        
+    GET  RESPONSE → AcceptDeliveryGetResponseSerializer
+    POST RESPONSE → AcceptDeliveryPostResponseSerializer
+    """
+    permission_classes = [AllowAny]
+
     def get(self, request, unique_code=None):
-        try:
-            if not unique_code:
-                return Response({
-                    'error': 'Unique code is required'
-                }, status=status.HTTP_400_BAD_REQUEST)
-            
-            try:
-                opportunity = DeliveryOpportunity.objects.get(unique_code=unique_code)
-            except DeliveryOpportunity.DoesNotExist:
-                return Response({
-                    'error': 'Invalid delivery code or opportunity not found'
-                }, status=status.HTTP_404_NOT_FOUND)
-            
-            order = opportunity.order
-            
-            # Get vendor information
-            order_vendors = Vendor.objects.filter(
-                orderitem__order=order
-            ).distinct()
-            
-            vendor_names = [v.business_name for v in order_vendors]
-            
-            # Check if opportunity is still available
-            can_accept = opportunity.can_be_accepted()
-            
-            return Response({
-                'opportunity_code': opportunity.unique_code,
-                'can_accept': can_accept,
-                'status': opportunity.status,
-                'expires_at': opportunity.expires_at,
-                'order': {
-                    'order_number': order.order_number,
-                    'created_at': order.created_at,
-                    'vendors': vendor_names,
-                    'pickup_location': order_vendors.first().user.institution if order_vendors.exists() else 'N/A',
-                    'delivery_address': order.address,
-                    'room_number': order.room_number or 'Not specified',
-                    'customer_name': f"{order.first_name} {order.last_name}",
-                    'customer_phone': order.phone,
-                    'total_amount': float(order.total)
-                },
-                'picker_info': {
-                    'type': opportunity.picker_type,
-                    'name': opportunity.company_rider.name if opportunity.company_rider else 
-                            f"{opportunity.user_picker.first_name} {opportunity.user_picker.last_name}" if opportunity.user_picker else 'Unknown'
-                }
-            }, status=status.HTTP_200_OK)
-            
-        except Exception as e:
-            logger.error(f"Error getting delivery opportunity details: {str(e)}", exc_info=True)
-            return Response({
-                'error': 'An error occurred while fetching opportunity details'
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
-    def cancel_other_opportunities(self, order, accepted_opportunity):
-        """Cancel all other pending opportunities for this order"""
-        try:
-            other_opportunities = DeliveryOpportunity.objects.filter(
-                order=order,
-                status='pending'
-            ).exclude(id=accepted_opportunity.id)
-            
-            cancelled_count = other_opportunities.count()
-            other_opportunities.update(
-                status='cancelled',
-                accepted_at=timezone.now()  # Use this to track when it was cancelled
+        if not unique_code:
+            return Response(
+                {"error": "unique_code is required."},
+                status=status.HTTP_400_BAD_REQUEST,
             )
-            
-            logger.info(f"Cancelled {cancelled_count} other opportunities for order {order.order_number}")
-            return cancelled_count
-            
-        except Exception as e:
-            logger.error(f"Error cancelling other opportunities: {str(e)}", exc_info=True)
-            return 0
-    
-    def send_acceptance_notifications(self, order, opportunity, rider_name, rider_phone, pickup_time, delivery_confirmation_code):
-        """Send notifications about delivery acceptance"""
-        try:
-            # Notify customer
-            self.notify_customer_delivery_accepted(order, rider_name, rider_phone, pickup_time)
-            
-            # Notify admin/vendor
-            self.notify_admin_delivery_accepted(order, opportunity, rider_name, rider_phone, pickup_time)
-            
-            # Send delivery confirmation link to rider
-            self.send_delivery_confirmation_link(order, opportunity, rider_name, rider_phone, delivery_confirmation_code)
-            
-        except Exception as e:
-            logger.error(f"Error sending acceptance notifications: {str(e)}", exc_info=True)
-    
-    def send_delivery_confirmation_link(self, order, opportunity, rider_name, rider_phone, delivery_confirmation_code):
-        """Send delivery confirmation link to the rider"""
-        try:
-            # Determine recipient email
-            rider_email = (
-                opportunity.company_rider.email 
-                if opportunity.company_rider 
-                else opportunity.user_picker.email
-            )
-            
-            # Generate confirmation link
-            confirmation_link = f"{settings.FRONTEND_URL}/confirm-delivery/{delivery_confirmation_code}"
-            
-            subject = f"Delivery Confirmation Link - Order #{order.order_number}"
-            
-            message = (
-                f"Hello {rider_name},\n\n"
-                f"Thank you for accepting the delivery for Order #{order.order_number}.\n\n"
-                f"📦 ORDER DETAILS:\n"
-                f"• Order Number: {order.order_number}\n"
-                f"• Customer: {order.first_name} {order.last_name}\n"
-                f"• Delivery Address: {order.address}\n"
-                f"• Room Number: {order.room_number or 'Not specified'}\n"
-                f"• Customer Phone: {order.phone}\n"
-                f"• Order Value: ₦{order.total}\n\n"
-                f"🚀 IMPORTANT - DELIVERY CONFIRMATION:\n"
-                f"Once you have successfully delivered the order to the customer, "
-                f"please click the link below to confirm delivery:\n\n"
-                f"{confirmation_link}\n\n"
-                f"📋 DELIVERY INSTRUCTIONS:\n"
-                f"1. Contact the customer when you're on your way\n"
-                f"2. Verify the customer's identity before delivery\n"
-                f"3. Handle items with care\n"
-                f"4. Click the confirmation link ONLY after successful delivery\n"
-                f"5. Keep this email for your records\n\n"
-                f"⚠️ IMPORTANT: Only confirm delivery after the customer has received their order.\n\n"
-                f"Thank you for your service!\n\n"
-                f"Best regards,\n"
-                f"Stumart Team"
-            )
-            
-            send_mail(
-                subject=subject,
-                message=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[rider_email],
-                fail_silently=False
-            )
-            
-            logger.info(f"Sent delivery confirmation link to {rider_name} at {rider_email} for order {order.order_number}")
-            
-        except Exception as e:
-            logger.error(f"Failed to send delivery confirmation link: {str(e)}", exc_info=True)
-    
-    def notify_customer_delivery_accepted(self, order, rider_name, rider_phone, pickup_time):
-        """Notify customer that their delivery has been accepted"""
-        try:
-            subject = f"Your Order #{order.order_number} is Out for Delivery!"
-            
-            message = (
-                f"Hello {order.first_name},\n\n"
-                f"Great news! Your order #{order.order_number} has been accepted for delivery.\n\n"
-                f"🚴 DELIVERY DETAILS:\n"
-                f"• Rider: {rider_name}\n"
-                f"• Contact: {rider_phone}\n"
-                f"• Pickup Time: {pickup_time}\n"
-                f"• Delivery Address: {order.address}\n"
-                f"• Room: {order.room_number or 'Not specified'}\n\n"
-                f"Your rider will contact you when they're on the way.\n"
-                f"You will receive another email once your order has been delivered.\n\n"
-                f"Thank you for choosing Stumart!"
-            )
-            
-            send_mail(
-                subject=subject,
-                message=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[order.email],
-                fail_silently=True
-            )
-            
-            logger.info(f"Sent delivery acceptance notification to customer for order {order.order_number}")
-            
-        except Exception as e:
-            logger.error(f"Failed to notify customer: {str(e)}", exc_info=True)
-    
-    def notify_admin_delivery_accepted(self, order, opportunity, rider_name, rider_phone, pickup_time):
-        """Notify admin/system about delivery acceptance"""
-        try:
-            admin_emails = [settings.DEFAULT_FROM_EMAIL]  # Add your admin emails
-            
-            picker_type_display = {
-                'company_rider': 'Company Rider',
-                'regular_picker': 'Regular Picker',
-                'student_picker': 'Student Picker'
-            }.get(opportunity.picker_type, 'Unknown')
-            
-            subject = f"Delivery Accepted - Order #{order.order_number}"
-            
-            message = (
-                f"A delivery has been accepted:\n\n"
-                f"ORDER INFO:\n"
-                f"• Order Number: {order.order_number}\n"
-                f"• Customer: {order.first_name} {order.last_name}\n"
-                f"• Address: {order.address}\n"
-                f"• Total: ₦{order.total}\n\n"
-                f"RIDER INFO:\n"
-                f"• Type: {picker_type_display}\n"
-                f"• Name: {rider_name}\n"
-                f"• Phone: {rider_phone}\n"
-                f"• Pickup Time: {pickup_time}\n"
-                f"• Email: {opportunity.company_rider.email if opportunity.company_rider else opportunity.user_picker.email}\n\n"
-                f"Opportunity Code: {opportunity.unique_code}\n"
-                f"Delivery Confirmation Code: {opportunity.delivery_confirmation_code}\n"
-                f"Accepted At: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}"
-            )
-            
-            send_mail(
-                subject=subject,
-                message=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=admin_emails,
-                fail_silently=True
-            )
-            
-            logger.info(f"Sent delivery acceptance notification to admin for order {order.order_number}")
-            
-        except Exception as e:
-            logger.error(f"Failed to notify admin: {str(e)}", exc_info=True)
-    
-    def notify_other_riders_cancelled(self, order, accepted_opportunity, cancelled_count):
-        """Notify other riders that the opportunity has been taken"""
-        try:
-            cancelled_opportunities = DeliveryOpportunity.objects.filter(
-                order=order,
-                status='cancelled'
-            ).exclude(id=accepted_opportunity.id)
-            
-            for opportunity in cancelled_opportunities:
-                try:
-                    if opportunity.company_rider:
-                        email = opportunity.company_rider.email
-                        name = opportunity.company_rider.name
-                    else:
-                        email = opportunity.user_picker.email
-                        name = f"{opportunity.user_picker.first_name} {opportunity.user_picker.last_name}"
-                    
-                    subject = f"Delivery Opportunity Taken - Order #{order.order_number}"
-                    
-                    message = (
-                        f"Hello {name},\n\n"
-                        f"The delivery opportunity for Order #{order.order_number} has been accepted by another rider.\n\n"
-                        f"Don't worry - more opportunities are coming your way!\n\n"
-                        f"Thank you for your quick response.\n\n"
-                        f"Best regards,\n"
-                        f"Stumart Team"
-                    )
-                    
-                    send_mail(
-                        subject=subject,
-                        message=message,
-                        from_email=settings.DEFAULT_FROM_EMAIL,
-                        recipient_list=[email],
-                        fail_silently=True
-                    )
-                    
-                except Exception as email_error:
-                    logger.error(f"Failed to notify cancelled rider {opportunity.id}: {str(email_error)}")
-                    continue
-            
-            logger.info(f"Notified {cancelled_count} riders that delivery was taken for order {order.order_number}")
-            
-        except Exception as e:
-            logger.error(f"Error notifying cancelled riders: {str(e)}", exc_info=True)
 
+        try:
+            opp = DeliveryOpportunity.objects.select_related(
+                "order",
+                "user_picker",
+                "company_rider",
+                "company_rider__company",
+            ).get(unique_code=unique_code)
+        except DeliveryOpportunity.DoesNotExist:
+            return Response(
+                {"error": "Delivery opportunity not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        order        = opp.order
+        order_vendors = Vendor.objects.filter(orderitem__order=order).distinct()
+
+        # ✅ Derive picker info from model
+        if opp.picker_type == "company_rider" and opp.company_rider:
+            picker_name  = opp.company_rider.name
+            picker_phone = opp.company_rider.phone
+            picker_email = opp.company_rider.email
+        elif opp.user_picker:
+            picker_name  = f"{opp.user_picker.first_name} {opp.user_picker.last_name}"
+            picker_phone = opp.user_picker.phone_number
+            picker_email = opp.user_picker.email
+        else:
+            picker_name  = "Unknown"
+            picker_phone = "Unknown"
+            picker_email = "Unknown"
+
+        data = {
+            "opportunity_code": opp.unique_code,
+            "can_accept"      : opp.can_be_accepted(),
+            "status"          : opp.status,
+            "expires_at"      : opp.expires_at,
+            "order": {
+                "order_number"    : order.order_number,
+                "created_at"      : order.created_at,
+                "vendors"         : [v.business_name for v in order_vendors],
+                "pickup_location" : order_vendors.first().user.institution if order_vendors.exists() else "N/A",
+                "delivery_address": order.address,
+                "room_number"     : order.room_number or "Not specified",
+                "customer_name"   : f"{order.first_name} {order.last_name}",
+                "customer_phone"  : order.phone,
+                "total_amount"    : float(order.total),
+            },
+            "picker_info": {
+                "type" : opp.picker_type,
+                "name" : picker_name,
+                "phone": picker_phone,
+                "email": picker_email,
+            },
+        }
+        return Response(AcceptDeliveryGetResponseSerializer(data).data)
+
+    def post(self, request):
+        req = AcceptDeliveryRequestSerializer(data=request.data)
+        if not req.is_valid():
+            return Response(req.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        data        = req.validated_data
+        unique_code = data["unique_code"]
+        pickup_time = data.get("pickup_time", "ASAP")
+
+        with transaction.atomic():
+            try:
+                opp = DeliveryOpportunity.objects.select_for_update().select_related(
+                    "order",
+                    "user_picker",
+                    "company_rider",
+                    "company_rider__company",
+                ).get(unique_code=unique_code)
+            except DeliveryOpportunity.DoesNotExist:
+                return Response(
+                    {"error": "Delivery opportunity not found."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            if not opp.can_be_accepted():
+                if opp.status == "accepted":
+                    return Response(
+                        {"error": "Already accepted by another rider."},
+                        status=status.HTTP_409_CONFLICT,
+                    )
+                return Response(
+                    {"error": "Opportunity no longer available."},
+                    status=status.HTTP_410_GONE,
+                )
+
+            # ✅ Derive rider identity entirely from the model
+            if opp.picker_type == "company_rider" and opp.company_rider:
+                rider_name  = opp.company_rider.name
+                rider_phone = opp.company_rider.phone
+                rider_email = opp.company_rider.email
+            elif opp.user_picker:
+                rider_name  = f"{opp.user_picker.first_name} {opp.user_picker.last_name}"
+                rider_phone = opp.user_picker.phone_number
+                rider_email = opp.user_picker.email
+            else:
+                return Response(
+                    {"error": "No picker attached to this opportunity."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            order     = opp.order
+            conf_code = generate_delivery_confirmation_code(order.id)
+
+            # Update opportunity
+            opp.status                     = "accepted"
+            opp.accepted_at                = now()
+            opp.accepted_rider_name        = rider_name
+            opp.accepted_rider_phone       = rider_phone
+            opp.pickup_time                = pickup_time
+            opp.delivery_confirmation_code = conf_code
+            opp.save()
+
+            # Update order
+            if opp.picker_type == "company_rider":
+                order.company_picker       = True
+                order.company_picker_email = rider_email
+                order.picker               = None
+            else:
+                order.company_picker       = False
+                order.company_picker_email = None
+                order.picker               = opp.user_picker
+
+            order.order_status = "IN_TRANSIT"
+            order.save()
+
+            # Cancel all other pending opportunities for this order
+            cancelled_qs = (
+                DeliveryOpportunity.objects
+                .filter(order=order, status="pending")
+                .exclude(id=opp.id)
+            )
+            cancelled_count = cancelled_qs.count()
+            cancelled_qs.update(status="cancelled", accepted_at=now())
+
+            # ✅ Capture loop variables explicitly to avoid lambda closure bugs
+            transaction.on_commit(
+                lambda o=order, rn=rider_name, rp=rider_phone, pt=pickup_time:
+                    send_customer_delivery_accepted_email(o, rn, rp, pt)
+            )
+            transaction.on_commit(
+                lambda o=order, op=opp, rn=rider_name, rp=rider_phone, cc=conf_code:
+                    send_rider_confirmation_link_email(o, op, rn, rp, cc)
+            )
+            # transaction.on_commit(
+            #     lambda o=order, op=opp:
+            #         send_admin_delivery_accepted_email(o, op, op.accepted_rider_name, op.accepted_rider_phone, op.pickup_time)
+            # )
+            if cancelled_count > 0:
+                transaction.on_commit(
+                    lambda o=order, op=opp: send_cancelled_riders_emails(o, op)
+                )
+
+        return Response(
+            AcceptDeliveryPostResponseSerializer({
+                "success"                      : True,
+                "message"                      : f"Delivery accepted by {rider_name}.",
+                "order_number"                 : order.order_number,
+                "pickup_time"                  : pickup_time,
+                "rider_name"                   : rider_name,
+                "rider_phone"                  : rider_phone,
+                "is_company_rider"             : opp.picker_type == "company_rider",
+                "other_opportunities_cancelled": cancelled_count,
+                "delivery_confirmation_code"   : conf_code,
+            }).data,
+            status=status.HTTP_200_OK,
+        )
+
+
+# ─────────────────────────────────────────────────────────────
+# CONFIRM DELIVERY (Rider confirms handover)
+# ─────────────────────────────────────────────────────────────
 
 class ConfirmDeliveryView(APIView):
-    permission_classes = []
-    
-    def post(self, request):
-        try:
-            delivery_confirmation_code = request.data.get('delivery_confirmation_code')
-            
-            if not delivery_confirmation_code:
-                return Response({
-                    'error': 'Delivery confirmation code is required'
-                }, status=status.HTTP_400_BAD_REQUEST)
-            
-            with transaction.atomic():
-                try:
-                    # Get the delivery opportunity with the confirmation code
-                    opportunity = DeliveryOpportunity.objects.select_for_update().get(
-                        delivery_confirmation_code=delivery_confirmation_code
-                    )
-                except DeliveryOpportunity.DoesNotExist:
-                    return Response({
-                        'error': 'Invalid delivery confirmation code'
-                    }, status=status.HTTP_404_NOT_FOUND)
-                
-                # Check if opportunity is in accepted state
-                if opportunity.status != 'accepted':
-                    return Response({
-                        'error': 'This delivery opportunity is not in accepted state',
-                        'message': f'Current status: {opportunity.status}'
-                    }, status=status.HTTP_400_BAD_REQUEST)
-                
-                order = opportunity.order
-                
-                # Check if order is already delivered
-                if order.order_status == 'DELIVERED':
-                    return Response({
-                        'error': 'This order has already been marked as delivered',
-                        'message': 'Order is already in delivered status'
-                    }, status=status.HTTP_409_CONFLICT)
-                
-                # Update order status to DELIVERED
-                order.order_status = 'DELIVERED'
-                order.save()
-                
-                # Update opportunity status
-                customer_confirmation_code = self.generate_customer_confirmation_code(order.id)
-                opportunity.status = 'completed'
-                opportunity.delivered_at = timezone.now()
-                opportunity.customer_confirmation_code = customer_confirmation_code
-                opportunity.save()
-                
-                # Generate customer confirmation code
-                
-                # Send notifications after transaction commits
-                transaction.on_commit(lambda: self.send_delivery_confirmation_notifications(
-                    order, opportunity, customer_confirmation_code
-                ))
-                
-                return Response({
-                    'success': True,
-                    'message': 'Delivery confirmed successfully',
-                    'order_number': order.order_number,
-                    'delivered_at': opportunity.delivered_at,
-                    'customer_confirmation_code': customer_confirmation_code
-                }, status=status.HTTP_200_OK)
-                
-        except Exception as e:
-            logger.error(f"Error in ConfirmDeliveryView: {str(e)}", exc_info=True)
-            return Response({
-                'error': 'An error occurred while processing your request. Please try again.'
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
-    def get(self, request, delivery_confirmation_code=None):
-        """Get delivery details for confirmation"""
-        try:
-            if not delivery_confirmation_code:
-                return Response({
-                    'error': 'Delivery confirmation code is required'
-                }, status=status.HTTP_400_BAD_REQUEST)
-            
-            try:
-                opportunity = DeliveryOpportunity.objects.get(
-                    delivery_confirmation_code=delivery_confirmation_code
-                )
-            except DeliveryOpportunity.DoesNotExist:
-                return Response({
-                    'error': 'Invalid delivery confirmation code'
-                }, status=status.HTTP_404_NOT_FOUND)
-            
-            order = opportunity.order
-            
-            return Response({
-                'delivery_confirmation_code': delivery_confirmation_code,
-                'can_confirm': opportunity.status == 'accepted' and order.order_status != 'DELIVERED',
-                'opportunity_status': opportunity.status,
-                'order_status': order.order_status,
-                'order': {
-                    'order_number': order.order_number,
-                    'customer_name': f"{order.first_name} {order.last_name}",
-                    'customer_phone': order.phone,
-                    'delivery_address': order.address,
-                    'room_number': order.room_number or 'Not specified',
-                    'total_amount': float(order.total),
-                    'created_at': order.created_at
-                },
-                'rider_info': {
-                    'name': opportunity.accepted_rider_name,
-                    'phone': opportunity.accepted_rider_phone,
-                    'pickup_time': opportunity.pickup_time,
-                    'accepted_at': opportunity.accepted_at
-                }
-            }, status=status.HTTP_200_OK)
-            
-        except Exception as e:
-            logger.error(f"Error getting delivery confirmation details: {str(e)}", exc_info=True)
-            return Response({
-                'error': 'An error occurred while fetching confirmation details'
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
-    def generate_customer_confirmation_code(self, order_id):
-        """Generate unique customer confirmation code"""
-        customer_confirmation_code = f"CUST_CONF_{order_id}_{str(uuid.uuid4())[:8].upper()}"
-        return customer_confirmation_code
-    
-    def send_delivery_confirmation_notifications(self, order, opportunity, customer_confirmation_code):
-        """Send notifications about successful delivery"""
-        try:
-            # Notify customer about delivery
-            self.notify_customer_delivery_completed(order, opportunity, customer_confirmation_code)
-            
-            # Notify admin about delivery completion
-            self.notify_admin_delivery_completed(order, opportunity)
-            
-        except Exception as e:
-            logger.error(f"Error sending delivery confirmation notifications: {str(e)}", exc_info=True)
-    
-    def notify_customer_delivery_completed(self, order, opportunity, customer_confirmation_code):
-        """Notify customer that their order has been delivered"""
-        try:
-            # Generate customer confirmation link
-            customer_confirmation_link = f"{settings.FRONTEND_URL}/confirm-order-received/{customer_confirmation_code}"
-            
-            subject = f"Order #{order.order_number} Delivered Successfully!"
-            
-            message = (
-                f"Hello {order.first_name},\n\n"
-                f"Great news! Your order #{order.order_number} has been delivered successfully.\n\n"
-                f"📦 DELIVERY DETAILS:\n"
-                f"• Order Number: {order.order_number}\n"
-                f"• Delivered To: {order.address}\n"
-                f"• Room: {order.room_number or 'Not specified'}\n"
-                f"• Delivered By: {opportunity.accepted_rider_name}\n"
-                f"• Delivered At: {opportunity.delivered_at.strftime('%Y-%m-%d %H:%M:%S')}\n"
-                f"• Order Value: ₦{order.total}\n\n"
-                f"✅ CONFIRM YOUR ORDER RECEIPT:\n"
-                f"Please click the link below to confirm you have received your order:\n\n"
-                f"{customer_confirmation_link}\n\n"
-                f"This helps us ensure delivery quality and protects both you and our riders.\n\n"
-                f"Thank you for choosing Stumart!\n\n"
-                f"Best regards,\n"
-                f"Stumart Team"
-            )
-            
-            send_mail(
-                subject=subject,
-                message=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[order.email],
-                fail_silently=False
-            )
-            
-            logger.info(f"Sent delivery completion notification to customer for order {order.order_number}")
-            
-        except Exception as e:
-            logger.error(f"Failed to notify customer about delivery completion: {str(e)}", exc_info=True)
-    
-    def notify_admin_delivery_completed(self, order, opportunity):
-        """Notify admin about delivery completion"""
-        try:
-            admin_emails = [settings.DEFAULT_FROM_EMAIL]
-            
-            subject = f"Delivery Completed - Order #{order.order_number}"
-            
-            message = (
-                f"A delivery has been completed:\n\n"
-                f"ORDER INFO:\n"
-                f"• Order Number: {order.order_number}\n"
-                f"• Customer: {order.first_name} {order.last_name}\n"
-                f"• Address: {order.address}\n"
-                f"• Total: ₦{order.total}\n\n"
-                f"DELIVERY INFO:\n"
-                f"• Rider: {opportunity.accepted_rider_name}\n"
-                f"• Phone: {opportunity.accepted_rider_phone}\n"
-                f"• Delivered At: {opportunity.delivered_at.strftime('%Y-%m-%d %H:%M:%S')}\n"
-                f"• Confirmation Code: {opportunity.delivery_confirmation_code}\n\n"
-                f"Status: Order marked as DELIVERED"
-            )
-            
-            send_mail(
-                subject=subject,
-                message=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=admin_emails,
-                fail_silently=True
-            )
-            
-            logger.info(f"Sent delivery completion notification to admin for order {order.order_number}")
-            
-        except Exception as e:
-            logger.error(f"Failed to notify admin about delivery completion: {str(e)}", exc_info=True)
+    """
+    GET  order/delivery/confirm/<delivery_confirmation_code>/  → delivery details
+    POST order/delivery/confirm/                               → confirm delivery
 
+    GET  RESPONSE → ConfirmDeliveryGetResponseSerializer
+    POST RESPONSE → ConfirmDeliveryPostResponseSerializer
+    """
+    permission_classes = [AllowAny]
+
+    def get(self, request, delivery_confirmation_code=None):
+        if not delivery_confirmation_code:
+            return Response({"error": "delivery_confirmation_code is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            opp = DeliveryOpportunity.objects.get(delivery_confirmation_code=delivery_confirmation_code)
+        except DeliveryOpportunity.DoesNotExist:
+            return Response({"error": "Invalid confirmation code."}, status=status.HTTP_404_NOT_FOUND)
+
+        order = opp.order
+        data = {
+            "delivery_confirmation_code": delivery_confirmation_code,
+            "can_confirm": opp.status == "accepted" and order.order_status != "DELIVERED",
+            "opportunity_status": opp.status,
+            "order_status": order.order_status,
+            "order": {
+                "order_number": order.order_number,
+                "customer_name": f"{order.first_name} {order.last_name}",
+                "customer_phone": order.phone,
+                "delivery_address": order.address,
+                "room_number": order.room_number or "Not specified",
+                "total_amount": float(order.total),
+                "created_at": order.created_at,
+            },
+            "rider_info": {
+                "name": opp.accepted_rider_name,
+                "phone": opp.accepted_rider_phone,
+                "pickup_time": opp.pickup_time,
+                "accepted_at": opp.accepted_at,
+            },
+        }
+        return Response(ConfirmDeliveryGetResponseSerializer(data).data)
+
+    def post(self, request):
+        req = ConfirmDeliveryRequestSerializer(data=request.data)
+        if not req.is_valid():
+            return Response(req.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        conf_code = req.validated_data["delivery_confirmation_code"]
+
+        with transaction.atomic():
+            try:
+                opp = DeliveryOpportunity.objects.select_for_update().get(delivery_confirmation_code=conf_code)
+            except DeliveryOpportunity.DoesNotExist:
+                return Response({"error": "Invalid confirmation code."}, status=status.HTTP_404_NOT_FOUND)
+
+            if opp.status != "accepted":
+                return Response({"error": f"Opportunity status is '{opp.status}', not 'accepted'."}, status=status.HTTP_400_BAD_REQUEST)
+
+            order = opp.order
+            if order.order_status == "DELIVERED":
+                return Response({"error": "Order already marked as delivered."}, status=status.HTTP_409_CONFLICT)
+
+            order.order_status = "DELIVERED"
+            order.save()
+
+            cust_code = generate_customer_confirmation_code(order.id)
+            opp.status = "completed"
+            opp.delivered_at = now()
+            opp.customer_confirmation_code = cust_code
+            opp.save()
+
+            transaction.on_commit(lambda: send_customer_delivery_completed_email(order, opp, cust_code))
+            transaction.on_commit(lambda: send_admin_delivery_completed_email(order, opp))
+
+        return Response(
+            ConfirmDeliveryPostResponseSerializer({
+                "success": True,
+                "message": "Delivery confirmed successfully.",
+                "order_number": order.order_number,
+                "delivered_at": opp.delivered_at,
+                "customer_confirmation_code": cust_code,
+            }).data,
+            status=status.HTTP_200_OK,
+        )
+
+
+# ─────────────────────────────────────────────────────────────
+# CUSTOMER CONFIRMATION (triggers payouts)
+# ─────────────────────────────────────────────────────────────
 
 class CustomerConfirmationView(APIView):
-    permission_classes = []
-    
+    """
+    GET  order/delivery/customer-confirm/<customer_confirmation_code>/  → order details
+    POST order/delivery/customer-confirm/                               → confirm receipt & trigger payouts
+
+    GET  RESPONSE → CustomerConfirmationGetResponseSerializer
+    POST RESPONSE → CustomerConfirmationPostResponseSerializer
+    """
+    permission_classes = [AllowAny]
+
     def get(self, request, customer_confirmation_code=None):
-        """Get order details for customer confirmation"""
+        if not customer_confirmation_code:
+            return Response({"error": "customer_confirmation_code is required."}, status=status.HTTP_400_BAD_REQUEST)
+
         try:
-            if not customer_confirmation_code:
-                return Response({
-                    'error': 'Customer confirmation code is required'
-                }, status=status.HTTP_400_BAD_REQUEST)
-            
-            try:
-                opportunity = DeliveryOpportunity.objects.get(
-                    customer_confirmation_code=customer_confirmation_code
-                )
-            except DeliveryOpportunity.DoesNotExist:
-                return Response({
-                    'error': 'Invalid customer confirmation code'
-                }, status=status.HTTP_404_NOT_FOUND)
-            
-            order = opportunity.order
-            
-            return Response({
-                'customer_confirmation_code': customer_confirmation_code,
-                'can_confirm': (opportunity.status == 'completed' and 
-                              order.order_status == 'DELIVERED' and 
-                              not order.confirm),
-                'opportunity_status': opportunity.status,
-                'order_status': order.order_status,
-                'already_confirmed': order.confirm,
-                'delivered_at': opportunity.delivered_at if hasattr(opportunity, 'delivered_at') else None,
-                'order': {
-                    'order_number': order.order_number,
-                    'customer_name': f"{order.first_name} {order.last_name}",
-                    'customer_phone': order.phone,
-                    'delivery_address': order.address,
-                    'room_number': order.room_number or 'Not specified',
-                    'total_amount': float(order.total),
-                    'shipping_fee': float(order.shipping_fee),
-                    'created_at': order.created_at
-                },
-                'rider_info': {
-                    'name': opportunity.accepted_rider_name,
-                    'phone': opportunity.accepted_rider_phone,
-                    'pickup_time': opportunity.pickup_time,
-                    'accepted_at': opportunity.accepted_at
-                }
-            }, status=status.HTTP_200_OK)
-            
-        except Exception as e:
-            logger.error(f"Error getting customer confirmation details: {str(e)}", exc_info=True)
-            return Response({
-                'error': 'An error occurred while fetching confirmation details'
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
-    def post(self, request):
-        try:
-            customer_confirmation_code = request.data.get('customer_confirmation_code')
-            
-            if not customer_confirmation_code:
-                return Response({
-                    'error': 'Customer confirmation code is required'
-                }, status=status.HTTP_400_BAD_REQUEST)
-            
-            with transaction.atomic():
-                try:
-                    opportunity = DeliveryOpportunity.objects.select_for_update().get(
-                        customer_confirmation_code=customer_confirmation_code
-                    )
-                except DeliveryOpportunity.DoesNotExist:
-                    return Response({
-                        'error': 'Invalid customer confirmation code'
-                    }, status=status.HTTP_404_NOT_FOUND)
-                
-                if opportunity.status != 'completed':
-                    return Response({
-                        'error': 'This delivery has not been confirmed yet by the rider',
-                        'message': f'Current status: {opportunity.status}'
-                    }, status=status.HTTP_400_BAD_REQUEST)
-                
-                order = opportunity.order
-                
-                if order.order_status == 'COMPLETED':
-                    return Response({
-                        'error': 'This order has already been confirmed by customer',
-                        'message': 'Order is already in completed status'
-                    }, status=status.HTTP_409_CONFLICT)
-                
-                # Update order status
-                order.order_status = 'COMPLETED'
-                order.confirm = True
-                order.save()
-                
-                # Process automated transfers to vendors and pickers
-                transfer_results = self.process_automated_transfers(order, opportunity)
-                
-                # Send notifications after transaction commits
-                transaction.on_commit(lambda: self.send_transfer_notifications(
-                    order, opportunity, transfer_results
-                ))
-                
-                return Response({
-                    'success': True,
-                    'message': 'Order confirmed successfully. Transfers initiated.',
-                    'order_number': order.order_number,
-                    'confirmed_at': timezone.now(),
-                    'transfer_results': transfer_results
-                }, status=status.HTTP_200_OK)
-                
-        except Exception as e:
-            logger.error(f"Error in CustomerConfirmationView: {str(e)}", exc_info=True)
-            return Response({
-                'error': 'An error occurred while processing your confirmation. Please try again.'
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
-    def process_automated_transfers(self, order, opportunity):
-        """Process automated transfers to vendors and pickers"""
-        from User.paystack_register import PaystackTransferService
-        from User.models import Vendor, Picker, StudentPicker
-        
-        transfer_service = PaystackTransferService()
-        results = {
-            'vendor_transfers': [],
-            'picker_transfer': None,
-            'company_rider_transfer': None,
-            'stumart_earnings': 0
+            opp = DeliveryOpportunity.objects.get(customer_confirmation_code=customer_confirmation_code)
+        except DeliveryOpportunity.DoesNotExist:
+            return Response({"error": "Invalid confirmation code."}, status=status.HTTP_404_NOT_FOUND)
+
+        order = opp.order
+        data = {
+            "customer_confirmation_code": customer_confirmation_code,
+            "can_confirm": opp.status == "completed" and order.order_status == "DELIVERED" and not order.confirm,
+            "opportunity_status": opp.status,
+            "order_status": order.order_status,
+            "already_confirmed": order.confirm,
+            "delivered_at": getattr(opp, "delivered_at", None),
+            "order": {
+                "order_number": order.order_number,
+                "customer_name": f"{order.first_name} {order.last_name}",
+                "customer_phone": order.phone,
+                "delivery_address": order.address,
+                "room_number": order.room_number or "Not specified",
+                "total_amount": float(order.total),
+                "shipping_fee": float(order.shipping_fee),
+                "created_at": order.created_at,
+            },
+            "rider_info": {
+                "name": opp.accepted_rider_name,
+                "phone": opp.accepted_rider_phone,
+                "pickup_time": opp.pickup_time,
+                "accepted_at": opp.accepted_at,
+            },
         }
-        
-        try:
-            shipping_fee = Decimal(str(order.shipping_fee))
-            tax_amount = Decimal(str(order.tax))
-            company_commission = Decimal('100.00')
-            
-            # Platform fees
-            vendor_platform_fee = Decimal('50.00')  # ₦50 per vendor
-            picker_platform_fee = Decimal('100.00')  # ₦100 per picker/student_picker
-            
-            # Calculate Stumart earnings
-            if opportunity.picker_type == 'company_rider':
-                stumart_earnings = tax_amount + company_commission
-            else:
-                # Add picker platform fee to Stumart earnings
-                stumart_earnings = tax_amount + picker_platform_fee
-            
-            # Update Stumart wallet
-            stumart_wallet = StumartWalletAccount.get_instance()
-            stumart_user = getattr(stumart_wallet, 'user', None)
-            
-            if not stumart_user:
-                stumart_user = User.objects.filter(is_superuser=True).first()
-            
-            if stumart_user:
-                if opportunity.picker_type == 'company_rider':
-                    stumart_wallet.add_tax(tax_amount)
-                    stumart_wallet.add_commission(company_commission)
-                    
-                    WalletTransactionAccount.objects.create(
-                        transaction_type='tax',
-                        amount=tax_amount,
-                        order=order,
-                        user=stumart_user,
-                        description=f"Tax collected from order #{order.order_number}"
-                    )
-                    
-                    WalletTransactionAccount.objects.create(
-                        transaction_type='commission',
-                        amount=company_commission,
-                        order=order,
-                        user=stumart_user,
-                        description=f"Commission from company rider delivery - order #{order.order_number}"
-                    )
-                else:
-                    stumart_wallet.add_tax(tax_amount)
-                    stumart_wallet.add_commission(picker_platform_fee)
-                    
-                    WalletTransactionAccount.objects.create(
-                        transaction_type='tax',
-                        amount=tax_amount,
-                        order=order,
-                        user=stumart_user,
-                        description=f"Tax collected from order #{order.order_number}"
-                    )
-                    
-                    WalletTransactionAccount.objects.create(
-                        transaction_type='commission',
-                        amount=picker_platform_fee,
-                        order=order,
-                        user=stumart_user,
-                        description=f"Platform fee from picker delivery - order #{order.order_number}"
-                    )
-            
-            results['stumart_earnings'] = float(stumart_earnings)
-            
-            # 1. Process Vendor Transfers
-            vendor_payments = self.calculate_vendor_payments(order)
-            
-            # Add vendor platform fee to Stumart earnings
-            total_vendor_platform_fees = vendor_platform_fee * len(vendor_payments)
-            stumart_earnings += total_vendor_platform_fees
-            results['stumart_earnings'] = float(stumart_earnings)
-            
-            # Record vendor platform fees
-            if stumart_user and len(vendor_payments) > 0:
-                WalletTransactionAccount.objects.create(
-                    transaction_type='commission',
-                    amount=total_vendor_platform_fees,
-                    order=order,
-                    user=stumart_user,
-                    description=f"Platform fees from {len(vendor_payments)} vendor(s) - order #{order.order_number}"
-                )
-            
-            for vendor_id, amount in vendor_payments.items():
-                try:
-                    vendor = Vendor.objects.get(id=vendor_id)
-                    
-                    # Deduct platform fee from vendor payment
-                    vendor_payout = amount - vendor_platform_fee
-                    
-                    # Ensure payout is not negative
-                    if vendor_payout < 0:
-                        logger.warning(f"Vendor {vendor.business_name} payout would be negative (₦{vendor_payout}), setting to 0")
-                        vendor_payout = Decimal('0.00')
-                    
-                    # Check if vendor has recipient code
-                    if not vendor.paystack_recipient_code:
-                        logger.warning(f"Vendor {vendor.business_name} has no recipient code, skipping transfer")
-                        results['vendor_transfers'].append({
-                            'vendor_id': vendor_id,
-                            'vendor_name': vendor.business_name,
-                            'vendor_email': vendor.user.email,
-                            'gross_amount': float(amount),
-                            'platform_fee': float(vendor_platform_fee),
-                            'net_amount': float(vendor_payout),
-                            'success': False,
-                            'error': 'No recipient code configured'
-                        })
-                        
-                        # Still credit wallet as fallback
-                        wallet, created = VendorWallets.objects.get_or_create(
-                            vendor=vendor,
-                            defaults={'balance': Decimal('0')}
-                        )
-                        wallet.balance += vendor_payout
-                        wallet.save()
-                        
-                        # Create wallet transaction record
-                        WalletTransactionAccount.objects.create(
-                            transaction_type='vendor_payment',
-                            amount=vendor_payout,
-                            order=order,
-                            user=vendor.user,
-                            description=f"Payment credited to wallet for order #{order.order_number} (₦{amount} - ₦{vendor_platform_fee} fee = ₦{vendor_payout}) (no recipient code)"
-                        )
-                        # Record failed transfer for audit
-                        try:
-                            WalletTransactionAccount.objects.create(
-                                transaction_type='failed_transfer',
-                                amount=vendor_payout,
-                                order=order,
-                                user=vendor.user,
-                                description=f"Failed transfer (no recipient code) for order #{order.order_number} - credited to wallet"
-                            )
-                        except Exception:
-                            pass
-                        continue
-                    
-                    # Convert amount to kobo (Paystack uses lowest currency unit)
-                    amount_in_kobo = int(vendor_payout * 100)
-                    
-                    # Generate unique reference
-                    timestamp = int(timezone.now().timestamp() * 1000)
-                    reference = f"vendor_{vendor_id}_order_{order.order_number}_{timestamp}"
-                    
-                    # Initiate transfer
-                    success, transfer_data, error = transfer_service.initiate_transfer(
-                        amount=amount_in_kobo,
-                        recipient_code=vendor.paystack_recipient_code,
-                        reason=f"Payment for order #{order.order_number} (less ₦{vendor_platform_fee} platform fee)",
-                        reference=reference
-                    )
-                    
-                    if success:
-                        transfer_code = transfer_data.get('transfer_code') if transfer_data else None
-                        
-                        # Create wallet transaction record for the transfer
-                        WalletTransactionAccount.objects.create(
-                            transaction_type='vendor_payment',
-                            amount=vendor_payout,
-                            order=order,
-                            user=vendor.user,
-                            description=f"Automated transfer for order #{order.order_number} (₦{amount} - ₦{vendor_platform_fee} fee = ₦{vendor_payout}) | Ref: {reference} | Transfer Code: {transfer_code}"
-                        )
-                        
-                        results['vendor_transfers'].append({
-                            'vendor_id': vendor_id,
-                            'vendor_name': vendor.business_name,
-                            'vendor_email': vendor.user.email,
-                            'gross_amount': float(amount),
-                            'platform_fee': float(vendor_platform_fee),
-                            'net_amount': float(vendor_payout),
-                            'success': True,
-                            'reference': reference,
-                            'transfer_code': transfer_code
-                        })
-                        
-                        logger.info(f"Transfer initiated for vendor {vendor.business_name}: ₦{vendor_payout} (₦{amount} - ₦{vendor_platform_fee} fee)")
-                    else:
-                        logger.error(f"Transfer failed for vendor {vendor.business_name}: {error}")
-                        results['vendor_transfers'].append({
-                            'vendor_id': vendor_id,
-                            'vendor_name': vendor.business_name,
-                            'vendor_email': vendor.user.email,
-                            'gross_amount': float(amount),
-                            'platform_fee': float(vendor_platform_fee),
-                            'net_amount': float(vendor_payout),
-                            'success': False,
-                            'error': error
-                        })
-                        
-                        # Fallback: Credit wallet
-                        wallet, created = VendorWallets.objects.get_or_create(
-                            vendor=vendor,
-                            defaults={'balance': Decimal('0')}
-                        )
-                        wallet.balance += vendor_payout
-                        wallet.save()
-                        
-                        # Create wallet transaction record
-                        WalletTransactionAccount.objects.create(
-                            transaction_type='vendor_payment',
-                            amount=vendor_payout,
-                            order=order,
-                            user=vendor.user,
-                            description=f"Payment credited to wallet for order #{order.order_number} (₦{amount} - ₦{vendor_platform_fee} fee = ₦{vendor_payout}) (transfer failed: {error})"
-                        )
-                        # Record failed transfer for audit
-                        try:
-                            WalletTransactionAccount.objects.create(
-                                transaction_type='failed_transfer',
-                                amount=vendor_payout,
-                                order=order,
-                                user=vendor.user,
-                                description=f"Failed transfer for order #{order.order_number} - error: {error}"
-                            )
-                        except Exception:
-                            pass
-                        
-                except Exception as e:
-                    logger.error(f"Error processing transfer for vendor {vendor_id}: {str(e)}")
-                    results['vendor_transfers'].append({
-                        'vendor_id': vendor_id,
-                        'gross_amount': float(amount),
-                        'platform_fee': float(vendor_platform_fee),
-                        'net_amount': float(amount - vendor_platform_fee),
-                        'success': False,
-                        'error': str(e)
-                    })
-            
-            # 2. Process Picker/Rider Transfers
-            if opportunity.picker_type == 'company_rider' and opportunity.company_rider:
-                # Company riders: Credit company wallet (companies handle their own rider payments)
-                company_rider = opportunity.company_rider
-                company = company_rider.company
-                
-                rider_earnings = shipping_fee - company_commission
-                
-                company_rider.total_earnings = (company_rider.total_earnings or Decimal('0')) + rider_earnings
-                company_rider.completed_deliveries += 1
-                company_rider.save()
-                
-                company_wallet, created = CompanyWallet.objects.get_or_create(
-                    company=company,
-                    defaults={'balance': Decimal('0')}
-                )
-                company_wallet.balance += rider_earnings
-                company_wallet.save()
-                
-                # Create transaction record
-                WalletTransactionAccount.objects.create(
-                    transaction_type='rider_earnings',
-                    amount=rider_earnings,
-                    order=order,
-                    user=company.user,
-                    description=f"Rider earnings credited to company wallet for order #{order.order_number} (₦{shipping_fee} - ₦{company_commission} commission)"
-                )
-                
-                results['company_rider_transfer'] = {
-                    'rider_name': company_rider.name,
-                    'company_name': company.user.email,
-                    'gross_amount': float(shipping_fee),
-                    'commission': float(company_commission),
-                    'net_amount': float(rider_earnings),
-                    'success': True,
-                    'note': 'Credited to company wallet (company manages rider payments)'
-                }
-                
-            elif opportunity.user_picker:
-                picker = opportunity.user_picker
-                picker_profile = None
-                recipient_code = None
-                
-                # Calculate picker payout (deduct platform fee)
-                picker_payout = shipping_fee - picker_platform_fee
-                
-                # Ensure payout is not negative
-                if picker_payout < 0:
-                    logger.warning(f"Picker {picker.email} payout would be negative (₦{picker_payout}), setting to 0")
-                    picker_payout = Decimal('0.00')
-                
-                # Get picker profile and recipient code
-                if picker.user_type == 'picker':
-                    picker_profile = picker.picker_profile
-                    recipient_code = picker_profile.paystack_recipient_code
-                    picker_profile.total_deliveries += 1
-                    picker_profile.save()
-                    
-                elif picker.user_type == 'student_picker':
-                    picker_profile = picker.student_picker_profile
-                    recipient_code = picker_profile.paystack_recipient_code
-                    picker_profile.total_deliveries += 1
-                    picker_profile.save()
-                
-                if not recipient_code:
-                    logger.warning(f"Picker {picker.email} has no recipient code, crediting wallet")
-                    
-                    # Fallback: Credit wallet
-                    if picker.user_type == 'picker':
-                        wallet, created = PickerWalletAccount.objects.get_or_create(
-                            picker=picker_profile,
-                            defaults={'amount': Decimal('0')}
-                        )
-                        wallet.amount += picker_payout
-                        wallet.save()
-                    else:
-                        wallet, created = StudentPickerWalletAccount.objects.get_or_create(
-                            student_picker=picker_profile,
-                            defaults={'amount': Decimal('0')}
-                        )
-                        wallet.amount += picker_payout
-                        wallet.save()
-                    
-                    # Create transaction record
-                    WalletTransactionAccount.objects.create(
-                        transaction_type='delivery_payment',
-                        amount=picker_payout,
-                        order=order,
-                        user=picker,
-                        description=f"Delivery payment credited to wallet for order #{order.order_number} (₦{shipping_fee} - ₦{picker_platform_fee} fee = ₦{picker_payout}) (no recipient code)"
-                    )
-                    # Record failed transfer for audit
-                    try:
-                        WalletTransactionAccount.objects.create(
-                            transaction_type='failed_transfer',
-                            amount=picker_payout,
-                            order=order,
-                            user=picker,
-                            description=f"Failed transfer (no recipient code) for order #{order.order_number} - credited to wallet"
-                        )
-                    except Exception:
-                        pass
-                    
-                    results['picker_transfer'] = {
-                        'picker_email': picker.email,
-                        'picker_name': f"{picker.first_name} {picker.last_name}",
-                        'picker_type': picker.user_type,
-                        'gross_amount': float(shipping_fee),
-                        'platform_fee': float(picker_platform_fee),
-                        'net_amount': float(picker_payout),
-                        'success': False,
-                        'error': 'No recipient code configured (wallet credited)'
-                    }
-                else:
-                    # Initiate transfer to picker
-                    amount_in_kobo = int(picker_payout * 100)
-                    timestamp = int(timezone.now().timestamp() * 1000)
-                    reference = f"picker_{picker.id}_order_{order.order_number}_{timestamp}"
-                    
-                    success, transfer_data, error = transfer_service.initiate_transfer(
-                        amount=amount_in_kobo,
-                        recipient_code=recipient_code,
-                        reason=f"Delivery payment for order #{order.order_number} (less ₦{picker_platform_fee} platform fee)",
-                        reference=reference
-                    )
-                    
-                    if success:
-                        transfer_code = transfer_data.get('transfer_code') if transfer_data else None
-                        
-                        # Create transaction record
-                        WalletTransactionAccount.objects.create(
-                            transaction_type='delivery_payment',
-                            amount=picker_payout,
-                            order=order,
-                            user=picker,
-                            description=f"Automated transfer for delivery #{order.order_number} (₦{shipping_fee} - ₦{picker_platform_fee} fee = ₦{picker_payout}) | Ref: {reference} | Transfer Code: {transfer_code}"
-                        )
-                        
-                        results['picker_transfer'] = {
-                            'picker_email': picker.email,
-                            'picker_name': f"{picker.first_name} {picker.last_name}",
-                            'picker_type': picker.user_type,
-                            'gross_amount': float(shipping_fee),
-                            'platform_fee': float(picker_platform_fee),
-                            'net_amount': float(picker_payout),
-                            'success': True,
-                            'reference': reference,
-                            'transfer_code': transfer_code
-                        }
-                        
-                        logger.info(f"Transfer initiated for picker {picker.email}: ₦{picker_payout} (₦{shipping_fee} - ₦{picker_platform_fee} fee)")
-                    else:
-                        logger.error(f"Transfer failed for picker {picker.email}: {error}")
-                        
-                        # Fallback: Credit wallet
-                        if picker.user_type == 'picker':
-                            wallet, created = PickerWalletAccount.objects.get_or_create(
-                                picker=picker_profile,
-                                defaults={'amount': Decimal('0')}
-                            )
-                            wallet.amount += picker_payout
-                            wallet.save()
-                        else:
-                            wallet, created = StudentPickerWalletAccount.objects.get_or_create(
-                                student_picker=picker_profile,
-                                defaults={'amount': Decimal('0')}
-                            )
-                            wallet.amount += picker_payout
-                            wallet.save()
-                        
-                        # Create transaction record
-                        WalletTransactionAccount.objects.create(
-                            transaction_type='delivery_payment',
-                            amount=picker_payout,
-                            order=order,
-                            user=picker,
-                            description=f"Delivery payment credited to wallet for order #{order.order_number} (₦{shipping_fee} - ₦{picker_platform_fee} fee = ₦{picker_payout}) (transfer failed: {error})"
-                        )
-                        # Record failed transfer for audit
-                        try:
-                            WalletTransactionAccount.objects.create(
-                                transaction_type='failed_transfer',
-                                amount=picker_payout,
-                                order=order,
-                                user=picker,
-                                description=f"Failed transfer for order #{order.order_number} - error: {error}"
-                            )
-                        except Exception:
-                            pass
-                        
-                        results['picker_transfer'] = {
-                            'picker_email': picker.email,
-                            'picker_name': f"{picker.first_name} {picker.last_name}",
-                            'picker_type': picker.user_type,
-                            'gross_amount': float(shipping_fee),
-                            'platform_fee': float(picker_platform_fee),
-                            'net_amount': float(picker_payout),
-                            'success': False,
-                            'error': error
-                        }
-            
-            return results
-            
-        except Exception as e:
-            logger.error(f"Error in process_automated_transfers: {str(e)}", exc_info=True)
-            raise
-    
-    def calculate_vendor_payments(self, order):
-        """Calculate vendor payments - returns dict of vendor_id: amount"""
-        vendor_totals = {}
-        
-        try:
-            order_items = order.order_items.all()
-            
-            for item in order_items:
-                vendor_id = item.vendor.id
-                item_total = Decimal(str(item.quantity)) * Decimal(str(item.price))
-                
-                if vendor_id in vendor_totals:
-                    vendor_totals[vendor_id] += item_total
-                else:
-                    vendor_totals[vendor_id] = item_total
-            
-            return vendor_totals
-            
-        except Exception as e:
-            logger.error(f"Error calculating vendor payments: {str(e)}")
-            return {}
-    
-    def send_transfer_notifications(self, order, opportunity, transfer_results):
-        """Send notifications about automated transfers"""
-        try:
-            # Notify customer
-            self.notify_customer_confirmation_success(order, opportunity)
-            
-            # Notify vendors about their transfers
-            for vendor_transfer in transfer_results.get('vendor_transfers', []):
-                self.notify_vendor_transfer(order, vendor_transfer)
-            
-            # Notify picker about their transfer
-            if transfer_results.get('picker_transfer'):
-                self.notify_picker_transfer(order, opportunity, transfer_results['picker_transfer'])
-            
-            # Notify admin with full transfer summary
-            self.notify_admin_transfers_completed(order, opportunity, transfer_results)
-            
-        except Exception as e:
-            logger.error(f"Error sending transfer notifications: {str(e)}", exc_info=True)
-    
-    def notify_customer_confirmation_success(self, order, opportunity):
-        """Notify customer about successful confirmation"""
-        try:
-            customer_email = order.email
-            customer_name = f"{order.first_name} {order.last_name}"
-            
-            subject = f"✅ Order Confirmed - #{order.order_number}"
-            
-            message = (
-                f"Dear {customer_name},\n\n"
-                f"Thank you for confirming receipt of your order!\n\n"
-                f"📦 ORDER DETAILS:\n"
-                f"• Order Number: {order.order_number}\n"
-                f"• Total Amount: ₦{order.total}\n"
-                f"• Delivery Address: {order.address}\n"
-                f"• Confirmed At: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
-                f"🚴 RIDER INFORMATION:\n"
-                f"• Name: {opportunity.accepted_rider_name}\n"
-                f"• Phone: {opportunity.accepted_rider_phone}\n\n"
-                f"Your order has been successfully completed. "
-                f"All payments have been processed automatically and sent to vendors and delivery personnel.\n\n"
-                f"Thank you for shopping with Stumart! "
-                f"We hope to serve you again soon.\n\n"
-                f"If you have any questions or concerns, please don't hesitate to contact us.\n\n"
-                f"Best regards,\n"
-                f"The Stumart Team"
-            )
-            
-            send_mail(
-                subject=subject,
-                message=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[customer_email],
-                fail_silently=True
-            )
-            
-            logger.info(f"Customer confirmation notification sent to {customer_email}")
-            
-        except Exception as e:
-            logger.error(f"Failed to notify customer about confirmation: {str(e)}")
-    
-    def notify_vendor_transfer(self, order, vendor_transfer):
-        """Notify vendor about automated transfer"""
-        try:
-            vendor_email = vendor_transfer.get('vendor_email')
-            vendor_name = vendor_transfer.get('vendor_name')
-            
-            if not vendor_email or not vendor_name:
-                logger.warning(f"Missing vendor email or name in transfer: {vendor_transfer}")
-                return
-            
-            if vendor_transfer['success']:
-                subject = f"💰 Payment Sent - Order #{order.order_number}"
-                
-                message = (
-                    f"Dear {vendor_name},\n\n"
-                    f"Great news! Your payment has been automatically processed and sent to your bank account.\n\n"
-                    f"💸 PAYMENT DETAILS:\n"
-                    f"• Order Number: {order.order_number}\n"
-                    f"• Amount: ₦{vendor_transfer['amount']:.2f}\n"
-                    f"• Reference: {vendor_transfer.get('reference', 'N/A')}\n"
-                    f"• Transfer Code: {vendor_transfer.get('transfer_code', 'N/A')}\n"
-                    f"• Status: Processing (arrives within 10-30 minutes)\n"
-                    f"• Processed: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
-                    f"⏰ DELIVERY TIMELINE:\n"
-                    f"Your payment will arrive in your bank account within 10-30 minutes.\n\n"
-                    f"📝 NOTE:\n"
-                    f"This is an automated transfer triggered by customer order confirmation.\n"
-                    f"No manual withdrawal needed!\n\n"
-                    f"Thank you for your business!\n\n"
-                    f"Best regards,\n"
-                    f"Stumart Team"
-                )
-            else:
-                subject = f"⚠️ Transfer Issue - Order #{order.order_number}"
-                
-                message = (
-                    f"Dear {vendor_name},\n\n"
-                    f"We attempted to process your payment automatically, but encountered an issue.\n\n"
-                    f"💸 PAYMENT DETAILS:\n"
-                    f"• Order Number: {order.order_number}\n"
-                    f"• Amount: ₦{vendor_transfer['amount']:.2f}\n"
-                    f"• Issue: {vendor_transfer.get('error', 'Transfer failed')}\n\n"
-                    f"📝 WHAT HAPPENS NEXT:\n"
-                    f"Your payment has been credited to your Stumart wallet.\n"
-                    f"You can withdraw it manually through the app.\n\n"
-                    f"If you continue to experience issues, please contact support.\n\n"
-                    f"Best regards,\n"
-                    f"Stumart Team"
-                )
-            
-            send_mail(
-                subject=subject,
-                message=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[vendor_email],
-                fail_silently=True
-            )
-            
-            logger.info(f"Transfer notification sent to vendor {vendor_name}")
-            
-        except Exception as e:
-            logger.error(f"Failed to notify vendor about transfer: {str(e)}")
-    
-    def notify_picker_transfer(self, order, opportunity, picker_transfer):
-        """Notify picker about automated transfer"""
-        try:
-            picker_email = picker_transfer.get('picker_email')
-            picker_name = picker_transfer.get('picker_name', picker_email)
-            
-            if not picker_email:
-                logger.warning("Missing picker email in transfer notification")
-                return
-            
-            if picker_transfer['success']:
-                subject = f"💰 Delivery Payment Sent - Order #{order.order_number}"
-                
-                message = (
-                    f"Hello {picker_name},\n\n"
-                    f"Your delivery payment has been automatically processed!\n\n"
-                    f"💸 PAYMENT DETAILS:\n"
-                    f"• Order Number: {order.order_number}\n"
-                    f"• Amount: ₦{picker_transfer['amount']:.2f}\n"
-                    f"• Reference: {picker_transfer.get('reference', 'N/A')}\n"
-                    f"• Transfer Code: {picker_transfer.get('transfer_code', 'N/A')}\n"
-                    f"• Status: Processing (arrives within 10-30 minutes)\n"
-                    f"• Processed: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
-                    f"⏰ Your payment will arrive in your bank account within 10-30 minutes.\n\n"
-                    f"Thank you for your excellent delivery service!\n\n"
-                    f"Best regards,\n"
-                    f"Stumart Team"
-                )
-            else:
-                subject = f"⚠️ Payment Issue - Order #{order.order_number}"
-                
-                message = (
-                    f"Hello {picker_name},\n\n"
-                    f"We attempted to process your delivery payment automatically, but encountered an issue.\n\n"
-                    f"💸 PAYMENT DETAILS:\n"
-                    f"• Order Number: {order.order_number}\n"
-                    f"• Amount: ₦{picker_transfer['amount']:.2f}\n"
-                    f"• Issue: {picker_transfer.get('error', 'Transfer failed')}\n\n"
-                    f"📝 WHAT HAPPENS NEXT:\n"
-                    f"Your payment has been credited to your Stumart wallet.\n"
-                    f"You can withdraw it manually through the app.\n\n"
-                    f"Best regards,\n"
-                    f"Stumart Team"
-                )
-            
-            send_mail(
-                subject=subject,
-                message=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[picker_email],
-                fail_silently=True
-            )
-            
-        except Exception as e:
-            logger.error(f"Failed to notify picker about transfer: {str(e)}")
-    
-    def notify_admin_transfers_completed(self, order, opportunity, transfer_results):
-        """Notify admin with complete transfer summary"""
-        try:
-            admin_emails = [settings.DEFAULT_FROM_EMAIL]
-            
-            # Format vendor transfers
-            vendor_summary = []
-            for v in transfer_results.get('vendor_transfers', []):
-                status = "✓ SUCCESS" if v['success'] else "✗ FAILED"
-                vendor_summary.append(
-                    f"  {status} - {v.get('vendor_name', 'Unknown')}: ₦{v['amount']:.2f}\n"
-                    f"    Ref: {v.get('reference', v.get('error', 'N/A'))}"
-                )
-            vendor_text = "\n".join(vendor_summary) if vendor_summary else "  None"
-            
-            # Format picker transfer
-            picker_info = transfer_results.get('picker_transfer')
-            if picker_info:
-                status = "✓ SUCCESS" if picker_info['success'] else "✗ FAILED"
-                picker_text = (
-                    f"  {status} - {picker_info.get('picker_name', picker_info.get('picker_email', 'Unknown'))} ({picker_info['picker_type']})\n"
-                    f"  Amount: ₦{picker_info['amount']:.2f}\n"
-                    f"  Ref: {picker_info.get('reference', picker_info.get('error', 'N/A'))}"
-                )
-            elif transfer_results.get('company_rider_transfer'):
-                rider_info = transfer_results['company_rider_transfer']
-                picker_text = (
-                    f"  ✓ COMPANY RIDER - {rider_info['rider_name']}\n"
-                    f"  Amount: ₦{rider_info['amount']:.2f} (credited to {rider_info['company_name']})\n"
-                    f"  Note: {rider_info['note']}"
-                )
-            else:
-                picker_text = "  None"
-            
-            subject = f"🔄 Automated Transfers Completed - Order #{order.order_number}"
-            
-            message = (
-                f"Automated transfers processed for completed order:\n\n"
-                f"📦 ORDER INFO:\n"
-                f"• Order Number: {order.order_number}\n"
-                f"• Customer: {order.first_name} {order.last_name}\n"
-                f"• Total: ₦{order.total}\n"
-                f"• Confirmed: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
-                f"💸 VENDOR TRANSFERS:\n{vendor_text}\n\n"
-                f"🚴 PICKER/RIDER TRANSFER:\n{picker_text}\n\n"
-                f"💰 STUMART EARNINGS: ₦{transfer_results.get('stumart_earnings', 0):.2f}\n\n"
-                f"{'='*50}\n"
-                f"All successful transfers will arrive in 10-30 minutes.\n"
-                f"Failed transfers have been credited to respective wallets for manual processing."
-            )
-            
-            send_mail(
-                subject=subject,
-                message=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=admin_emails,
-                fail_silently=True
-            )
-            
-        except Exception as e:
-            logger.error(f"Failed to notify admin: {str(e)}")
+        return Response(CustomerConfirmationGetResponseSerializer(data).data)
+
+    def post(self, request):
+        req = CustomerConfirmationRequestSerializer(data=request.data)
+        if not req.is_valid():
+            return Response(req.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        cust_code = req.validated_data["customer_confirmation_code"]
+
+        with transaction.atomic():
+            try:
+                opp = DeliveryOpportunity.objects.select_for_update().get(customer_confirmation_code=cust_code)
+            except DeliveryOpportunity.DoesNotExist:
+                return Response({"error": "Invalid confirmation code."}, status=status.HTTP_404_NOT_FOUND)
+
+            if opp.status != "completed":
+                return Response({"error": "Delivery not yet confirmed by rider."}, status=status.HTTP_400_BAD_REQUEST)
+
+            order = opp.order
+            if order.order_status == "COMPLETED":
+                return Response({"error": "Order already confirmed."}, status=status.HTTP_409_CONFLICT)
+
+            order.order_status = "COMPLETED"
+            order.confirm = True
+            order.save()
+
+            transfer_results = process_automated_transfers(order, opp)
+
+            transaction.on_commit(lambda: send_customer_order_completed_email(order, opp))
+            transaction.on_commit(lambda: self._send_payout_notifications(order, opp, transfer_results))
+
+        return Response(
+            CustomerConfirmationPostResponseSerializer({
+                "success": True,
+                "message": "Order confirmed. Transfers initiated.",
+                "order_number": order.order_number,
+                "confirmed_at": now(),
+                "transfer_results": transfer_results,
+            }).data,
+            status=status.HTTP_200_OK,
+        )
+
+    @staticmethod
+    def _send_payout_notifications(order, opp, transfer_results):
+        for vt in transfer_results.get("vendor_transfers", []):
+            send_vendor_payout_email(order, vt)
+        pt = transfer_results.get("picker_transfer")
+        if pt:
+            send_picker_payout_email(order, pt)
+        send_admin_transfer_summary_email(order, opp, transfer_results)
+
+
+# ─────────────────────────────────────────────────────────────
+# INTERNAL HELPERS
+# ─────────────────────────────────────────────────────────────
+
+def _safe_call(fn, *args, **kwargs):
+    """Call fn(*args, **kwargs) and swallow exceptions so on_commit doesn't crash."""
+    try:
+        fn(*args, **kwargs)
+    except Exception:
+        logger.exception("Error in on_commit callback %s", fn.__name__)

@@ -10,7 +10,7 @@ import CompanyLayout from "./company/CompanyLayout";
 // Public Pages
 import Landing from "./pages/landing/Landing";
 import AllVendorsCategory from "./pages/AllVendorsCategory";
-import Home from "./pages/Home";
+// import Home from "./pages/Home";
 import About from "./pages/About";
 import Contact from "./pages/ContactUs";
 import Vendors from "./pages/Vendor";
@@ -83,6 +83,12 @@ import AcceptDelivery from "./pages/AcceptDelivery";
 import DeliveryConfirmation from "./pages/DeliveryConfirmation";
 import CustomerOrderConfirmation from "./pages/CustomerOrderConfirmation";
 import WithdrawalDashboard from "./withdrawal/WithdrawalDashboard";
+import SelectUserType from "./user/SelectUserType";
+import StudentSignup from "./user/StudentSignUp";
+import VendorSignup from "./user/VendorSignup";
+import PickerSignup from "./user/PickerSignup";
+import StudentPickerSignup from "./user/StudentPickerSignup";
+import Bookmark from "./pages/Bookmark";
 
 // Create React Query client
 const queryClient = new QueryClient({
@@ -131,7 +137,14 @@ function App() {
               />
 
               <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Signup />} />
+              <Route path="/signup" element={<SelectUserType />} />
+              <Route path="/signup/student" element={<StudentSignup />} />
+              <Route path="/signup/vendor" element={<VendorSignup />} />
+              <Route path="/signup/picker" element={<PickerSignup />} />
+              <Route
+                path="/signup/student-picker"
+                element={<StudentPickerSignup />}
+              />
               <Route path="/company-signup" element={<CompanyRegistration />} />
               <Route path="/verify-email" element={<VerifyEmail />} />
 
@@ -201,6 +214,14 @@ function App() {
                   }
                 />
                 <Route
+                  path="bookmarks"
+                  element={
+                    <ProtectedRoute allowedRoles={["student"]}>
+                      <Bookmark />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
                   path="chatbot"
                   element={
                     <ProtectedRoute allowedRoles={["student"]}>
@@ -211,7 +232,7 @@ function App() {
                 <Route
                   path="shopping-cart"
                   element={
-                    <ProtectedRoute allowedRoles={["student"]}>
+                    <ProtectedRoute>
                       <ShoppingCart />
                     </ProtectedRoute>
                   }

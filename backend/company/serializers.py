@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from User.models import Company, Area, CompanyRider
+from user.models import Company, Area, CompanyRider
 from django.utils import timezone
 from django.db.models import Sum
 
@@ -75,5 +75,3 @@ class CompanyRiderSerializer(serializers.ModelSerializer):
     def get_last_active_display(self, obj):
         """Get formatted last active time"""
         return obj.get_last_active_display()
-
-
