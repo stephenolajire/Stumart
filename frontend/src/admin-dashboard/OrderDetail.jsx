@@ -42,7 +42,7 @@ const AdminOrderDetail = () => {
   const fetchOrderDetail = async () => {
     try {
       setLoading(true);
-      const response = await api.get(`admin-orders/${order_id}/`);
+      const response = await api.get(`admin/orders/${order_id}/`);
       setOrderDetail(response.data);
       setStatusUpdate(response.data.status);
       setError(null);
@@ -57,7 +57,7 @@ const AdminOrderDetail = () => {
   const handleStatusChange = async () => {
     try {
       setUpdateLoading(true);
-      await api.put(`admin-orders/${orderId}/`, {
+      await api.put(`admin/orders/${orderId}/`, {
         status: statusUpdate,
       });
       fetchOrderDetail();
@@ -138,7 +138,7 @@ const AdminOrderDetail = () => {
   if (error) {
     return (
       <div className="flex items-center justify-center min-h-96 p-4">
-        <div className="text-center max-w-md">
+        <div className="text-center max-w-4xl">
           <FaExclamationTriangle className="w-12 h-12 sm:w-16 sm:h-16 text-red-500 mx-auto mb-4" />
           <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
             Error Loading Order

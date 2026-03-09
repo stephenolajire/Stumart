@@ -466,7 +466,7 @@ class VendorsBySchoolView(APIView):
         description="Retrieve vendors by school/institution grouped by category"
     )
     def get(self, request):
-        school_name = request.query_params.get("school", None)
+        school_name = request.query_params.get("school") or request.query_params.get("institution")
 
         try:
             if school_name:

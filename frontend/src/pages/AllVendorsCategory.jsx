@@ -7,7 +7,7 @@ import {
 } from "../constant/data";
 import VendorHeroSection from "./components/VendorHero";
 import VendorCategoryCard from "./components/VendorCategoryCard";
-import { useVendorsByCategory } from "../hooks/useVendorHome";
+import { useGetVendorsByCategory } from "../hooks/useHome";
 import { Search, Filter, X, ChevronLeft, ChevronRight } from "lucide-react";
 
 const AllVendorsCategory = () => {
@@ -29,7 +29,7 @@ const AllVendorsCategory = () => {
   const [selectedState, setSelectedState] = useState("");
 
   // Fetch vendors data
-  const { data, isLoading, error, isFetching } = useVendorsByCategory({
+  const { data, isLoading, error, isFetching } = useGetVendorsByCategory({
     ...filters,
     page_size: 20,
   });
