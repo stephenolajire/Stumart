@@ -192,6 +192,7 @@ else:
     'www.stumart.com.ng',  # Add this
     'localhost',
     '127.0.0.1',
+    'stumart-server-pvo1.onrender.com',
 ]
 
 # CORS Configuration
@@ -203,6 +204,7 @@ CORS_ALLOWED_ORIGINS = [
     "https://stumart-server.onrender.com",
     "https://server-stumart.onrender.com",
     "https://stumart-fe1z.onrender.com",
+    "https://stumart-server-pvo1.onrender.com",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -238,6 +240,7 @@ CSRF_TRUSTED_ORIGINS = [
     "https://server-stumart.onrender.com",
     "https://stumart-fe1z.onrender.com",
     "http://localhost:5173",
+    "https://stumart-server-pvo1.onrender.com",
 ]
 
 

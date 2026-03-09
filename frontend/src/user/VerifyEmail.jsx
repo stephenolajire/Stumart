@@ -200,16 +200,17 @@ const VerifyEmail = () => {
     timeLeft > 120 ? "#eab308" : timeLeft > 30 ? "#f59e0b" : "#ef4444";
 
   return (
-    <div className="min-h-screen bg-background-secondary flex items-center justify-center py-12 px-4">
-      <div className="w-full max-w-4xl">
-        {/* Card */}
-        <div className="bg-surface rounded-2xl shadow-lg border border-border overflow-hidden">
-          {/* Top accent bar */}
-          <div className="h-1 bg-background-tertiary">
-            <div
-              className="h-full transition-all duration-1000"
-              style={{ width: `${timerPercent}%`, backgroundColor: timerColor }}
-            />
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-5xl space-y-8">
+        <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-200">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+              Verify Your Email
+            </h2>
+            <p className="text-gray-600">
+              Please enter the 6-digit code sent to your email
+            </p>
           </div>
 
           <div className="p-8">
