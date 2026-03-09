@@ -1,3 +1,4 @@
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FaCamera,
@@ -18,6 +19,10 @@ const ID_TYPES = [
   { value: "voters_card", label: "Voter's Card" },
   { value: "passport", label: "International Passport" },
 ];
+
+const sectionClass = "bg-gray-50 rounded-xl p-5 space-y-4";
+const sectionTitle =
+  "flex items-center gap-2 font-semibold text-sm text-gray-700 mb-3";
 
 const KYCVerification = () => {
   const navigate = useNavigate();
@@ -138,34 +143,10 @@ const KYCVerification = () => {
   ];
   const completedSteps = steps.filter((s) => s.done).length;
 
-      navigate("/add-product");
-    } catch (error) {
-      console.error("KYC Submission Error:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Submission Failed",
-        text: error.response?.data?.error || "Please try again later",
-        confirmButtonColor: "#eab308",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-orange-50 flex items-center justify-center p-6">
       <div className="max-w-3xl w-full">
         <div className="bg-white rounded-2xl shadow-2xl p-8 md:p-12">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-800 mb-2">
-              Account Verification
-            </h2>
-            <p className="text-gray-600">
-              Please provide the following documents to verify your identity
-            </p>
-          </div>
-
           <div className="p-8">
             {/* Header */}
             <div className="text-center mb-8">
@@ -189,7 +170,7 @@ const KYCVerification = () => {
             {/* Step indicators */}
             <div className="flex items-center justify-center gap-2 mb-8">
               {steps.map((step, i) => (
-                <React.Fragment key={i}>
+                <div key={i} className="flex items-center gap-2">
                   <div className="flex items-center gap-2">
                     <div
                       className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300"
@@ -229,7 +210,7 @@ const KYCVerification = () => {
                       }}
                     />
                   )}
-                </React.Fragment>
+                </div>
               ))}
             </div>
 
@@ -279,22 +260,40 @@ const KYCVerification = () => {
                   </button>
                 )}
 
-              {isCameraOpen && (
-                <div className="bg-gray-100 rounded-lg p-6 space-y-4">
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    className="w-full mx-auto rounded-lg shadow-lg"
-                  />
-                  <div className="flex justify-center space-x-4">
-                    <button
-                      type="button"
-                      onClick={captureSelfie}
-                      className="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors duration-200"
-                    >
-                      <FaCheckCircle /> Captured
+                {isCameraOpen && (
+                  <div className="bg-gray-100 rounded-lg p-6 space-y-4">
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      playsInline
+                      className="w-full mx-auto rounded-lg shadow-lg"
+                    />
+                    <div className="flex justify-center space-x-4">
+                      <button
+                        type="button"
+                        onClick={captureSelfie}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors duration-200"
+                      >
+                        <FaCheckCircle /> Capture
+                      </button>
+                      <button
+                        type="button"
+                        onClick={stopCamera}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition-colors duration-200"
+                      >
+                        <FaTimesCircle /> Cancel
+                      </button>
                     </div>
+                  </div>
+                )}
+
+                {preview.selfie && (
+                  <div className="relative">
+                    <img
+                      src={preview.selfie}
+                      alt="Selfie Preview"
+                      className="w-full max-h-52 object-contain rounded-lg"
+                    />
                     <button
                       type="button"
                       onClick={() => {
@@ -412,7 +411,6 @@ const KYCVerification = () => {
                       accept="image/*"
                       onChange={handleImageChange}
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      required
                     />
                   </div>
                 </div>
