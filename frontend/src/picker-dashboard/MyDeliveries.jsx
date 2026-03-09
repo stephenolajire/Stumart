@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   MapPin,
   User,
@@ -13,11 +13,10 @@ import {
   Loader2,
   AlertCircle,
 } from "lucide-react";
-import api from "../constant/api";
 import Swal from "sweetalert2";
 import { Link } from "react-router-dom";
+import { useMyDeliveries, useMarkDelivered } from "../hooks/usePicker";
 
-// Create toast mixin configuration
 const Toast = Swal.mixin({
   toast: true,
   position: "top-right",
@@ -31,50 +30,28 @@ const Toast = Swal.mixin({
 });
 
 const MyDeliveries = () => {
-  const [deliveries, setDeliveries] = useState([]);
   const [activeTab, setActiveTab] = useState("active");
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchDeliveries = async () => {
-      try {
-        setIsLoading(true);
-        const response = await api.get(`my-deliveries?status=${activeTab}`);
-        setDeliveries(response.data);
-      } catch (error) {
-        console.error("Error fetching deliveries:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const { data: deliveries = [], isLoading } = useMyDeliveries(activeTab);
+  const { mutate: markDelivered } = useMarkDelivered();
 
-    fetchDeliveries();
-  }, [activeTab]);
-
-  const handleMarkAsDelivered = async (orderId) => {
-    try {
-      await api.post(`orders/${orderId}/deliver/`, {
-        status: "DELIVERED",
-      });
-
-      // Remove the order from active deliveries list
-      setDeliveries((prevDeliveries) =>
-        prevDeliveries.filter((delivery) => delivery.id !== orderId)
-      );
-
-      Toast.fire({
-        icon: "success",
-        title: "Order marked as delivered",
-        text: "Thank you for an amazing job!",
-      });
-    } catch (error) {
-      console.error("Error marking order as delivered:", error);
-      Toast.fire({
-        icon: "error",
-        title: "Failed to update status",
-        text: "Please try again later",
-      });
-    }
+  const handleMarkAsDelivered = (orderId) => {
+    markDelivered(orderId, {
+      onSuccess: () => {
+        Toast.fire({
+          icon: "success",
+          title: "Order marked as delivered",
+          text: "Thank you for an amazing job!",
+        });
+      },
+      onError: () => {
+        Toast.fire({
+          icon: "error",
+          title: "Failed to update status",
+          text: "Please try again later",
+        });
+      },
+    });
   };
 
   const formatDate = (dateString) => {
@@ -104,7 +81,6 @@ const MyDeliveries = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
         <div className="mb-8">
           <div className="flex items-center mb-6">
             <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mr-4">
@@ -120,7 +96,6 @@ const MyDeliveries = () => {
             </div>
           </div>
 
-          {/* Tabs */}
           <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
             <button
               className={`flex-1 py-3 px-4 rounded-md font-medium transition-all duration-200 ${
@@ -151,7 +126,6 @@ const MyDeliveries = () => {
           </div>
         </div>
 
-        {/* Loading State */}
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-16">
             <Loader2 className="w-12 h-12 text-yellow-600 animate-spin mb-4" />
@@ -174,14 +148,12 @@ const MyDeliveries = () => {
             </p>
           </div>
         ) : (
-          /* Deliveries List */
           <div className="grid gap-6">
             {deliveries.map((delivery) => (
               <div
                 key={delivery.id}
                 className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300"
               >
-                {/* Delivery Header */}
                 <div className="bg-gradient-to-r from-yellow-500 to-yellow-600 px-6 py-4">
                   <div className="flex items-center justify-between text-white">
                     <div className="flex items-center">
@@ -202,9 +174,7 @@ const MyDeliveries = () => {
                     </div>
                     <div className="text-right">
                       <span
-                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border bg-white ${getStatusStyle(
-                          delivery.status
-                        )}`}
+                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border bg-white ${getStatusStyle(delivery.status)}`}
                       >
                         {getStatusIcon(delivery.status)}
                         <span className="ml-1">
@@ -218,7 +188,6 @@ const MyDeliveries = () => {
                 </div>
 
                 <div className="p-6">
-                  {/* Delivery Details */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                     <div className="flex items-start">
                       <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-0.5">
@@ -263,7 +232,6 @@ const MyDeliveries = () => {
                     </div>
                   </div>
 
-                  {/* Financial Details */}
                   <div className="bg-gray-50 rounded-lg p-4 mb-6">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
@@ -291,7 +259,6 @@ const MyDeliveries = () => {
                     </div>
                   </div>
 
-                  {/* Action Buttons */}
                   <div className="flex flex-col sm:flex-row gap-3">
                     <Link
                       to={`/delivery-detail/${delivery.id}`}

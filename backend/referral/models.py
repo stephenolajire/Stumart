@@ -78,7 +78,7 @@ class Referral(models.Model):
         This should be called after an order status changes to COMPLETED/DELIVERED
         """
         from django.db.models import Count, Q
-        from Stumart.models import Order  # Adjust import based on your app name
+        from stumart.models import Order  # Adjust import based on your app name
         
         # Get date range for current period (since last reset or beginning)
         start_date = self.last_reset_date if self.last_reset_date else self.created_at
@@ -154,7 +154,7 @@ class Referral(models.Model):
         """
         Get all orders that used this referral code
         """
-        from Stumart.models import Order  # Adjust import based on your app name
+        from stumart.models import Order  # Adjust import based on your app name
         
         orders = Order.objects.filter(referral_code=self.referral_code)
         
@@ -180,7 +180,7 @@ class Referral(models.Model):
         """
         Get comprehensive statistics for this referral
         """
-        from Stumart.models import Order  # Adjust import based on your app name
+        from stumart.models import Order  # Adjust import based on your app name
         
         # Current period stats
         start_date = self.last_reset_date if self.last_reset_date else self.created_at

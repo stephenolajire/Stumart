@@ -1,19 +1,12 @@
 import React, { useState, useRef, useContext } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useReactToPrint } from "react-to-print";
-import api from "../constant/api";
 import Swal from "sweetalert2";
 import { Link } from "react-router-dom";
 import { GlobalContext } from "../constant/GlobalContext";
 import Spinner from "../components/Spinner";
 import ReviewModal from "../components/ReviewModal";
 import {
-  FaArrowLeft,
   FaBox,
   FaMapMarkerAlt,
-  FaUser,
-  FaEnvelope,
-  FaPhone,
   FaShoppingBag,
   FaCheckCircle,
   FaTimes,
@@ -26,10 +19,16 @@ import {
   FaExclamationTriangle,
   FaCreditCard,
   FaCalendar,
-  FaDollarSign,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
+import { useGetOrderHistory, useInitializePayment } from "../hooks/useOrder";
+import {
+  useCreateVendorReview,
+  useCreatePickerReview,
+} from "../hooks/useStumart";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import api from "../constant/api";
 
 const OrderHistory = () => {
   const [expandedOrder, setExpandedOrder] = useState(null);
@@ -38,28 +37,17 @@ const OrderHistory = () => {
   const printRefs = useRef({});
   const [reviewOrder, setReviewOrder] = useState(null);
   const navigate = useNavigate();
-  const user_type = localStorage.getItem("user_type");
 
   const { isAuthenticated } = useContext(GlobalContext);
   const queryClient = useQueryClient();
 
-  const {
-    data: orders = [],
-    isLoading: loading,
-    error,
-    refetch: fetchOrders,
-  } = useQuery({
-    queryKey: ["orders"],
-    queryFn: async () => {
-      const response = await api.get("orders/");
-      return response.data;
-    },
-    enabled: isAuthenticated,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-    retry: 2,
-    refetchOnWindowFocus: false,
-  });
+  // ── Queries ───────────────────────────────────────────────────
+  const { data: orders = [], isLoading: loading, error } = useGetOrderHistory();
+
+  // ── Mutations ─────────────────────────────────────────────────
+  const submitVendorReviewMutation = useCreateVendorReview();
+  const submitPickerReviewMutation = useCreatePickerReview();
+  const initializePaymentMutation = useInitializePayment();
 
   const markAsDeliveredMutation = useMutation({
     mutationFn: async (orderId) => {
@@ -69,7 +57,7 @@ const OrderHistory = () => {
       return response.data;
     },
     onSuccess: (data, orderId) => {
-      queryClient.setQueryData(["orders"], (oldOrders) => {
+      queryClient.setQueryData(["order-history"], (oldOrders) => {
         if (!oldOrders) return oldOrders;
         return oldOrders.map((order) =>
           order.order_number === orderId
@@ -77,7 +65,6 @@ const OrderHistory = () => {
             : order,
         );
       });
-
       Swal.fire({
         icon: "success",
         text: "Thank you for your patronage!",
@@ -85,8 +72,7 @@ const OrderHistory = () => {
         confirmButtonColor: "#111827",
       });
     },
-    onError: (error) => {
-      console.error("Error marking order as delivered:", error);
+    onError: () => {
       Swal.fire({
         icon: "error",
         title: "Status Error",
@@ -96,124 +82,123 @@ const OrderHistory = () => {
     },
   });
 
-  const initializePaymentMutation = useMutation({
-    mutationFn: async (paymentData) => {
-      const response = await api.post("payment/initialize/", paymentData);
-      return response.data;
-    },
-    onSuccess: (data) => {
-      window.location.href = data.authorization_url;
-    },
-    onError: (error) => {
-      console.error("Payment initialization error:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Payment Error",
-        text:
-          error.response?.data?.message ||
-          "Failed to initialize payment. Please try again.",
-        confirmButtonColor: "#111827",
-      });
-    },
-  });
-
-  const submitReviewMutation = useMutation({
-    mutationFn: async ({ orderId, reviews }) => {
-      const order = orders.find((o) => o.id === orderId);
-      const pickerId = order.picker?.profile_id;
-
-      if (!pickerId) {
-        throw new Error("This order doesn't have a picker assigned yet.");
-      }
-
-      const uniqueVendors = new Set();
-      order.order_items?.forEach((item) => {
-        uniqueVendors.add(item.vendor_id);
-      });
-
-      const reviewPromises = Array.from(uniqueVendors).map((vendorId) =>
-        api.post(`submit-reviews/`, {
-          order_id: orderId,
-          vendor_id: vendorId,
-          picker_id: pickerId,
-          vendor_rating: reviews.vendor.rating,
-          vendor_comment: reviews.vendor.comment,
-          picker_rating: reviews.picker.rating,
-          picker_comment: reviews.picker.comment,
-        }),
-      );
-
-      await Promise.all(reviewPromises);
-      return { uniqueVendorsCount: uniqueVendors.size };
-    },
-    onSuccess: (data, { orderId }) => {
-      queryClient.setQueryData(["orders"], (oldOrders) => {
-        if (!oldOrders) return oldOrders;
-        return oldOrders.map((order) =>
-          order.id === orderId ? { ...order, reviewed: true } : order,
-        );
-      });
-
-      Swal.fire({
-        icon: "success",
-        title: "Thank you for your reviews!",
-        text:
-          data.uniqueVendorsCount > 1
-            ? `Reviews submitted for ${data.uniqueVendorsCount} vendors and 1 picker.`
-            : "Reviews submitted successfully!",
-        confirmButtonColor: "#111827",
-      });
-    },
-    onError: (error) => {
-      console.error("Error submitting reviews:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Failed to submit reviews",
-        text:
-          error.response?.data?.error ||
-          error.message ||
-          "Please try again later",
-        confirmButtonColor: "#111827",
-      });
-    },
-  });
-
-  const toggleOrderDetails = (orderId) => {
+  // ── Handlers ──────────────────────────────────────────────────
+  const toggleOrderDetails = (orderId) =>
     setExpandedOrder((prev) => (prev === orderId ? null : orderId));
-  };
 
-  const handleMarkAsDelivered = async (orderId) => {
+  const handleMarkAsDelivered = (orderId) =>
     markAsDeliveredMutation.mutate(orderId);
-  };
 
-  const handleContinuePayment = async (order) => {
-    try {
-      localStorage.setItem("order_id", order.id);
-
-      initializePaymentMutation.mutate({
+  const handleContinuePayment = (order) => {
+    localStorage.setItem("order_id", order.id);
+    initializePaymentMutation.mutate(
+      {
         order_id: order.id,
         email: order.shipping.email,
         amount: order.total * 100,
         callback_url: `${window.location.origin}/payment/verify/`,
-      });
-    } catch (error) {
-      console.error("Error in continue payment handler:", error);
-    }
-  };
-
-  const handleReviewSubmit = async (reviews) => {
-    if (!reviewOrder) return;
-
-    submitReviewMutation.mutate(
-      { orderId: reviewOrder.id, reviews },
+      },
       {
-        onSuccess: () => {
-          setReviewOrder(null);
+        onSuccess: (data) => {
+          window.location.href = data.authorization_url;
+        },
+        onError: (error) => {
+          Swal.fire({
+            icon: "error",
+            title: "Payment Error",
+            text:
+              error.response?.data?.message ||
+              "Failed to initialize payment. Please try again.",
+            confirmButtonColor: "#111827",
+          });
         },
       },
     );
   };
 
+  const handleReviewSubmit = (reviews) => {
+    if (!reviewOrder) return;
+
+    const order = reviewOrder;
+    const pickerId = order.picker?.profile_id;
+
+    if (!pickerId) {
+      Swal.fire({
+        icon: "error",
+        title: "No Picker Assigned",
+        text: "This order doesn't have a picker assigned yet.",
+        confirmButtonColor: "#111827",
+      });
+      return;
+    }
+
+    const uniqueVendorIds = [
+      ...new Set(
+        order.order_items?.map((item) => item.vendor_id).filter(Boolean),
+      ),
+    ];
+
+    if (uniqueVendorIds.length === 0) {
+      Swal.fire({
+        icon: "error",
+        title: "No Vendors Found",
+        text: "Could not find vendors for this order.",
+        confirmButtonColor: "#111827",
+      });
+      return;
+    }
+
+    // ✅ Fields match VendorReviewSerializer: order, vendor, rating, comment
+    const vendorReviewPromises = uniqueVendorIds.map((vendorId) =>
+      submitVendorReviewMutation.mutateAsync({
+        order: order.id, // ✅ not order_id
+        vendor: vendorId, // ✅ not vendor_id
+        rating: reviews.vendor.rating,
+        comment: reviews.vendor.comment,
+      }),
+    );
+
+    // ✅ Fields match PickerReviewSerializer: order, picker, rating, comment
+    const pickerReviewPromise = submitPickerReviewMutation.mutateAsync({
+      order: order.id, // ✅ not order_id
+      picker: pickerId, // ✅ not picker_id
+      rating: reviews.picker.rating,
+      comment: reviews.picker.comment,
+    });
+
+    Promise.all([...vendorReviewPromises, pickerReviewPromise])
+      .then(() => {
+        queryClient.setQueryData(["order-history"], (oldOrders) => {
+          if (!oldOrders) return oldOrders;
+          return oldOrders.map((o) =>
+            o.id === order.id ? { ...o, reviewed: true } : o,
+          );
+        });
+        setReviewOrder(null);
+        Swal.fire({
+          icon: "success",
+          title: "Thank you for your reviews!",
+          text:
+            uniqueVendorIds.length > 1
+              ? `Reviews submitted for ${uniqueVendorIds.length} vendors and 1 picker.`
+              : "Reviews submitted successfully!",
+          confirmButtonColor: "#111827",
+        });
+      })
+      .catch((error) => {
+        Swal.fire({
+          icon: "error",
+          title: "Failed to submit reviews",
+          text:
+            error.response?.data?.error ||
+            error.message ||
+            "Please try again later",
+          confirmButtonColor: "#111827",
+        });
+      });
+  };
+
+  // ── Helpers ───────────────────────────────────────────────────
   const getStatusConfig = (status) => {
     switch (status.toUpperCase()) {
       case "PENDING":
@@ -254,41 +239,36 @@ const OrderHistory = () => {
     }
   };
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat("en-US", {
+  const formatDate = (dateString) =>
+    new Intl.DateTimeFormat("en-US", {
       year: "numeric",
       month: "long",
       day: "numeric",
-    }).format(date);
-  };
+    }).format(new Date(dateString));
 
-  const handlePrint = (orderId) => {
-    const printHandler = useReactToPrint({
-      content: () => printRefs.current[orderId],
-    });
-    printHandler();
-  };
+  const isReviewSubmitting =
+    submitVendorReviewMutation.isPending ||
+    submitPickerReviewMutation.isPending;
 
+  // ── Pagination ────────────────────────────────────────────────
   const indexOfLastOrder = currentPage * ordersPerPage;
   const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
-  const currentOrders = orders?.slice(indexOfFirstOrder, indexOfLastOrder);
+  const currentOrders = orders.slice(indexOfFirstOrder, indexOfLastOrder);
   const totalPages = Math.ceil(orders.length / ordersPerPage);
-
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
-  if (loading) {
+  // ── Early returns ─────────────────────────────────────────────
+  if (loading)
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 pt-28">
         <Spinner />
       </div>
     );
-  }
 
-  if (error) {
+  if (error)
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 pt-28">
-        <div className="bg-white border border-gray-200 rounded-xl p-6 max-w-md text-center">
+        <div className="bg-white border border-gray-200 rounded-xl p-6 max-w-7xl text-center">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <FaExclamationTriangle className="w-8 h-8 text-red-600" />
           </div>
@@ -299,9 +279,8 @@ const OrderHistory = () => {
         </div>
       </div>
     );
-  }
 
-  if (orders.length === 0) {
+  if (orders.length === 0)
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 pt-28">
         <div className="text-center bg-white rounded-xl border border-gray-200 p-8 max-w-md">
@@ -324,8 +303,8 @@ const OrderHistory = () => {
         </div>
       </div>
     );
-  }
 
+  // ── Render ────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gray-50 pt-28 md:pt-4 pb-10 px-4 sm:px-6">
       <Header title="Order History" />
@@ -339,13 +318,12 @@ const OrderHistory = () => {
               key={order.order_number}
               className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow"
             >
-              {/* Order Header - Always Visible */}
+              {/* Order Header */}
               <div
                 className="p-5 cursor-pointer hover:bg-gray-50 transition-colors"
                 onClick={() => toggleOrderDetails(order.order_number)}
               >
                 <div className="flex items-center justify-between gap-4">
-                  {/* Left: Order Info */}
                   <div className="flex items-center gap-4 flex-1 min-w-0">
                     <div className="hidden sm:flex w-12 h-12 bg-gray-900 rounded-lg items-center justify-center flex-shrink-0">
                       <FaBox className="w-6 h-6 text-white" />
@@ -370,8 +348,6 @@ const OrderHistory = () => {
                       </div>
                     </div>
                   </div>
-
-                  {/* Right: Amount & Expand */}
                   <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
                     <div className="text-right">
                       <div className="text-xs text-gray-500 mb-0.5">Total</div>
@@ -390,14 +366,14 @@ const OrderHistory = () => {
                 </div>
               </div>
 
-              {/* Order Details - Expandable */}
+              {/* Order Details */}
               {expandedOrder === order.order_number && (
                 <div
                   className="border-t border-gray-200 bg-gray-50"
                   ref={(el) => (printRefs.current[order.order_number] = el)}
                 >
                   <div className="p-5 grid lg:grid-cols-3 gap-4">
-                    {/* Left Column - Shipping & Items */}
+                    {/* Left Column */}
                     <div className="lg:col-span-2 space-y-4">
                       {/* Shipping Details */}
                       <div className="bg-white rounded-lg border border-gray-200 p-4">
@@ -443,62 +419,60 @@ const OrderHistory = () => {
                           Items ({order.order_items?.length || 0})
                         </h3>
                         <div className="space-y-3">
-                          {order.order_items &&
-                            order.order_items.map((item) => (
-                              <div
-                                key={item.id}
-                                className="flex gap-3 pb-3 border-b border-gray-100 last:border-0 last:pb-0"
-                              >
-                                <div className="flex-shrink-0">
-                                  {item.product.image ? (
-                                    <img
-                                      src={item.product.image}
-                                      alt={item.product.name}
-                                      className="w-14 h-14 object-cover rounded-md"
-                                    />
-                                  ) : (
-                                    <div className="w-14 h-14 bg-gray-100 rounded-md flex items-center justify-center">
-                                      <FaBox className="w-6 h-6 text-gray-400" />
-                                    </div>
-                                  )}
+                          {order.order_items?.map((item) => (
+                            <div
+                              key={item.id}
+                              className="flex gap-3 pb-3 border-b border-gray-100 last:border-0 last:pb-0"
+                            >
+                              <div className="flex-shrink-0">
+                                {item.product.image ? (
+                                  <img
+                                    src={item.product.image}
+                                    alt={item.product.name}
+                                    className="w-14 h-14 object-cover rounded-md"
+                                  />
+                                ) : (
+                                  <div className="w-14 h-14 bg-gray-100 rounded-md flex items-center justify-center">
+                                    <FaBox className="w-6 h-6 text-gray-400" />
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-medium text-gray-900 text-sm mb-1 line-clamp-1">
+                                  {item.product.name}
+                                </h4>
+                                <p className="text-xs text-gray-500 mb-1">
+                                  By: {item.vendor}
+                                </p>
+                                <div className="flex items-center justify-between">
+                                  <div className="text-xs text-gray-600">
+                                    {item.size && (
+                                      <span>Size: {item.size}</span>
+                                    )}
+                                    {item.size && item.color && (
+                                      <span className="mx-1">•</span>
+                                    )}
+                                    {item.color && (
+                                      <span>Color: {item.color}</span>
+                                    )}
+                                  </div>
+                                  <div className="text-xs font-medium text-gray-900">
+                                    Qty: {item.quantity}
+                                  </div>
                                 </div>
-
-                                <div className="flex-1 min-w-0">
-                                  <h4 className="font-medium text-gray-900 text-sm mb-1 line-clamp-1">
-                                    {item.product.name}
-                                  </h4>
-                                  <p className="text-xs text-gray-500 mb-1">
-                                    By: {item.vendor}
-                                  </p>
-                                  <div className="flex items-center justify-between">
-                                    <div className="text-xs text-gray-600">
-                                      {item.size && (
-                                        <span>Size: {item.size}</span>
-                                      )}
-                                      {item.size && item.color && (
-                                        <span className="mx-1">•</span>
-                                      )}
-                                      {item.color && (
-                                        <span>Color: {item.color}</span>
-                                      )}
-                                    </div>
-                                    <div className="text-xs font-medium text-gray-900">
-                                      Qty: {item.quantity}
-                                    </div>
-                                  </div>
-                                  <div className="mt-1 font-semibold text-gray-900 text-sm">
-                                    ₦{item.price.toLocaleString()}
-                                  </div>
+                                <div className="mt-1 font-semibold text-gray-900 text-sm">
+                                  ₦{item.price.toLocaleString()}
                                 </div>
                               </div>
-                            ))}
+                            </div>
+                          ))}
                         </div>
                       </div>
                     </div>
 
-                    {/* Right Column - Summary & Actions */}
+                    {/* Right Column */}
                     <div className="space-y-4">
-                      {/* Order Summary */}
+                      {/* Summary */}
                       <div className="bg-white rounded-lg border border-gray-200 p-4">
                         <h3 className="text-sm font-semibold text-gray-900 mb-3">
                           Summary
@@ -545,10 +519,10 @@ const OrderHistory = () => {
                             <button
                               className="w-full flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 text-white px-4 py-2.5 rounded-lg font-medium transition-colors disabled:opacity-50 text-xs"
                               onClick={() => setReviewOrder(order)}
-                              disabled={submitReviewMutation.isPending}
+                              disabled={isReviewSubmitting}
                             >
                               <FaStar className="w-4 h-4" />
-                              {submitReviewMutation.isPending
+                              {isReviewSubmitting
                                 ? "Submitting..."
                                 : "Write Review"}
                             </button>
@@ -600,7 +574,6 @@ const OrderHistory = () => {
           >
             Prev
           </button>
-
           <div className="flex gap-2">
             {Array.from({ length: totalPages }, (_, i) => i + 1).map(
               (number) => (
@@ -618,7 +591,6 @@ const OrderHistory = () => {
               ),
             )}
           </div>
-
           <button
             onClick={() => paginate(currentPage + 1)}
             disabled={currentPage === totalPages}

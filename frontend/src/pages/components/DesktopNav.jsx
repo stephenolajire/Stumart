@@ -1,4 +1,5 @@
-import React, { useContext, useState, useRef, useEffect } from "react";
+// components/Navigation.jsx
+import React, { useState, useRef, useEffect } from "react";
 import {
   Search,
   User,
@@ -6,12 +7,9 @@ import {
   ShoppingCart,
   Phone,
   Zap,
-  Settings,
   LogOut,
   Heart,
   Package,
-  CreditCard,
-  MapPin,
   Headphones,
   FileText,
   Gift,
@@ -20,8 +18,9 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { GlobalContext } from "../../constant/GlobalContext";
+import { useQueryClient } from "@tanstack/react-query";
 import api from "../../constant/api";
+import { useCart } from "../../hooks/useCart";
 
 const Navigation = () => {
   const [accountDropdownOpen, setAccountDropdownOpen] = useState(false);
@@ -29,171 +28,103 @@ const Navigation = () => {
   const [searchParams, setSearchParams] = useState("");
   const [isSearching, setIsSearching] = useState(false);
 
-  // Add refs for dropdowns
   const accountDropdownRef = useRef(null);
   const quickLinksDropdownRef = useRef(null);
 
-  const { isAuthenticated, useCart, clearCache } = useContext(GlobalContext);
-
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  // Use the TanStack Query hook for cart data
-  const { data: cartData } = useCart();
-  const count = cartData?.count || 0;
+  // Auth — same source of truth as ProtectedRoute
+  const isAuthenticated = !!localStorage.getItem("access");
 
-  // Click outside handler for account dropdown
+  // Cart count — shares the same ["cart"] cache as every other useCart() call
+  const { cart } = useCart();
+  const count = cart?.count ?? 0;
+
+  // ── Click-outside handlers ─────────────────────────────────────────────────
   useEffect(() => {
-    const handleClickOutside = (event) => {
+    const handler = (e) => {
       if (
         accountDropdownRef.current &&
-        !accountDropdownRef.current.contains(event.target)
-      ) {
+        !accountDropdownRef.current.contains(e.target)
+      )
         setAccountDropdownOpen(false);
-      }
     };
-
-    if (accountDropdownOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    if (accountDropdownOpen) document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, [accountDropdownOpen]);
 
-  // Click outside handler for quick links dropdown
   useEffect(() => {
-    const handleClickOutside = (event) => {
+    const handler = (e) => {
       if (
         quickLinksDropdownRef.current &&
-        !quickLinksDropdownRef.current.contains(event.target)
-      ) {
+        !quickLinksDropdownRef.current.contains(e.target)
+      )
         setQuickLinksDropdownOpen(false);
-      }
     };
-
-    if (quickLinksDropdownOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    if (quickLinksDropdownOpen) document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, [quickLinksDropdownOpen]);
 
-  const handleAccountLinkClick = () => {
-    setAccountDropdownOpen(false);
-  };
-
-  const handleQuickLinkClick = () => {
-    setQuickLinksDropdownOpen(false);
-  };
-
+  // ── Logout ─────────────────────────────────────────────────────────────────
   const handleLogout = () => {
     localStorage.removeItem("access");
     localStorage.removeItem("refresh");
     localStorage.removeItem("user_type");
     localStorage.removeItem("institution");
-
-    // Clear all cached data on logout
-    clearCache("all");
-
+    queryClient.clear(); // wipe all cached data including cart
     navigate("/");
     window.location.reload();
   };
 
+  // ── Search ─────────────────────────────────────────────────────────────────
   const handleSearch = async () => {
-    if (!searchParams.trim()) {
-      alert("Please enter a search term");
-      return;
-    }
-
+    if (!searchParams.trim()) return alert("Please enter a search term");
     setIsSearching(true);
-
     try {
-      // Make API call to search endpoint
-      const response = await api.get("/search-products/", {
-        params: {
-          product_name: searchParams.trim(),
-          // You can add state and institution filters if needed
-          // state: userState,
-          // institution: userInstitution,
+      const response = await api.get("/stumart/products/search/", {
+        params: { product_name: searchParams.trim() },
+      });
+      navigate("/search-results", {
+        state: {
+          products: response.data.products || [],
+          searchParams: {
+            productName: searchParams.trim(),
+            searchType: response.data.search_type,
+            count: response.data.count || 0,
+            message: response.data.message,
+          },
         },
       });
-
-      if (response.data.status === "success") {
-        // Navigate to search results page with the products data
-        navigate("/search-results", {
-          state: {
-            products: response.data.products,
-            searchParams: {
-              productName: searchParams.trim(),
-              searchType: response.data.search_type,
-              count: response.data.count,
-            },
-          },
-        });
-        window.location.reload();
-      } else if (response.data.status === "not_found") {
-        // Handle no results found
-        navigate("/search-results", {
-          state: {
-            products: [],
-            searchParams: {
-              productName: searchParams.trim(),
-              searchType: response.data.search_type,
-              count: 0,
-              message: response.data.message,
-            },
-          },
-        });
-      }
     } catch (error) {
-      console.error("Search error:", error);
-
-      // Handle different error scenarios
-      if (error.response?.status === 404) {
-        // No products found
-        navigate("/search-results", {
-          state: {
-            products: [],
-            searchParams: {
-              productName: searchParams.trim(),
-              count: 0,
-              message:
-                error.response.data.message ||
-                "No products found matching your search",
-            },
+      navigate("/search-results", {
+        state: {
+          products: [],
+          searchParams: {
+            productName: searchParams.trim(),
+            count: 0,
+            message: error.response?.data?.message || "No products found",
           },
-        });
-      } else {
-        // Other errors
-        alert("Search failed. Please try again.");
-      }
+        },
+      });
     } finally {
       setIsSearching(false);
     }
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === "Enter") {
-      handleSearch();
-    }
+    if (e.key === "Enter") handleSearch();
   };
 
   return (
     <div className="hidden lg:block flex-1 w-full">
       {/* Top Banner */}
-      <div className="bg-linear-to-r from-purple-600 to-yellow-500 text-white text-sm py-2 px-10 w-[calc(100%-250px)] ">
+      <div className="bg-gradient-to-r from-purple-600 to-yellow-500 text-white text-sm py-2 px-10 w-[calc(100%-250px)]">
         <div className="flex justify-between items-center w-full mx-auto">
           <div className="flex items-center space-x-6">
             <div className="flex items-center space-x-2">
               <Zap className="w-4 h-4" />
               <span>Student Week: Up to 50% OFF</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-white/20 rounded"></div>
-              <span>Download App for Better Deals</span>
             </div>
           </div>
           <div className="flex items-center space-x-6">
@@ -202,7 +133,7 @@ const Navigation = () => {
               <span>Call for Deals: 0900 600 0000</span>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
               <span>LIVE NOW</span>
             </div>
           </div>
@@ -215,7 +146,7 @@ const Navigation = () => {
           {/* Logo */}
           <Link to="/">
             <div className="flex items-center">
-              <div className=" text-white p-2 rounded-lg mr-2">
+              <div className="text-white p-2 rounded-lg mr-2">
                 <div className="w-10 h-10 flex items-center justify-center font-bold text-sm">
                   <img
                     src="/stumart.jpeg"
@@ -229,7 +160,7 @@ const Navigation = () => {
           </Link>
 
           {/* Search Bar */}
-          <div className="flex-1  mx-8">
+          <div className="flex-1 mx-8">
             <div className="relative">
               <input
                 type="text"
@@ -264,7 +195,7 @@ const Navigation = () => {
               >
                 <User className="w-5 h-5" />
                 <span className="text-base">Account</span>
-                <div className="w-3 h-3 border-b-2 border-r-2 border-gray-400 transform rotate-45 -translate-y-0.5"></div>
+                <div className="w-3 h-3 border-b-2 border-r-2 border-gray-400 transform rotate-45 -translate-y-0.5" />
               </div>
 
               {accountDropdownOpen && (
@@ -278,71 +209,56 @@ const Navigation = () => {
                     </div>
                     <Link
                       to="/profile"
-                      onClick={handleAccountLinkClick}
+                      onClick={() => setAccountDropdownOpen(false)}
                       className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                     >
-                      <User className="w-4 h-4 mr-3" />
-                      My Profile
+                      <User className="w-4 h-4 mr-3" /> My Profile
                     </Link>
                     <Link
                       to="/order-history"
-                      onClick={handleAccountLinkClick}
+                      onClick={() => setAccountDropdownOpen(false)}
                       className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                     >
-                      <Package className="w-4 h-4 mr-3" />
-                      My Orders
+                      <Package className="w-4 h-4 mr-3" /> My Orders
                     </Link>
                     <Link
-                      to="#"
-                      onClick={handleAccountLinkClick}
+                      to="/bookmarks"
+                      onClick={() => setAccountDropdownOpen(false)}
                       className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                     >
-                      <Heart className="w-4 h-4 mr-3" />
-                      Wishlist
+                      <Heart className="w-4 h-4 mr-3" /> Wishlist
                     </Link>
                     {isAuthenticated ? (
-                      <div>
-                        <Link
-                          to="/messages"
-                          onClick={handleAccountLinkClick}
-                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                        >
-                          <MessageCircle className="w-4 h-4 mr-3" />
-                          Messages
-                        </Link>
-                        <Link
-                          to="/"
+                      <>
+                        <button
                           onClick={() => {
-                            handleAccountLinkClick();
+                            setAccountDropdownOpen(false);
                             handleLogout();
                           }}
-                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                          className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                         >
-                          <LogOut className="w-4 h-4 mr-3" />
-                          Logout
-                        </Link>
-                      </div>
+                          <LogOut className="w-4 h-4 mr-3" /> Logout
+                        </button>
+                      </>
                     ) : (
-                      <div>
+                      <>
                         <Link
                           to="/login"
-                          onClick={handleAccountLinkClick}
+                          onClick={() => setAccountDropdownOpen(false)}
                           className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                         >
-                          <LogIn className="w-4 h-4 mr-3" />
-                          Login
+                          <LogIn className="w-4 h-4 mr-3" /> Login
                         </Link>
                         <div className="border-t border-gray-100 mt-2">
                           <Link
-                            to="/register"
-                            onClick={handleAccountLinkClick}
+                            to="/signup"
+                            onClick={() => setAccountDropdownOpen(false)}
                             className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                           >
-                            <LogOut className="w-4 h-4 mr-3" />
-                            Register
+                            <LogIn className="w-4 h-4 mr-3" /> Register
                           </Link>
                         </div>
-                      </div>
+                      </>
                     )}
                   </div>
                 </div>
@@ -359,7 +275,7 @@ const Navigation = () => {
               >
                 <HelpCircle className="w-5 h-5" />
                 <span className="text-base">Quick Links</span>
-                <div className="w-3 h-3 border-b-2 border-r-2 border-gray-400 transform rotate-45 -translate-y-0.5"></div>
+                <div className="w-3 h-3 border-b-2 border-r-2 border-gray-400 transform rotate-45 -translate-y-0.5" />
               </div>
 
               {quickLinksDropdownOpen && (
@@ -367,36 +283,31 @@ const Navigation = () => {
                   <div className="py-2">
                     <Link
                       to="/about"
-                      onClick={handleQuickLinkClick}
+                      onClick={() => setQuickLinksDropdownOpen(false)}
                       className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                     >
-                      <Headphones className="w-4 h-4 mr-3" />
-                      About
+                      <Headphones className="w-4 h-4 mr-3" /> About
                     </Link>
                     <Link
                       to="/rider"
-                      onClick={handleQuickLinkClick}
+                      onClick={() => setQuickLinksDropdownOpen(false)}
                       className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                     >
-                      <Truck className="w-4 h-4 mr-3" />
-                      Rider
+                      <Truck className="w-4 h-4 mr-3" /> Rider
                     </Link>
                     <Link
                       to="/vendors"
-                      onClick={handleQuickLinkClick}
+                      onClick={() => setQuickLinksDropdownOpen(false)}
                       className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                     >
-                      <Gift className="w-4 h-4 mr-3" />
-                      Vendors
+                      <Gift className="w-4 h-4 mr-3" /> Vendors
                     </Link>
-
                     <Link
                       to="/contact"
-                      onClick={handleQuickLinkClick}
+                      onClick={() => setQuickLinksDropdownOpen(false)}
                       className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                     >
-                      <Phone className="w-4 h-4 mr-3" />
-                      Contact Us
+                      <Phone className="w-4 h-4 mr-3" /> Contact Us
                     </Link>
                   </div>
                 </div>
@@ -408,11 +319,11 @@ const Navigation = () => {
               <div className="flex relative items-center space-x-1 cursor-pointer hover:text-yellow-500 transition-colors">
                 <ShoppingCart className="w-5 h-5" />
                 <span className="text-base">Cart</span>
-                <div className="bg-yellow-500 text-white text-sm w-4 h-4 flex rounded-full items-center justify-center absolute right-8 -top-1">
-                  <p className="text-center mx-auto items-center justify-center">
-                    {count}
-                  </p>
-                </div>
+                {count > 0 && (
+                  <div className="bg-yellow-500 text-white text-xs w-4 h-4 flex rounded-full items-center justify-center absolute -right-3 -top-2">
+                    {count > 99 ? "99+" : count}
+                  </div>
+                )}
               </div>
             </Link>
           </div>

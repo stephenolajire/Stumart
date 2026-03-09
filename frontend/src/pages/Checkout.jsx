@@ -1,13 +1,11 @@
 import React, { useContext, useState, useEffect } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { GlobalContext, useArea } from "../constant/GlobalContext";
+import { GlobalContext } from "../constant/GlobalContext";
 import { useNavigate } from "react-router-dom";
-import api from "../constant/api";
 import Header from "../components/Header";
 import Swal from "sweetalert2";
+import { useCreateOrder, useInitializePayment } from "../hooks/useOrder";
 
 const Checkout = () => {
-  // Form states
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -15,28 +13,21 @@ const Checkout = () => {
     phone: "",
     address: "",
     room: "",
-    referralCode: "", // NEW: Referral code field
+    referralCode: "",
     saveInfo: false,
   });
 
-  // Area selection states
-  const [selectedAreaId, setSelectedAreaId] = useState("");
-  const [showManualAddress, setShowManualAddress] = useState(false);
+  const [vendorNearby, setVendorNearby] = useState(null);
 
   const { useCart } = useContext(GlobalContext);
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
-  const { data: areaData, isLoading: areaLoading } = useArea();
-
-  // Get cart data using the hook from context
   const {
     data: cartData,
     isLoading: cartLoading,
     error: cartError,
   } = useCart();
 
-  // Extract cart information with fallbacks
   const cartItems = cartData?.items || [];
   const cartSummary = cartData?.summary || {
     subTotal: 0,
@@ -46,29 +37,27 @@ const Checkout = () => {
     total: 0,
   };
 
-  // Check delivery time availability
+  const { mutate: createOrder, isPending: isCreatingOrder } = useCreateOrder();
+  const { mutate: initializePayment, isPending: isInitializingPayment } =
+    useInitializePayment();
+
   const checkDeliveryTimeAvailability = () => {
     const now = new Date();
     const currentHour = now.getHours();
     const currentMinute = now.getMinutes();
+    const DELIVERY_START_HOUR = 8;
+    const DELIVERY_END_HOUR = 18;
 
-    const DELIVERY_START_HOUR = 8; // 8 AM
-    const DELIVERY_END_HOUR = 18; // 6 PM (18:00)
-
-    // Check if current time is within delivery hours
     if (currentHour >= DELIVERY_START_HOUR && currentHour < DELIVERY_END_HOUR) {
       return { available: true };
     }
 
-    // Before 7 AM
     if (currentHour < DELIVERY_START_HOUR) {
       const hoursUntilStart = DELIVERY_START_HOUR - currentHour;
       const minutesUntilStart = 60 - currentMinute;
-
       let timeMessage;
       if (hoursUntilStart === 1 && minutesUntilStart < 60) {
-        const totalMinutes = minutesUntilStart;
-        timeMessage = `${totalMinutes} minute${totalMinutes !== 1 ? "s" : ""}`;
+        timeMessage = `${minutesUntilStart} minute${minutesUntilStart !== 1 ? "s" : ""}`;
       } else if (hoursUntilStart > 1) {
         const adjustedHours =
           minutesUntilStart === 60 ? hoursUntilStart : hoursUntilStart - 1;
@@ -76,7 +65,6 @@ const Checkout = () => {
       } else {
         timeMessage = `${minutesUntilStart} minute${minutesUntilStart !== 1 ? "s" : ""}`;
       }
-
       return {
         available: false,
         type: "before",
@@ -85,24 +73,17 @@ const Checkout = () => {
       };
     }
 
-    // After 6 PM
-    if (currentHour >= DELIVERY_END_HOUR) {
-      return {
-        available: false,
-        type: "after",
-        message:
-          "Our delivery riders are no longer available for today. Please come back tomorrow after 7:00 AM.",
-        title: "Delivery Hours Ended",
-      };
-    }
-
-    return { available: true };
+    return {
+      available: false,
+      type: "after",
+      message:
+        "Our delivery riders are no longer available for today. Please come back tomorrow after 7:00 AM.",
+      title: "Delivery Hours Ended",
+    };
   };
 
-  // Show delivery time alert on component mount
   useEffect(() => {
     const deliveryCheck = checkDeliveryTimeAvailability();
-
     if (!deliveryCheck.available) {
       Swal.fire({
         icon: "warning",
@@ -111,149 +92,16 @@ const Checkout = () => {
         confirmButtonText: "Understood",
         confirmButtonColor: "#EAB308",
         allowOutsideClick: false,
-        customClass: {
-          popup: "delivery-time-alert",
-        },
       }).then((result) => {
-        if (result.isConfirmed) {
-          navigate(-1);
-        }
+        if (result.isConfirmed) navigate(-1);
       });
     }
   }, []);
 
-  // Create order mutation
-  const createOrderMutation = useMutation({
-    mutationFn: async (orderData) => {
-      const response = await api.post("orders/create/", orderData);
-      return response.data;
-    },
-    onSuccess: (data) => {
-      // Store order ID
-      localStorage.setItem("order_id", data.order_id);
-
-      // Show success message if referral code was applied
-      if (data.referral_code_applied) {
-        console.log(
-          `Referral code ${data.referral_code_applied} applied successfully!`,
-        );
-      }
-
-      // Initiate payment
-      initializePayment({
-        order_id: data.order_id,
-        email: formData.email,
-        amount: cartSummary.total * 100, // Paystack requires amount in kobo
-        callback_url: `${window.location.origin}/payment/verify/`,
-      });
-    },
-    onError: (error) => {
-      handleCheckoutError(error);
-    },
-  });
-
-  // Initialize payment mutation
-  const initializePaymentMutation = useMutation({
-    mutationFn: async (paymentData) => {
-      const response = await api.post("payment/initialize/", paymentData);
-      return response.data;
-    },
-    onSuccess: (data) => {
-      // Redirect to Paystack payment page
-      window.location.href = data.authorization_url;
-    },
-    onError: (error) => {
-      handleCheckoutError(error);
-    },
-  });
-
-  // Clear cart mutation
-  const clearCartMutation = useMutation({
-    mutationFn: async () => {
-      const cartCode = localStorage.getItem("cart_code");
-      if (cartCode) {
-        const response = await api.delete(`clear-cart/`, {
-          params: { cart_code: cartCode },
-        });
-        return response.data;
-      }
-    },
-    onSuccess: () => {
-      // Invalidate cart queries
-      queryClient.invalidateQueries({ queryKey: ["cart"] });
-    },
-  });
-
-  const goback = () => {
-    navigate(-1);
-  };
-
-  // Format currency
-  const formatCurrency = (amount) => {
-    return `₦${Number(amount)
-      .toFixed(2)
-      .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
-  };
-
-  // Handle input changes
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === "checkbox" ? checked : value,
-    });
-  };
-
-  // Handle area selection
-  const handleAreaSelection = (e) => {
-    const areaId = e.target.value;
-    setSelectedAreaId(areaId);
-
-    if (areaId) {
-      // Find selected area and set address
-      const selectedArea = areaData.find(
-        (area) => area.id.toString() === areaId,
-      );
-      if (selectedArea) {
-        setFormData({
-          ...formData,
-          address: selectedArea.name,
-        });
-      }
-    } else {
-      setFormData({
-        ...formData,
-        address: "",
-      });
-    }
-  };
-
-  // Toggle manual address input
-  const toggleManualAddress = () => {
-    setShowManualAddress(true);
-    setSelectedAreaId("");
-    setFormData({
-      ...formData,
-      address: "",
-    });
-  };
-
-  // Initialize payment helper
-  const initializePayment = (paymentData) => {
-    initializePaymentMutation.mutate(paymentData);
-  };
-
-  // Enhanced error handling
   const handleCheckoutError = (err) => {
-    console.error("Checkout error:", err);
-
     if (err.response?.data?.error_details) {
-      // Handle the multiple institutions error specifically
       const errorDetails = err.response.data.error_details;
-      const institutions = errorDetails.multiple_institutions_found;
       const vendorsByInstitution = errorDetails.vendors_by_institution;
-
-      // Create a detailed message showing vendors by institution
       let institutionDetails = "";
       Object.entries(vendorsByInstitution).forEach(([institution, vendors]) => {
         institutionDetails += `<strong>${institution}:</strong><br>`;
@@ -262,39 +110,21 @@ const Checkout = () => {
         });
         institutionDetails += "<br>";
       });
-
       Swal.fire({
         icon: "error",
         title: "Order Cannot Be Processed",
-        html: `
-          <div style="text-align: left;">
-            <p><strong>Error:</strong> ${err.response.data.message}</p>
-            <br>
-            <p><strong>Vendors by Institution:</strong></p>
-            <div style="margin-left: 10px;">
-              ${institutionDetails}
-            </div>
-            <p><strong>Suggestion:</strong> ${errorDetails.suggestion}</p>
-          </div>
-        `,
+        html: `<div style="text-align: left;"><p><strong>Error:</strong> ${err.response.data.message}</p><br><p><strong>Vendors by Institution:</strong></p><div style="margin-left: 10px;">${institutionDetails}</div><p><strong>Suggestion:</strong> ${errorDetails.suggestion}</p></div>`,
         confirmButtonText: "Go Back to Cart",
         confirmButtonColor: "#3085d6",
         width: "500px",
-        customClass: {
-          htmlContainer: "swal-html-container",
-        },
       }).then((result) => {
-        if (result.isConfirmed) {
-          navigate(-1);
-        }
+        if (result.isConfirmed) navigate(-1);
       });
     } else {
-      // Handle other types of errors
       const errorMessage =
         err.response?.data?.message ||
         err.response?.data?.error ||
         "An error occurred during checkout. Please try again.";
-
       Swal.fire({
         icon: "error",
         title: "Checkout Error",
@@ -305,11 +135,21 @@ const Checkout = () => {
     }
   };
 
-  // Handle form submission
+  const goback = () => navigate(-1);
+
+  const formatCurrency = (amount) =>
+    `₦${Number(amount)
+      .toFixed(2)
+      .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData({ ...formData, [name]: type === "checkbox" ? checked : value });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Check delivery time before submitting
     const deliveryCheck = checkDeliveryTimeAvailability();
     if (!deliveryCheck.available) {
       Swal.fire({
@@ -322,7 +162,6 @@ const Checkout = () => {
       return;
     }
 
-    // Validate cart
     if (!cartItems.length) {
       Swal.fire({
         icon: "warning",
@@ -333,23 +172,26 @@ const Checkout = () => {
       return;
     }
 
-    // Validate address selection
-    if (
-      areaData &&
-      areaData.length > 0 &&
-      !selectedAreaId &&
-      !showManualAddress
-    ) {
+    if (!formData.address.trim()) {
       Swal.fire({
         icon: "warning",
         title: "Address Required",
-        text: "Please select an area or enter your address manually.",
+        text: "Please enter your delivery address.",
         confirmButtonColor: "#3085d6",
       });
       return;
     }
 
-    // Prepare order data
+    if (vendorNearby === null) {
+      Swal.fire({
+        icon: "warning",
+        title: "One More Thing",
+        text: "Please let us know if the vendor you're ordering from is near your location.",
+        confirmButtonColor: "#EAB308",
+      });
+      return;
+    }
+
     const orderData = {
       first_name: formData.firstName,
       last_name: formData.lastName,
@@ -363,28 +205,43 @@ const Checkout = () => {
       tax: cartSummary.tax,
       takeaway: cartSummary.takeaway,
       total: cartSummary.total,
-      // Add area_id if selected
-      ...(selectedAreaId && { area_id: selectedAreaId }),
-      // Add vendors information if available
+      vendor_is_nearby: vendorNearby,
       ...(cartData?.vendors && { vendors: cartData.vendors }),
-      // NEW: Add referral code if provided (optional)
       ...(formData.referralCode.trim() && {
         referral_code: formData.referralCode.trim().toUpperCase(),
       }),
     };
 
-    // Create order
-    createOrderMutation.mutate(orderData);
+    createOrder(orderData, {
+      onSuccess: (data) => {
+        localStorage.setItem("order_id", data.order_id);
+        if (data.referral_code_applied) {
+          console.log(
+            `Referral code ${data.referral_code_applied} applied successfully!`,
+          );
+        }
+        initializePayment(
+          {
+            order_id: data.order_id,
+            email: formData.email,
+            amount: cartSummary.total * 100,
+            callback_url: `${window.location.origin}/payment/verify/`,
+          },
+          {
+            onSuccess: (payData) => {
+              window.location.href = payData.authorization_url;
+            },
+            onError: handleCheckoutError,
+          },
+        );
+      },
+      onError: handleCheckoutError,
+    });
   };
 
-  // Loading states
-  const isLoading =
-    createOrderMutation.isPending ||
-    initializePaymentMutation.isPending ||
-    cartLoading;
+  const isLoading = isCreatingOrder || isInitializingPayment || cartLoading;
 
-  // Show loading if cart is still loading
-  if (cartLoading || areaLoading) {
+  if (cartLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header title="Checkout" />
@@ -398,7 +255,6 @@ const Checkout = () => {
     );
   }
 
-  // Show error if cart failed to load
   if (cartError) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -420,7 +276,6 @@ const Checkout = () => {
     );
   }
 
-  // Show empty cart message
   if (!cartItems.length) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -440,13 +295,12 @@ const Checkout = () => {
     );
   }
 
-  // Get delivery status for display
   const deliveryStatus = checkDeliveryTimeAvailability();
 
   return (
     <div className="h-auto bg-gray-50 py-4 mt-38 lg:mt-0">
       <div className="w-full mx-auto px-4 md:px-8">
-        {/* Delivery Hours Info Banner */}
+        {/* Delivery Hours Banner */}
         <div className="mb-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg">
           <div className="flex items-start">
             <div className="shrink-0">
@@ -478,11 +332,11 @@ const Checkout = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Checkout form */}
+          {/* Checkout Form */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-2xl shadow-lg p-8">
               <form onSubmit={handleSubmit} className="space-y-8">
-                {/* Contact Information Section */}
+                {/* Contact Information */}
                 <div className="border-b border-gray-200 pb-8">
                   <h3 className="text-2xl font-bold text-gray-900 mb-6">
                     Contact Information
@@ -565,7 +419,6 @@ const Checkout = () => {
                     </div>
                   </div>
 
-                  {/* NEW: Referral Code Input */}
                   <div className="mt-6">
                     <label
                       htmlFor="referralCode"
@@ -595,102 +448,31 @@ const Checkout = () => {
                   </div>
                 </div>
 
-                {/* Shipping Address Section */}
-                <div className="space-y-6">
+                {/* Shipping Address */}
+                <div className="space-y-6 border-b border-gray-200 pb-8">
                   <h3 className="text-2xl font-bold text-gray-900">
                     Shipping Address
                   </h3>
 
-                  {/* Area Selection */}
-                  {areaData && areaData.length > 0 && !showManualAddress && (
-                    <div>
-                      <label
-                        htmlFor="area"
-                        className="block text-sm font-medium text-gray-700 mb-2"
-                      >
-                        Select Your Area
-                      </label>
-                      <select
-                        id="area"
-                        name="area"
-                        value={selectedAreaId}
-                        onChange={handleAreaSelection}
-                        required={!showManualAddress}
-                        disabled={isLoading}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
-                      >
-                        <option value="">Select an area</option>
-                        {areaData.map((area) => (
-                          <option key={area.id} value={area.id}>
-                            {area.name}
-                          </option>
-                        ))}
-                      </select>
-
-                      <div className="mt-4">
-                        <button
-                          type="button"
-                          onClick={toggleManualAddress}
-                          disabled={isLoading}
-                          className="text-yellow-600 hover:text-yellow-700 font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          Don't see your area? Enter address manually
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Manual Address Input */}
-                  {(showManualAddress ||
-                    (areaData && areaData.length === 0)) && (
-                    <div>
-                      <label
-                        htmlFor="address"
-                        className="block text-sm font-medium text-gray-700 mb-2"
-                      >
-                        Hostel Address
-                      </label>
-                      <input
-                        type="text"
-                        id="address"
-                        name="address"
-                        value={formData.address}
-                        onChange={handleInputChange}
-                        required
-                        disabled={isLoading}
-                        placeholder="Enter your hostel address"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
-                      />
-
-                      {areaData && areaData.length > 0 && showManualAddress && (
-                        <div className="mt-2">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setShowManualAddress(false);
-                              setFormData({ ...formData, address: "" });
-                            }}
-                            disabled={isLoading}
-                            className="text-yellow-600 hover:text-yellow-700 font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            ← Back to area selection
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Address Display (when area is selected) */}
-                  {selectedAreaId && !showManualAddress && formData.address && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Selected Address
-                      </label>
-                      <div className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900">
-                        {formData.address}
-                      </div>
-                    </div>
-                  )}
+                  <div>
+                    <label
+                      htmlFor="address"
+                      className="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Hostel Address
+                    </label>
+                    <input
+                      type="text"
+                      id="address"
+                      name="address"
+                      value={formData.address}
+                      onChange={handleInputChange}
+                      required
+                      disabled={isLoading}
+                      placeholder="Enter your hostel address"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    />
+                  </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
@@ -714,8 +496,98 @@ const Checkout = () => {
                   </div>
                 </div>
 
+                {/* Vendor Proximity Question */}
+                <div className="space-y-3">
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900">
+                      Is this vendor near you?
+                    </h3>
+                    <p className="text-sm text-gray-500 mt-0.5">
+                      This helps us match you with a nearby student picker if
+                      one is available.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      disabled={isLoading}
+                      onClick={() => setVendorNearby(true)}
+                      className={`flex items-center justify-center gap-2.5 px-4 py-4 rounded-xl border-2 font-medium text-sm transition-all duration-200 disabled:cursor-not-allowed ${
+                        vendorNearby === true
+                          ? "border-yellow-400 bg-yellow-50 text-yellow-800"
+                          : "border-gray-200 bg-white text-gray-600 hover:border-yellow-200 hover:bg-yellow-50/40"
+                      }`}
+                    >
+                      <span className="text-xl leading-none">📍</span>
+                      <span>Yes, nearby</span>
+                      {vendorNearby === true && (
+                        <span className="ml-auto w-4 h-4 rounded-full bg-yellow-400 flex items-center justify-center flex-shrink-0">
+                          <svg
+                            className="w-2.5 h-2.5 text-white"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={3}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M5 13l4 4L19 7"
+                            />
+                          </svg>
+                        </span>
+                      )}
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={isLoading}
+                      onClick={() => setVendorNearby(false)}
+                      className={`flex items-center justify-center gap-2.5 px-4 py-4 rounded-xl border-2 font-medium text-sm transition-all duration-200 disabled:cursor-not-allowed ${
+                        vendorNearby === false
+                          ? "border-gray-400 bg-gray-50 text-gray-800"
+                          : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50"
+                      }`}
+                    >
+                      <span className="text-xl leading-none">🗺️</span>
+                      <span>No, far away</span>
+                      {vendorNearby === false && (
+                        <span className="ml-auto w-4 h-4 rounded-full bg-gray-400 flex items-center justify-center flex-shrink-0">
+                          <svg
+                            className="w-2.5 h-2.5 text-white"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={3}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M5 13l4 4L19 7"
+                            />
+                          </svg>
+                        </span>
+                      )}
+                    </button>
+                  </div>
+
+                  {vendorNearby === true && (
+                    <p className="text-xs text-yellow-700 bg-yellow-50 border border-yellow-100 rounded-lg px-3 py-2 flex items-start gap-1.5">
+                      <span className="mt-0.5 flex-shrink-0">🎒</span>A student
+                      picker near you may be assigned to handle this delivery.
+                    </p>
+                  )}
+                  {vendorNearby === false && (
+                    <p className="text-xs text-gray-500 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 flex items-start gap-1.5">
+                      <span className="mt-0.5 flex-shrink-0">🛵</span>Your order
+                      will be assigned to a regular delivery rider.
+                    </p>
+                  )}
+                </div>
+
                 {/* Form Actions */}
-                <div className="flex flex-col sm:flex-row gap-4 pt-6">
+                <div className="flex flex-col sm:flex-row gap-4 pt-2">
                   <button
                     type="button"
                     onClick={goback}
@@ -743,7 +615,7 @@ const Checkout = () => {
             </div>
           </div>
 
-          {/* Order summary */}
+          {/* Order Summary */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl shadow-lg p-8 sticky top-8">
               <h3 className="text-2xl font-bold text-gray-900 mb-6">
@@ -812,7 +684,6 @@ const Checkout = () => {
                     {formatCurrency(cartSummary.tax)}
                   </span>
                 </div>
-                {/* Conditionally show takeaway fee only if it's greater than 0 */}
                 {cartSummary.takeaway > 0 && (
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Takeaway Fee</span>
@@ -828,6 +699,21 @@ const Checkout = () => {
                   </span>
                 </div>
               </div>
+
+              {vendorNearby !== null && (
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                  <div
+                    className={`flex items-center gap-2 text-xs rounded-lg px-3 py-2 ${vendorNearby ? "bg-yellow-50 text-yellow-700" : "bg-gray-50 text-gray-500"}`}
+                  >
+                    <span>{vendorNearby ? "📍" : "🗺️"}</span>
+                    <span className="font-medium">
+                      {vendorNearby
+                        ? "Vendor marked as nearby"
+                        : "Vendor marked as far away"}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -3,8 +3,6 @@ import {
   FaMoneyBillWave,
   FaChartLine,
   FaUsers,
-  FaCalendarWeek,
-  FaCalendarAlt,
   FaGraduationCap,
   FaStore,
   FaTruck,
@@ -65,7 +63,6 @@ const DashboardHome = () => {
     );
   }
 
-  // Prepare chart data
   const userBreakdownData = [
     {
       name: "Students",
@@ -101,10 +98,10 @@ const DashboardHome = () => {
     { name: "Out of Stock", value: stats.product_stats.out_of_stock },
   ];
 
-  const userGrowthData = [
-    { name: "This Week", value: stats.user_stats.new_week },
-    { name: "This Month", value: stats.user_stats.new_month },
-    { name: "Total", value: stats.user_stats.total },
+  const userBreakdownBarData = [
+    { name: "Students", value: stats.user_stats.breakdown.students },
+    { name: "Vendors", value: stats.user_stats.breakdown.vendors },
+    { name: "Pickers", value: stats.user_stats.breakdown.pickers },
   ];
 
   const CustomTooltip = ({ active, payload }) => {
@@ -137,7 +134,6 @@ const DashboardHome = () => {
 
   return (
     <div className="space-y-8 bg-gray-50 min-h-screen py-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold text-gray-900">Dashboard</h2>
@@ -164,7 +160,7 @@ const DashboardHome = () => {
         </button>
       </div>
 
-      {/* Financial Overview Section */}
+      {/* Financial Overview */}
       <section className="space-y-4">
         <div className="flex items-center gap-3">
           <div className="w-1 h-6 bg-gray-900 rounded-full"></div>
@@ -172,7 +168,7 @@ const DashboardHome = () => {
             Financial Overview
           </h3>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <StatCard
             title="Total Revenue"
             value={`₦${stats.financial_stats.total_sales.toLocaleString()}`}
@@ -183,15 +179,10 @@ const DashboardHome = () => {
             value={`₦${stats.financial_stats.total_profit.toLocaleString()}`}
             icon={<FaChartLine size={20} />}
           />
-          <StatCard
-            title="Weekly Sales"
-            value={`₦${stats.financial_stats.recent_sales.toLocaleString()}`}
-            icon={<FaMoneyBillWave size={20} />}
-          />
         </div>
       </section>
 
-      {/* User Statistics Section with Charts */}
+      {/* User Statistics */}
       <section className="space-y-4">
         <div className="flex items-center gap-3">
           <div className="w-1 h-6 bg-gray-900 rounded-full"></div>
@@ -201,11 +192,10 @@ const DashboardHome = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* User Growth Chart */}
           <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-            <h4 className="text-gray-900 font-semibold mb-4">User Growth</h4>
+            <h4 className="text-gray-900 font-semibold mb-4">User Breakdown</h4>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={userGrowthData}>
+              <BarChart data={userBreakdownBarData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis
                   dataKey="name"
@@ -219,7 +209,6 @@ const DashboardHome = () => {
             </ResponsiveContainer>
           </div>
 
-          {/* User Breakdown Pie Chart */}
           <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
             <h4 className="text-gray-900 font-semibold mb-4">
               User Distribution
@@ -235,7 +224,6 @@ const DashboardHome = () => {
                     `${name}: ${(percent * 100).toFixed(0)}%`
                   }
                   outerRadius={80}
-                  fill="#8884d8"
                   dataKey="value"
                   style={{ fontSize: "14px" }}
                 >
@@ -250,27 +238,31 @@ const DashboardHome = () => {
           </div>
         </div>
 
-        {/* User Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <StatCard
             title="Total Users"
             value={stats?.user_stats?.total}
             icon={<FaUsers size={20} />}
           />
           <StatCard
-            title="New This Week"
-            value={stats?.user_stats?.new_week}
-            icon={<FaCalendarWeek size={20} />}
+            title="Students"
+            value={stats?.user_stats?.breakdown?.students}
+            icon={<FaGraduationCap size={20} />}
           />
           <StatCard
-            title="New This Month"
-            value={stats?.user_stats?.new_month}
-            icon={<FaCalendarAlt size={20} />}
+            title="Vendors"
+            value={stats?.user_stats?.breakdown?.vendors}
+            icon={<FaStore size={20} />}
+          />
+          <StatCard
+            title="Pickers"
+            value={stats?.user_stats?.breakdown?.pickers}
+            icon={<FaTruck size={20} />}
           />
         </div>
       </section>
 
-      {/* Orders & Products Section with Charts */}
+      {/* Orders & Products */}
       <section className="space-y-4">
         <div className="flex items-center gap-3">
           <div className="w-1 h-6 bg-gray-900 rounded-full"></div>
@@ -280,7 +272,6 @@ const DashboardHome = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Order Status Chart */}
           <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
             <h4 className="text-gray-900 font-semibold mb-4">Order Status</h4>
             <ResponsiveContainer width="100%" height={300}>
@@ -294,7 +285,6 @@ const DashboardHome = () => {
                     `${name}: ${(percent * 100).toFixed(0)}%`
                   }
                   outerRadius={80}
-                  fill="#8884d8"
                   dataKey="value"
                   style={{ fontSize: "14px" }}
                 >
@@ -308,7 +298,6 @@ const DashboardHome = () => {
             </ResponsiveContainer>
           </div>
 
-          {/* Product Stock Chart */}
           <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
             <h4 className="text-gray-900 font-semibold mb-4">
               Product Stock Status
@@ -329,17 +318,11 @@ const DashboardHome = () => {
           </div>
         </div>
 
-        {/* Order & Product Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
             title="Total Orders"
             value={stats.order_stats.total}
             icon={<FaBox size={20} />}
-          />
-          <StatCard
-            title="Recent Orders"
-            value={stats.order_stats.recent}
-            icon={<FaSync size={20} />}
           />
           <StatCard
             title="Pending Orders"

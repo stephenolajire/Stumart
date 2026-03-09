@@ -29,10 +29,10 @@ class UserAdmin(admin.ModelAdmin):
 
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
-    list_display = ('get_email', 'get_full_name', 'matric_number', 'department')
+    list_display = ('get_email', 'get_full_name')
     search_fields = ('user__email', 'user__first_name', 'user__last_name', 
-                    'matric_number', 'department')
-    list_filter = ('department',)
+                    )
+   
 
     def get_email(self, obj):
         return obj.user.email

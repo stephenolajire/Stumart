@@ -63,7 +63,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'email', 'username', 'password','residence',
+        fields = ('id', 'email', 'username', 'password',
                   'first_name', 'last_name', 'phone_number', 'user_type',
                   'profile_pic', 'state', 'institution', 'image_url')
         extra_kwargs = {
@@ -211,18 +211,18 @@ class UserSerializer(serializers.ModelSerializer):
         
         return value
 
-    def validate_profile_pic(self, value):
-        if value:
-            # Check file size (5MB limit)
-            if value.size > 5 * 1024 * 1024:
-                raise ImageTooLargeError()
+    # def validate_profile_pic(self, value):
+    #     if value:
+    #         # Check file size (5MB limit)
+    #         if value.size > 5 * 1024 * 1024:
+    #             raise ImageTooLargeError()
             
-            # Check file format
-            allowed_formats = ['image/jpeg', 'image/png', 'image/gif']
-            if value.content_type not in allowed_formats:
-                raise InvalidImageFormatError()
+    #         # Check file format
+    #         allowed_formats = ['image/jpeg', 'image/png', 'image/gif']
+    #         if value.content_type not in allowed_formats:
+    #             raise InvalidImageFormatError()
         
-        return value
+    #     return value
 
     def validate_state(self, value):
         if not value or not value.strip():
@@ -313,14 +313,14 @@ class BaseUserProfileMixin:
         """Get list of user model fields"""
         return {
             'email', 'username', 'password', 'first_name', 'last_name',
-            'phone_number', 'user_type', 'state', 'institution', 'profile_pic'
+            'phone_number', 'user_type', 'state', 'institution'
         }
     
     def _extract_user_data(self, validated_data):
         """Extract user-related data from validated data"""
         user_fields = [
             'email', 'username', 'password', 'first_name', 'last_name',
-            'phone_number', 'user_type', 'state', 'institution', 'profile_pic'
+            'phone_number', 'user_type', 'state', 'institution'
         ]
         
         user_data = {}
@@ -341,7 +341,7 @@ class StudentSerializer(BaseUserProfileMixin, serializers.ModelSerializer):
     user_type = serializers.CharField(write_only=True)
     state = serializers.CharField(write_only=True)
     institution = serializers.CharField(write_only=True)
-    profile_pic = serializers.ImageField(write_only=True, required=False)
+    # profile_pic = serializers.ImageField(write_only=True, required=False)
     
     # Include user data in response
     user = UserSerializer(read_only=True)
@@ -350,22 +350,10 @@ class StudentSerializer(BaseUserProfileMixin, serializers.ModelSerializer):
         model = Student
         fields = '__all__'
 
-    def validate_matric_number(self, value):
-        if not value or not value.strip():
-            raise MissingRequiredFieldError("Matric number is required.")
-        
-        cleaned_matric = value.strip().upper()
-        
-        # Check if matric number already exists
-        # if Student.objects.filter(matric_number=cleaned_matric).exists():
-        #     raise InvalidMatricNumberError("A student with this matric number already exists.")
-        
-        return cleaned_matric
-
-    def validate_department(self, value):
-        if not value or not value.strip():
-            raise MissingRequiredFieldError("Department is required.")
-        return value.strip().title()
+    # def validate_department(self, value):
+    #     if not value or not value.strip():
+    #         raise MissingRequiredFieldError("Department is required.")
+    #     return value.strip().title()
 
     def validate_phone_number(self, value):
         """Use the same validation logic as UserSerializer"""
@@ -592,7 +580,6 @@ class PickerSerializer(BaseUserProfileMixin, serializers.ModelSerializer):
         return self.create_user_and_profile(validated_data, Picker)
 
 class StudentPickerSerializer(BaseUserProfileMixin, serializers.ModelSerializer):
-    # Flatten user fields
     email = serializers.EmailField(write_only=True)
     username = serializers.CharField(write_only=True)
     password = serializers.CharField(write_only=True, validators=[validate_password])
@@ -603,8 +590,13 @@ class StudentPickerSerializer(BaseUserProfileMixin, serializers.ModelSerializer)
     state = serializers.CharField(write_only=True)
     institution = serializers.CharField(write_only=True)
     profile_pic = serializers.ImageField(write_only=True, required=False)
-    
-    # Include user data in response
+
+    preferred_vendors = serializers.PrimaryKeyRelatedField(
+        queryset=Vendor.objects.all(),
+        many=True,
+        required=False
+    )
+
     user = UserSerializer(read_only=True)
 
     class Meta:
@@ -622,33 +614,49 @@ class StudentPickerSerializer(BaseUserProfileMixin, serializers.ModelSerializer)
         return value.strip().upper()
 
     def validate_phone_number(self, value):
-        user_serializer = UserSerializer()
-        return user_serializer.validate_phone_number(value)
+        return UserSerializer().validate_phone_number(value)
 
     def validate_email(self, value):
-        user_serializer = UserSerializer()
-        return user_serializer.validate_email(value)
+        return UserSerializer().validate_email(value)
 
     def validate_password(self, value):
-        user_serializer = UserSerializer()
-        return user_serializer.validate_password(value)
+        return UserSerializer().validate_password(value)
 
     def validate_first_name(self, value):
-        user_serializer = UserSerializer()
-        return user_serializer.validate_first_name(value)
+        return UserSerializer().validate_first_name(value)
 
     def validate_last_name(self, value):
-        user_serializer = UserSerializer()
-        return user_serializer.validate_last_name(value)
+        return UserSerializer().validate_last_name(value)
 
     def validate_profile_pic(self, value):
         if value:
-            user_serializer = UserSerializer()
-            return user_serializer.validate_profile_pic(value)
+            return UserSerializer().validate_profile_pic(value)
         return value
 
+    def validate(self, data):
+        # ✅ Validate preferred_vendors belong to the same institution
+        institution = data.get('institution', '').strip().lower()
+        preferred_vendors = data.get('preferred_vendors', [])
+
+        if preferred_vendors and institution:
+            invalid_vendors = [
+                v for v in preferred_vendors
+                if v.user.institution.strip().lower() != institution
+            ]
+            if invalid_vendors:
+                bad_names = [v.business_name for v in invalid_vendors]
+                raise ValidationError(
+                    f"The following vendors are not in your institution: {', '.join(bad_names)}"
+                )
+
+        return data
+
     def create(self, validated_data):
-        return self.create_user_and_profile(validated_data, StudentPicker)
+        preferred_vendors = validated_data.pop('preferred_vendors', [])
+        instance = self.create_user_and_profile(validated_data, StudentPicker)
+        if preferred_vendors:
+            instance.preferred_vendors.set(preferred_vendors)
+        return instance
 
 # Keep your other serializers unchanged
 class KYCVerificationSerializer(serializers.ModelSerializer):

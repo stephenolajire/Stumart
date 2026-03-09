@@ -227,7 +227,7 @@ def register_existing_recipients(skip_verification: bool = True):
     Args:
         skip_verification: Skip account verification (recommended for bulk operations)
     """
-    from User.models import Vendor, Picker, StudentPicker
+    from user.models import Vendor, Picker, StudentPicker
     
     service = PaystackTransferService()
     results = {

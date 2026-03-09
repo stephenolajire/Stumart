@@ -67,6 +67,7 @@ const ReferralManagement = () => {
       queryClient.invalidateQueries(["referrals-list"]);
     },
     onError: (error) => {
+      console.log("Error response:", error.response?.data);
       const errorMessage =
         error.response?.data?.details?.email?.[0] ||
         error.response?.data?.error ||
@@ -127,7 +128,7 @@ const ReferralManagement = () => {
       Swal.fire({
         icon: "error",
         title: "Error",
-        text: error.response?.data?.message || "Failed to send email",
+        text: error.response?.message || "Failed to send email",
         confirmButtonColor: "#ef4444",
       });
     },

@@ -11,10 +11,9 @@ export const MEDIA_BASE_URL = isDevelopment
   ? import.meta.env.VITE_MEDIA_URL_DEV
   : import.meta.env.VITE_MEDIA_URL_PROD;
 
-
 // Create axios instance with authentication header
 const api = axios.create({
-  baseURL:API_URL,
+  baseURL: API_URL,
   headers: {
     "Content-Type": "application/json",
   },
@@ -27,11 +26,15 @@ api.interceptors.request.use(
     if (token) {
       config.headers["Authorization"] = `Bearer ${token}`;
     }
+    // Let axios set Content-Type automatically for FormData (multipart/form-data + boundary)
+    if (config.data instanceof FormData) {
+      delete config.headers["Content-Type"];
+    }
     return config;
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 // Response interceptor to handle token refresh
@@ -57,7 +60,8 @@ api.interceptors.response.use(
 
         if (res.status === 200) {
           localStorage.setItem("access", res.data.access);
-          originalRequest.headers["Authorization"] = `Bearer ${res.data.access}`;
+          originalRequest.headers["Authorization"] =
+            `Bearer ${res.data.access}`;
           return axios(originalRequest);
         }
       } catch (refreshError) {
@@ -70,7 +74,7 @@ api.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default api;

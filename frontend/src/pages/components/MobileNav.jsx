@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Menu,
   Search,
@@ -16,9 +16,10 @@ import {
   Phone,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { GlobalContext } from "../../constant/GlobalContext";
+import { useQueryClient } from "@tanstack/react-query";
 import SidebarNavigation from "./MobileSidebar";
 import api from "../../constant/api";
+import { useCart } from "../../hooks/useCart";
 
 const MobileNav = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -27,186 +28,121 @@ const MobileNav = () => {
   const [isSearching, setIsSearching] = useState(false);
 
   const dropdownRef = useRef(null);
-
-  const toggleMenu = () => {
-    setOpenMenu(!openMenu);
-  };
-
-  const handleDropdownLinkClick = () => {
-    setAccountDropdownOpen(false);
-  };
-
-  const { isAuthenticated, clearCache, useCart } = useContext(GlobalContext);
-
-  const { data: cartData } = useCart();
-  const count = cartData?.count || 0;
-
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  // Click outside handler
+  // Auth — same source of truth as ProtectedRoute
+  const isAuthenticated = !!localStorage.getItem("access");
+
+  // Cart count — shares same ["cart"] cache as Navigation and all other consumers
+  const { cart } = useCart();
+  const count = cart?.count ?? 0;
+
+  // ── Click-outside for account dropdown ────────────────────────────────────
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+    const handler = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target))
         setAccountDropdownOpen(false);
-      }
     };
-
-    // Add event listener when dropdown is open
-    if (accountDropdownOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    // Cleanup
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    if (accountDropdownOpen) document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, [accountDropdownOpen]);
 
+  // ── Logout ─────────────────────────────────────────────────────────────────
   const handleLogout = () => {
     localStorage.removeItem("access");
     localStorage.removeItem("refresh");
     localStorage.removeItem("user_type");
     localStorage.removeItem("institution");
-
-    // Clear all cached data on logout
-    clearCache("all");
-
+    queryClient.clear();
     navigate("/");
     window.location.reload();
   };
 
+  // ── Search ─────────────────────────────────────────────────────────────────
   const handleSearch = async () => {
-    if (!searchQuery.trim()) {
-      alert("Please enter a search term");
-      return;
-    }
-
+    if (!searchQuery.trim()) return alert("Please enter a search term");
     setIsSearching(true);
-
     try {
-      // Make API call to search endpoint
-      const response = await api.get("/search-products/", {
-        params: {
-          product_name: searchQuery.trim(),
+      const response = await api.get("/stumart/products/search/", {
+        params: { product_name: searchQuery.trim() },
+      });
+      navigate("/search-results", {
+        state: {
+          products: response.data.products || [],
+          searchParams: {
+            productName: searchQuery.trim(),
+            searchType: response.data.search_type,
+            count: response.data.count || 0,
+            message: response.data.message,
+          },
         },
       });
-
-      if (response.data.status === "success") {
-        // Navigate to search results page with the products data
-        navigate("/search-results", {
-          state: {
-            products: response.data.products,
-            searchParams: {
-              productName: searchQuery.trim(),
-              searchType: response.data.search_type,
-              count: response.data.count,
-            },
-          },
-        });
-        window.location.reload();
-      } else if (response.data.status === "not_found") {
-        // Handle no results found
-        navigate("/search-results", {
-          state: {
-            products: [],
-            searchParams: {
-              productName: searchQuery.trim(),
-              searchType: response.data.search_type,
-              count: 0,
-              message: response.data.message,
-            },
-          },
-        });
-      }
     } catch (error) {
-      console.error("Search error:", error);
-
-      // Handle different error scenarios
-      if (error.response?.status === 404) {
-        // No products found
-        navigate("/search-results", {
-          state: {
-            products: [],
-            searchParams: {
-              productName: searchQuery.trim(),
-              count: 0,
-              message:
-                error.response.data.message ||
-                "No products found matching your search",
-            },
+      navigate("/search-results", {
+        state: {
+          products: [],
+          searchParams: {
+            productName: searchQuery.trim(),
+            count: 0,
+            message: error.response?.data?.message || "No products found",
           },
-        });
-      } else {
-        // Other errors
-        alert("Search failed. Please try again.");
-      }
+        },
+      });
     } finally {
       setIsSearching(false);
     }
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === "Enter") {
-      handleSearch();
-    }
-  };
-
-  const handleSearchIconClick = () => {
-    handleSearch();
+    if (e.key === "Enter") handleSearch();
   };
 
   return (
     <header className="bg-white border-b border-gray-200 shadow-sm lg:hidden">
-      {/* Top Banner - Mobile Optimized */}
-      <div className="bg-linear-to-r from-purple-600 to-yellow-500 text-white text-xs py-2 px-4">
+      {/* Top Banner */}
+      <div className="bg-gradient-to-r from-purple-600 to-yellow-500 text-white text-xs py-2 px-4">
         <div className="flex items-center justify-between">
-          {/* Left side - Promo */}
           <div className="flex items-center space-x-1.5">
             <Zap className="w-3.5 h-3.5 shrink-0" />
             <span className="font-medium truncate">Up to 50% OFF</span>
           </div>
-
-          {/* Right side - Live indicator and phone */}
           <div className="flex items-center space-x-3">
             <a
-              href="tel:09006000000"
+              href="tel:09039672814"
               className="flex items-center space-x-1 hover:opacity-80 transition-opacity"
             >
               <Phone className="w-3.5 h-3.5 shrink-0" />
               <span className="hidden sm:inline text-xs">0900 600 0000</span>
             </a>
             <div className="flex items-center space-x-1">
-              <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
+              <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
               <span className="font-semibold text-xs">LIVE</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main Navigation */}
+      {/* Main bar */}
       <div className="w-full mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <div className="flex">
-            <Link to="/">
-              <div className="flex items-center space-x-1">
-                <div className="w-10 h-10 bg-yellow-500 rounded-full">
-                  <img
-                    src="/stumart.jpeg"
-                    alt="logo"
-                    className="w-full h-full rounded-full"
-                  />
-                </div>
-              </div>
-            </Link>
-          </div>
+          <Link to="/">
+            <div className="w-10 h-10 bg-yellow-500 rounded-full overflow-hidden">
+              <img
+                src="/stumart.jpeg"
+                alt="logo"
+                className="w-full h-full rounded-full"
+              />
+            </div>
+          </Link>
 
-          {/* Action Buttons */}
+          {/* Action buttons */}
           <div className="flex items-center space-x-2">
-            {/* User Account */}
+            {/* Account dropdown */}
             <div className="relative" ref={dropdownRef}>
               <div
-                className="flex items-center space-x-2 cursor-pointer hover:text-yellow-500 transition-colors"
+                className="flex items-center space-x-1 cursor-pointer hover:text-yellow-500 transition-colors"
                 onClick={() => setAccountDropdownOpen(!accountDropdownOpen)}
               >
                 <User className="w-5 h-5" />
@@ -228,114 +164,98 @@ const MobileNav = () => {
                     </div>
                     <Link
                       to="/profile"
-                      onClick={handleDropdownLinkClick}
+                      onClick={() => setAccountDropdownOpen(false)}
                       className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                     >
-                      <User className="w-4 h-4 mr-3" />
-                      My Profile
+                      <User className="w-4 h-4 mr-3" /> My Profile
                     </Link>
                     <Link
                       to="/order-history"
-                      onClick={handleDropdownLinkClick}
+                      onClick={() => setAccountDropdownOpen(false)}
                       className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                     >
-                      <Package className="w-4 h-4 mr-3" />
-                      My Orders
+                      <Package className="w-4 h-4 mr-3" /> My Orders
                     </Link>
                     <Link
-                      to="#"
-                      onClick={handleDropdownLinkClick}
+                      to="/bookmarks"
+                      onClick={() => setAccountDropdownOpen(false)}
                       className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                     >
-                      <Heart className="w-4 h-4 mr-3" />
-                      Wishlist
+                      <Heart className="w-4 h-4 mr-3" /> Wishlist
                     </Link>
+
                     {isAuthenticated ? (
-                      <div>
-                        <Link
-                          to="/messages"
-                          onClick={handleDropdownLinkClick}
-                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                        >
-                          <MessageCircle className="w-4 h-4 mr-3" />
-                          Messages
-                        </Link>
-                        <Link
-                          to="/"
+                      <>
+                        <button
                           onClick={() => {
-                            handleDropdownLinkClick();
+                            setAccountDropdownOpen(false);
                             handleLogout();
                           }}
-                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                          className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                         >
-                          <LogOut className="w-4 h-4 mr-3" />
-                          Logout
-                        </Link>
-                      </div>
+                          <LogOut className="w-4 h-4 mr-3" /> Logout
+                        </button>
+                      </>
                     ) : (
-                      <div>
+                      <>
                         <Link
                           to="/login"
-                          onClick={handleDropdownLinkClick}
+                          onClick={() => setAccountDropdownOpen(false)}
                           className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                         >
-                          <LogIn className="w-4 h-4 mr-3" />
-                          Login
+                          <LogIn className="w-4 h-4 mr-3" /> Login
                         </Link>
                         <div className="border-t border-gray-100 mt-2">
                           <Link
-                            to="/register"
-                            onClick={handleDropdownLinkClick}
+                            to="/signup"
+                            onClick={() => setAccountDropdownOpen(false)}
                             className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                           >
-                            <LogOut className="w-4 h-4 mr-3" />
-                            Register
+                            <LogIn className="w-4 h-4 mr-3" /> Register
                           </Link>
                         </div>
-                      </div>
+                      </>
                     )}
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Shopping Cart */}
+            {/* Cart badge */}
             <Link to="/shopping-cart">
-              <button className="relative p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors duration-200">
+              <button className="relative p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors">
                 <ShoppingCart className="w-6 h-6" />
-                {/* Cart Badge */}
-                <span className="absolute -top-px right-px bg-yellow-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
-                  {count}
-                </span>
+                {count > 0 && (
+                  <span className="absolute -top-px right-px bg-yellow-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                    {count > 99 ? "99+" : count}
+                  </span>
+                )}
               </button>
             </Link>
 
-            {openMenu ? (
-              <button
-                onClick={toggleMenu}
-                className="p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors duration-200"
-              >
+            {/* Hamburger */}
+            <button
+              onClick={() => setOpenMenu(!openMenu)}
+              className="p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+            >
+              {openMenu ? (
                 <X className="w-6 h-6" />
-              </button>
-            ) : (
-              <button
-                onClick={toggleMenu}
-                className="p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors duration-200"
-              >
+              ) : (
                 <Menu className="w-6 h-6" />
-              </button>
-            )}
-
-            <div className="">
-              {openMenu && (
-                <SidebarNavigation close={toggleMenu} openMenu={openMenu} />
               )}
-            </div>
+            </button>
+
+            {openMenu && (
+              <SidebarNavigation
+                close={() => setOpenMenu(false)}
+                openMenu={openMenu}
+              />
+            )}
           </div>
         </div>
       </div>
 
-      {/* Search Bar */}
+      {/* Search bar */}
       <div className="w-full mx-auto px-4 sm:px-6 pb-4">
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -347,15 +267,14 @@ const MobileNav = () => {
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyPress={handleKeyPress}
             disabled={isSearching}
-            className={`block w-full pl-10 pr-16 py-2.5 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 focus:bg-white transition-all duration-200 text-sm placeholder-gray-500 ${
+            className={`block w-full pl-10 pr-16 py-2.5 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 focus:bg-white transition-all text-sm placeholder-gray-500 ${
               isSearching ? "opacity-50 cursor-not-allowed" : ""
             }`}
             placeholder="Search products, brands and categories"
           />
-          {/* Search Button */}
           <div className="absolute inset-y-0 right-0 flex items-center">
             <button
-              onClick={handleSearchIconClick}
+              onClick={handleSearch}
               disabled={isSearching}
               className={`px-3 py-1 mr-1 text-sm font-medium rounded-md transition-colors ${
                 isSearching

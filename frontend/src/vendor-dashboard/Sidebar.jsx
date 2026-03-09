@@ -4,7 +4,7 @@ import {
   FaBox,
   FaShoppingCart,
   FaBoxes,
-  FaCreditCard,
+  // FaCreditCard,
   FaStar,
   FaCog,
   FaUser,
@@ -16,7 +16,7 @@ const Sidebar = ({ activeTab, setActiveTab, toggleMenu }) => {
     { id: "products", label: "Products", icon: <FaBox /> },
     { id: "orders", label: "Orders", icon: <FaShoppingCart /> },
     { id: "inventory", label: "Inventory", icon: <FaBoxes /> },
-    { id: "payments", label: "Payments", icon: <FaCreditCard /> },
+    // { id: "payments", label: "Payments", icon: <FaCreditCard /> },
     { id: "reviews", label: "Reviews & Ratings", icon: <FaStar /> },
     { id: "settings", label: "Settings", icon: <FaCog /> },
     { id: "logout", label: "Logout", icon: <FaUser /> },
@@ -36,7 +36,9 @@ const Sidebar = ({ activeTab, setActiveTab, toggleMenu }) => {
                 ? "bg-yellow-500 text-gray-900 shadow-md transform scale-105"
                 : "text-gray-300 hover:bg-gray-800 hover:text-white hover:transform hover:translate-x-1"
             }`}
-            onClick={() => {setActiveTab(item.id), toggleMenu()}}
+            onClick={() => {
+              (setActiveTab(item.id), toggleMenu());
+            }}
           >
             <span
               className={`text-lg mr-3 ${

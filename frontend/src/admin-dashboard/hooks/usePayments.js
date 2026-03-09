@@ -20,7 +20,7 @@ const fetchPaymentTransactions = async (filters = {}) => {
     params.append("status", filters.status);
   }
 
-  const response = await api.get("admin-payments/", { params });
+  const response = await api.get("admin/payments/", { params });
   return response.data;
 };
 
@@ -41,7 +41,7 @@ export const usePaymentTransactions = (filters = {}) => {
 
 // Hook to get payment statistics (example)
 const fetchPaymentStats = async () => {
-  const response = await api.get("admin-payments/stats/");
+  const response = await api.get("admi/-payments/stats/");
   return response.data;
 };
 

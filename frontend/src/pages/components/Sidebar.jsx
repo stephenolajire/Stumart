@@ -85,7 +85,7 @@ const Sidebar = () => {
               className={`group relative mx-3 my-2 rounded-xl transition-all duration-300 cursor-pointer
                 ${
                   activeCategory === "All"
-                    ? "bg-gradient-to-r from-yellow-500 to-yellow-500 text-white shadow-lg transform scale-105"
+                    ? "bg-linear-to-r from-yellow-500 to-yellow-500 text-white shadow-lg transform scale-105"
                     : "bg-white hover:bg-yellow-50 hover:shadow-md hover:transform hover:scale-102"
                 }`}
               onClick={() =>
@@ -187,7 +187,7 @@ const Sidebar = () => {
                 }`}
               onClick={() => {
                 setActiveCategory(
-                  activeCategory === category.name ? null : category.name
+                  activeCategory === category.name ? null : category.name,
                 );
                 handleNavigate(category);
               }}

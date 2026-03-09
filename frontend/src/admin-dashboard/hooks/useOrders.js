@@ -21,7 +21,7 @@ export const useOrders = (filters = {}) => {
         if (filters.status) params.append("status", filters.status);
 
         console.log(`Fetching orders with filters:`, filters);
-        const response = await api.get("admin-orders/", { params });
+        const response = await api.get("admin/orders/", { params });
         console.log("Orders data received:", response.data);
         return response.data;
       } catch (error) {
@@ -50,7 +50,7 @@ export const useOrderDetail = (orderId) => {
       } catch (error) {
         console.error("Error fetching order detail:", error);
         throw new Error(
-          "Failed to fetch order details. Please try again later."
+          "Failed to fetch order details. Please try again later.",
         );
       }
     },
@@ -94,7 +94,7 @@ export const useUpdateOrderStatus = () => {
         return oldData.map((order) =>
           order.id === orderId
             ? { ...order, status, updated_at: new Date().toISOString() }
-            : order
+            : order,
         );
       });
 
@@ -121,7 +121,7 @@ export const useUpdateOrderStatus = () => {
       if (context?.previousOrderDetail) {
         queryClient.setQueryData(
           ["order", context.orderId],
-          context.previousOrderDetail
+          context.previousOrderDetail,
         );
       }
 
@@ -171,7 +171,7 @@ export const useCancelOrder = () => {
                 status: "CANCELLED",
                 updated_at: new Date().toISOString(),
               }
-            : order
+            : order,
         );
       });
 
@@ -198,7 +198,7 @@ export const useCancelOrder = () => {
       if (context?.previousOrderDetail) {
         queryClient.setQueryData(
           ["order", context.orderId],
-          context.previousOrderDetail
+          context.previousOrderDetail,
         );
       }
 
@@ -225,7 +225,7 @@ export const useAssignPickerToOrder = () => {
         {
           picker_id: pickerId,
           picker_type: pickerType,
-        }
+        },
       );
 
       return response.data;

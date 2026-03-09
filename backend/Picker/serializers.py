@@ -1,6 +1,6 @@
 from rest_framework import serializers
-from Stumart.models import Order, OrderItem
-from User.models import User, Picker, StudentPicker
+from stumart.models import Order, OrderItem
+from user.models import User, Picker, StudentPicker
 
 class OrderItemSerializer(serializers.ModelSerializer):
     """

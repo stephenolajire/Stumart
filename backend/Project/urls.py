@@ -23,7 +23,7 @@ from rest_framework_simplejwt.views import (
     TokenVerifyView,
     TokenObtainPairView,
 )
-from User.views import CustomTokenObtainPairView
+from user.views import CustomTokenObtainPairView
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 
 urlpatterns = [
@@ -35,19 +35,21 @@ urlpatterns = [
     path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
     
     # API Routes
-    path('api/', include('Picker.urls')),
-    path('api/', include('User.urls')),
-    path('api/', include('Stumart.urls')),
-    path('api/', include('Vendor.urls')),
-    path('api/', include('Admin.urls')),
-    path('api/', include('Other.urls')),
-    path('api/', include('Chatbot.urls')),
-    path('api/', include('Chat.urls')),
-    path('api/', include('Utilities.urls')),
-    path('api/', include('Home.urls')),
+    path('api/', include('picker.urls')),
+    path('api/', include('user.urls')),
+    path('api/', include('stumart.urls')),
+    path('api/', include('vendor.urls')),
+    path('api/', include('adminn.urls')),
+    path('api/', include('other.urls')),
+    path('api/', include('chatbot.urls')),
+    path('api/', include('chat.urls')),
+    path('api/', include('utilities.urls')),
+    path('api/', include('home.urls')),
     path('api/', include('company.urls')),
     path('api/', include('order.urls')),
     path('api/', include('payment.urls')),
+    path('api/', include('cart.urls')),
+    path('api/', include('bookmark.urls')),
     path('api/referrals/', include('referral.urls')),
     path('api/token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),

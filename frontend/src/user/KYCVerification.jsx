@@ -1,18 +1,29 @@
-import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FaCamera,
   FaUpload,
   FaTimesCircle,
   FaCheckCircle,
-  FaSpinner,
+  FaShieldAlt,
+  FaIdCard,
 } from "react-icons/fa";
 import Swal from "sweetalert2";
-import api from "../constant/api";
+import { useSubmitKyc } from "../hooks/useUser";
+
+const ID_TYPES = [
+  { value: "student_id", label: "Student ID Card" },
+  { value: "course_form", label: "Student Course Form" },
+  { value: "national_id", label: "National ID Card" },
+  { value: "drivers_license", label: "Driver's License" },
+  { value: "voters_card", label: "Voter's Card" },
+  { value: "passport", label: "International Passport" },
+];
 
 const KYCVerification = () => {
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
+  const userType = localStorage.getItem("userType");
+  const { mutate: submitKyc, isPending } = useSubmitKyc();
+
   const [formData, setFormData] = useState({
     selfie_image: null,
     id_type: "",
@@ -23,23 +34,13 @@ const KYCVerification = () => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
 
-  const ID_TYPES = [
-    { value: "student_id", label: "Student ID Card" },
-    { value: "course_form", label: "Student Course Form" },
-    { value: "national_id", label: "National ID Card" },
-    { value: "drivers_license", label: "Driver's License" },
-    { value: "voters_card", label: "Voter's Card" },
-    { value: "passport", label: "International Passport" },
-  ];
-
+  /* ── Camera ── */
   const startCamera = async () => {
     setIsCameraOpen(true);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
-    } catch (error) {
+      if (videoRef.current) videoRef.current.srcObject = stream;
+    } catch {
       Swal.fire({
         icon: "error",
         title: "Camera Access Denied",
@@ -54,98 +55,88 @@ const KYCVerification = () => {
     if (!videoRef.current || !canvasRef.current) return;
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    const context = canvas.getContext("2d");
-
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
+    canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
     canvas.toBlob((blob) => {
       const file = new File([blob], "selfie.jpg", { type: "image/jpeg" });
-
-      setFormData((prev) => ({ ...prev, selfie_image: file }));
-      setPreview((prev) => ({ ...prev, selfie: URL.createObjectURL(blob) }));
-
+      setFormData((p) => ({ ...p, selfie_image: file }));
+      setPreview((p) => ({ ...p, selfie: URL.createObjectURL(blob) }));
       stopCamera();
     }, "image/jpeg");
   };
 
   const stopCamera = () => {
-    if (videoRef.current && videoRef.current.srcObject) {
-      const tracks = videoRef.current.srcObject.getTracks();
-      tracks.forEach((track) => track.stop());
-    }
+    videoRef.current?.srcObject?.getTracks().forEach((t) => t.stop());
     setIsCameraOpen(false);
   };
 
+  /* ── ID image ── */
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        Swal.fire({
-          icon: "error",
-          title: "File Too Large",
-          text: "Please select an image less than 5MB",
-          confirmButtonColor: "#eab308",
-        });
-        return;
-      }
-
-      setFormData((prev) => ({ ...prev, id_image: file }));
-
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreview((prev) => ({ ...prev, id: reader.result }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!formData.selfie_image || !formData.id_type || !formData.id_image) {
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
       Swal.fire({
         icon: "error",
-        title: "Incomplete Form",
-        text: "Please fill all required fields",
+        title: "File Too Large",
+        text: "Please select an image less than 5MB",
         confirmButtonColor: "#eab308",
       });
       return;
     }
+    setFormData((p) => ({ ...p, id_image: file }));
+    const reader = new FileReader();
+    reader.onloadend = () => setPreview((p) => ({ ...p, id: reader.result }));
+    reader.readAsDataURL(file);
+  };
 
-    setIsLoading(true);
-    const submitData = new FormData();
-
-    // Ensure files are properly appended with correct names
-    if (formData.selfie_image instanceof File) {
-      submitData.append("selfie_image", formData.selfie_image, "selfie.jpg");
-    }
-    if (formData.id_image instanceof File) {
-      submitData.append("id_image", formData.id_image, "id.jpg");
-    }
-    submitData.append("id_type", formData.id_type);
-
-    try {
-      const response = await api.post("/kyc/", submitData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Accept: "application/json",
-        },
-        onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round(
-            (progressEvent.loaded * 100) / progressEvent.total
-          );
-          console.log(`Upload Progress: ${percentCompleted}%`);
-        },
-      });
-
-      await Swal.fire({
-        icon: "success",
-        title: "Verification Submitted!",
-        text: "Your KYC verification has been submitted successfully.",
+  /* ── Submit ── */
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!formData.selfie_image || !formData.id_type || !formData.id_image) {
+      Swal.fire({
+        icon: "error",
+        title: "Incomplete Form",
+        text: "Please complete all three steps",
         confirmButtonColor: "#eab308",
       });
+      return;
+    }
+    const fd = new FormData();
+    fd.append("selfie_image", formData.selfie_image, "selfie.jpg");
+    fd.append("id_image", formData.id_image, "id.jpg");
+    fd.append("id_type", formData.id_type);
+
+    submitKyc(fd, {
+      onSuccess: () => {
+        Swal.fire({
+          icon: "success",
+          title: "Verification Submitted!",
+          text: "Your KYC has been submitted successfully.",
+          confirmButtonColor: "#eab308",
+        }).then(() => {
+          if (userType === "vendor") navigate("/add-product");
+          else navigate("/kyc-status");
+        });
+      },
+      onError: (err) => {
+        Swal.fire({
+          icon: "error",
+          title: "Submission Failed",
+          text: err.response?.data?.error || "Please try again later",
+          confirmButtonColor: "#eab308",
+        });
+      },
+    });
+  };
+
+  /* ── Step tracker ── */
+  const steps = [
+    { label: "Take Selfie", done: !!preview.selfie },
+    { label: "Select ID Type", done: !!formData.id_type },
+    { label: "Upload ID", done: !!preview.id },
+  ];
+  const completedSteps = steps.filter((s) => s.done).length;
 
       navigate("/add-product");
     } catch (error) {
@@ -175,25 +166,118 @@ const KYCVerification = () => {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Selfie Section */}
-            <div className="space-y-4">
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                Selfie Image *
-              </label>
+          <div className="p-8">
+            {/* Header */}
+            <div className="text-center mb-8">
+              <div
+                className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4"
+                style={{ backgroundColor: "rgba(234,179,8,0.12)" }}
+              >
+                <FaShieldAlt
+                  className="text-2xl"
+                  style={{ color: "var(--color-primary)" }}
+                />
+              </div>
+              <h2 className="text-2xl font-bold text-text-primary mb-1">
+                Account Verification
+              </h2>
+              <p className="text-text-secondary text-sm">
+                Complete all three steps to verify your identity
+              </p>
+            </div>
 
-              {!isCameraOpen && !preview.selfie && (
-                <div className="flex justify-center">
+            {/* Step indicators */}
+            <div className="flex items-center justify-center gap-2 mb-8">
+              {steps.map((step, i) => (
+                <React.Fragment key={i}>
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300"
+                      style={{
+                        backgroundColor: step.done
+                          ? "var(--color-primary)"
+                          : "var(--color-background-tertiary)",
+                        color: step.done
+                          ? "white"
+                          : "var(--color-text-tertiary)",
+                      }}
+                    >
+                      {step.done ? (
+                        <FaCheckCircle className="text-xs" />
+                      ) : (
+                        i + 1
+                      )}
+                    </div>
+                    <span
+                      className="text-xs font-medium hidden sm:block"
+                      style={{
+                        color: step.done
+                          ? "var(--color-primary)"
+                          : "var(--color-text-tertiary)",
+                      }}
+                    >
+                      {step.label}
+                    </span>
+                  </div>
+                  {i < steps.length - 1 && (
+                    <div
+                      className="h-px w-8 shrink-0"
+                      style={{
+                        backgroundColor: step.done
+                          ? "var(--color-primary)"
+                          : "var(--color-border)",
+                      }}
+                    />
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* ── Step 1: Selfie ── */}
+              <div className={sectionClass}>
+                <p className={sectionTitle}>
+                  <FaCamera style={{ color: "var(--color-primary)" }} />
+                  Step 1 — Take a Selfie
+                </p>
+
+                {!isCameraOpen && !preview.selfie && (
                   <button
                     type="button"
                     onClick={startCamera}
-                    className="inline-flex items-center px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-white font-medium rounded-lg shadow-sm transition-colors duration-200"
+                    className="w-full py-10 border-2 border-dashed rounded-xl flex flex-col items-center gap-3 transition-all duration-200 group"
+                    style={{
+                      borderColor: "var(--color-border)",
+                      backgroundColor: "var(--color-background-secondary)",
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.borderColor =
+                        "var(--color-primary)")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.borderColor =
+                        "var(--color-border)")
+                    }
                   >
-                    <FaCamera className="mr-2" />
-                    Take a Selfie
+                    <div
+                      className="w-12 h-12 rounded-full flex items-center justify-center"
+                      style={{ backgroundColor: "rgba(234,179,8,0.12)" }}
+                    >
+                      <FaCamera
+                        className="text-xl"
+                        style={{ color: "var(--color-primary)" }}
+                      />
+                    </div>
+                    <div className="text-center">
+                      <p className="font-semibold text-sm text-text-primary">
+                        Open Camera
+                      </p>
+                      <p className="text-xs text-text-tertiary mt-0.5">
+                        Click to take your selfie
+                      </p>
+                    </div>
                   </button>
-                </div>
-              )}
+                )}
 
               {isCameraOpen && (
                 <div className="bg-gray-100 rounded-lg p-6 space-y-4">
@@ -209,141 +293,172 @@ const KYCVerification = () => {
                       onClick={captureSelfie}
                       className="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors duration-200"
                     >
-                      <FaCheckCircle className="mr-2" />
-                      Capture Selfie
-                    </button>
+                      <FaCheckCircle /> Captured
+                    </div>
                     <button
                       type="button"
-                      onClick={stopCamera}
-                      className="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors duration-200"
+                      onClick={() => {
+                        setPreview((p) => ({ ...p, selfie: null }));
+                        setFormData((p) => ({ ...p, selfie_image: null }));
+                      }}
+                      className="absolute bottom-3 right-3 px-3 py-1.5 rounded-lg text-xs font-medium text-white"
+                      style={{ backgroundColor: "rgba(0,0,0,0.55)" }}
                     >
-                      <FaTimesCircle className="mr-2" />
-                      Close Camera
+                      Retake
                     </button>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
 
-              {preview.selfie && (
+              {/* ── Step 2: ID Type ── */}
+              <div className={sectionClass}>
+                <p className={sectionTitle}>
+                  <FaIdCard style={{ color: "var(--color-primary)" }} />
+                  Step 2 — Select ID Type
+                </p>
+                <select
+                  value={formData.id_type}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, id_type: e.target.value }))
+                  }
+                  className="w-full px-4 py-3 rounded-xl border text-sm outline-none transition-all duration-200"
+                  style={{
+                    borderColor: formData.id_type
+                      ? "var(--color-primary)"
+                      : "var(--color-border)",
+                    backgroundColor: "var(--color-background-secondary)",
+                    color: "var(--color-text-primary)",
+                    boxShadow: formData.id_type
+                      ? "0 0 0 3px rgba(234,179,8,0.15)"
+                      : "none",
+                  }}
+                  required
+                >
+                  <option value="">Select ID Type</option>
+                  {ID_TYPES.map((t) => (
+                    <option key={t.value} value={t.value}>
+                      {t.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* ── Step 3: ID Image ── */}
+              <div className={sectionClass}>
+                <p className={sectionTitle}>
+                  <FaUpload style={{ color: "var(--color-primary)" }} />
+                  Step 3 — Upload ID Image
+                </p>
+
                 <div className="relative">
                   <div
-                    className="w-full h-64 bg-cover bg-center rounded-lg border-2 border-green-300 shadow-md"
-                    style={{ backgroundImage: `url(${preview.selfie})` }}
-                  />
-                  <div className="absolute top-2 right-2 bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
-                    <FaCheckCircle className="inline mr-1" />
-                    Captured
+                    className="border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 cursor-pointer"
+                    style={{
+                      borderColor: preview.id
+                        ? "var(--color-success)"
+                        : "var(--color-border)",
+                      backgroundColor: preview.id
+                        ? "rgba(16,185,129,0.05)"
+                        : "var(--color-background-secondary)",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!preview.id)
+                        e.currentTarget.style.borderColor =
+                          "var(--color-primary)";
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!preview.id)
+                        e.currentTarget.style.borderColor =
+                          "var(--color-border)";
+                    }}
+                  >
+                    {preview.id ? (
+                      <div className="relative">
+                        <img
+                          src={preview.id}
+                          alt="ID Preview"
+                          className="max-w-full h-52 object-contain mx-auto rounded-lg"
+                        />
+                        <div
+                          className="absolute top-2 right-2 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-white"
+                          style={{ backgroundColor: "var(--color-success)" }}
+                        >
+                          <FaCheckCircle /> Uploaded
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-3">
+                        <div
+                          className="w-12 h-12 rounded-full flex items-center justify-center"
+                          style={{ backgroundColor: "rgba(234,179,8,0.12)" }}
+                        >
+                          <FaUpload
+                            className="text-xl"
+                            style={{ color: "var(--color-primary)" }}
+                          />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-sm text-text-primary">
+                            Click to upload your ID
+                          </p>
+                          <p className="text-xs text-text-tertiary mt-1">
+                            PNG, JPG, JPEG — max 5MB
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      required
+                    />
                   </div>
                 </div>
-              )}
-
-              <canvas ref={canvasRef} className="hidden" />
-            </div>
-
-            {/* ID Type Selection */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
-                ID Type *
-              </label>
-              <select
-                value={formData.id_type}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, id_type: e.target.value }))
-                }
-                className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 bg-white"
-                required
-              >
-                <option value="">Select ID Type</option>
-                {ID_TYPES.map((type) => (
-                  <option key={type.value} value={type.value}>
-                    {type.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* ID Image Upload */}
-            <div className="space-y-4">
-              <label className="block text-sm font-medium text-gray-700">
-                ID Image *
-              </label>
-
-              <div className="relative">
-                <div
-                  className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors duration-200 ${
-                    preview.id
-                      ? "border-green-300 bg-green-50"
-                      : "border-gray-300 hover:border-yellow-400 bg-gray-50 hover:bg-yellow-50"
-                  }`}
-                >
-                  {preview.id ? (
-                    <div className="relative">
-                      <img
-                        src={preview.id}
-                        alt="ID Preview"
-                        className="max-w-full h-64 object-contain mx-auto rounded-lg shadow-md"
-                      />
-                      <div className="absolute top-2 right-2 bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
-                        <FaCheckCircle className="inline mr-1" />
-                        Uploaded
-                      </div>
-                    </div>
-                  ) : (
-                    <div>
-                      <FaUpload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                      <div className="text-sm text-gray-600">
-                        <span className="font-medium text-yellow-600 hover:text-yellow-500 cursor-pointer">
-                          Click to upload your ID
-                        </span>
-                        <p className="mt-1">or drag and drop</p>
-                        <p className="mt-2 text-xs text-gray-500">
-                          PNG, JPG, JPEG up to 5MB
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    required
-                  />
-                </div>
               </div>
-            </div>
 
-            {/* Submit Button */}
-            <div className="pt-6">
+              {/* ── Submit ── */}
               <button
                 type="submit"
-                disabled={isLoading}
-                className={`w-full py-4 px-6 rounded-lg font-medium text-lg transition-all duration-200 ${
-                  isLoading
-                    ? "bg-gray-100 text-gray-500 cursor-not-allowed"
-                    : "bg-yellow-500 hover:bg-yellow-600 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                }`}
+                disabled={isPending}
+                className="w-full py-4 rounded-xl font-semibold text-white text-base transition-all duration-200 flex items-center justify-center gap-2 mt-2"
+                style={{
+                  backgroundColor: isPending
+                    ? "var(--color-border-dark)"
+                    : "var(--color-primary)",
+                  cursor: isPending ? "not-allowed" : "pointer",
+                  boxShadow: !isPending
+                    ? "0 4px 14px rgba(234,179,8,0.35)"
+                    : "none",
+                }}
               >
-                {isLoading ? (
-                  <span className="inline-flex items-center">
-                    <FaSpinner className="animate-spin mr-3" />
+                {isPending ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     Submitting Verification...
-                  </span>
+                  </>
                 ) : (
-                  "Submit Verification"
+                  <>
+                    <FaShieldAlt />
+                    Submit Verification
+                    {completedSteps < 3 && (
+                      <span className="text-xs font-normal opacity-70">
+                        ({completedSteps}/3 done)
+                      </span>
+                    )}
+                  </>
                 )}
               </button>
-            </div>
 
-            {/* Help Text */}
-            <div className="text-center">
-              <p className="text-sm text-gray-500">
-                Your information is secure and will only be used for
-                verification purposes.
+              <p className="text-center text-xs text-text-tertiary">
+                🔒 Your information is secure and only used for verification
+                purposes.
               </p>
-            </div>
-          </form>
+            </form>
+          </div>
+
+          <canvas ref={canvasRef} className="hidden" />
         </div>
       </div>
     </div>

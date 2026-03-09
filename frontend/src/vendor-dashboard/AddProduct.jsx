@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
-// import axios from "axios";
 import api from "../constant/api";
 import Swal from "sweetalert2";
 import Header from "./Header";
+import { useCreateVendorProduct } from "../hooks/useStumart";
 
-// Configure toast notification
 const Toast = Swal.mixin({
   toast: true,
   position: "top-right",
@@ -28,33 +27,29 @@ const AddProduct = () => {
     delivery_day: "",
   });
   const [errors, setErrors] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
   const [loadingCategory, setLoadingCategory] = useState(true);
-  const [message, setMessage] = useState({ text: "", type: "" });
   const [imagePreview, setImagePreview] = useState(null);
-
-  // New states for the additional requirements
   const [businessCategory, setBusinessCategory] = useState("");
   const [sizes, setSizes] = useState([{ size: "", quantity: 0 }]);
-  // Updated colors state to match size structure with quantity
   const [colors, setColors] = useState([{ color: "", quantity: 0 }]);
   const [additionalImages, setAdditionalImages] = useState([
     { image: null, preview: null },
   ]);
   const [gender, setGender] = useState("");
 
-  // Fetch business category on component mount
+  const { mutate: createVendorProduct, isPending } = useCreateVendorProduct();
+
   useEffect(() => {
     const fetchBusinessCategory = async () => {
       try {
         setLoadingCategory(true);
-        const response = await api.get("create-products");
+        const response = await api.get("stumart/products/create");
         setBusinessCategory(response.data.business_category || "");
       } catch (error) {
         console.error("Failed to fetch business category:", error);
-        setMessage({
-          text: "Failed to load vendor information. Please refresh the page.",
-          type: "error",
+        Toast.fire({
+          icon: "error",
+          title: "Failed to load vendor information. Please refresh.",
         });
       } finally {
         setLoadingCategory(false);
@@ -64,23 +59,19 @@ const AddProduct = () => {
     fetchBusinessCategory();
   }, []);
 
-  // Validation rules
   const validate = () => {
     const newErrors = {};
 
-    // Name validation
     if (!product.name.trim()) {
       newErrors.name = "Product name is required";
     } else if (product.name.length > 100) {
       newErrors.name = "Product name must be less than 100 characters";
     }
 
-    // Description validation
     if (!product.description.trim()) {
       newErrors.description = "Product description is required";
     }
 
-    // Price validation
     if (!product.price) {
       newErrors.price = "Price is required";
     } else if (
@@ -92,7 +83,6 @@ const AddProduct = () => {
       newErrors.price = "Price cannot exceed 99,999.99";
     }
 
-    // In stock validation (only if category is not food)
     if (businessCategory !== "food") {
       if (product.in_stock === "") {
         newErrors.in_stock = "Stock quantity is required";
@@ -110,11 +100,9 @@ const AddProduct = () => {
         newErrors.delivery_day = "Product delivery day should be specific";
       }
     } else {
-      // If business category is food, set default delivery day
       product.delivery_day = "1 day";
     }
 
-    // Image validation - optional but validate if provided
     if (product.image) {
       const allowedTypes = [
         "image/jpeg",
@@ -130,12 +118,9 @@ const AddProduct = () => {
       }
     }
 
-    // Fashion specific validations
     if (businessCategory === "fashion") {
-      // Validate sizes
       const sizeErrors = [];
       let hasEmptySize = false;
-
       sizes.forEach((item, index) => {
         if (!item.size.trim()) {
           hasEmptySize = true;
@@ -146,15 +131,10 @@ const AddProduct = () => {
             sizeErrors[index] || "Quantity must be a valid whole number";
         }
       });
+      if (hasEmptySize || sizeErrors.length > 0) newErrors.sizes = sizeErrors;
 
-      if (hasEmptySize || sizeErrors.length > 0) {
-        newErrors.sizes = sizeErrors;
-      }
-
-      // Validate colors - updated to match size validation including quantity
       const colorErrors = [];
       let hasEmptyColor = false;
-
       colors.forEach((item, index) => {
         if (!item.color.trim()) {
           hasEmptyColor = true;
@@ -165,18 +145,12 @@ const AddProduct = () => {
             colorErrors[index] || "Quantity must be a valid whole number";
         }
       });
-
-      if (hasEmptyColor || colorErrors.length > 0) {
+      if (hasEmptyColor || colorErrors.length > 0)
         newErrors.colors = colorErrors;
-      }
 
-      // Validate gender selection
-      if (!gender) {
-        newErrors.gender = "Please select a gender category";
-      }
+      if (!gender) newErrors.gender = "Please select a gender category";
     }
 
-    // Validate additional images
     additionalImages.forEach((item, index) => {
       if (item.image) {
         const allowedTypes = [
@@ -197,7 +171,6 @@ const AddProduct = () => {
       }
     });
 
-    // Keywords validation
     if (!product.keyword.trim()) {
       newErrors.keywords = "Keywords are required";
     } else if (product.keyword.length > 200) {
@@ -210,273 +183,166 @@ const AddProduct = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
-    // Clear field-specific error when user starts typing
-    if (errors[name]) {
-      setErrors((prev) => ({
-        ...prev,
-        [name]: "",
-      }));
-    }
-
-    setProduct((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
+    setProduct((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-
+    if (errors.image) setErrors((prev) => ({ ...prev, image: "" }));
     if (file) {
-      // Clear previous error
-      if (errors.image) {
-        setErrors((prev) => ({
-          ...prev,
-          image: "",
-        }));
-      }
-
-      // Image preview
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-      };
+      reader.onloadend = () => setImagePreview(reader.result);
       reader.readAsDataURL(file);
-
-      setProduct((prev) => ({
-        ...prev,
-        image: file,
-      }));
+      setProduct((prev) => ({ ...prev, image: file }));
     } else {
       setImagePreview(null);
-      setProduct((prev) => ({
-        ...prev,
-        image: null,
-      }));
+      setProduct((prev) => ({ ...prev, image: null }));
     }
   };
 
-  // Handle additional images
   const handleAdditionalImageChange = (e, index) => {
     const file = e.target.files[0];
-
+    if (errors.additionalImages?.[index]) {
+      const newErrors = { ...errors };
+      newErrors.additionalImages[index] = "";
+      setErrors(newErrors);
+    }
     if (file) {
-      // Clear previous error if exists
-      if (errors.additionalImages && errors.additionalImages[index]) {
-        const newErrors = { ...errors };
-        if (newErrors.additionalImages) {
-          newErrors.additionalImages[index] = "";
-        }
-        setErrors(newErrors);
-      }
-
-      // Create image preview
       const reader = new FileReader();
       reader.onloadend = () => {
-        const newAdditionalImages = [...additionalImages];
-        newAdditionalImages[index] = {
-          image: file,
-          preview: reader.result,
-        };
-        setAdditionalImages(newAdditionalImages);
+        const updated = [...additionalImages];
+        updated[index] = { image: file, preview: reader.result };
+        setAdditionalImages(updated);
       };
       reader.readAsDataURL(file);
     } else {
-      const newAdditionalImages = [...additionalImages];
-      newAdditionalImages[index] = { image: null, preview: null };
-      setAdditionalImages(newAdditionalImages);
+      const updated = [...additionalImages];
+      updated[index] = { image: null, preview: null };
+      setAdditionalImages(updated);
     }
   };
 
-  // Add a new additional image field
-  const addImageField = () => {
+  const addImageField = () =>
     setAdditionalImages([...additionalImages, { image: null, preview: null }]);
-  };
 
-  // Handle size changes
   const handleSizeChange = (index, field, value) => {
-    const newSizes = [...sizes];
-    newSizes[index][field] = value;
-    setSizes(newSizes);
-
-    // Clear errors if they exist
-    if (errors.sizes && errors.sizes[index]) {
+    const updated = [...sizes];
+    updated[index][field] = value;
+    setSizes(updated);
+    if (errors.sizes?.[index]) {
       const newErrors = { ...errors };
-      if (newErrors.sizes) {
-        newErrors.sizes[index] = "";
-      }
+      newErrors.sizes[index] = "";
       setErrors(newErrors);
     }
   };
 
-  // Add a new size field
-  const addSizeField = () => {
-    setSizes([...sizes, { size: "", quantity: 0 }]);
-  };
+  const addSizeField = () => setSizes([...sizes, { size: "", quantity: 0 }]);
 
-  // Modified: Handle color changes to match size change handler
   const handleColorChange = (index, field, value) => {
-    const newColors = [...colors];
-    newColors[index][field] = value;
-    setColors(newColors);
-
-    // Clear errors if they exist
-    if (errors.colors && errors.colors[index]) {
+    const updated = [...colors];
+    updated[index][field] = value;
+    setColors(updated);
+    if (errors.colors?.[index]) {
       const newErrors = { ...errors };
-      if (newErrors.colors) {
-        newErrors.colors[index] = "";
-      }
+      newErrors.colors[index] = "";
       setErrors(newErrors);
     }
   };
 
-  // Add a new color field
-  const addColorField = () => {
+  const addColorField = () =>
     setColors([...colors, { color: "", quantity: 0 }]);
-  };
 
-  // Handle gender selection
   const handleGenderChange = (e) => {
     setGender(e.target.value);
-
-    // Clear error if exists
-    if (errors.gender) {
-      setErrors((prev) => ({
-        ...prev,
-        gender: "",
-      }));
-    }
+    if (errors.gender) setErrors((prev) => ({ ...prev, gender: "" }));
   };
 
-  const handleSubmit = async (e) => {
+  const buildFormData = () => {
+    const formData = new FormData();
+    formData.append("name", product.name.trim());
+    formData.append("description", product.description.trim());
+    formData.append("price", product.price);
+    formData.append("delivery_day", product.delivery_day.trim());
+
+    if (businessCategory !== "food") {
+      formData.append("in_stock", product.in_stock);
+    }
+
+    if (product.image) {
+      formData.append("image", product.image);
+    }
+
+    if (businessCategory === "fashion") {
+      formData.append("gender", gender);
+      const sizesData = sizes
+        .filter((s) => s.size.trim() !== "")
+        .map(({ size, quantity }) => ({ size, quantity }));
+      formData.append("sizes", JSON.stringify(sizesData));
+      const colorsData = colors
+        .filter((c) => c.color.trim() !== "")
+        .map(({ color, quantity }) => ({ color, quantity }));
+      formData.append("colors", JSON.stringify(colorsData));
+    }
+
+    additionalImages.forEach((item, index) => {
+      if (item.image) {
+        formData.append(`additional_images_${index}`, item.image);
+      }
+    });
+
+    formData.append("keyword", product.keyword.trim());
+    return formData;
+  };
+
+  const handleSubmit = (e) => {
     e.preventDefault();
+    if (!validate()) return;
 
-    if (!validate()) {
-      return;
-    }
-
-    setIsLoading(true);
-    setMessage({ text: "", type: "" });
-
-    try {
-      // Create form data to handle file upload
-      const formData = new FormData();
-      formData.append("name", product.name.trim());
-      formData.append("description", product.description.trim());
-      formData.append("price", product.price);
-      formData.append("delivery_day", product.delivery_day.trim());
-
-      // Only append in_stock if the business category is not food
-      if (businessCategory !== "food") {
-        formData.append("in_stock", product.in_stock);
-      }
-
-      // Add main image if available
-      if (product.image) {
-        formData.append("image", product.image);
-      }
-
-      // Add fashion-specific attributes if applicable
-      if (businessCategory === "fashion") {
-        formData.append("gender", gender);
-
-        // Add sizes as JSON
-        // Add sizes as JSON - keep only size and quantity fields
-        const sizesData = sizes
-          .filter((s) => s.size.trim() !== "")
-          .map(({ size, quantity }) => ({ size, quantity }));
-        formData.append("sizes", JSON.stringify(sizesData));
-
-        // Add colors as JSON - keep only color and quantity fields
-        const colorsData = colors
-          .filter((c) => c.color.trim() !== "")
-          .map(({ color, quantity }) => ({ color, quantity }));
-        formData.append("colors", JSON.stringify(colorsData));
-      }
-
-      // Add additional images
-      // Add additional images - with clearer naming
-      additionalImages.forEach((item, index) => {
-        if (item.image) {
-          // Use a consistent name pattern
-          formData.append(`additional_images_${index}`, item.image);
-          console.log(
-            `Appending image: additional_images_${index}`,
-            item.image.name
-          );
+    createVendorProduct(buildFormData(), {
+      onSuccess: (res) => {
+        if (res.status === 201) {
+          Toast.fire({ icon: "success", title: "Product added successfully" });
+          resetForm();
         }
-      });
-
-      // Change keywords to keyword
-      formData.append("keyword", product.keyword.trim());
-
-      // Include CSRF token if using Django's CSRF protection
-      const csrfToken = document.querySelector(
-        "[name=csrfmiddlewaretoken]"
-      )?.value;
-      const headers = {
-        "Content-Type": "multipart/form-data",
-      };
-
-      if (csrfToken) {
-        headers["X-CSRFToken"] = csrfToken;
-      }
-
-      // Send API request
-      const response = await api.post("vendor-products/", formData, {
-        headers,
-      });
-
-      if (response.status === 201) {
-        Toast.fire({
-          icon: "success",
-          title: "Product added successfully",
-        });
-
-        resetForm();
-      }
-    } catch (error) {
-      console.error("API Error:", error.response?.data || error.message);
-
-      if (error.response?.status === 400) {
-        const serverErrors = error.response.data.errors;
-        if (serverErrors) {
-          const fieldErrors = {};
-          Object.keys(serverErrors).forEach((field) => {
-            fieldErrors[field] = Array.isArray(serverErrors[field])
-              ? serverErrors[field][0]
-              : serverErrors[field];
+      },
+      onError: (error) => {
+        if (error.response?.status === 400) {
+          const serverErrors = error.response.data.errors;
+          if (serverErrors) {
+            const fieldErrors = {};
+            Object.keys(serverErrors).forEach((field) => {
+              fieldErrors[field] = Array.isArray(serverErrors[field])
+                ? serverErrors[field][0]
+                : serverErrors[field];
+            });
+            setErrors(fieldErrors);
+          }
+          Toast.fire({
+            icon: "error",
+            title: "Please correct the form errors",
           });
-          setErrors(fieldErrors);
+        } else if (error.response?.status === 403) {
+          Toast.fire({
+            icon: "error",
+            title: "Permission denied",
+            text: "Your account must be registered as a vendor",
+          });
+        } else if (error.response?.status === 401) {
+          Toast.fire({
+            icon: "error",
+            title: "Authentication required",
+            text: "Please log in to add products",
+          });
+        } else {
+          Toast.fire({
+            icon: "error",
+            title: "Failed to add product",
+            text: "Please try again later",
+          });
         }
-
-        Toast.fire({
-          icon: "error",
-          title: "Please correct the form errors",
-        });
-      } else if (error.response?.status === 403) {
-        Toast.fire({
-          icon: "error",
-          title: "Permission denied",
-          text: "Your account must be registered as a vendor",
-        });
-      } else if (error.response?.status === 401) {
-        Toast.fire({
-          icon: "error",
-          title: "Authentication required",
-          text: "Please log in to add products",
-        });
-      } else {
-        Toast.fire({
-          icon: "error",
-          title: "Failed to add product",
-          text: "Please try again later",
-        });
-      }
-    } finally {
-      setIsLoading(false);
-    }
+      },
+    });
   };
 
   const resetForm = () => {
@@ -491,47 +357,33 @@ const AddProduct = () => {
     });
     setErrors({});
     setImagePreview(null);
-    setMessage({ text: "", type: "" });
-
-    // Reset fashion specific fields
     setSizes([{ size: "", quantity: 0 }]);
-    setColors([{ color: "", quantity: 0 }]); // Updated with quantity
+    setColors([{ color: "", quantity: 0 }]);
     setAdditionalImages([{ image: null, preview: null }]);
     setGender("");
-
-    // Reset file inputs
-    const fileInputs = document.querySelectorAll('input[type="file"]');
-    fileInputs.forEach((input) => {
-      if (input) input.value = "";
+    document.querySelectorAll('input[type="file"]').forEach((input) => {
+      input.value = "";
     });
   };
 
-  // Calculate total variations
   const getTotalVariations = () => {
     if (businessCategory !== "fashion") return 0;
-
     const validSizes = sizes.filter((s) => s.size.trim() !== "").length;
     const validColors = colors.filter((c) => c.color.trim() !== "").length;
-
     if (validSizes === 0 || validColors === 0) return 0;
     return validSizes * validColors;
   };
 
-  // Calculate total inventory - updated to include color quantities
   const getTotalInventory = () => {
     if (businessCategory !== "fashion") return product.in_stock;
-
-    // Calculate total from size quantities
-    const sizeTotal = sizes.reduce((total, size) => {
-      return total + (size.quantity ? parseInt(size.quantity) : 0);
-    }, 0);
-
-    // Calculate total from color quantities
-    const colorTotal = colors.reduce((total, color) => {
-      return total + (color.quantity ? parseInt(color.quantity) : 0);
-    }, 0);
-
-    // Return the sum
+    const sizeTotal = sizes.reduce(
+      (t, s) => t + (s.quantity ? parseInt(s.quantity) : 0),
+      0,
+    );
+    const colorTotal = colors.reduce(
+      (t, c) => t + (c.quantity ? parseInt(c.quantity) : 0),
+      0,
+    );
     return sizeTotal + colorTotal;
   };
 
@@ -566,18 +418,6 @@ const AddProduct = () => {
           encType="multipart/form-data"
           className="space-y-6"
         >
-          {/* Include CSRF token if using Django's CSRF protection */}
-          {document.querySelector("[name=csrfmiddlewaretoken]") && (
-            <input
-              type="hidden"
-              name="csrfmiddlewaretoken"
-              value={
-                document.querySelector("[name=csrfmiddlewaretoken]")?.value
-              }
-            />
-          )}
-
-          {/* Product Name */}
           <div>
             <label
               htmlFor="name"
@@ -591,9 +431,7 @@ const AddProduct = () => {
               name="name"
               value={product.name}
               onChange={handleChange}
-              className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 ${
-                errors.name ? "border-red-500 bg-red-50" : "border-gray-300"
-              }`}
+              className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 ${errors.name ? "border-red-500 bg-red-50" : "border-gray-300"}`}
               placeholder="Enter product name"
             />
             {errors.name && (
@@ -601,7 +439,6 @@ const AddProduct = () => {
             )}
           </div>
 
-          {/* Description */}
           <div>
             <label
               htmlFor="description"
@@ -614,11 +451,7 @@ const AddProduct = () => {
               name="description"
               value={product.description}
               onChange={handleChange}
-              className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 ${
-                errors.description
-                  ? "border-red-500 bg-red-50"
-                  : "border-gray-300"
-              }`}
+              className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 ${errors.description ? "border-red-500 bg-red-50" : "border-gray-300"}`}
               rows="4"
               placeholder="Describe your product"
             />
@@ -627,7 +460,6 @@ const AddProduct = () => {
             )}
           </div>
 
-          {/* Price and Stock Row */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label
@@ -642,9 +474,7 @@ const AddProduct = () => {
                 name="price"
                 value={product.price}
                 onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 ${
-                  errors.price ? "border-red-500 bg-red-50" : "border-gray-300"
-                }`}
+                className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 ${errors.price ? "border-red-500 bg-red-50" : "border-gray-300"}`}
                 step="0.01"
                 min="0"
                 placeholder="0.00"
@@ -654,7 +484,6 @@ const AddProduct = () => {
               )}
             </div>
 
-            {/* Show in_stock only for non-food categories */}
             {businessCategory !== "food" && (
               <div>
                 <label
@@ -669,11 +498,7 @@ const AddProduct = () => {
                   name="in_stock"
                   value={product.in_stock}
                   onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 ${
-                    errors.in_stock
-                      ? "border-red-500 bg-red-50"
-                      : "border-gray-300"
-                  }`}
+                  className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 ${errors.in_stock ? "border-red-500 bg-red-50" : "border-gray-300"}`}
                   min="0"
                   placeholder="0"
                 />
@@ -684,7 +509,6 @@ const AddProduct = () => {
             )}
           </div>
 
-          {/* Delivery Day */}
           {businessCategory !== "food" && (
             <div>
               <label
@@ -699,11 +523,7 @@ const AddProduct = () => {
                 name="delivery_day"
                 value={product.delivery_day}
                 onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 ${
-                  errors.delivery_day
-                    ? "border-red-500 bg-red-50"
-                    : "border-gray-300"
-                }`}
+                className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 ${errors.delivery_day ? "border-red-500 bg-red-50" : "border-gray-300"}`}
                 placeholder="e.g., 1 day, 2 days etc."
               />
               {errors.delivery_day && (
@@ -714,7 +534,6 @@ const AddProduct = () => {
             </div>
           )}
 
-          {/* Main Product Image */}
           <div>
             <label
               htmlFor="product-image"
@@ -727,9 +546,7 @@ const AddProduct = () => {
               id="product-image"
               name="image"
               onChange={handleImageChange}
-              className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 ${
-                errors.image ? "border-red-500 bg-red-50" : "border-gray-300"
-              }`}
+              className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 ${errors.image ? "border-red-500 bg-red-50" : "border-gray-300"}`}
               accept="image/jpeg,image/png,image/gif,image/webp"
             />
             <p className="mt-1 text-sm text-gray-500">
@@ -739,7 +556,6 @@ const AddProduct = () => {
             {errors.image && (
               <p className="mt-1 text-sm text-red-600">{errors.image}</p>
             )}
-
             {imagePreview && (
               <div className="mt-4">
                 <img
@@ -751,7 +567,6 @@ const AddProduct = () => {
             )}
           </div>
 
-          {/* Additional Images */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Additional Images
@@ -763,20 +578,14 @@ const AddProduct = () => {
                     type="file"
                     id={`additional-image-${index}`}
                     onChange={(e) => handleAdditionalImageChange(e, index)}
-                    className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 ${
-                      errors.additionalImages && errors.additionalImages[index]
-                        ? "border-red-500 bg-red-50"
-                        : "border-gray-300"
-                    }`}
+                    className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 ${errors.additionalImages?.[index] ? "border-red-500 bg-red-50" : "border-gray-300"}`}
                     accept="image/jpeg,image/png,image/gif,image/webp"
                   />
-                  {errors.additionalImages &&
-                    errors.additionalImages[index] && (
-                      <p className="text-sm text-red-600">
-                        {errors.additionalImages[index]}
-                      </p>
-                    )}
-
+                  {errors.additionalImages?.[index] && (
+                    <p className="text-sm text-red-600">
+                      {errors.additionalImages[index]}
+                    </p>
+                  )}
                   {item.preview && (
                     <img
                       src={item.preview}
@@ -786,7 +595,6 @@ const AddProduct = () => {
                   )}
                 </div>
               ))}
-
               <button
                 type="button"
                 onClick={addImageField}
@@ -797,10 +605,8 @@ const AddProduct = () => {
             </div>
           </div>
 
-          {/* Fashion Specific Fields */}
           {businessCategory === "fashion" && (
             <>
-              {/* Gender Selection */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3">
                   Gender Category*
@@ -827,25 +633,23 @@ const AddProduct = () => {
                 )}
               </div>
 
-              {/* Sizes Section */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3">
                   Available Sizes*
                 </label>
                 <div className="space-y-3">
                   {sizes.map((item, index) => (
-                    <div key={`size-${index}`} className="flex flex-col gap-2 md:flex-row space-x-3">
+                    <div
+                      key={`size-${index}`}
+                      className="flex flex-col gap-2 md:flex-row space-x-3"
+                    >
                       <input
                         type="text"
                         value={item.size}
                         onChange={(e) =>
                           handleSizeChange(index, "size", e.target.value)
                         }
-                        className={`flex-1 px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 ${
-                          errors.sizes && errors.sizes[index]
-                            ? "border-red-500 bg-red-50"
-                            : "border-gray-300"
-                        }`}
+                        className={`flex-1 px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 ${errors.sizes?.[index] ? "border-red-500 bg-red-50" : "border-gray-300"}`}
                         placeholder="Size (e.g., S, M, L, XL, 42, 44)"
                       />
                       <input
@@ -860,13 +664,12 @@ const AddProduct = () => {
                       />
                     </div>
                   ))}
-                  {errors.sizes && errors.sizes.some((error) => error) && (
+                  {errors.sizes?.some((e) => e) && (
                     <p className="text-sm text-red-600">
                       Please fix size errors above
                     </p>
                   )}
                 </div>
-
                 <button
                   type="button"
                   onClick={addSizeField}
@@ -876,25 +679,23 @@ const AddProduct = () => {
                 </button>
               </div>
 
-              {/* Colors Section */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3">
                   Available Colors*
                 </label>
                 <div className="space-y-3">
                   {colors.map((item, index) => (
-                    <div key={`color-${index}`} className="flex flex-col gap-2 md:flex-row space-x-3">
+                    <div
+                      key={`color-${index}`}
+                      className="flex flex-col gap-2 md:flex-row space-x-3"
+                    >
                       <input
                         type="text"
                         value={item.color}
                         onChange={(e) =>
                           handleColorChange(index, "color", e.target.value)
                         }
-                        className={`flex-1 px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 ${
-                          errors.colors && errors.colors[index]
-                            ? "border-red-500 bg-red-50"
-                            : "border-gray-300"
-                        }`}
+                        className={`flex-1 px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 ${errors.colors?.[index] ? "border-red-500 bg-red-50" : "border-gray-300"}`}
                         placeholder="Color name (e.g., Red, Blue, Green)"
                       />
                       <input
@@ -909,13 +710,12 @@ const AddProduct = () => {
                       />
                     </div>
                   ))}
-                  {errors.colors && errors.colors.some((error) => error) && (
+                  {errors.colors?.some((e) => e) && (
                     <p className="text-sm text-red-600">
                       Please fix color errors above
                     </p>
                   )}
                 </div>
-
                 <button
                   type="button"
                   onClick={addColorField}
@@ -925,7 +725,6 @@ const AddProduct = () => {
                 </button>
               </div>
 
-              {/* Variations Summary */}
               <div className="bg-gray-50 rounded-lg p-4">
                 <h4 className="text-sm font-medium text-gray-700 mb-2">
                   Summary
@@ -948,7 +747,6 @@ const AddProduct = () => {
             </>
           )}
 
-          {/* Keywords */}
           <div>
             <label
               htmlFor="keyword"
@@ -962,9 +760,7 @@ const AddProduct = () => {
               name="keyword"
               value={product.keyword}
               onChange={handleChange}
-              className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 ${
-                errors.keyword ? "border-red-500 bg-red-50" : "border-gray-300"
-              }`}
+              className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 ${errors.keyword ? "border-red-500 bg-red-50" : "border-gray-300"}`}
               placeholder="e.g., shoes, jeans, shirts"
             />
             <p className="mt-1 text-sm text-gray-500">
@@ -976,7 +772,6 @@ const AddProduct = () => {
             )}
           </div>
 
-          {/* Form Actions */}
           <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
             <button
               type="button"
@@ -985,13 +780,12 @@ const AddProduct = () => {
             >
               Reset Form
             </button>
-
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isPending}
               className="w-full sm:w-auto px-6 py-2 bg-yellow-500 hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 transition-colors duration-200"
             >
-              {isLoading ? "Adding Product..." : "Add Product"}
+              {isPending ? "Adding Product..." : "Add Product"}
             </button>
           </div>
         </form>

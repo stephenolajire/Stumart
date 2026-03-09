@@ -235,7 +235,7 @@ const UpdateStockModal = ({
       // Calculate total from sizes for fashion items
       const sizeTotal = formData.sizes.reduce(
         (total, size) => total + (parseInt(size.quantity) || 0),
-        0
+        0,
       );
 
       // If no sizes are provided, use the manual stock input
@@ -264,10 +264,10 @@ const UpdateStockModal = ({
     }
 
     const hasSizeChanges = formData.sizes.some(
-      (size) => size.size.trim() || size.quantity > 0
+      (size) => size.size.trim() || size.quantity > 0,
     );
     const hasColorChanges = formData.colors.some(
-      (color) => color.color.trim() || color.quantity > 0
+      (color) => color.color.trim() || color.quantity > 0,
     );
     const hasNewImages = newImages.some((img) => img.image);
 
@@ -313,11 +313,11 @@ const UpdateStockModal = ({
 
       // Filter out empty sizes and colors
       const validSizes = formData.sizes.filter(
-        (size) => size.size && size.size.trim() && size.quantity >= 0
+        (size) => size.size && size.size.trim() && size.quantity >= 0,
       );
 
       const validColors = formData.colors.filter(
-        (color) => color.color && color.color.trim() && color.quantity >= 0
+        (color) => color.color && color.color.trim() && color.quantity >= 0,
       );
 
       // Calculate total stock
@@ -344,7 +344,7 @@ const UpdateStockModal = ({
           "Parsed price:",
           newPrice,
           "Is valid:",
-          !isNaN(newPrice) && newPrice >= 0
+          !isNaN(newPrice) && newPrice >= 0,
         );
 
         if (!isNaN(newPrice) && newPrice >= 0) {
@@ -506,7 +506,7 @@ const UpdateStockModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-gray-100 bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         {/* Modal Header */}
         <div className="flex items-center justify-between p-6 border-b">
@@ -609,7 +609,7 @@ const UpdateStockModal = ({
                                       className="w-full h-full object-cover"
                                     />
                                   </div>
-                                )
+                                ),
                               )}
                             </div>
                           </div>
@@ -705,7 +705,7 @@ const UpdateStockModal = ({
                                 handleSizeChange(
                                   index,
                                   "quantity",
-                                  parseInt(e.target.value) || 0
+                                  parseInt(e.target.value) || 0,
                                 )
                               }
                               className={`w-24 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent ${
@@ -753,7 +753,7 @@ const UpdateStockModal = ({
                                 handleColorChange(
                                   index,
                                   "color",
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                               className={`flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent ${
@@ -770,7 +770,7 @@ const UpdateStockModal = ({
                                 handleColorChange(
                                   index,
                                   "quantity",
-                                  parseInt(e.target.value) || 0
+                                  parseInt(e.target.value) || 0,
                                 )
                               }
                               className={`w-24 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent ${

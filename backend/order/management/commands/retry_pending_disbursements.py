@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 from django.db.models import Q, Count
 from datetime import timedelta
-from Stumart.models import Order
+from stumart.models import Order
 from wallet.models import WalletTransactionAccount, DeliveryOpportunity
 import logging
 

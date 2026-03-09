@@ -47,14 +47,14 @@ const DeliveryDetails = () => {
   const fetchDeliveryDetails = async () => {
     try {
       setIsLoading(true);
-      const response = await api.get(`delivery-details/${uniqueCode}/`);
+      const response = await api.get(`order/delivery/accept/${uniqueCode}/`);
       setOpportunity(response.data);
       setError(null);
     } catch (error) {
       console.error("Error fetching delivery details:", error);
       setError(
         error.response?.data?.error ||
-          "Failed to load delivery details. Please check the link and try again."
+          "Failed to load delivery details. Please check the link and try again.",
       );
     } finally {
       setIsLoading(false);
@@ -128,7 +128,7 @@ const DeliveryDetails = () => {
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="max-w-md mx-auto text-center">
+        <div className="max-w-4xl mx-auto text-center">
           <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <AlertCircle className="w-12 h-12 text-red-600" />
           </div>
@@ -174,7 +174,7 @@ const DeliveryDetails = () => {
           <div className="flex items-center justify-between mb-6">
             <span
               className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium border ${getStatusColor(
-                opportunity.status
+                opportunity.status,
               )}`}
             >
               {getStatusIcon(opportunity.status)}
@@ -349,8 +349,8 @@ const DeliveryDetails = () => {
                     {opportunity.status === "accepted"
                       ? "This delivery has already been accepted by another rider"
                       : opportunity.status === "expired"
-                      ? "This delivery opportunity has expired"
-                      : "This delivery is no longer available"}
+                        ? "This delivery opportunity has expired"
+                        : "This delivery is no longer available"}
                   </p>
 
                   <button

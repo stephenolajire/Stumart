@@ -6,19 +6,13 @@ import React, {
   useMemo,
 } from "react";
 import { useSearchParams } from "react-router-dom";
-import {
-  FaFilter,
-  FaTimes,
-  FaBox,
-  FaSadTear,
-  FaStore,
-  FaArrowLeft,
-} from "react-icons/fa";
+import { FaFilter, FaTimes, FaBox, FaSadTear, FaStore } from "react-icons/fa";
 import { GlobalContext } from "../constant/GlobalContext";
 import { nigeriaInstitutions, nigeriaStates } from "../constant/data";
 import Card from "./components/Card";
 import Spinner from "../components/Spinner";
 import Pagination from "../company/Pagination";
+import { useGetProductsByCategory } from "../hooks/useHome";
 
 const Category = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -28,9 +22,8 @@ const Category = () => {
   const [schools, setSchools] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const { useProductCategory, isAuthenticated } = useContext(GlobalContext);
+  const { isAuthenticated } = useContext(GlobalContext);
 
-  // Initialize filters from URL params
   const [filters, setFilters] = useState({
     vendor: searchParams.get("vendor") || "",
     state: searchParams.get("state") || "",
@@ -41,9 +34,8 @@ const Category = () => {
     sort: searchParams.get("sort") || "newest",
   });
 
-  // FIXED: Include page parameter in currentFilters
-  const currentFilters = useMemo(() => {
-    return {
+  const currentFilters = useMemo(
+    () => ({
       category,
       vendor: filters.vendor,
       state: filters.state,
@@ -52,86 +44,70 @@ const Category = () => {
       minPrice: filters.minPrice,
       maxPrice: filters.maxPrice,
       sort: filters.sort,
-      page: currentPage, // ADD THIS LINE
-    };
-  }, [
-    category,
-    filters.vendor,
-    filters.state,
-    filters.school,
-    filters.search,
-    filters.minPrice,
-    filters.maxPrice,
-    filters.sort,
-    currentPage, // ADD THIS DEPENDENCY
-  ]);
+      page: currentPage,
+    }),
+    [
+      category,
+      filters.vendor,
+      filters.state,
+      filters.school,
+      filters.search,
+      filters.minPrice,
+      filters.maxPrice,
+      filters.sort,
+      currentPage,
+    ],
+  );
 
-  // Use the React Query hook for fetching category products
+  // ✅ Using the hook directly instead of GlobalContext
   const {
     data: productsData,
     isLoading,
     error,
     refetch: refetchProducts,
-  } = useProductCategory(currentFilters);
+  } = useGetProductsByCategory(currentFilters);
 
-  console.log(productsData);
-
-  // FIXED: Handle page change and scroll to top
   const handlePageChange = (page) => {
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Extract data from React Query response
-  const products = productsData?.data?.results || [];
-  const userInstitution = productsData?.data?.user_institution || "";
-  const allVendors = productsData?.data?.vendors || [];
-  const totalProducts = productsData?.data?.total_products || products.length;
+  const products = productsData?.results || [];
+  const userInstitution = productsData?.user_institution || "";
+  const allVendors = productsData?.vendors || [];
+  const totalProducts = productsData?.total_products || products.length;
 
-  // Check if all products belong to the same vendor
   const singleVendorInfo = useMemo(() => {
     if (!products || products.length === 0) return null;
-
     const uniqueVendorIds = [
-      ...new Set(
-        products.map((product) => product.vendor_id || product.vendorId)
-      ),
+      ...new Set(products.map((p) => p.vendor_id || p.vendorId)),
     ];
-
     if (uniqueVendorIds.length === 1 && uniqueVendorIds[0]) {
       const vendorId = uniqueVendorIds[0];
       const vendor = allVendors.find((v) => v.id === vendorId);
       return vendor ? { id: vendorId, name: vendor.name } : null;
     }
-
     return null;
   }, [products, allVendors]);
 
-  // FIXED: Reset to page 1 when filters change
   const handleFilterChange = useCallback(
     (name, value) => {
-      console.log("Filter changed:", name, value);
-
       setFilters((prev) => ({ ...prev, [name]: value }));
-      setCurrentPage(1); // RESET TO PAGE 1 WHEN FILTER CHANGES
-
+      setCurrentPage(1);
       setSearchParams((prev) => {
         if (value) {
           prev.set(name, value);
         } else {
           prev.delete(name);
         }
-        if (category) {
-          prev.set("category", category);
-        }
-        prev.delete("page"); // REMOVE PAGE FROM URL WHEN FILTER CHANGES
+        if (category) prev.set("category", category);
+        prev.delete("page");
         return prev;
       });
     },
-    [setSearchParams, category]
+    [setSearchParams, category],
   );
 
-  // Handle state change for school filtering
   const handleStateChange = useCallback(
     (state) => {
       setSelectedState(state);
@@ -139,12 +115,11 @@ const Category = () => {
       handleFilterChange("state", state);
       handleFilterChange("school", "");
     },
-    [handleFilterChange]
+    [handleFilterChange],
   );
 
-  // Clear all filters
   const clearFilters = useCallback(() => {
-    const resetFilters = {
+    setFilters({
       vendor: "",
       state: "",
       school: "",
@@ -152,21 +127,15 @@ const Category = () => {
       minPrice: "",
       maxPrice: "",
       sort: "newest",
-    };
-
-    setFilters(resetFilters);
+    });
     setSelectedState("");
     setSchools([]);
-    setCurrentPage(1); // RESET PAGE
-
+    setCurrentPage(1);
     const params = new URLSearchParams();
-    if (category) {
-      params.set("category", category);
-    }
+    if (category) params.set("category", category);
     setSearchParams(params);
   }, [category, setSearchParams]);
 
-  // Effect to initialize state and schools from URL params
   useEffect(() => {
     const stateFromUrl = searchParams.get("state");
     if (stateFromUrl && nigeriaInstitutions[stateFromUrl]) {
@@ -175,11 +144,9 @@ const Category = () => {
     }
   }, [searchParams]);
 
-  // Memoized no products message
   const noProductsMessage = useMemo(() => {
     const hasActiveFilters =
       filters.search || filters.state || filters.school || filters.vendor;
-
     if (hasActiveFilters) {
       return (
         <>
@@ -189,13 +156,8 @@ const Category = () => {
         </>
       );
     }
-
     return `No products are available in the ${category} category at this time. Please check back later.`;
   }, [filters.search, filters.state, filters.school, filters.vendor, category]);
-
-  // Handle error state
-  const errorMessage =
-    error?.message || "Failed to load products. Please try again.";
 
   if (isLoading) {
     return (
@@ -213,7 +175,9 @@ const Category = () => {
             <div className="text-red-500 text-lg mb-4">
               Error Loading Products
             </div>
-            <p className="text-gray-600 mb-6">{errorMessage}</p>
+            <p className="text-gray-600 mb-6">
+              {error?.message || "Failed to load products. Please try again."}
+            </p>
             <button
               onClick={() => refetchProducts()}
               className="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200"
@@ -229,7 +193,7 @@ const Category = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-4 px-4 mt-38 lg:mt-0 sm:px-6 lg:px-8">
       <div className="w-full mx-auto">
-        {/* Header Section */}
+        {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
           <div>
             {isAuthenticated ? (
@@ -254,7 +218,7 @@ const Category = () => {
           </button>
         </div>
 
-        {/* Single Vendor Display */}
+        {/* Single Vendor Banner */}
         {singleVendorInfo && products.length > 0 && (
           <div className="bg-linear-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4 mb-6">
             <div className="flex items-center justify-center space-x-2">
@@ -269,14 +233,13 @@ const Category = () => {
           </div>
         )}
 
-        {/* Filters Section */}
+        {/* Filters */}
         <div
           className={`bg-white rounded-lg shadow-sm p-4 mb-6 transition-all duration-300 ${
             showFilters ? "block" : "hidden"
           }`}
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Search */}
             <div className="lg:col-span-2">
               <input
                 type="text"
@@ -287,7 +250,6 @@ const Category = () => {
               />
             </div>
 
-            {/* Sort */}
             <div>
               <select
                 value={filters.sort}
@@ -300,7 +262,6 @@ const Category = () => {
               </select>
             </div>
 
-            {/* Vendor */}
             <div>
               <select
                 value={filters.vendor}
@@ -309,9 +270,7 @@ const Category = () => {
               >
                 <option value="">All Vendors</option>
                 {Array.from(
-                  new Map(
-                    allVendors.map((vendor) => [vendor.name, vendor])
-                  ).values()
+                  new Map(allVendors.map((v) => [v.name, v])).values(),
                 ).map((vendor) => (
                   <option key={vendor.id} value={vendor.id}>
                     {vendor.name}
@@ -320,7 +279,6 @@ const Category = () => {
               </select>
             </div>
 
-            {/* Price Range */}
             <div className="flex space-x-2">
               <input
                 type="number"
@@ -338,7 +296,6 @@ const Category = () => {
               />
             </div>
 
-            {/* State - Only for unauthenticated users */}
             {!isAuthenticated && (
               <div>
                 <select
@@ -356,7 +313,6 @@ const Category = () => {
               </div>
             )}
 
-            {/* School - Only for unauthenticated users */}
             {!isAuthenticated && (
               <div>
                 <select
@@ -375,7 +331,6 @@ const Category = () => {
               </div>
             )}
 
-            {/* Clear Filters */}
             <div className="flex items-end">
               <button
                 onClick={clearFilters}
@@ -386,7 +341,6 @@ const Category = () => {
             </div>
           </div>
 
-          {/* Mobile Clear Filters */}
           {showFilters && (
             <div className="mt-4 flex justify-center sm:hidden">
               <button
@@ -399,7 +353,7 @@ const Category = () => {
           )}
         </div>
 
-        {/* Content Area */}
+        {/* Products */}
         {products.length === 0 ? (
           <div className="bg-white rounded-lg shadow-sm p-12 text-center">
             <div className="mb-6">
@@ -422,10 +376,11 @@ const Category = () => {
           </div>
         )}
       </div>
+
       <Pagination
-        count={productsData?.data?.count || 0}
-        next={productsData?.data?.next || null}
-        previous={productsData?.data?.previous || null}
+        count={productsData?.count || 0}
+        next={productsData?.next || null}
+        previous={productsData?.previous || null}
         currentPage={currentPage}
         onPageChange={handlePageChange}
         resultsPerPage={18}

@@ -1,50 +1,56 @@
 from collections import OrderedDict
 from django.shortcuts import render
 from rest_framework.views import APIView
-from Stumart.paginations import CustomPagination
-from Stumart.models import Product
-from Stumart.serializers import ProductSerializer
+from stumart.paginations import CustomPagination
+from stumart.models import Product
+from stumart.serializers import ProductSerializer
 from rest_framework.response import Response
 from rest_framework import status
-from User.models import Vendor
+from user.models import Vendor
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.contrib.auth import get_user_model
 from decimal import Decimal
 import logging
 from django.db.models import Q, Prefetch, Count
 from django.core.cache import cache
-from User.serializers import VendorSerializer
+from user.serializers import VendorSerializer
 import random
-from django.core.cache import cache
-from django.db.models import Q
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.permissions import AllowAny
-from collections import defaultdict, OrderedDict
-import random
-import logging
-
-
 from django.conf import settings
+from drf_spectacular.utils import extend_schema
+
+from .serializers import (
+    VendorsByCategoryRequestSerializer,
+    VendorsByCategoryResponseSerializer,
+    ProductCategoryRequestSerializer,
+    ProductCategoryResponseSerializer,
+    CategoryLastFiveRequestSerializer,
+    CategoryLastFiveResponseSerializer,
+    VendorsBySchoolRequestSerializer,
+    VendorsBySchoolResponseSerializer,
+    ErrorResponseSerializer,
+    ErrorResponseDetailSerializer
+)
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
 
 
 class VendorsByCategoryView(APIView):
-    # Get all vendors in a specific category with pagination and filtering.
+    """
+    Vendors By Category API
     
-    # Query Parameters:
-    # - category (required): Business category to filter by
-    # - school: Filter by institution
-    # - state: Filter by state
-    # - search: Search by business name or description
-    # - sort: Sort order (newest, rating_high, rating_low, name_asc, name_desc, random)
-    # - verified_only: Show only verified vendors (true/false)
+    Get all vendors in a specific category with pagination and filtering.
+    Supports sorting, searching, and institutional/state filtering.
+    """
     pagination_class = CustomPagination
     permission_classes = [AllowAny]
-
+    serializer_class = VendorsByCategoryResponseSerializer
+    
+    @extend_schema(
+        request=VendorsByCategoryRequestSerializer,
+        responses=VendorsByCategoryResponseSerializer,
+        description="Retrieve vendors filtered by category with optional filters"
+    )
     def get(self, request):
         try:
             category = request.query_params.get('category', '').strip()
@@ -59,7 +65,7 @@ class VendorsByCategoryView(APIView):
             school = request.query_params.get('school', '').strip()
             state = request.query_params.get('state', '').strip()
             search = request.query_params.get('search', '').strip()
-            sort_by = request.query_params.get('sort', 'random').strip()  # Changed default to 'random'
+            sort_by = request.query_params.get('sort', 'random').strip()
             verified_only = request.query_params.get('verified_only', 'false').strip().lower() == 'true'
 
             # Build optimized queryset
@@ -67,19 +73,16 @@ class VendorsByCategoryView(APIView):
                 'user',
                 'user__kyc'
             ).only(
-                # Vendor fields
                 'id', 'business_name', 'business_category', 
                 'specific_category', 'business_description', 
                 'shop_image', 'rating', 'total_ratings', 
                 'is_verified', 'user_id',
-                # User fields
                 'user__id', 'user__email', 'user__institution',
                 'user__phone_number', 'user__state',
-                # KYC field
                 'user__kyc__verification_status'
             )
 
-            # Apply KYC filtering - only approved vendors
+            # Apply KYC filtering
             queryset = queryset.filter(user__kyc__verification_status='approved')
             
             # Apply category filtering
@@ -94,10 +97,8 @@ class VendorsByCategoryView(APIView):
             # Apply school filtering based on authentication
             if request.user.is_authenticated:
                 if not school:
-                    # If authenticated and no school specified, show vendors from user's institution
                     queryset = queryset.filter(user__institution__iexact=request.user.institution)
             else:
-                # If not authenticated, apply state and school filters
                 if state:
                     queryset = queryset.filter(user__state__iexact=state)
                 if school:
@@ -123,9 +124,8 @@ class VendorsByCategoryView(APIView):
             elif sort_by == 'name_desc':
                 queryset = queryset.order_by('-business_name')
             elif sort_by == 'random':
-                queryset = queryset.order_by('?')  # Database-level random ordering
+                queryset = queryset.order_by('?')
             else:
-                # Default to random if no valid sort specified
                 queryset = queryset.order_by('?')
 
             # Get total count before pagination
@@ -167,9 +167,21 @@ class VendorsByCategoryView(APIView):
 
 
 class ProductCategoryView(APIView):
+    """
+    Product Category API
+    
+    Get products filtered by category with support for price filtering,
+    vendor filtering, and multiple sorting options.
+    """
     pagination_class = CustomPagination
     permission_classes = [AllowAny]
-
+    serializer_class = ProductCategoryResponseSerializer
+    
+    @extend_schema(
+        request=ProductCategoryRequestSerializer,
+        responses=ProductCategoryResponseSerializer,
+        description="Retrieve products filtered by category with optional filters"
+    )
     def get(self, request):
         try:
             category = request.query_params.get('category', '').strip()
@@ -190,23 +202,19 @@ class ProductCategoryView(APIView):
             sort_by = request.query_params.get('sort', 'newest').strip()
             gender = request.query_params.get('gender', '').strip()
 
-            # Build optimized queryset with select_related for ForeignKeys
+            # Build optimized queryset
             queryset = Product.objects.select_related(
                 'vendor',
                 'vendor__vendor_profile',
                 'vendor__kyc'
             ).only(
-                # Product fields
                 'id', 'name', 'description', 'price', 'promotion_price', 
                 'created_at', 'vendor_id', 'image', 'in_stock', 
                 'gender', 'delivery_day', 'keyword',
-                # Vendor fields
                 'vendor__id', 'vendor__institution', 'vendor__state',
-                # Vendor profile fields
                 'vendor__vendor_profile__business_name',
                 'vendor__vendor_profile__business_category',
                 'vendor__vendor_profile__specific_category',
-                # KYC fields
                 'vendor__kyc__verification_status'
             )
 
@@ -218,7 +226,7 @@ class ProductCategoryView(APIView):
             category_filter |= Q(vendor__vendor_profile__specific_category__iexact=category)
             queryset = queryset.filter(category_filter)
 
-            # Apply gender filtering for fashion products
+            # Apply gender filtering
             if gender and gender in ['men', 'women', 'unisex', 'kids']:
                 queryset = queryset.filter(gender=gender)
 
@@ -266,18 +274,17 @@ class ProductCategoryView(APIView):
                 except (ValueError, TypeError):
                     pass
 
-            # Apply sorting with database indexes
+            # Apply sorting
             if sort_by == 'price_low':
                 queryset = queryset.order_by('price', '-created_at')
             elif sort_by == 'price_high':
                 queryset = queryset.order_by('-price', '-created_at')
             elif sort_by == 'popular':
-                # You can add a popularity field or order by sales
                 queryset = queryset.order_by('-in_stock', '-created_at')
-            else:  # newest (default)
+            else:
                 queryset = queryset.order_by('-created_at')
 
-            # Get unique vendors efficiently
+            # Get unique vendors
             unique_vendors = (
                 User.objects
                 .filter(
@@ -337,11 +344,23 @@ class ProductCategoryView(APIView):
 
 
 class CategoryLastFiveView(APIView):
+    """
+    Category Last Five Products API
+    
+    Get the last 5 (or fewer) products for each category.
+    Results are cached for 5 minutes for performance.
+    """
     permission_classes = [AllowAny]
-
+    serializer_class = CategoryLastFiveResponseSerializer
+    
+    @extend_schema(
+        request=CategoryLastFiveRequestSerializer,
+        responses=CategoryLastFiveResponseSerializer,
+        description="Retrieve last 5 products for each category"
+    )
     def get(self, request):
         try:
-            # Try to get from cache first (5 minutes cache)
+            # Try to get from cache (5 minutes)
             cache_key = 'category_last_five_products'
             cached_data = cache.get(cache_key)
             
@@ -352,7 +371,7 @@ class CategoryLastFiveView(APIView):
                     'cached': True
                 }, status=status.HTTP_200_OK)
 
-            # Get all unique business categories efficiently
+            # Get all unique business categories
             categories = (
                 User.objects
                 .filter(vendor_profile__isnull=False)
@@ -361,12 +380,10 @@ class CategoryLastFiveView(APIView):
                 .distinct()
             )
 
-            # Convert to list and sort with Food first
             categories_list = list(categories)
             
-            # Custom sorting: Food first, then alphabetically
+            # Sort with Food first
             def sort_categories(category):
-                # Return 0 for Food (comes first), 1 for everything else
                 if category.lower() == 'food':
                     return (0, category.lower())
                 else:
@@ -374,12 +391,9 @@ class CategoryLastFiveView(APIView):
             
             categories_list.sort(key=sort_categories)
 
-            # Use OrderedDict to maintain insertion order
-            from collections import OrderedDict
             response_data = OrderedDict()
 
             for category in categories_list:
-                # Fixed query - added kyc fields to only()
                 products = (
                     Product.objects
                     .select_related('vendor', 'vendor__vendor_profile', 'vendor__kyc')
@@ -388,26 +402,20 @@ class CategoryLastFiveView(APIView):
                         vendor__vendor_profile__business_category__iexact=category
                     )
                     .only(
-                        # Product fields
                         'id', 'name', 'description', 'price', 'promotion_price',
                         'created_at', 'image', 'in_stock', 'vendor_id',
                         'gender', 'delivery_day',
-                        # Vendor fields
                         'vendor__id',
-                        # Vendor profile fields
                         'vendor__vendor_profile__business_name',
                         'vendor__vendor_profile__business_category',
-                        # KYC fields
                         'vendor__kyc__verification_status'
                     )
                     .order_by('-created_at')[:6]
                 )
 
-                # Only add category if it has products
                 if products:
                     serializer = ProductSerializer(products, many=True)
                     
-                    # Get total count efficiently
                     total_count = (
                         Product.objects
                         .filter(
@@ -441,11 +449,22 @@ class CategoryLastFiveView(APIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-
 class VendorsBySchoolView(APIView):
-    serializer_class = VendorSerializer
+    """
+    Vendors By School API
+    
+    Get vendors grouped by category for a specific school/institution.
+    Returns up to 5 vendors per category.
+    Results are cached for 5 minutes.
+    """
+    serializer_class = VendorsBySchoolResponseSerializer
     permission_classes = [AllowAny]
     
+    @extend_schema(
+        request=VendorsBySchoolRequestSerializer,
+        responses=VendorsBySchoolResponseSerializer,
+        description="Retrieve vendors by school/institution grouped by category"
+    )
     def get(self, request):
         school_name = request.query_params.get("school", None)
 
@@ -469,7 +488,7 @@ class VendorsBySchoolView(APIView):
                     'cached': True
                 }, status=status.HTTP_200_OK)
 
-            from Stumart.models import Product
+            from stumart.models import Product
             
             vendor_user_ids_with_products = set(
                 Product.objects.values_list('vendor_id', flat=True).distinct()
@@ -513,6 +532,7 @@ class VendorsBySchoolView(APIView):
                     status=status.HTTP_404_NOT_FOUND
                 )
             
+            from collections import defaultdict
             vendors_by_category = defaultdict(list)
             
             for vendor in vendors_list:
@@ -574,3 +594,33 @@ class VendorsBySchoolView(APIView):
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+        
+
+class AllVendorNamesView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        school = request.query_params.get("school", None)
+        
+        queryset = Vendor.objects.select_related('user', 'user__kyc').filter(
+            user__kyc__verification_status='approved'
+        )
+        
+        if school:
+            queryset = queryset.filter(user__institution__iexact=school)
+
+        grouped = {}
+        for v in queryset:
+            cat = v.business_category
+            if cat not in grouped:
+                grouped[cat] = []
+            grouped[cat].append({
+                'id': v.id,
+                'business_name': v.business_name,
+            })
+
+        return Response({
+            'status': 'success',
+            'vendors': grouped,
+            'count': queryset.count()
+        }, status=status.HTTP_200_OK)

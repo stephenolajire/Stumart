@@ -12,7 +12,7 @@ export const usePickers = (filters = {}) => {
     queryKey: QUERY_KEYS.pickers(filters),
     queryFn: async () => {
       try {
-        let url = "admin-pickers/";
+        let url = "admin/pickers/";
         const params = new URLSearchParams();
 
         // Add filters to URL params
@@ -49,7 +49,7 @@ export const useTogglePickerAvailability = () => {
   return useMutation({
     mutationFn: async ({ pickerId, pickerType, isAvailable }) => {
       console.log(
-        `Toggling availability for ${pickerType} with ID ${pickerId} to ${isAvailable}`
+        `Toggling availability for ${pickerType} with ID ${pickerId} to ${isAvailable}`,
       );
 
       const response = await api.put(`pickers/${pickerId}/${pickerType}/`, {
@@ -74,7 +74,7 @@ export const useTogglePickerAvailability = () => {
         return oldData.map((picker) =>
           picker.id === pickerId && picker.picker_type === pickerType
             ? { ...picker, is_available: isAvailable }
-            : picker
+            : picker,
         );
       });
 
@@ -104,7 +104,7 @@ export const useTogglePickerVerification = () => {
   return useMutation({
     mutationFn: async ({ pickerId, pickerType, isVerified }) => {
       console.log(
-        `Toggling verification for ${pickerType} with ID ${pickerId} to ${isVerified}`
+        `Toggling verification for ${pickerType} with ID ${pickerId} to ${isVerified}`,
       );
 
       const response = await api.put(`pickers/${pickerId}/${pickerType}/`, {
@@ -129,7 +129,7 @@ export const useTogglePickerVerification = () => {
         return oldData.map((picker) =>
           picker.id === pickerId && picker.picker_type === pickerType
             ? { ...picker, is_verified: isVerified }
-            : picker
+            : picker,
         );
       });
 
