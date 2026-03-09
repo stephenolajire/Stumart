@@ -492,3 +492,26 @@ ADMIN_EMAILS = [email.strip() for email in os.environ.get('ADMIN_EMAILS', '').sp
 
 
 ADMIN_PHONE_NUMBERS = [phone.strip() for phone in os.environ.get('ADMIN_PHONE_NUMBERS', '').split(',') if phone.strip()]
+
+
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'ERROR',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+    },
+}
