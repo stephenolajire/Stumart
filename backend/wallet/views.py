@@ -20,11 +20,11 @@ logger = logging.getLogger(__name__)
 from weasyprint import HTML
 from django.template import Context, Template
 from django.shortcuts import get_object_or_404
-from User.models import Vendor
+from user.models import Vendor
 from rest_framework import generics
 from rest_framework import filters
 from django_filters.rest_framework import DjangoFilterBackend
-from Stumart.paginations import CustomPagination
+from stumart.paginations import CustomPagination
 from django.db import transaction
 import string
 import random
