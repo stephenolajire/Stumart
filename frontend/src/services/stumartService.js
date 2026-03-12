@@ -8,8 +8,10 @@ export const stumartService = {
 
   searchProducts: (params) => api.get("stumart/products/search/", { params }),
 
-  // ── Vendor Products ────────────────────────────────────────
-  getVendorProducts: () => api.get("/stumart/vendor/products/"),
+  getVendorProducts: (page = 1, pageSize = 20) =>
+    api.get("/stumart/vendor/products/", {
+      params: { page, page_size: pageSize },
+    }),
 
   getShopProducts: (shopId, params) =>
     api.get(`/stumart/vendor/products/${shopId}`, { params }),
@@ -19,7 +21,10 @@ export const stumartService = {
       headers: { "Content-Type": "multipart/form-data" },
     }),
 
-  getSpecificVendorProducts: (id) => api.get(`/stumart/vendor/products/${id}/`),
+  getSpecificVendorProducts: (id, page = 1, pageSize = 20) =>
+    api.get(`/stumart/vendor/products/${id}/`, {
+      params: { page, page_size: pageSize },
+    }),
 
   getProductDetail: (pk) => api.get(`/stumart/vendor/products/${pk}/detail/`),
 
@@ -91,4 +96,4 @@ export const stumartService = {
 
   // ── Videos ─────────────────────────────────────────────────
   getBothVideos: () => api.get("/stumart/videos/both/"),
-}
+};

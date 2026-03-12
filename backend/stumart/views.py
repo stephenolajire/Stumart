@@ -100,17 +100,20 @@ class SpecificVendorProductsView(APIView):
     Request:  SpecificVendorProductsQuerySerializer  (query params)
     Response: SpecificVendorProductsResponseSerializer
     """
-    # what the view reads from the request
-    request_serializer_class  = SpecificVendorProductsQuerySerializer
-    # what the view returns in the response
-    serializer_class           = SpecificVendorProductsResponseSerializer
+    request_serializer_class = SpecificVendorProductsQuerySerializer
+    serializer_class         = SpecificVendorProductsResponseSerializer
 
     def get(self, request, id):
         try:
             vendor = get_object_or_404(Vendor, id=id)
-            products = Product.objects.filter(vendor=vendor.user)
 
-            page = int(request.query_params.get("page", 1))
+            products = Product.objects.select_related(
+                'vendor__vendor_profile',
+            ).filter(
+                vendor=vendor.user
+            ).order_by('-created_at')
+
+            page      = int(request.query_params.get("page", 1))
             page_size = int(request.query_params.get("page_size", 20))
             paginator = Paginator(products, page_size)
 
@@ -123,16 +126,21 @@ class SpecificVendorProductsView(APIView):
                 )
 
             business_data = {
-                "business_name": vendor.business_name,
-                "shop_image": request.build_absolute_uri(vendor.shop_image.url) if vendor.shop_image else None,
-                "business_category": vendor.business_category,
+                "business_name":        vendor.business_name,
+                "shop_image":           request.build_absolute_uri(vendor.shop_image.url) if vendor.shop_image else None,
+                "business_category":    vendor.business_category,
                 "business_description": vendor.business_description,
-                "rating": vendor.rating
+                "rating":               vendor.rating,
             }
 
-            serializer = ProductSerializer(paginated_products, many=True, context={'request': request})
-            product_data = serializer.data
+            serializer = ProductCardSerializer(
+                paginated_products,
+                many=True,
+                context={'request': request}
+            )
+            product_data = list(serializer.data)
 
+            # food vendors don't need in_stock
             if vendor.business_category and vendor.business_category.lower() == "food":
                 for product in product_data:
                     product.pop("in_stock", None)
@@ -140,21 +148,24 @@ class SpecificVendorProductsView(APIView):
             return Response(
                 {
                     "vendor_details": business_data,
-                    "products": product_data,
+                    "products":       product_data,
                     "pagination": {
-                        "current_page": paginated_products.number,
-                        "total_pages": paginator.num_pages,
+                        "current_page":   paginated_products.number,
+                        "total_pages":    paginator.num_pages,
                         "total_products": paginator.count,
-                        "has_next": paginated_products.has_next(),
-                        "has_previous": paginated_products.has_previous(),
-                        "page_size": page_size,
-                    }
+                        "has_next":       paginated_products.has_next(),
+                        "has_previous":   paginated_products.has_previous(),
+                        "page_size":      page_size,
+                    },
                 },
                 status=status.HTTP_200_OK
             )
 
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class VendorsByOtherView(APIView):

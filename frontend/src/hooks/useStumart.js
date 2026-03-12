@@ -9,7 +9,7 @@ export const stumartKeys = {
 
   // Vendor Products
   vendorProducts: ["vendor-products"],
-  specificVendorProducts: (id) => ["vendor-products", id],
+  specificVendorProducts: (id, page) => ["specific-vendor-products", id, page],
   productDetail: (pk) => ["product-detail", pk],
 
   // Shops
@@ -99,13 +99,27 @@ export const useCreateVendorProduct = () => {
   });
 };
 
-export const useGetSpecificVendorProducts = (id) =>
+export const useGetSpecificVendorProducts = (id, page = 1, pageSize = 20) =>
   useQuery({
-    queryKey: stumartKeys.specificVendorProducts(id),
+    queryKey: stumartKeys.specificVendorProducts(id, page), // 👈 page in key
     queryFn: () =>
-      stumartService.getSpecificVendorProducts(id).then((r) => r.data),
+      stumartService
+        .getSpecificVendorProducts(id, page, pageSize)
+        .then((r) => ({
+          products: r.data.products || [],
+          details: r.data.vendor_details || {},
+          pagination: r.data.pagination || {},
+        })),
     enabled: !!id,
+    staleTime: 10 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    retry: 2,
+    refetchOnWindowFocus: false,
+    placeholderData: (previousData) => previousData,
   });
+
+// stumartKeys
+
 
 export const useGetProductDetail = (pk) =>
   useQuery({

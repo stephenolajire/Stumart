@@ -10,7 +10,7 @@ import Spinner from "../components/Spinner";
 import Card from "./components/Card";
 import Pagination from "./components/Pagination";
 import PriceFilter from "./components/PriceFilter";
-import { useGetShopProducts } from "../hooks/useStumart";
+import { useGetSpecificVendorProducts } from "../hooks/useStumart";
 
 const ShopDetails = () => {
   const { shopId } = useParams();
@@ -22,10 +22,10 @@ const ShopDetails = () => {
   const {
     data: productsData,
     isLoading,
+    isFetching,
     isError,
     error,
-  } = useGetShopProducts(shopId, page);
-  console.log("ShopDetails - productsData:", productsData);
+  } = useGetSpecificVendorProducts(shopId, page);
 
   const products = productsData?.products || [];
   const details = productsData?.details || {};
@@ -133,26 +133,19 @@ const ShopDetails = () => {
       <div className="w-full mx-auto">
         {/* ── Shop Hero Banner ───────────────────────────── */}
         <div className="bg-text-primary mt-38 lg:mt-0 px-6 sm:px-10 py-10 mb-8">
-          {/* Category badge */}
           <div className="mb-4">
             <span className="inline-block bg-primary text-text-primary text-xs font-bold uppercase tracking-widest py-1.5 px-4 rounded-lg">
               {details?.business_category}
             </span>
           </div>
-
-          {/* Shop name */}
           <h1 className="text-2xl sm:text-3xl font-bold text-text-inverse mb-3 leading-tight">
             {details?.business_name}
           </h1>
-
-          {/* Description */}
           <p className="text-sm text-text-inverse/70 mb-7 leading-relaxed">
             {details?.business_description?.trim()
               ? details.business_description
               : `Discover quality products at ${details?.business_name}, your trusted destination for ${details?.business_category}.`}
           </p>
-
-          {/* Meta chips */}
           <div className="flex flex-wrap gap-3">
             <div className="flex items-center gap-2 bg-white/10 border border-white/15 py-2 px-4 rounded-xl">
               <FaBuilding className="text-primary text-sm" />
@@ -179,12 +172,21 @@ const ShopDetails = () => {
               </h2>
               <div className="w-14 h-1 bg-primary rounded-full" />
             </div>
-            {pagination?.total_products > 0 && (
-              <span className="text-sm text-text-tertiary">
-                {filteredProducts.length} of {pagination.total_products} product
-                {pagination.total_products !== 1 ? "s" : ""}
-              </span>
-            )}
+            <div className="flex items-center gap-3">
+              {/* 👇 Fetching indicator for page changes */}
+              {isFetching && !isLoading && (
+                <div className="flex items-center gap-2 text-xs text-text-secondary">
+                  <div className="w-3.5 h-3.5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  <span>Loading...</span>
+                </div>
+              )}
+              {pagination?.total_products > 0 && (
+                <span className="text-sm text-text-tertiary">
+                  {filteredProducts.length} of {pagination.total_products}{" "}
+                  product{pagination.total_products !== 1 ? "s" : ""}
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Price filter */}
@@ -199,20 +201,28 @@ const ShopDetails = () => {
             </div>
           )}
 
-          {/* Grid or empty-filter state */}
-          {filteredProducts.length > 0 ? (
-            <Card products={filteredProducts} />
-          ) : (
-            <div className="max-w-sm mx-auto bg-surface rounded-2xl border border-border shadow-sm p-10 text-center mt-10">
-              <div className="text-5xl mb-4">💰</div>
-              <h3 className="text-base font-bold text-text-primary mb-2">
-                No products in this range
-              </h3>
-              <p className="text-text-secondary text-sm">
-                Adjust the price filter to see more products.
-              </p>
-            </div>
-          )}
+          {/* 👇 Dim products while fetching next page */}
+          <div
+            className={`transition-opacity duration-200 ${
+              isFetching && !isLoading
+                ? "opacity-50 pointer-events-none"
+                : "opacity-100"
+            }`}
+          >
+            {filteredProducts.length > 0 ? (
+              <Card products={filteredProducts} />
+            ) : (
+              <div className="max-w-sm mx-auto bg-surface rounded-2xl border border-border shadow-sm p-10 text-center mt-10">
+                <div className="text-5xl mb-4">💰</div>
+                <h3 className="text-base font-bold text-text-primary mb-2">
+                  No products in this range
+                </h3>
+                <p className="text-text-secondary text-sm">
+                  Adjust the price filter to see more products.
+                </p>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* ── Pagination ─────────────────────────────────── */}
