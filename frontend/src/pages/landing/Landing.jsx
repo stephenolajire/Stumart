@@ -34,7 +34,7 @@ const GuestNoticePopup = ({ onClose }) => {
       />
 
       {/* Card */}
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-slide-up">
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden animate-slide-up">
         {/* Progress bar */}
         <div className="absolute top-0 left-0 right-0 h-1 bg-gray-100">
           <div

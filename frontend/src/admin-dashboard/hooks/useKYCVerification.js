@@ -49,7 +49,7 @@ const updateKYCStatus = async ({
     payload.rejection_reason = rejection_reason;
   }
 
-  const response = await api.put(`admin-kyc-verification/${id}/`, payload);
+  const response = await api.put(`admin/kyc-verification/${id}/`, payload);
   return response.data;
 };
 
