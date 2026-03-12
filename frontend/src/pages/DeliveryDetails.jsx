@@ -195,7 +195,7 @@ const DeliveryDetails = () => {
           <div className="lg:col-span-2 space-y-6">
             {/* Order Information Card */}
             <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-              <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4">
+              <div className="bg-linear-to-r from-blue-500 to-blue-600 px-6 py-4">
                 <h2 className="text-xl font-semibold text-white flex items-center">
                   <Package className="w-5 h-5 mr-2" />
                   Order Information
@@ -252,7 +252,7 @@ const DeliveryDetails = () => {
 
             {/* Delivery Details Card */}
             <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-              <div className="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4">
+              <div className="bg-linear-to-r from-green-500 to-green-600 px-6 py-4">
                 <h2 className="text-xl font-semibold text-white flex items-center">
                   <Truck className="w-5 h-5 mr-2" />
                   Delivery Details
@@ -332,7 +332,7 @@ const DeliveryDetails = () => {
 
                   <button
                     onClick={handleAcceptDelivery}
-                    className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg"
+                    className="w-full bg-linear-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg"
                   >
                     Accept Delivery
                   </button>

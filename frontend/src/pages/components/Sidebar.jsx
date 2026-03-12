@@ -51,13 +51,13 @@ const businessCategories = [
       "https://images.unsplash.com/photo-1498049794561-7780e7231661?w=40&h=40&fit=crop&crop=center",
     description: "Browse electronics",
   },
-  {
-    name: "Others",
-    path: "/other-services",
-    image:
-      "https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=40&h=40&fit=crop&crop=center",
-    description: "Browse other services",
-  },
+  // {
+  //   name: "Others",
+  //   path: "/other-services",
+  //   image:
+  //     "https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=40&h=40&fit=crop&crop=center",
+  //   description: "Browse other services",
+  // },
 ];
 
 const Sidebar = () => {
@@ -69,9 +69,9 @@ const Sidebar = () => {
   };
 
   return (
-    <div className="max-h-screen h-screen bg-gradient-to-b from-yellow-50 to-yellow-100 border-r border-yellow-200 shadow-lg overflow-hidden">
+    <div className="max-h-screen h-screen bg-linear-to-b from-yellow-50 to-yellow-100 border-r border-yellow-200 shadow-lg overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-yellow-500 to-yellow-500 text-white p-4 shadow-md">
+      <div className="bg-linear-to-r from-yellow-500 to-yellow-500 text-white p-4 shadow-md">
         <h2 className="text-xl font-bold text-center">Categories</h2>
         <div className="w-12 h-1 bg-white/30 mx-auto mt-2 rounded-full"></div>
       </div>
@@ -111,7 +111,7 @@ const Sidebar = () => {
                       e.target.nextSibling.style.display = "flex";
                     }}
                   />
-                  <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-lg items-center justify-center text-white font-bold text-lg hidden">
+                  <div className="w-12 h-12 bg-linear-to-br from-yellow-400 to-yellow-500 rounded-lg items-center justify-center text-white font-bold text-lg hidden">
                     A
                   </div>
                 </div>
@@ -171,7 +171,7 @@ const Sidebar = () => {
               )}
 
               {/* Hover glow effect */}
-              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-yellow-500/0 to-yellow-500/0 group-hover:from-yellow-500/5 group-hover:to-yellow-500/5 transition-all duration-300 pointer-events-none"></div>
+              <div className="absolute inset-0 rounded-xl bg-linear-to-r from-yellow-500/0 to-yellow-500/0 group-hover:from-yellow-500/5 group-hover:to-yellow-500/5 transition-all duration-300 pointer-events-none"></div>
             </div>
           </Link>
 
@@ -182,7 +182,7 @@ const Sidebar = () => {
               className={`group relative mx-3 my-2 rounded-xl transition-all duration-300 cursor-pointer
                 ${
                   activeCategory === category.name
-                    ? "bg-gradient-to-r from-yellow-500 to-yellow-500 text-white shadow-lg transform scale-105"
+                    ? "bg-linear-to-r from-yellow-500 to-yellow-500 text-white shadow-lg transform scale-105"
                     : "bg-white hover:bg-yellow-50 hover:shadow-md hover:transform hover:scale-102"
                 }`}
               onClick={() => {
@@ -216,7 +216,7 @@ const Sidebar = () => {
                     }}
                   />
                   {/* Fallback div with gradient background */}
-                  <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-lg items-center justify-center text-white font-bold text-lg hidden">
+                  <div className="w-12 h-12 bg-linear-to-br from-yellow-400 to-yellow-500 rounded-lg items-center justify-center text-white font-bold text-lg hidden">
                     {category.name.charAt(0)}
                   </div>
                 </div>
@@ -278,14 +278,14 @@ const Sidebar = () => {
               )}
 
               {/* Hover glow effect */}
-              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-yellow-500/0 to-yellow-500/0 group-hover:from-yellow-500/5 group-hover:to-yellow-500/5 transition-all duration-300 pointer-events-none"></div>
+              <div className="absolute inset-0 rounded-xl bg-linear-to-r from-yellow-500/0 to-yellow-500/0 group-hover:from-yellow-500/5 group-hover:to-yellow-500/5 transition-all duration-300 pointer-events-none"></div>
             </div>
           ))}
         </div>
 
         {/* Bottom decoration */}
         {/* <div className="px-4 pb-4">
-          <div className="bg-gradient-to-r from-yellow-500 to-yellow-500 rounded-xl p-4 text-white text-center">
+          <div className="bg-linear-to-r from-yellow-500 to-yellow-500 rounded-xl p-4 text-white text-center">
             <div className="text-sm font-medium mb-1">Explore More</div>
             <div className="text-xs opacity-90">Discover amazing deals</div>
             <div className="flex justify-center mt-2">

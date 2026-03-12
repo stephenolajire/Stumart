@@ -244,7 +244,7 @@ const AcceptDelivery = () => {
 
         {/* Order Summary */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 mb-8">
-          <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4 rounded-t-2xl">
+          <div className="bg-linear-to-r from-blue-500 to-blue-600 px-6 py-4 rounded-t-2xl">
             <h2 className="text-xl font-semibold text-white">Order Summary</h2>
           </div>
           <div className="p-6">
@@ -283,7 +283,7 @@ const AcceptDelivery = () => {
 
         {/* ✅ Picker Info Card — shown from API response, not user input */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 mb-8">
-          <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 px-6 py-4 rounded-t-2xl">
+          <div className="bg-linear-to-r from-indigo-500 to-indigo-600 px-6 py-4 rounded-t-2xl">
             <h2 className="text-xl font-semibold text-white">Your Details</h2>
           </div>
           <div className="p-6 space-y-3 text-sm">
@@ -307,7 +307,7 @@ const AcceptDelivery = () => {
 
         {/* Acceptance Form — only pickup_time */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100">
-          <div className="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4 rounded-t-2xl">
+          <div className="bg-linear-to-r from-green-500 to-green-600 px-6 py-4 rounded-t-2xl">
             <h2 className="text-xl font-semibold text-white">
               Confirm Acceptance
             </h2>
@@ -374,7 +374,7 @@ const AcceptDelivery = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="flex-1 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg flex items-center justify-center"
+                  className="flex-1 bg-linear-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg flex items-center justify-center"
                 >
                   {isSubmitting ? (
                     <>

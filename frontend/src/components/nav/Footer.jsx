@@ -20,7 +20,7 @@ const Footer = () => {
           <div className="grid md:grid-cols-4 gap-8">
             <div className="md:col-span-2">
               <div className="flex items-center space-x-3 mb-6">
-                <div className="w-10 h-10 bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl flex items-center justify-center">
+                <div className="w-10 h-10 bg-linear-to-r from-amber-500 to-orange-500 rounded-xl flex items-center justify-center">
                   <svg
                     className="w-6 h-6 text-white"
                     fill="none"
@@ -107,7 +107,7 @@ const Footer = () => {
 
           <div className="border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
             <p className="text-gray-400 text-sm mb-4 md:mb-0">
-              © 2025 StuMart. All rights reserved.
+              © {new Date().getFullYear()} StuMart. All rights reserved.
             </p>
             {/* <div className="flex space-x-6 text-sm">
               {["Terms of Service", "Privacy Policy", "Cookie Policy"].map(

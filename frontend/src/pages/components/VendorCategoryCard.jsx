@@ -1,23 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  MapPin,
-  Star,
-  Phone,
-  Mail,
-  ShieldCheck,
-  Heart,
-  X,
-  LogIn,
-  UserPlus,
-} from "lucide-react";
+import { Star, Heart, X, LogIn, UserPlus } from "lucide-react";
 import { MEDIA_BASE_URL } from "../../constant/api";
 import { useVendorBookmarkToggle } from "../../hooks/useVendorBookmark";
 
-// ── Guest login prompt modal ──────────────────────────────────────────────────
 const LoginPromptModal = ({ onClose }) => {
   const navigate = useNavigate();
-
   return (
     <div
       className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
@@ -49,8 +37,7 @@ const LoginPromptModal = ({ onClose }) => {
             }}
             className="w-full flex items-center justify-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-semibold py-3 rounded-xl transition-colors"
           >
-            <LogIn className="w-4 h-4" />
-            Sign In
+            <LogIn className="w-4 h-4" /> Sign In
           </button>
           <button
             onClick={() => {
@@ -59,8 +46,7 @@ const LoginPromptModal = ({ onClose }) => {
             }}
             className="w-full flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-3 rounded-xl transition-colors"
           >
-            <UserPlus className="w-4 h-4" />
-            Create Account
+            <UserPlus className="w-4 h-4" /> Create Account
           </button>
           <button
             onClick={onClose}
@@ -74,7 +60,6 @@ const LoginPromptModal = ({ onClose }) => {
   );
 };
 
-// ── Vendor bookmark button ────────────────────────────────────────────────────
 const VendorBookmarkButton = ({ vendorId, onGuestClick }) => {
   const { isBookmarked, isLoggedIn, toggle, isToggling } =
     useVendorBookmarkToggle(vendorId);
@@ -97,29 +82,16 @@ const VendorBookmarkButton = ({ vendorId, onGuestClick }) => {
       aria-label={isBookmarked ? "Remove vendor bookmark" : "Save vendor"}
     >
       <Heart
-        className={`w-4 h-4 transition-all duration-300 ${
-          isBookmarked
-            ? "fill-yellow-500 text-yellow-500 scale-110"
-            : "text-yellow-500"
-        }`}
+        className={`w-4 h-4 transition-all duration-300 ${isBookmarked ? "fill-yellow-500 text-yellow-500 scale-110" : "text-yellow-500"}`}
       />
     </button>
   );
 };
 
-// ── Main VendorCategoryCard component ─────────────────────────────────────────
 const VendorCategoryCard = ({ vendor }) => {
   const navigate = useNavigate();
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
-
-  const handleClick = () => {
-    navigate(`/shop/${vendor.id}`);
-  };
-
-  const getDisplayRating = (rating) => {
-    const numRating = parseFloat(rating);
-    return numRating === 0 ? 3.0 : numRating;
-  };
+  const displayRating = parseFloat(vendor.rating) || 3.0;
 
   return (
     <>
@@ -128,69 +100,45 @@ const VendorCategoryCard = ({ vendor }) => {
       )}
 
       <div
-        onClick={handleClick}
-        className="group cursor-pointer bg-surface border-2 border-border rounded-xl 
-                   overflow-hidden transition-all duration-300 hover:border-primary 
-                   hover:shadow-xl hover:-translate-y-1"
+        onClick={() => navigate(`/shop/${vendor.id}`)}
+        className="group cursor-pointer bg-surface border-2 border-border rounded-xl overflow-hidden transition-all duration-300 hover:border-primary hover:shadow-xl hover:-translate-y-1"
       >
-        {/* Vendor Image */}
+        {/* Image */}
         <div className="relative h-48 overflow-hidden bg-background-tertiary">
           <img
-            src={`${MEDIA_BASE_URL}${vendor.shop_image}`}
+            src={
+              vendor.shop_image
+                ? `${MEDIA_BASE_URL}${vendor.shop_image}`
+                : "/placeholder-shop.jpg"
+            }
             alt={vendor.business_name}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
             onError={(e) => {
               e.target.src = "/placeholder-shop.jpg";
             }}
           />
-
-          {/* Vendor Bookmark Button */}
           <VendorBookmarkButton
             vendorId={vendor.id}
             onGuestClick={() => setShowLoginPrompt(true)}
           />
 
-          {/* Verified Badge */}
-          {vendor.is_verified && (
-            <div
-              className="absolute top-3 right-3 bg-primary text-text-inverse 
-                          px-3 py-1 rounded-full text-xs font-bold 
-                          flex items-center gap-1 shadow-lg"
-            >
-              <ShieldCheck size={14} />
-              Verified
-            </div>
-          )}
-
           {/* Rating Badge */}
-          <div
-            className="absolute bottom-3 left-3 bg-white/95 backdrop-blur-sm 
-                          px-3 py-1 rounded-full flex items-center gap-1 shadow-lg"
-          >
+          <div className="absolute bottom-3 left-3 bg-white/95 backdrop-blur-sm px-3 py-1 rounded-full flex items-center gap-1 shadow-lg">
             <Star size={14} className="fill-primary text-primary" />
             <span className="text-sm font-bold text-text-primary">
-              {getDisplayRating(vendor.rating).toFixed(1)}
-            </span>
-            <span className="text-xs text-text-secondary">
-              ({vendor.total_ratings || 0})
+              {displayRating.toFixed(1)}
             </span>
           </div>
         </div>
 
-        {/* Vendor Info */}
+        {/* Info */}
         <div className="p-4">
-          <h3
-            className="text-lg font-bold text-text-primary mb-2 line-clamp-1 
-                         group-hover:text-primary transition-colors"
-          >
+          <h3 className="text-lg font-bold text-text-primary mb-2 line-clamp-1 group-hover:text-primary transition-colors">
             {vendor.business_name}
           </h3>
-
-          <div className="flex items-start gap-2 mb-3">
-            <p className="text-sm text-text-secondary line-clamp-2 leading-tight">
-              {vendor.user?.institution || "University"}
-            </p>
-          </div>
+          <p className="text-sm text-text-secondary line-clamp-1">
+            {vendor.institution || "University"}
+          </p>
         </div>
       </div>
     </>

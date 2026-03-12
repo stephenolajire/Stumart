@@ -1,20 +1,16 @@
-// components/Card.jsx
 import React, { useState } from "react";
 import { Heart, X, LogIn, UserPlus } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useBookmarkToggle } from "../../hooks/useBookmark";
 
-// ── Guest login prompt modal ──────────────────────────────────────────────────
 const LoginPromptModal = ({ onClose }) => {
   const navigate = useNavigate();
-
   return (
     <div
       className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden">
-        {/* Header */}
         <div className="relative bg-linear-to-br from-gray-900 to-gray-800 px-6 pt-8 pb-6 text-center">
           <button
             onClick={onClose}
@@ -32,8 +28,6 @@ const LoginPromptModal = ({ onClose }) => {
             Sign in to bookmark products and access them anytime.
           </p>
         </div>
-
-        {/* Actions */}
         <div className="p-5 space-y-3">
           <button
             onClick={() => {
@@ -42,8 +36,7 @@ const LoginPromptModal = ({ onClose }) => {
             }}
             className="w-full flex items-center justify-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-semibold py-3 rounded-xl transition-colors"
           >
-            <LogIn className="w-4 h-4" />
-            Sign In
+            <LogIn className="w-4 h-4" /> Sign In
           </button>
           <button
             onClick={() => {
@@ -52,8 +45,7 @@ const LoginPromptModal = ({ onClose }) => {
             }}
             className="w-full flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-3 rounded-xl transition-colors"
           >
-            <UserPlus className="w-4 h-4" />
-            Create Account
+            <UserPlus className="w-4 h-4" /> Create Account
           </button>
           <button
             onClick={onClose}
@@ -67,7 +59,6 @@ const LoginPromptModal = ({ onClose }) => {
   );
 };
 
-// ── Per-card bookmark button ──────────────────────────────────────────────────
 const BookmarkButton = ({ productId, onGuestClick }) => {
   const { isBookmarked, isLoggedIn, toggle, isToggling } =
     useBookmarkToggle(productId);
@@ -76,7 +67,7 @@ const BookmarkButton = ({ productId, onGuestClick }) => {
     e.preventDefault();
     e.stopPropagation();
     if (!isLoggedIn) {
-      onGuestClick(); // show the modal instead of silently redirecting
+      onGuestClick();
       return;
     }
     toggle();
@@ -90,29 +81,14 @@ const BookmarkButton = ({ productId, onGuestClick }) => {
       aria-label={isBookmarked ? "Remove bookmark" : "Save product"}
     >
       <Heart
-        className={`w-4 h-4 transition-all duration-300 ${
-          isBookmarked
-            ? "fill-yellow-500 text-yellow-500 scale-110"
-            : "text-yellow-500"
-        }`}
+        className={`w-4 h-4 transition-all duration-300 ${isBookmarked ? "fill-yellow-500 text-yellow-500 scale-110" : "text-yellow-500"}`}
       />
     </button>
   );
 };
 
-// ── Main Card component ───────────────────────────────────────────────────────
 const Card = ({ products }) => {
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
-
-  const calculateDiscount = (originalPrice, promotionPrice) => {
-    if (
-      !promotionPrice ||
-      promotionPrice <= 0 ||
-      promotionPrice >= originalPrice
-    )
-      return null;
-    return Math.round(((originalPrice - promotionPrice) / originalPrice) * 100);
-  };
 
   const formatPrice = (price) =>
     new Intl.NumberFormat("en-NG", {
@@ -122,19 +98,23 @@ const Card = ({ products }) => {
       maximumFractionDigits: 0,
     }).format(price || 0);
 
+  const calculateDiscount = (price, promoPrice) => {
+    if (!promoPrice || promoPrice <= 0 || promoPrice >= price) return null;
+    return Math.round(((price - promoPrice) / price) * 100);
+  };
+
   return (
     <>
-      {/* Single modal instance shared across all cards */}
       {showLoginPrompt && (
         <LoginPromptModal onClose={() => setShowLoginPrompt(false)} />
       )}
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
         {products.map((product) => {
-          const discountPercentage = calculateDiscount(
-            parseFloat(product.price),
-            parseFloat(product.promotion_price),
-          );
+          const price = parseFloat(product.price);
+          const promoPrice = parseFloat(product.promotion_price);
+          const discount = calculateDiscount(price, promoPrice);
+          const isFashion = product.vendor_category === "fashion";
 
           return (
             <div
@@ -142,31 +122,20 @@ const Card = ({ products }) => {
               className="group relative lg:rounded-lg bg-white shadow-md hover:shadow-xl transition-all duration-500 overflow-hidden border border-gray-100 hover:border-yellow-200"
             >
               {/* Discount Badge */}
-              {discountPercentage && (
+              {discount && (
                 <div className="absolute top-3 left-3 z-20">
                   <div className="bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
-                    {discountPercentage}% OFF
+                    {discount}% OFF
                   </div>
                 </div>
               )}
 
-              {/* Stock Status Badge */}
-              {product.vendor_category !== "fashion" &&
-                product.in_stock === 0 && (
-                  <div className="absolute top-3 left-3 z-20">
-                    <div className="bg-gray-800 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
-                      Available
-                    </div>
-                  </div>
-                )}
-
-              {/* Bookmark Button */}
+              {/* Bookmark */}
               <BookmarkButton
                 productId={product.id}
                 onGuestClick={() => setShowLoginPrompt(true)}
               />
 
-              {/* Product Link */}
               <Link to={`/product/${product.id}`} className="block">
                 <div className="relative overflow-hidden bg-gray-50">
                   <img
@@ -174,6 +143,9 @@ const Card = ({ products }) => {
                     src={product.image_url}
                     alt={product.name}
                     className="w-full h-30 lg:h-40 object-cover transition-transform duration-700 group-hover:scale-110"
+                    onError={(e) => {
+                      e.target.src = "/placeholder-shop.jpg";
+                    }}
                   />
                 </div>
 
@@ -181,47 +153,41 @@ const Card = ({ products }) => {
                   <h3 className="font-medium lg:font-semibold text-gray-900 text-xs lg:text-sm line-clamp-2 group-hover:text-yellow-600 transition-colors duration-300 sm:capitalize lg:uppercase">
                     {product.name}
                   </h3>
-                  <h6 className="text-xs text-gray-600">
-                    {product.vendor_institution}
-                  </h6>
 
+                  <p className="text-xs text-gray-600 line-clamp-1">
+                    {product.vendor_institution}
+                  </p>
+
+                  {/* Price */}
                   <div className="space-y-1">
-                    {product.promotion_price &&
-                    parseFloat(product.promotion_price) > 0 &&
-                    parseFloat(product.promotion_price) <
-                      parseFloat(product.price) ? (
+                    {discount ? (
                       <div className="space-y-1">
                         <span className="text-base lg:text-lg font-bold text-yellow-500">
-                          {formatPrice(parseFloat(product.promotion_price))}
+                          {formatPrice(promoPrice)}
                         </span>
                         <div className="flex items-center gap-1.5">
                           <span className="text-xs text-gray-400 line-through">
-                            {formatPrice(parseFloat(product.price))}
+                            {formatPrice(price)}
                           </span>
                           <span className="text-xs text-green-600 font-medium">
-                            -{discountPercentage}%
+                            -{discount}%
                           </span>
                         </div>
                       </div>
                     ) : (
                       <span className="text-base lg:text-lg font-bold text-gray-900">
-                        {formatPrice(parseFloat(product.price))}
+                        {formatPrice(price)}
                       </span>
                     )}
                   </div>
 
-                  {product.vendor_category === "fashion" ? (
-                    <div className="text-xs">
-                      {product.in_stock > 0 ? (
-                        <span className="text-green-600 font-medium">
-                          In Stock
-                        </span>
-                      ) : (
-                        <span className="text-red-500 font-medium">
-                          Out of stock
-                        </span>
-                      )}
-                    </div>
+                  {/* Stock */}
+                  {isFashion ? (
+                    <span
+                      className={`text-xs font-medium ${product.in_stock > 0 ? "text-green-600" : "text-red-500"}`}
+                    >
+                      {product.in_stock > 0 ? "In Stock" : "Out of Stock"}
+                    </span>
                   ) : (
                     <span className="text-green-600 font-medium text-xs">
                       Available

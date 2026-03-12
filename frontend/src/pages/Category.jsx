@@ -26,40 +26,42 @@ const Category = () => {
 
   const [filters, setFilters] = useState({
     vendor: searchParams.get("vendor") || "",
-    state: searchParams.get("state") || "",
-    school: searchParams.get("school") || "",
     search: searchParams.get("search") || "",
     minPrice: searchParams.get("minPrice") || "",
     maxPrice: searchParams.get("maxPrice") || "",
     sort: searchParams.get("sort") || "newest",
+    // only relevant for unauthenticated users
+    state: searchParams.get("state") || "",
+    school: searchParams.get("school") || "",
   });
 
   const currentFilters = useMemo(
     () => ({
       category,
       vendor: filters.vendor,
-      state: filters.state,
-      school: filters.school,
       search: filters.search,
       minPrice: filters.minPrice,
       maxPrice: filters.maxPrice,
       sort: filters.sort,
       page: currentPage,
+      // strip location filters for authenticated users
+      state: isAuthenticated ? "" : filters.state,
+      school: isAuthenticated ? "" : filters.school,
     }),
     [
       category,
       filters.vendor,
-      filters.state,
-      filters.school,
       filters.search,
       filters.minPrice,
       filters.maxPrice,
       filters.sort,
+      filters.state,
+      filters.school,
       currentPage,
+      isAuthenticated,
     ],
   );
 
-  // ✅ Using the hook directly instead of GlobalContext
   const {
     data: productsData,
     isLoading,
@@ -78,14 +80,13 @@ const Category = () => {
   const totalProducts = productsData?.total_products || products.length;
 
   const singleVendorInfo = useMemo(() => {
-    if (!products || products.length === 0) return null;
-    const uniqueVendorIds = [
+    if (!products.length) return null;
+    const uniqueIds = [
       ...new Set(products.map((p) => p.vendor_id || p.vendorId)),
     ];
-    if (uniqueVendorIds.length === 1 && uniqueVendorIds[0]) {
-      const vendorId = uniqueVendorIds[0];
-      const vendor = allVendors.find((v) => v.id === vendorId);
-      return vendor ? { id: vendorId, name: vendor.name } : null;
+    if (uniqueIds.length === 1 && uniqueIds[0]) {
+      const vendor = allVendors.find((v) => v.id === uniqueIds[0]);
+      return vendor ? { id: uniqueIds[0], name: vendor.name } : null;
     }
     return null;
   }, [products, allVendors]);
@@ -95,11 +96,7 @@ const Category = () => {
       setFilters((prev) => ({ ...prev, [name]: value }));
       setCurrentPage(1);
       setSearchParams((prev) => {
-        if (value) {
-          prev.set(name, value);
-        } else {
-          prev.delete(name);
-        }
+        value ? prev.set(name, value) : prev.delete(name);
         if (category) prev.set("category", category);
         prev.delete("page");
         return prev;
@@ -151,12 +148,11 @@ const Category = () => {
       return (
         <>
           <FaSadTear className="text-4xl text-gray-400 mb-4" />
-          No products match your current filters in the {category} category. Try
-          adjusting your search criteria.
+          No products match your current filters in the {category} category.
         </>
       );
     }
-    return `No products are available in the ${category} category at this time. Please check back later.`;
+    return `No products are available in the ${category} category at this time.`;
   }, [filters.search, filters.state, filters.school, filters.vendor, category]);
 
   if (isLoading) {
@@ -196,15 +192,10 @@ const Category = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
           <div>
-            {isAuthenticated ? (
-              <h1 className="text-2xl capitalize font-bold text-gray-900">
-                {category} Category in {userInstitution}
-              </h1>
-            ) : (
-              <h1 className="text-2xl font-bold capitalize text-gray-900">
-                {category} Category in All Registered Institutions
-              </h1>
-            )}
+            <h1 className="text-2xl capitalize font-bold text-gray-900">
+              {category} Category
+              {isAuthenticated && userInstitution && ` in ${userInstitution}`}
+            </h1>
             <p className="text-gray-600 mt-1">
               {totalProducts} product{totalProducts !== 1 ? "s" : ""} found
             </p>
@@ -235,11 +226,10 @@ const Category = () => {
 
         {/* Filters */}
         <div
-          className={`bg-white rounded-lg shadow-sm p-4 mb-6 transition-all duration-300 ${
-            showFilters ? "block" : "hidden"
-          }`}
+          className={`bg-white rounded-lg shadow-sm p-4 mb-6 transition-all duration-300 ${showFilters ? "block" : "hidden"}`}
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Search */}
             <div className="lg:col-span-2">
               <input
                 type="text"
@@ -250,35 +240,34 @@ const Category = () => {
               />
             </div>
 
-            <div>
-              <select
-                value={filters.sort}
-                onChange={(e) => handleFilterChange("sort", e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
-              >
-                <option value="newest">Newest</option>
-                <option value="price_low">Price: Low to High</option>
-                <option value="price_high">Price: High to Low</option>
-              </select>
-            </div>
+            {/* Sort */}
+            <select
+              value={filters.sort}
+              onChange={(e) => handleFilterChange("sort", e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+            >
+              <option value="newest">Newest</option>
+              <option value="price_low">Price: Low to High</option>
+              <option value="price_high">Price: High to Low</option>
+            </select>
 
-            <div>
-              <select
-                value={filters.vendor}
-                onChange={(e) => handleFilterChange("vendor", e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
-              >
-                <option value="">All Vendors</option>
-                {Array.from(
-                  new Map(allVendors.map((v) => [v.name, v])).values(),
-                ).map((vendor) => (
-                  <option key={vendor.id} value={vendor.id}>
-                    {vendor.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* Vendor */}
+            <select
+              value={filters.vendor}
+              onChange={(e) => handleFilterChange("vendor", e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+            >
+              <option value="">All Vendors</option>
+              {Array.from(
+                new Map(allVendors.map((v) => [v.name, v])).values(),
+              ).map((vendor) => (
+                <option key={vendor.id} value={vendor.id}>
+                  {vendor.name}
+                </option>
+              ))}
+            </select>
 
+            {/* Price */}
             <div className="flex space-x-2">
               <input
                 type="number"
@@ -296,8 +285,9 @@ const Category = () => {
               />
             </div>
 
+            {/* State & School — unauthenticated only */}
             {!isAuthenticated && (
-              <div>
+              <>
                 <select
                   value={filters.state}
                   onChange={(e) => handleStateChange(e.target.value)}
@@ -310,11 +300,7 @@ const Category = () => {
                     </option>
                   ))}
                 </select>
-              </div>
-            )}
 
-            {!isAuthenticated && (
-              <div>
                 <select
                   value={filters.school}
                   onChange={(e) => handleFilterChange("school", e.target.value)}
@@ -328,9 +314,10 @@ const Category = () => {
                     </option>
                   ))}
                 </select>
-              </div>
+              </>
             )}
 
+            {/* Clear */}
             <div className="flex items-end">
               <button
                 onClick={clearFilters}
@@ -340,29 +327,16 @@ const Category = () => {
               </button>
             </div>
           </div>
-
-          {showFilters && (
-            <div className="mt-4 flex justify-center sm:hidden">
-              <button
-                onClick={clearFilters}
-                className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
-              >
-                Clear All Filters
-              </button>
-            </div>
-          )}
         </div>
 
         {/* Products */}
         {products.length === 0 ? (
           <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-            <div className="mb-6">
-              <FaBox className="text-6xl text-gray-300 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                No Products Found
-              </h2>
-              <div className="text-gray-600">{noProductsMessage}</div>
-            </div>
+            <FaBox className="text-6xl text-gray-300 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              No Products Found
+            </h2>
+            <div className="text-gray-600 mb-6">{noProductsMessage}</div>
             <button
               onClick={clearFilters}
               className="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200"

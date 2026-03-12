@@ -522,7 +522,7 @@ const Checkout = () => {
                       <span className="text-xl leading-none">📍</span>
                       <span>Yes, nearby</span>
                       {vendorNearby === true && (
-                        <span className="ml-auto w-4 h-4 rounded-full bg-yellow-400 flex items-center justify-center flex-shrink-0">
+                        <span className="ml-auto w-4 h-4 rounded-full bg-yellow-400 flex items-center justify-center shrink-0">
                           <svg
                             className="w-2.5 h-2.5 text-white"
                             fill="none"
@@ -553,7 +553,7 @@ const Checkout = () => {
                       <span className="text-xl leading-none">🗺️</span>
                       <span>No, far away</span>
                       {vendorNearby === false && (
-                        <span className="ml-auto w-4 h-4 rounded-full bg-gray-400 flex items-center justify-center flex-shrink-0">
+                        <span className="ml-auto w-4 h-4 rounded-full bg-gray-400 flex items-center justify-center shrink-0">
                           <svg
                             className="w-2.5 h-2.5 text-white"
                             fill="none"
@@ -574,13 +574,13 @@ const Checkout = () => {
 
                   {vendorNearby === true && (
                     <p className="text-xs text-yellow-700 bg-yellow-50 border border-yellow-100 rounded-lg px-3 py-2 flex items-start gap-1.5">
-                      <span className="mt-0.5 flex-shrink-0">🎒</span>A student
+                      <span className="mt-0.5 shrink-0">🎒</span>A student
                       picker near you may be assigned to handle this delivery.
                     </p>
                   )}
                   {vendorNearby === false && (
                     <p className="text-xs text-gray-500 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 flex items-start gap-1.5">
-                      <span className="mt-0.5 flex-shrink-0">🛵</span>Your order
+                      <span className="mt-0.5 shrink-0">🛵</span>Your order
                       will be assigned to a regular delivery rider.
                     </p>
                   )}

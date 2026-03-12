@@ -70,7 +70,8 @@ const Login = () => {
         subscription,
         institution,
       } = response.data;
-      queryClient.invalidateQueries({ queryKey: ["vendors-by-school"] });
+      // queryClient.invalidateQueries({ queryKey: ["vendors-by-school"] });
+      queryClient.invalidateQueries({ queryKey: ["products-by-category"] });
 
       console.log(response.data);
 

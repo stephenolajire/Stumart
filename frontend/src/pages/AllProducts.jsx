@@ -16,7 +16,7 @@ import {
 } from "react-icons/fa";
 import { nigeriaInstitutions, nigeriaStates } from "../constant/data";
 import { GlobalContext } from "../constant/GlobalContext";
-import { useGetAllProducts } from "../hooks/useStumart"; // ← direct hook, not from context
+import { useGetAllProducts } from "../hooks/useStumart";
 
 const AllProducts = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -26,24 +26,8 @@ const AllProducts = () => {
   const [toggleLoading, setToggleLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // ── Auth from GlobalContext (only this — no hooks from context) ────────────
   const { isAuthenticated } = useContext(GlobalContext);
-
-  const school = localStorage.getItem("institution");
   const navigate = useNavigate();
-
-  // ── Filters ────────────────────────────────────────────────────────────────
-  const [filters, setFilters] = useState({
-    category: searchParams.get("category") || "",
-    minPrice: searchParams.get("minPrice") || "",
-    maxPrice: searchParams.get("maxPrice") || "",
-    sort: searchParams.get("sort") || "newest",
-    search: searchParams.get("search") || "",
-    school: searchParams.get("school") || "",
-    vendor: searchParams.get("vendor") || "",
-    state: searchParams.get("state") || "",
-    page: parseInt(searchParams.get("page")) || 1,
-  });
 
   // ── View mode ──────────────────────────────────────────────────────────────
   const [viewMode, setViewMode] = useState(() =>
@@ -55,6 +39,20 @@ const AllProducts = () => {
 
   const viewingOtherSchools = viewMode === "other";
 
+  // ── Filters — no school param needed for "my school" mode ─────────────────
+  const [filters, setFilters] = useState({
+    category: searchParams.get("category") || "",
+    minPrice: searchParams.get("minPrice") || "",
+    maxPrice: searchParams.get("maxPrice") || "",
+    sort: searchParams.get("sort") || "newest",
+    search: searchParams.get("search") || "",
+    vendor: searchParams.get("vendor") || "",
+    // school/state only matter in "other" mode
+    school: viewingOtherSchools ? searchParams.get("school") || "" : "",
+    state: viewingOtherSchools ? searchParams.get("state") || "" : "",
+    page: parseInt(searchParams.get("page")) || 1,
+  });
+
   // ── Memoised query params ──────────────────────────────────────────────────
   const currentFilters = useMemo(
     () => ({
@@ -63,12 +61,11 @@ const AllProducts = () => {
       maxPrice: filters.maxPrice,
       sort: filters.sort,
       search: filters.search,
-      school: filters.school,
       vendor: filters.vendor,
-      state: filters.state,
+      school: viewingOtherSchools ? filters.school : "",
+      state: viewingOtherSchools ? filters.state : "",
       page: filters.page,
-      viewMode,
-      isAuthenticated,
+      viewOtherProducts: viewingOtherSchools,
     }),
     [
       filters.category,
@@ -76,16 +73,15 @@ const AllProducts = () => {
       filters.maxPrice,
       filters.sort,
       filters.search,
-      filters.school,
       filters.vendor,
+      filters.school,
       filters.state,
       filters.page,
-      viewMode,
-      isAuthenticated,
+      viewingOtherSchools,
     ],
   );
 
-  // ── Data fetching — hook called directly, NOT from GlobalContext ───────────
+  // ── Data fetching ──────────────────────────────────────────────────────────
   const {
     data: productsData,
     isLoading: allProductsLoading,
@@ -95,12 +91,18 @@ const AllProducts = () => {
 
   // ── Derived data ───────────────────────────────────────────────────────────
   const allProducts = productsData?.results || productsData?.products || [];
-  const allProductsCategories = productsData?.categories || [];
   const allProductsVendors = productsData?.vendors || [];
   const totalProducts =
     productsData?.count || productsData?.total_products || 0;
   const nextPage = productsData?.next;
   const previousPage = productsData?.previous;
+  const userInstitution = productsData?.user_institution || "";
+
+  // Categories derived from vendors list
+  const allProductsCategories = useMemo(() => {
+    const cats = new Set(allProducts.map((p) => p.category).filter(Boolean));
+    return [...cats];
+  }, [allProducts]);
 
   const singleVendorInfo = useMemo(() => {
     if (!allProducts.length) return null;
@@ -124,7 +126,7 @@ const AllProducts = () => {
           <h3 style="color:#e74c3c;margin-bottom:15px;">Important Delivery Information!</h3>
           <p style="font-size:16px;line-height:1.6;color:#34495e;margin-bottom:20px;">
             We only deliver within your registered school campus:
-            <strong style="color:#3498db;">${school}</strong>
+            <strong style="color:#3498db;">${userInstitution}</strong>
           </p>
           <div style="background:#fff3cd;border:1px solid #ffeaa7;border-radius:8px;padding:15px;margin:15px 0;">
             <p style="margin:0;color:#856404;font-weight:500;font-size:12px;">
@@ -147,19 +149,20 @@ const AllProducts = () => {
         setViewMode("school");
         const params = new URLSearchParams(searchParams);
         params.delete("viewOtherProducts");
-        if (school) {
-          setFilters((prev) => ({ ...prev, school }));
-          params.set("school", school);
-        }
+        params.delete("school");
+        params.delete("state");
+        setFilters((prev) => ({ ...prev, school: "", state: "" }));
         setSearchParams(params);
       }
     });
-  }, [school, searchParams, setSearchParams]);
+  }, [userInstitution, searchParams, setSearchParams]);
 
   // ── Filter handlers ────────────────────────────────────────────────────────
   const handleStateChange = useCallback((state) => {
     setSelectedState(state);
-    setSchools(state ? nigeriaInstitutions[state] || [] : []);
+    setSchools(
+      state ? nigeriaInstitutions[state.replace(/\s+/g, "_")] || [] : [],
+    );
     handleFilterChange("state", state);
     handleFilterChange("school", "");
   }, []);
@@ -210,27 +213,17 @@ const AllProducts = () => {
 
       if (newViewMode === "other") {
         params.set("viewOtherProducts", "true");
-        if (filters.school) {
-          setFilters((prev) => ({ ...prev, school: "", page: 1 }));
-          params.delete("school");
-        }
       } else {
         params.delete("viewOtherProducts");
-        if (school && !filters.school) {
-          setFilters((prev) => ({ ...prev, school, page: 1 }));
-          params.set("school", school);
-        }
+        params.delete("school");
+        params.delete("state");
+        setFilters((prev) => ({ ...prev, school: "", state: "", page: 1 }));
+        setSelectedState("");
+        setSchools([]);
       }
       setSearchParams(params);
     },
-    [
-      viewMode,
-      searchParams,
-      filters.school,
-      school,
-      setSearchParams,
-      showDeliveryWarning,
-    ],
+    [viewMode, searchParams, setSearchParams, showDeliveryWarning],
   );
 
   const clearFilters = useCallback(() => {
@@ -240,7 +233,7 @@ const AllProducts = () => {
       maxPrice: "",
       sort: "newest",
       search: "",
-      school: viewMode === "school" && school ? school : "",
+      school: "",
       vendor: "",
       state: "",
       page: 1,
@@ -251,29 +244,14 @@ const AllProducts = () => {
     setCurrentPage(1);
 
     const params = new URLSearchParams();
-    if (viewMode === "other") {
-      params.set("viewOtherProducts", "true");
-    } else {
-      params.set("viewOtherProducts", "false");
-      if (school) params.set("school", school);
-    }
+    if (viewingOtherSchools) params.set("viewOtherProducts", "true");
     setSearchParams(params);
-  }, [viewMode, school, setSearchParams]);
+  }, [viewingOtherSchools, setSearchParams]);
 
   // ── Effects ────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!allProductsLoading && toggleLoading) setToggleLoading(false);
   }, [allProductsLoading, toggleLoading]);
-
-  useEffect(() => {
-    if (isAuthenticated && viewMode === "school" && school && !filters.school) {
-      setFilters((prev) => ({ ...prev, school }));
-      setSearchParams((prev) => {
-        prev.set("school", school);
-        return prev;
-      });
-    }
-  }, [isAuthenticated, viewMode, school, filters.school, setSearchParams]);
 
   useEffect(() => {
     if (filters.page !== currentPage) setCurrentPage(filters.page);
@@ -307,8 +285,8 @@ const AllProducts = () => {
     <div className="min-h-screen bg-gray-50 mt-38 lg:mt-0 py-4 px-4 sm:px-6 lg:px-8">
       <SEO
         title="All Products - StuMart | Campus Marketplace"
-        description="Browse all products available on StuMart campus marketplace. Find textbooks, electronics, food, fashion, and more from students and vendors across Nigerian universities."
-        keywords="stumart products, campus marketplace products, student products, university shopping"
+        description="Browse all products available on StuMart campus marketplace."
+        keywords="stumart products, campus marketplace products, student products"
         url="/products"
       />
 
@@ -353,19 +331,19 @@ const AllProducts = () => {
           {isAuthenticated && !viewingOtherSchools ? (
             <>
               <h6 className="text-lg font-semibold text-gray-900 mb-2">
-                All products in {school}
+                All products in {userInstitution}
               </h6>
               <p className="text-gray-600">
-                Use the filter option to see other school products
+                Switch to "Other Schools" to browse products from other campuses
               </p>
             </>
           ) : (
             <>
               <h6 className="text-lg font-semibold text-gray-900 mb-2">
-                All products in registered schools
+                Products from other schools
               </h6>
               <p className="text-gray-600 mb-2">
-                Use the filter option to see products from a specific school
+                Use the filters to narrow down by state or school
               </p>
               {!isAuthenticated && (
                 <p className="text-yellow-600 font-medium">
@@ -388,7 +366,7 @@ const AllProducts = () => {
 
         {/* Single vendor banner */}
         {singleVendorInfo && productsCount > 0 && !allProductsLoading && (
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <div className="bg-linear-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4 mb-6">
             <div className="flex items-center justify-center space-x-2">
               <FaStore className="text-blue-600 text-lg" />
               <span className="text-gray-700">
@@ -403,7 +381,9 @@ const AllProducts = () => {
 
         {/* Filters panel */}
         <div
-          className={`bg-white rounded-lg shadow-sm p-4 mb-6 transition-all duration-300 ${showFilters ? "block" : "hidden"}`}
+          className={`bg-white rounded-lg shadow-sm p-4 mb-6 transition-all duration-300 ${
+            showFilters ? "block" : "hidden"
+          }`}
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Search */}
@@ -460,34 +440,39 @@ const AllProducts = () => {
               />
             </div>
 
-            {/* State */}
-            <select
-              value={filters.state}
-              onChange={(e) => handleStateChange(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
-            >
-              <option value="">All States</option>
-              {nigeriaStates.map((s) => (
-                <option key={s} value={s}>
-                  {s.replace(/_/g, " ")}
-                </option>
-              ))}
-            </select>
+            {/* State & School — only visible in "other schools" mode */}
+            {viewingOtherSchools && (
+              <>
+                <select
+                  value={filters.state}
+                  onChange={(e) => handleStateChange(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                >
+                  <option value="">All States</option>
+                  {nigeriaStates.map((s) => (
+                    <option key={s} value={s}>
+                      {s.replace(/_/g, " ")}
+                    </option>
+                  ))}
+                </select>
 
-            {/* School */}
-            <select
-              value={filters.school}
-              onChange={(e) => handleFilterChange("school", e.target.value)}
-              disabled={!selectedState}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
-            >
-              <option value="">All Schools</option>
-              {schools.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
+                <select
+                  value={filters.school}
+                  onChange={(e) => handleFilterChange("school", e.target.value)}
+                  disabled={!selectedState}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                >
+                  <option value="">
+                    {selectedState ? "All Schools" : "Select state first"}
+                  </option>
+                  {schools.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              </>
+            )}
 
             {/* Vendor */}
             <select
@@ -559,7 +544,6 @@ const AllProducts = () => {
             {totalPages > 1 && (
               <div className="bg-white rounded-lg shadow-sm p-6 mt-6">
                 <div className="flex flex-wrap justify-center items-center space-x-1 sm:space-x-2">
-                  {/* Prev */}
                   <button
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={!hasPreviousPage || allProductsLoading}
@@ -573,7 +557,6 @@ const AllProducts = () => {
                     <span className="hidden sm:inline">Previous</span>
                   </button>
 
-                  {/* Page numbers */}
                   <div className="flex space-x-1">
                     {currentPage > 3 && (
                       <>
@@ -627,7 +610,6 @@ const AllProducts = () => {
                     )}
                   </div>
 
-                  {/* Next */}
                   <button
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={!hasNextPage || allProductsLoading}
