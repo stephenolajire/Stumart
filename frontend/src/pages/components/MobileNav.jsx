@@ -54,6 +54,7 @@ const MobileNav = () => {
     localStorage.removeItem("refresh");
     localStorage.removeItem("user_type");
     localStorage.removeItem("institution");
+    localStorage.removeItem("guest_popup_seen");
     queryClient.clear();
     navigate("/");
     window.location.reload();

@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
-import { useContext } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import Hero from "../components/Hero";
 import FeaturedShops from "../components/FeaturedShops";
@@ -34,7 +33,7 @@ const GuestNoticePopup = ({ onClose }) => {
       />
 
       {/* Card */}
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden animate-slide-up">
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-slide-up">
         {/* Progress bar */}
         <div className="absolute top-0 left-0 right-0 h-1 bg-gray-100">
           <div
@@ -133,15 +132,22 @@ const Landing = () => {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      // Small delay so page loads first
-      const delay = setTimeout(() => setShowPopup(true), 1000);
-      return () => clearTimeout(delay);
+      const hasSeenPopup = localStorage.getItem("guest_popup_seen");
+      if (!hasSeenPopup) {
+        const delay = setTimeout(() => setShowPopup(true), 1000);
+        return () => clearTimeout(delay);
+      }
     }
   }, [isAuthenticated]);
 
+  const handleClose = () => {
+    setShowPopup(false);
+    localStorage.setItem("guest_popup_seen", "true");
+  };
+
   return (
     <main className="mt-7 overflow-x-hidden w-screen lg:w-[calc(100vw-272px)]">
-      {showPopup && <GuestNoticePopup onClose={() => setShowPopup(false)} />}
+      {showPopup && <GuestNoticePopup onClose={handleClose} />}
 
       <section>
         <Hero />

@@ -72,6 +72,7 @@ const Navigation = () => {
     localStorage.removeItem("refresh");
     localStorage.removeItem("user_type");
     localStorage.removeItem("institution");
+    localStorage.removeItem("guest_popup_seen");
     queryClient.clear(); // wipe all cached data including cart
     navigate("/");
     window.location.reload();
