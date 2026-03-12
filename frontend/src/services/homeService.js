@@ -9,7 +9,10 @@ export const homeService = {
 
   getCategoriesLastFive: () => api.get("/home/categories/last-five/"),
 
-  getVendorsBySchool: () => api.get("/home/vendors/by-school/"),
+  getVendorsBySchool: (institution = "") =>
+    api.get("/home/vendors/by-school/", {
+      params: institution ? { school: institution } : {},
+    }),
 
   getAllVendorNames: (params) =>
     api.get("/home/vendors/all-names/", { params }),

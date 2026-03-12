@@ -35,12 +35,13 @@ export const useGetCategoriesLastFive = () =>
     queryFn: () => homeService.getCategoriesLastFive().then((r) => r.data),
   });
 
-export const useGetVendorsBySchool = () => {
+export const useGetVendorsBySchool = (institution = "") => {
   const { isAuthenticated } = useContext(GlobalContext);
 
   return useQuery({
-    queryKey: [...homeKeys.vendorsBySchool, isAuthenticated],
-    queryFn: () => homeService.getVendorsBySchool().then((r) => r.data),
+    queryKey: [...homeKeys.vendorsBySchool, isAuthenticated, institution],
+    queryFn: () =>
+      homeService.getVendorsBySchool(institution).then((r) => r.data),
     staleTime: 0,
     refetchOnMount: true,
     refetchOnWindowFocus: false,

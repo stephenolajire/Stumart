@@ -371,8 +371,8 @@ class VendorsBySchoolView(APIView):
         school_name = (
             (getattr(request.user, 'institution', None) or '').strip()
             if request.user.is_authenticated
-            else None
-        ) or None  # converts empty string to None
+            else request.query_params.get('school', '').strip()
+        ) or None # converts empty string to None
 
         try:
             if school_name:

@@ -4,10 +4,10 @@ import logo from "../assets/stumart.jpeg";
 
 const userTypes = [
   {
-    type: "Student",
+    type: "Student/Customer",
     route: "/signup/student",
     icon: "🎓",
-    tagline: "Shop, order & get delivered on campus",
+    tagline: "Shop, order & get delivered on campus or living around campus",
     color: "#f59e0b",
     bg: "#fffbeb",
     border: "#fde68a",
@@ -16,7 +16,7 @@ const userTypes = [
     type: "Vendor",
     route: "/signup/vendor",
     icon: "🏪",
-    tagline: "Sell your products to students nearby",
+    tagline: "Sell your products to students nearby/neighbors nearby",
     color: "#10b981",
     bg: "#ecfdf5",
     border: "#a7f3d0",

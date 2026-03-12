@@ -6,12 +6,9 @@ import {
   FaPhone,
   FaUniversity,
   FaMapMarkerAlt,
-  FaImage,
-  FaList,
   FaLock,
   FaEye,
   FaEyeSlash,
-  FaHouseUser,
   FaArrowLeft,
 } from "react-icons/fa";
 import Swal from "sweetalert2";
@@ -59,7 +56,7 @@ const StudentSignup = () => {
     else if (!phoneRegex.test(formData.phoneNumber))
       e.phoneNumber = "Invalid phone number";
     if (!formData.state) e.state = "State is required";
-    if (!formData.institution) e.institution = "Institution is required";
+    if (!formData.institution) e.institution = "Nearest campus is required";
     if (!formData.password) e.password = "Password is required";
     else if (formData.password.length < 8) e.password = "Minimum 8 characters";
     else if (
@@ -142,8 +139,8 @@ const StudentSignup = () => {
         localStorage.setItem("user_type", "student");
         Swal.fire({
           icon: "success",
-          title: "Registration Successful!",
-          text: "Check your email for verification code.",
+          title: "Account Created!",
+          text: "Check your email for a verification code.",
           confirmButtonColor: "#f59e0b",
         });
         navigate("/verify-email", { state: { userId } });
@@ -157,14 +154,14 @@ const StudentSignup = () => {
   const labelClass = "flex items-center text-sm font-medium text-gray-700 mb-1";
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-yellow-50 via-orange-50 to-amber-50 py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-orange-50 to-amber-50 py-8 px-4">
       <div className="w-full max-w-[600px] mx-auto">
         <form
           onSubmit={handleSubmit}
           className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden"
         >
           {/* Header */}
-          <div className="text-center pt-8 pb-6 px-6 bg-linear-to-b from-white to-gray-50">
+          <div className="relative text-center pt-8 pb-6 px-6 bg-gradient-to-b from-white to-gray-50">
             <button
               type="button"
               onClick={() => navigate("/signup")}
@@ -178,17 +175,36 @@ const StudentSignup = () => {
               className="w-14 h-14 mx-auto mb-3 rounded-full object-cover"
             />
             <div className="inline-flex items-center gap-2 bg-yellow-50 border border-yellow-200 rounded-full px-4 py-1.5 mb-3">
-              <span className="text-lg">🎓</span>
+              <span className="text-lg">🛍️</span>
               <span className="text-sm font-semibold text-yellow-700">
-                Student Registration
+                Customer Registration
               </span>
             </div>
             <h2 className="text-2xl font-bold text-gray-800">
-              Create Student Account
+              Create Your Account
             </h2>
             <p className="text-gray-500 text-sm mt-1">
-              Shop and get deliveries on campus
+              For students and residents near a campus
             </p>
+
+            {/* Perks */}
+            <div className="flex justify-center gap-4 mt-4 flex-wrap">
+              {[
+                { icon: "🎓", text: "Students" },
+                { icon: "🏘️", text: "Campus Residents" },
+                { icon: "🚀", text: "Fast Delivery" },
+              ].map(({ icon, text }) => (
+                <div
+                  key={text}
+                  className="flex items-center gap-1.5 bg-white border border-gray-100 rounded-full px-3 py-1 shadow-sm"
+                >
+                  <span className="text-sm">{icon}</span>
+                  <span className="text-xs font-medium text-gray-600">
+                    {text}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="px-6 pb-8 space-y-5">
@@ -252,7 +268,7 @@ const StudentSignup = () => {
                 value={formData.email}
                 onChange={handleChange}
                 className={inputClass}
-                placeholder="Enter email"
+                placeholder="Enter your email"
               />
               {errors.email && (
                 <p className="text-red-500 text-xs mt-1">{errors.email}</p>
@@ -290,7 +306,7 @@ const StudentSignup = () => {
                 onChange={handleChange}
                 className={inputClass}
               >
-                <option value="">Select State</option>
+                <option value="">Select your state</option>
                 {nigeriaStates.map((s) => (
                   <option key={s} value={s}>
                     {s}
@@ -305,7 +321,7 @@ const StudentSignup = () => {
             {/* Institution */}
             <div>
               <label className={labelClass}>
-                <FaUniversity className="mr-2 text-yellow-500" /> Institution
+                <FaUniversity className="mr-2 text-yellow-500" /> Nearest Campus
               </label>
               <select
                 name="institution"
@@ -315,7 +331,9 @@ const StudentSignup = () => {
                 disabled={!formData.state}
               >
                 <option value="">
-                  {formData.state ? "Select Institution" : "Select state first"}
+                  {formData.state
+                    ? "Select nearest campus"
+                    : "Select state first"}
                 </option>
                 {institutions.map((i) => (
                   <option key={i} value={i}>
@@ -323,6 +341,12 @@ const StudentSignup = () => {
                   </option>
                 ))}
               </select>
+              {/* Helper text */}
+              {!errors.institution && (
+                <p className="text-gray-400 text-xs mt-1">
+                  Select the campus closest to where you live or study
+                </p>
+              )}
               {errors.institution && (
                 <p className="text-red-500 text-xs mt-1">
                   {errors.institution}
@@ -386,10 +410,32 @@ const StudentSignup = () => {
               </div>
             </div>
 
+            {/* Info box */}
+            <div className="bg-yellow-50 border border-yellow-100 rounded-xl p-4">
+              <p className="text-xs font-semibold text-yellow-800 mb-2">
+                📍 Who can sign up as a customer?
+              </p>
+              <ul className="space-y-1">
+                {[
+                  "University & polytechnic students",
+                  "People living near or around a campus",
+                  "Anyone who wants to shop from campus vendors",
+                ].map((item) => (
+                  <li
+                    key={item}
+                    className="flex items-start gap-2 text-xs text-yellow-700"
+                  >
+                    <span className="mt-0.5">✓</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
             <button
               type="submit"
               disabled={isPending || throttleWaitTime > 0}
-              className="w-full py-3.5 rounded-xl font-semibold text-white text-base transition-all duration-200 mt-4"
+              className="w-full py-3.5 rounded-xl font-semibold text-white text-base transition-all duration-200 mt-2"
               style={{
                 backgroundColor:
                   isPending || throttleWaitTime > 0 ? "#d1d5db" : "#f59e0b",
@@ -400,7 +446,7 @@ const StudentSignup = () => {
                 ? "Creating Account..."
                 : throttleWaitTime > 0
                   ? `Wait ${throttleWaitTime}s`
-                  : "Create Student Account"}
+                  : "Create Account"}
             </button>
 
             <p className="text-center text-sm text-gray-500">
