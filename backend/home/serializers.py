@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from user.models import Vendor
 from stumart.models import Product
+from django.conf import settings
 
 
 # ======================== Request Serializers ========================
@@ -147,6 +148,12 @@ class VendorsBySchoolResponseSerializer(serializers.Serializer):
     school = serializers.CharField()
     cached = serializers.BooleanField()
 
+class VendorCardSerializer(serializers.ModelSerializer):
+    institution = serializers.CharField(source='user.institution', read_only=True)
+
+    class Meta:
+        model = Vendor
+        fields = ['id', 'business_name', 'shop_image', 'rating', 'institution']
 
 class ProductCategoryResponseSerializer(serializers.Serializer):
     """Response serializer for ProductCategoryView"""
@@ -168,3 +175,39 @@ class ErrorResponseDetailSerializer(serializers.Serializer):
     """Error response with message"""
     error = serializers.CharField()
     message = serializers.CharField(required=False, allow_null=True)
+
+
+class HeroProductSerializer(serializers.ModelSerializer):
+    vendor_name        = serializers.CharField(source='vendor.vendor_profile.business_name', read_only=True)
+    vendor_rating      = serializers.DecimalField(source='vendor.vendor_profile.rating', max_digits=3, decimal_places=2, read_only=True)
+    vendor_institution = serializers.CharField(source='vendor.institution', read_only=True)
+    image_url          = serializers.SerializerMethodField()
+
+    class Meta:
+        model   = Product
+        fields  = [
+            'id', 'name', 'description', 'price',
+            'image_url', 'vendor_name', 'vendor_rating', 'vendor_institution',
+        ]
+
+    def get_image_url(self, obj):
+        if obj.image:
+            return f"https://res.cloudinary.com/{settings.CLOUDINARY_STORAGE['CLOUD_NAME']}/{obj.image}"
+        return None
+    
+class ProductCardSerializer(serializers.ModelSerializer):
+    image_url          = serializers.SerializerMethodField()
+    vendor_institution = serializers.CharField(source='vendor.institution', read_only=True)
+    vendor_category    = serializers.CharField(source='vendor.vendor_profile.business_category', read_only=True)
+
+    class Meta:
+        model  = Product
+        fields = [
+            'id', 'name', 'price', 'promotion_price',
+            'image_url', 'in_stock', 'vendor_category', 'vendor_institution',
+        ]
+
+    def get_image_url(self, obj):
+        if obj.image:
+            return f"https://res.cloudinary.com/{settings.CLOUDINARY_STORAGE['CLOUD_NAME']}/{obj.image}"
+        return None

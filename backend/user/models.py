@@ -50,7 +50,7 @@ class User(AbstractUser):
     email = models.EmailField(_('email address'), unique=True)
     phone_number = models.CharField(max_length=15, unique=True)
     user_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES)
-    # residence = models.CharField(max_length=20, choices=RESIDENCE_CHOICES, default=" ")
+    residence = models.CharField(max_length=20, choices=RESIDENCE_CHOICES, null=True, blank=True)
     profile_pic = CloudinaryField('profile_pics/', null=True, blank=True)
     state = models.CharField(max_length=50)
     first_name = models.CharField(max_length=200)
@@ -369,10 +369,14 @@ class KYCVerification(models.Model):
             self.verification_date = timezone.now()
             self.user.is_verified = True
             self.user.save()
-            # Also update vendor is_verified
             if hasattr(self.user, 'vendor_profile'):
                 self.user.vendor_profile.is_verified = True
                 self.user.vendor_profile.save()
+                # Denormalize KYC status onto all products
+                self.user.products.update(kyc_approved=True)
+        elif self.verification_status == 'rejected':
+            if hasattr(self.user, 'vendor_profile'):
+                self.user.products.update(kyc_approved=False)
         super().save(*args, **kwargs)
 
 

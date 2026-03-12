@@ -62,6 +62,25 @@ class Product(models.Model):
         blank=True
     )
 
+        # In stumart/models.py — add to Product model
+    institution = models.CharField(
+        max_length=100, 
+        db_index=True,
+        default='',
+        help_text="Denormalized from vendor.institution for fast filtering"
+    )
+    state = models.CharField(
+        max_length=50,
+        db_index=True, 
+        default='',
+        help_text="Denormalized from vendor.state for fast filtering"
+    )
+    kyc_approved = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text="Denormalized from vendor KYC status — updated on KYC approval"
+    )
+
     class Meta:
         ordering = ['-created_at']
         indexes = [
@@ -123,6 +142,16 @@ class Product(models.Model):
     def is_available(self):
         """Check if product is available in stock"""
         return self.in_stock > 0
+    def save(self, *args, **kwargs):
+        # Denormalize vendor location onto product for fast filtering
+        if not self.institution and self.vendor_id:
+            self.institution = self.vendor.institution or ''
+            self.state = self.vendor.state or ''
+            self.kyc_approved = getattr(
+                getattr(self.vendor, 'kyc', None), 
+                'verification_status', ''
+            ) == 'approved'
+        super().save(*args, **kwargs)
 
 
 class ProductImage(models.Model):

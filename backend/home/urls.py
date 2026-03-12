@@ -8,4 +8,5 @@ urlpatterns = [
     path('home/categories/last-five/', CategoryLastFiveView.as_view(), name='categories-last-five'),
     path('home/vendors/by-school/', VendorsBySchoolView.as_view(), name='vendors-by-school'),
     path('home/vendors/all-names/', AllVendorNamesView.as_view(), name='all-vendor-names'),
+    path('home/hero-products/', HeroProductsView.as_view()),path('home/hero-products/', HeroProductsView.as_view()),
 ]

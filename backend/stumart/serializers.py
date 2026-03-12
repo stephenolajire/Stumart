@@ -786,3 +786,32 @@ class BothVideosResponseSerializer(serializers.Serializer):
     success        = serializers.BooleanField()
     register_video = RegisterVideoSerializer(allow_null=True)
     product_video  = AddProductVideoSerializer(allow_null=True)
+
+
+class ProductCardSerializer(serializers.ModelSerializer):
+    image_url = serializers.SerializerMethodField()
+    vendor_institution = serializers.CharField(
+        source='vendor.institution', read_only=True
+    )
+    vendor_category = serializers.CharField(
+        source='vendor.vendor_profile.business_category', read_only=True
+    )
+
+    class Meta:
+        model = Product
+        fields = [
+            'id',
+            'name',
+            'price',
+            'promotion_price',
+            'image_url',
+            'vendor_institution',
+            'vendor_category',
+            'in_stock',
+        ]
+
+    def get_image_url(self, obj):
+        request = self.context.get('request')
+        if obj.image and request:
+            return request.build_absolute_uri(obj.image.url)
+        return str(obj.image) if obj.image else None
