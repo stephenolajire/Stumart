@@ -107,8 +107,6 @@ const drawWheel = (canvas, items, angle) => {
     ctx.fillStyle = "#fff";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.shadowColor = "rgba(0,0,0,0.35)";
-    ctx.shadowBlur = 3;
     ctx.fillText(label, px, 0);
     ctx.restore();
   });

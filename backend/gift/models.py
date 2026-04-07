@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
+from cloudinary.models import CloudinaryField
 
 
 class GiftItem(models.Model):
@@ -14,7 +15,7 @@ class GiftItem(models.Model):
     """
     name        = models.CharField(max_length=120)
     description = models.CharField(max_length=255, blank=True)
-    image       = models.ImageField(upload_to="gift_items/", blank=True, null=True)
+    image       = CloudinaryField("image", blank=True, null=True)
     
     # Gift as standalone FREE reward product
     # Price is always 0.00 (gifts are compensation, not sold)

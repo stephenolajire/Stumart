@@ -20,6 +20,7 @@ const Toast = Swal.mixin({
 
 const ShoppingCart = () => {
   const navigate = useNavigate();
+  // const MEDIA_BASE_URL = "https://res.cloudinary.com/dldk7qyai";
 
   const {
     cart,
@@ -38,6 +39,10 @@ const ShoppingCart = () => {
   const tax = cart?.tax || 0;
   const takeaway = cart?.takeaway || 0;
   const total = cart?.total || 0;
+
+  // Check if all items are gifts
+  const allItemsAreGifts =
+    cartItems.length > 0 && cartItems.every((item) => item.is_gift);
 
   const formatPrice = (price) =>
     new Intl.NumberFormat("en-NG", {
@@ -133,7 +138,11 @@ const ShoppingCart = () => {
                     {/* Image */}
                     <div className="md:col-span-2 flex justify-center md:justify-start">
                       <img
-                        src={item.product_image || "/api/placeholder/80/80"}
+                        src={
+                          item.product_image
+                            ? item.product_image
+                            : "/api/placeholder/80/80"
+                        }
                         alt={item.product_name}
                         className="w-20 h-20 object-cover rounded-lg border"
                       />
@@ -181,53 +190,59 @@ const ShoppingCart = () => {
                       <span className="md:hidden text-sm text-gray-500 mr-2 self-center">
                         Qty:
                       </span>
-                      <div className="flex items-center border border-gray-300 rounded-lg">
-                        <button
-                          onClick={() =>
-                            handleUpdateQuantity(item.id, item.quantity - 1)
-                          }
-                          className="p-2 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed rounded-l-lg transition-colors duration-200"
-                          disabled={item.quantity <= 1 || isUpdatingItem}
-                        >
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M20 12H4"
-                            />
-                          </svg>
-                        </button>
-                        <span className="px-4 py-2 font-medium min-w-12 text-center">
+                      {item.is_gift ? (
+                        <span className="px-4 py-2 font-medium text-center bg-gray-100 rounded-lg text-gray-700">
                           {item.quantity}
                         </span>
-                        <button
-                          onClick={() =>
-                            handleUpdateQuantity(item.id, item.quantity + 1)
-                          }
-                          className="p-2 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed rounded-r-lg transition-colors duration-200"
-                          disabled={isUpdatingItem}
-                        >
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
+                      ) : (
+                        <div className="flex items-center border border-gray-300 rounded-lg">
+                          <button
+                            onClick={() =>
+                              handleUpdateQuantity(item.id, item.quantity - 1)
+                            }
+                            className="p-2 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed rounded-l-lg transition-colors duration-200"
+                            disabled={item.quantity <= 1 || isUpdatingItem}
                           >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                            />
-                          </svg>
-                        </button>
-                      </div>
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M20 12H4"
+                              />
+                            </svg>
+                          </button>
+                          <span className="px-4 py-2 font-medium min-w-12 text-center">
+                            {item.quantity}
+                          </span>
+                          <button
+                            onClick={() =>
+                              handleUpdateQuantity(item.id, item.quantity + 1)
+                            }
+                            className="p-2 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed rounded-r-lg transition-colors duration-200"
+                            disabled={isUpdatingItem}
+                          >
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                              />
+                            </svg>
+                          </button>
+                        </div>
+                      )}
                     </div>
 
                     {/* Remove */}
@@ -293,10 +308,12 @@ const ShoppingCart = () => {
                     <span>Shipping</span>
                     <span>₦{formatPrice(shippingFee)}</span>
                   </div>
-                  <div className="flex justify-between text-gray-600">
-                    <span>Service Charge</span>
-                    <span>₦{formatPrice(tax)}</span>
-                  </div>
+                  {!allItemsAreGifts && (
+                    <div className="flex justify-between text-gray-600">
+                      <span>Service Charge</span>
+                      <span>₦{formatPrice(tax)}</span>
+                    </div>
+                  )}
                   {takeaway > 0 && (
                     <div className="flex justify-between text-gray-600">
                       <span>Takeaway Fee</span>
@@ -306,17 +323,21 @@ const ShoppingCart = () => {
                   <hr className="my-4" />
                   <div className="flex justify-between text-lg font-bold text-gray-900">
                     <span>Total</span>
-                    <span>₦{formatPrice(total)}</span>
+                    <span>
+                      ₦{formatPrice(allItemsAreGifts ? total - tax : total)}
+                    </span>
                   </div>
                 </div>
 
-                <Link
-                  to="/checkout"
-                  className="w-full mt-6 bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-4 px-6 rounded-lg text-center block transition-colors duration-200"
-                  style={{ textDecoration: "none" }}
-                >
-                  Proceed to Checkout
-                </Link>
+                {!allItemsAreGifts && (
+                  <Link
+                    to="/checkout"
+                    className="w-full mt-6 bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-4 px-6 rounded-lg text-center block transition-colors duration-200"
+                    style={{ textDecoration: "none" }}
+                  >
+                    Proceed to Checkout
+                  </Link>
+                )}
               </div>
             </div>
           </div>
