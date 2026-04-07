@@ -317,7 +317,7 @@ const ProductDetails = () => {
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-background-secondary pt-20 lg:pt-6 pb-8">
+    <div className="min-h-screen bg-background-secondary mt-23 md:mt-0 pt-20 lg:pt-6 pb-8">
       <SEO
         title={`${product.name} - StuMart | ${product.vendor_name}`}
         description={`Buy ${product.name} from ${product.vendor_name} on StuMart. ${product.description?.substring(0, 120) ?? ""} Price: ₦${Number(product.promotion_price || product.price).toLocaleString()}`}

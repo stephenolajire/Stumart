@@ -676,7 +676,7 @@ const SpinWheel = () => {
                 ? "Spinning…"
                 : canSpin
                   ? "🎰 Spin Now!"
-                  : "Already spun today"}
+                  : "Daily Spun Used"}
             </button>
 
             {!canSpin && nextSpin && (
