@@ -231,11 +231,13 @@ class Cart(models.Model):
         ]
 
     def __str__(self):
-        return f"Cart({self.user.email})"
+        if self.user:
+            return f"Cart({self.user.email})"
+        return f"Cart({self.id})"
 
 
 class CartItem(models.Model):
-    """Model for items in the cart"""
+    """Model for items in the cart - supports both products and gift items"""
     cart = models.ForeignKey(
         Cart,
         on_delete=models.CASCADE,
@@ -245,6 +247,16 @@ class CartItem(models.Model):
         Product,
         on_delete=models.CASCADE,
         related_name="cart_items",
+        null=True,
+        blank=True,
+    )
+    # Allow adding gift items directly to cart (as standalone free products)
+    gift_item = models.ForeignKey(
+        "gift.GiftItem",
+        on_delete=models.CASCADE,
+        related_name="cart_items",
+        null=True,
+        blank=True,
     )
     quantity = models.PositiveIntegerField(default=1)
     size  = models.CharField(max_length=50, blank=True, null=True)
@@ -259,7 +271,11 @@ class CartItem(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.product.name}"
+        if self.product:
+            return f"{self.product.name}"
+        elif self.gift_item:
+            return f"{self.gift_item.name} (gift)"
+        return "Unknown item"
 
 class Order(models.Model):
     order_number = models.CharField(max_length=20, unique=True, db_index=True)

@@ -306,6 +306,16 @@ class CreateOrderView(APIView):
         if not cart_items.exists():
             return Response({"error": "No cart items found."}, status=status.HTTP_400_BAD_REQUEST)
 
+        # ── validate: orders must contain at least one actual product (not just gifts) ──
+        has_product = cart_items.filter(product__isnull=False).exists()
+        if not has_product:
+            return Response(
+                {
+                    "error": "Your cart contains only gift items. Please add at least one product to create an order.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         validation_error = self._validate_cart_categories(cart_items)
         if validation_error:
             return Response({"error": validation_error}, status=status.HTTP_400_BAD_REQUEST)
@@ -335,6 +345,10 @@ class CreateOrderView(APIView):
                 )
 
                 for cart_item in cart_items:
+                    # Skip gift items - only create OrderItems for actual products
+                    if not cart_item.product:
+                        continue
+                    
                     vendor_instance = Vendor.objects.filter(user=cart_item.product.vendor).first()
                     if not vendor_instance:
                         return Response(
@@ -370,6 +384,10 @@ class CreateOrderView(APIView):
     def _validate_cart_categories(cart_items):
         has_food = has_non_food = False
         for item in cart_items:
+            # Skip gift items - only validate product categories
+            if not item.product:
+                continue
+            
             vendor = Vendor.objects.filter(user=item.product.vendor).first()
             if not vendor:
                 continue

@@ -1,7 +1,9 @@
+// pages/Landing.jsx
 import React, { useState, useEffect, useRef, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import Hero from "../components/Hero";
 import FeaturedShops from "../components/FeaturedShops";
+import SpinWheel from "../components/SpinWheel";
 import { GlobalContext } from "../../constant/GlobalContext";
 
 const GuestNoticePopup = ({ onClose }) => {
@@ -20,21 +22,16 @@ const GuestNoticePopup = ({ onClose }) => {
         return prev - 1;
       });
     }, 1000);
-
     return () => clearInterval(timerRef.current);
   }, [onClose]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
-      {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-sm"
         onClick={onClose}
       />
-
-      {/* Card */}
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden animate-slide-up">
-        {/* Progress bar */}
         <div className="absolute top-0 left-0 right-0 h-1 bg-gray-100">
           <div
             className="h-full bg-yellow-400 transition-all duration-1000 ease-linear"
@@ -42,7 +39,6 @@ const GuestNoticePopup = ({ onClose }) => {
           />
         </div>
 
-        {/* Close + countdown */}
         <div className="flex items-center justify-between px-5 pt-5 pb-0">
           <span className="text-xs text-gray-400">Closes in {countdown}s</span>
           <button
@@ -53,13 +49,10 @@ const GuestNoticePopup = ({ onClose }) => {
           </button>
         </div>
 
-        {/* Body */}
         <div className="px-5 pt-4 pb-6">
-          {/* Icon */}
           <div className="w-14 h-14 bg-yellow-50 border border-yellow-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <span className="text-3xl">🏪</span>
           </div>
-
           <h3 className="text-lg font-bold text-gray-900 text-center mb-1">
             You're browsing as a guest
           </h3>
@@ -69,7 +62,6 @@ const GuestNoticePopup = ({ onClose }) => {
             to see vendors closest to you.
           </p>
 
-          {/* What you're missing */}
           <div className="bg-yellow-50 border border-yellow-100 rounded-xl p-4 mb-5 space-y-2">
             {[
               {
@@ -98,7 +90,6 @@ const GuestNoticePopup = ({ onClose }) => {
             ))}
           </div>
 
-          {/* Actions */}
           <div className="flex gap-3">
             <button
               onClick={() => navigate("/login")}
@@ -126,9 +117,94 @@ const GuestNoticePopup = ({ onClose }) => {
   );
 };
 
+// ── Spin Wheel Modal ──────────────────────────────────────────────────────────
+const SpinWheelModal = ({ onClose }) => {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <div
+        className="relative w-full overflow-hidden animate-slide-up"
+        style={{
+          maxWidth: 500,
+          borderRadius: 28,
+          background: "linear-gradient(160deg, #fff9f0 0%, #ffffff 60%)",
+          boxShadow: "0 24px 64px rgba(0,0,0,0.25)",
+        }}
+      >
+        {/* Top decorative bar */}
+        <div
+          className="h-1.5 w-full"
+          style={{
+            background:
+              "linear-gradient(90deg, #FFD700, #FF6B35, #FF4E88, #7B5EA7, #4ECDC4)",
+          }}
+        />
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 pt-4 pb-0">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">🎁</span>
+            <div>
+              <h2 className="text-base font-bold text-gray-900 leading-none">
+                Daily Gift Spin
+              </h2>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Spin once per day to win!
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors text-gray-500"
+            style={{ fontSize: 16 }}
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Wheel — no extra padding crushing it */}
+        <div className="flex items-center justify-center px-2 pb-6 pt-2">
+          <SpinWheel />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ── Floating Spin Button ──────────────────────────────────────────────────────
+const SpinWheelButton = ({ onOpen }) => {
+  return (
+    <button
+      onClick={onOpen}
+      className="fixed bottom-8 right-6 z-40 flex flex-col items-center justify-center gap-1 rounded-full text-white font-semibold transition-all active:scale-95"
+      title="Spin the wheel to win free gifts!"
+      style={{
+        width: 64,
+        height: 64,
+        background: "linear-gradient(135deg, #FF6B35 0%, #FF9900 100%)",
+        boxShadow: "0 6px 24px rgba(255,107,0,0.5)",
+        animation: "float-btn 3s ease-in-out infinite",
+      }}
+    >
+      <span style={{ fontSize: 26 }}>🎁</span>
+      <style>{`
+        @keyframes float-btn {
+          0%, 100% { transform: translateY(0) scale(1); box-shadow: 0 6px 24px rgba(255,107,0,0.5); }
+          50% { transform: translateY(-5px) scale(1.04); box-shadow: 0 12px 32px rgba(255,107,0,0.6); }
+        }
+      `}</style>
+    </button>
+  );
+};
+
+// ── Landing ───────────────────────────────────────────────────────────────────
 const Landing = () => {
   const { isAuthenticated } = useContext(GlobalContext);
   const [showPopup, setShowPopup] = useState(false);
+  const [showSpinModal, setShowSpinModal] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -140,21 +216,33 @@ const Landing = () => {
     }
   }, [isAuthenticated]);
 
-  const handleClose = () => {
+  const handleClosePopup = () => {
     setShowPopup(false);
     localStorage.setItem("guest_popup_seen", "true");
   };
 
   return (
     <main className="mt-7 overflow-x-hidden w-screen lg:w-[calc(100vw-272px)]">
-      {showPopup && <GuestNoticePopup onClose={handleClose} />}
+      {showPopup && <GuestNoticePopup onClose={handleClosePopup} />}
+      {showSpinModal && (
+        <SpinWheelModal onClose={() => setShowSpinModal(false)} />
+      )}
 
-      <section>
-        <Hero />
-      </section>
-      <section>
-        <FeaturedShops />
-      </section>
+      {/* Floating Spin Button — visible to authenticated users only */}
+      {isAuthenticated && (
+        <SpinWheelButton onOpen={() => setShowSpinModal(true)} />
+      )}
+
+      <div className="lg:flex lg:gap-6 lg:items-start lg:px-4">
+        <div className="flex-1 min-w-0">
+          <section>
+            <Hero />
+          </section>
+          <section>
+            <FeaturedShops />
+          </section>
+        </div>
+      </div>
     </main>
   );
 };

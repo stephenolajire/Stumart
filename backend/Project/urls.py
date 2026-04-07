@@ -50,6 +50,7 @@ urlpatterns = [
     path('api/', include('payment.urls')),
     path('api/', include('cart.urls')),
     path('api/', include('bookmark.urls')),
+    path('api/gift/', include('gift.urls')),
     path('api/referrals/', include('referral.urls')),
     path('api/token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),

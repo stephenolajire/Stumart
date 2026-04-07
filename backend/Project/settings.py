@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     'referral',
     'cart',
     'bookmark',
+    'gift',
     # 'silk',
 ]
 

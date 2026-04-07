@@ -230,31 +230,72 @@ class ProductCreateSerializer(serializers.ModelSerializer):
 
 
 class CartItemSerializer(serializers.ModelSerializer):
-    product_name    = serializers.CharField(source='product.name', read_only=True)
-    product_price   = serializers.DecimalField(source='product.price', max_digits=10, decimal_places=2, read_only=True)
-    promotion_price = serializers.DecimalField(source='product.promotion_price', max_digits=10, decimal_places=2, read_only=True)
+    product_name    = serializers.SerializerMethodField()
+    product_price   = serializers.SerializerMethodField()
+    promotion_price = serializers.SerializerMethodField()
     product_image   = serializers.SerializerMethodField()
     total_price     = serializers.SerializerMethodField()
-    delivery_day    = serializers.CharField(source='product.delivery_day', read_only=True)
+    delivery_day    = serializers.SerializerMethodField()
+    is_gift         = serializers.SerializerMethodField()
 
     class Meta:
         model = CartItem
         fields = [
-            'id', 'product', 'product_name', 'product_price', 'product_image',
+            'id', 'product', 'gift_item', 'product_name', 'product_price', 'product_image',
             'quantity', 'size', 'color', 'total_price', 'created_at',
-            'promotion_price', 'delivery_day',
+            'promotion_price', 'delivery_day', 'is_gift',
         ]
+
+    def get_is_gift(self, obj):
+        """Check if this is a gift item"""
+        return obj.gift_item is not None
+
+    def get_product_name(self, obj):
+        if obj.product:
+            return obj.product.name
+        elif obj.gift_item:
+            return obj.gift_item.name
+        return None
+
+    def get_product_price(self, obj):
+        if obj.product:
+            return obj.product.price
+        elif obj.gift_item:
+            return obj.gift_item.price
+        return 0
+
+    def get_promotion_price(self, obj):
+        if obj.product:
+            return obj.product.promotion_price
+        return None
 
     def get_product_image(self, obj):
         request = self.context.get('request')
-        if obj.product.image and request:
-            return request.build_absolute_uri(obj.product.image.url)
-        elif obj.product.image:
-            return obj.product.image.url
+        image = None
+        
+        if obj.product and obj.product.image:
+            image = obj.product.image
+        elif obj.gift_item and obj.gift_item.image:
+            image = obj.gift_item.image
+        
+        if image and request:
+            return request.build_absolute_uri(image.url)
+        elif image:
+            return image.url
+        return None
+
+    def get_delivery_day(self, obj):
+        if obj.product:
+            return obj.product.delivery_day
         return None
 
     def get_total_price(self, obj):
-        return obj.product.price * obj.quantity
+        price = 0
+        if obj.product:
+            price = obj.product.price
+        elif obj.gift_item:
+            price = obj.gift_item.price
+        return price * obj.quantity
 
 
 class CartSerializer(serializers.ModelSerializer):
@@ -267,7 +308,13 @@ class CartSerializer(serializers.ModelSerializer):
         fields = ['id', 'cart_code', 'items', 'total_price', 'item_count', 'created_at', 'updated_at']
 
     def get_total_price(self, obj):
-        return sum(item.product.price * item.quantity for item in obj.cartitem_set.all())
+        total = 0
+        for item in obj.cartitem_set.all():
+            if item.product:
+                total += item.product.price * item.quantity
+            elif item.gift_item:
+                total += item.gift_item.price * item.quantity
+        return total
 
     def get_item_count(self, obj):
         return sum(item.quantity for item in obj.cartitem_set.all())
