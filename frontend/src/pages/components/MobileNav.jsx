@@ -14,6 +14,7 @@ import {
   MessageCircle,
   Zap,
   Phone,
+  Wallet,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
@@ -102,7 +103,7 @@ const MobileNav = () => {
   return (
     <header className="bg-white border-b border-gray-200 shadow-sm lg:hidden">
       {/* Top Banner */}
-      <div className="bg-gradient-to-r from-purple-600 to-yellow-500 text-white text-xs py-2 px-4">
+      <div className="bg-linear-to-r from-purple-600 to-yellow-500 text-white text-xs py-2 px-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-1.5">
             <Zap className="w-3.5 h-3.5 shrink-0" />
@@ -183,6 +184,13 @@ const MobileNav = () => {
                       className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                     >
                       <Heart className="w-4 h-4 mr-3" /> Wishlist
+                    </Link>
+                    <Link
+                      to="/wallet"
+                      onClick={() => setAccountDropdownOpen(false)}
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    >
+                      <Wallet className="w-4 h-4 mr-3" /> Referral Wallet
                     </Link>
 
                     {isAuthenticated ? (
