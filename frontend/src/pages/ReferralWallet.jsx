@@ -81,9 +81,9 @@ export default function ReferralWallet() {
   }
 
   return (
-    <div className="w-full px-3 py-6 flex flex-col gap-3 box-border mt-5">
+    <div className="w-full px-3 py-6 flex flex-col gap-3 box-border">
       {/* Balance card */}
-      <div className="relative overflow-hidden bg-[#1a1a1a] rounded-2xl p-5 text-white">
+      <div className="relative overflow-hidden bg-[#1a1a1a] rounded-2xl p-5 text-white mt-36 lg:mt-0">
         <p className="text-[10px] font-medium uppercase tracking-widest text-gray-500">
           Pending payout
         </p>

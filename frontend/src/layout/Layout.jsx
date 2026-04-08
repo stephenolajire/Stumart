@@ -1,6 +1,10 @@
 import React, { useState, useContext, useMemo } from "react";
+// import Navigation from "../components/nav/Navigation";
 import Footer from "../components/nav/Footer";
 import { Outlet } from "react-router-dom";
+// import { FaPlayCircle, FaTimes, FaComments } from "react-icons/fa";
+// import Chatbot from "../chatbot/Chatbot";
+// import styles from "../css/Layout.module.css";
 import { GlobalContext } from "../constant/GlobalContext";
 import Navigation from "../pages/components/DesktopNav";
 import Sidebar from "../pages/components/Sidebar";
@@ -14,27 +18,22 @@ const Layout = () => {
 
   return (
     <div className="hide-scrollbar">
-      <div className="flex flex-row bg-gray-100">
-        {/* Sidebar */}
-        <div className="w-[250px] hidden lg:flex max-h-screen fixed top-0 left-0">
+      <div className="flex flex-row gap-10 bg-gray-100">
+        <div className="w-[250px] hidden lg:flex max-h-screen fixed">
           <Sidebar />
         </div>
-
-        {/* Main content column */}
-        <div className="flex-1 min-w-0 lg:ml-[250px] flex flex-col">
-          {/* Fixed top nav */}
-          <div className="fixed top-0 right-0 left-0 lg:left-[250px] z-50 bg-white">
+        <div className="flex-1 lg:ml-[250px]">
+          <div className="fixed z-1000 flex-1 w-full bg-white">
             <Navigation />
             <MobileNav />
           </div>
-
-          {/* Page content — pushed below the fixed nav */}
-          <div className="mt-[116px] w-full min-w-0 overflow-x-hidden">
+          <div className="lg:mt-29">
             <Outlet />
           </div>
-
-          <Footer />
         </div>
+      </div>
+      <div className="flex-1 lg:ml-[250px] ">
+        <Footer />
       </div>
     </div>
   );
