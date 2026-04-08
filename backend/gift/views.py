@@ -29,22 +29,24 @@ def _get_or_create_cart(user):
 
 def _add_to_cart(user, gift_item):
     """
-    Adds the won gift item to the user's cart (qty 1, no variant).
+    Clears any previously won gift items from the cart, then adds the
+    newly won gift item (qty 1, no variant).
     Returns CartItem data dict or None on failure.
     """
     try:
         cart = _get_or_create_cart(user)
-        cart_item, created = CartItem.objects.get_or_create(
+
+        # Remove any previously spun gift items before adding the new one
+        CartItem.objects.filter(cart=cart, gift_item__isnull=False).delete()
+
+        cart_item = CartItem.objects.create(
             cart=cart,
             gift_item=gift_item,
             product=None,
             size=None,
             color=None,
-            defaults={"quantity": 1},
+            quantity=1,
         )
-        if not created:
-            cart_item.quantity += 1
-            cart_item.save(update_fields=["quantity", "updated_at"])
         return CartItemSerializer(cart_item).data
     except Exception:
         logger.exception("Failed to add gift item to cart for user %s", user.pk)

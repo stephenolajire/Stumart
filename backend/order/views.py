@@ -1339,3 +1339,201 @@ def _safe_call(fn, *args, **kwargs):
         fn(*args, **kwargs)
     except Exception:
         logger.exception("Error in on_commit callback %s", fn.__name__)
+
+
+# ─────────────────────────────────────────────────────────────
+# PAYMENT — PAY WITH WALLET (Referral Earnings)
+# ─────────────────────────────────────────────────────────────
+
+from referral.models import Referral, PayoutHistory  # adjust app name if different
+
+class WalletPaymentView(APIView):
+    """
+    POST order/payment/wallet/
+
+    Settles an order using the user's referral wallet (current period earnings).
+    Validates that the order total matches the available balance exactly.
+
+    REQUEST BODY:
+        order_id   int   (required)
+
+    RESPONSE 200 → { status, message, order_number, amount_deducted, remaining_balance }
+    RESPONSE 400 → { status, message }  — validation failures
+    RESPONSE 404 → { status, message }  — order or wallet not found
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        order_id = request.data.get("order_id")
+        if not order_id:
+            return Response(
+                {"status": "failed", "message": "order_id is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            order = Order.objects.get(id=order_id, user=request.user)
+        except Order.DoesNotExist:
+            return Response(
+                {"status": "failed", "message": "Order not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # ── Guard: only PENDING orders can be paid ────────────────────────────
+        if order.order_status != "PENDING":
+            return Response(
+                {
+                    "status": "failed",
+                    "message": f"Order cannot be paid (current status: {order.order_status}).",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # ── Guard: no double-payment ──────────────────────────────────────────
+        if Transaction.objects.filter(order=order, status="COMPLETED").exists():
+            return Response(
+                {"status": "failed", "message": "This order has already been paid."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # ── Fetch wallet ──────────────────────────────────────────────────────
+        try:
+            referral = Referral.objects.get(user=request.user, is_active=True)
+        except Referral.DoesNotExist:
+            return Response(
+                {
+                    "status": "failed",
+                    "message": "You don't have an active referral wallet.",
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # ── Sync earnings from completed orders before checking balance ───────
+        referral.update_stats()
+        referral.refresh_from_db()
+
+        wallet_balance = referral.total_earnings
+        order_total    = order.total
+
+        # ── Validate: balance must exactly match or exceed order total ────────
+        if wallet_balance < order_total:
+            return Response(
+                {
+                    "status": "failed",
+                    "message": (
+                        f"Insufficient wallet balance. "
+                        f"Order total is ₦{order_total:,.0f} but your wallet has ₦{wallet_balance:,.0f}."
+                    ),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        order_items = list(
+            OrderItem.objects.filter(order=order).select_related(
+                "product", "vendor", "vendor__user"
+            )
+        )
+
+        if not order_items:
+            return Response(
+                {"status": "failed", "message": "No items found in this order."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        with transaction.atomic():
+            # Re-fetch referral inside lock to prevent race conditions
+            referral = Referral.objects.select_for_update().get(id=referral.id)
+
+            # Double-check balance inside the lock
+            if referral.total_earnings < order_total:
+                return Response(
+                    {"status": "failed", "message": "Insufficient wallet balance."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # ── Deduct from wallet ────────────────────────────────────────────
+            period_start = referral.last_reset_date or referral.created_at
+            period_end   = now()
+
+            referral.total_earnings  -= order_total
+            referral.total_referrals  = max(0, int(referral.total_earnings) // 200)
+            referral.total_paid_out  += order_total
+            referral.last_payout_amount = order_total
+            referral.last_payout_date   = period_end
+            referral.save(update_fields=[
+                "total_earnings",
+                "total_referrals",
+                "total_paid_out",
+                "last_payout_amount",
+                "last_payout_date",
+            ])
+
+            # ── Record payout history ─────────────────────────────────────────
+            PayoutHistory.objects.create(
+                referral=referral,
+                amount=order_total,
+                referral_count=int(order_total) // 200,
+                period_start=period_start,
+                period_end=period_end,
+                email_sent=False,
+                notes=f"Wallet payment for order {order.order_number}",
+            )
+
+            # ── Record transaction ────────────────────────────────────────────
+            wallet_ref = f"WALLET-{order.order_number}-{uuid.uuid4().hex[:8].upper()}"
+            Transaction.objects.create(
+                order=order,
+                transaction_id=wallet_ref,
+                amount=order_total,
+                status="COMPLETED",
+                payment_method="WALLET",
+            )
+
+            # ── Mark order as paid ────────────────────────────────────────────
+            order.order_status = "PAID"
+            order.save()
+
+            # ── Post-payment pipeline (same as Paystack verify) ───────────────
+            vendors_oos = deduct_inventory(order_items)
+            transaction.on_commit(lambda: send_out_of_stock_emails(vendors_oos))
+            transaction.on_commit(lambda: send_vendor_order_emails(order, order_items))
+            transaction.on_commit(lambda: send_customer_receipt_email(order, order_items))
+            transaction.on_commit(lambda: send_admin_notifications(order, order_items))
+
+            from order.util.notifications_utils import send_order_notifications
+            transaction.on_commit(
+                lambda: _safe_call(send_order_notifications, order, order_items)
+            )
+
+            first_vendor = order_items[0].vendor if order_items else None
+            if first_vendor:
+                transaction.on_commit(
+                    lambda o=order, v=first_vendor: _safe_call(_dispatch_delivery_opportunities, o, v)
+                )
+
+            # ── Clear cart ────────────────────────────────────────────────────
+            try:
+                user_cart = Cart.objects.filter(user=request.user).first()
+                if user_cart:
+                    deleted_count, _ = CartItem.objects.filter(cart=user_cart).delete()
+                    logger.info(
+                        "Cleared %d cart item(s) for user %s after wallet payment ref=%s",
+                        deleted_count, request.user.email, wallet_ref,
+                    )
+            except Exception:
+                logger.exception(
+                    "Failed to clear cart for user %s after wallet payment ref=%s",
+                    request.user.email, wallet_ref,
+                )
+
+        return Response(
+            {
+                "status": "success",
+                "message": "Payment successful. Your order is being processed.",
+                "order_number": order.order_number,
+                "amount_deducted": float(order_total),
+                "remaining_balance": float(referral.total_earnings),
+                "transaction_reference": wallet_ref,
+            },
+            status=status.HTTP_200_OK,
+        )

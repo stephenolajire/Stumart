@@ -798,22 +798,16 @@ def send_admin_transfer_summary_email(order, opportunity, transfer_results: dict
 # ─────────────────────────────────────────────────────────────
 # EMAIL — ADMIN NEW ORDER NOTIFICATION
 # ─────────────────────────────────────────────────────────────
-
 def send_admin_notifications(order, order_items) -> None:
     """
     Notify all admin users by email when a new order is paid.
-    Called via transaction.on_commit after payment verification.
+    Admin emails are sourced from settings.ADMIN_EMAILS (env: ADMIN_EMAILS).
     """
-    from user.models import User
-
     try:
-        admin_emails = list(
-            User.objects.filter(user_type="admin", is_active=True)
-            .values_list("email", flat=True)
-        )
+        admin_emails = getattr(settings, "ADMIN_EMAILS", [])
 
         if not admin_emails:
-            logger.warning("No active admin users found to notify for order %s", order.order_number)
+            logger.warning("No admin emails configured in settings.ADMIN_EMAILS for order %s", order.order_number)
             return
 
         items_summary = "\n".join(

@@ -7,6 +7,8 @@ export const orderService = {
 
   verifyPayment: (params) => api.get("order/payment/verify/", { params }),
 
+  payWithWallet: (data) => api.post("order/payment/wallet/", data), // ← new
+
   getOrderDetail: (orderNumber) => api.get(`order/${orderNumber}/`),
 
   getOrderHistory: () => api.get("order/history/"),

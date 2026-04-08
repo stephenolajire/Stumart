@@ -3,7 +3,258 @@ import { GlobalContext } from "../constant/GlobalContext";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import Swal from "sweetalert2";
-import { useCreateOrder, useInitializePayment } from "../hooks/useOrder";
+import {
+  useCreateOrder,
+  useInitializePayment,
+  usePayWithWallet,
+} from "../hooks/useOrder";
+import { useReferral } from "../hooks/useReferral";
+
+// ── Error Modal ───────────────────────────────────────────────────────────────
+
+const ErrorModal = ({ error, onClose }) => {
+  if (!error) return null;
+
+  const hasInstitutionDetails = error?.error_details?.vendors_by_institution;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Modal */}
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+        {/* Top accent bar */}
+        <div className="h-1.5 w-full bg-red-500" />
+
+        <div className="p-6">
+          {/* Icon + Title */}
+          <div className="flex items-start gap-4 mb-4">
+            <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0 mt-0.5">
+              <svg
+                className="w-5 h-5 text-red-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
+                />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-gray-900">
+                {error.title || "Checkout Error"}
+              </h3>
+              <p className="text-sm text-gray-500 mt-0.5">
+                {error.message || "Something went wrong. Please try again."}
+              </p>
+            </div>
+          </div>
+
+          {/* Institution breakdown if present */}
+          {hasInstitutionDetails && (
+            <div className="mt-4 bg-gray-50 border border-gray-100 rounded-xl p-4 text-sm space-y-3">
+              <p className="font-medium text-gray-700">
+                Vendors by institution:
+              </p>
+              {Object.entries(error.error_details.vendors_by_institution).map(
+                ([institution, vendors]) => (
+                  <div key={institution}>
+                    <p className="font-medium text-gray-900">{institution}</p>
+                    <ul className="mt-1 space-y-0.5 pl-3">
+                      {vendors.map((v, i) => (
+                        <li key={i} className="text-gray-500 text-xs">
+                          • {typeof v === "string" ? v : v.vendor_name}
+                          {v.product_name ? ` — ${v.product_name}` : ""}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ),
+              )}
+              {error.error_details.suggestion && (
+                <p className="text-xs text-blue-600 font-medium pt-1 border-t border-gray-200">
+                  💡 {error.error_details.suggestion}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="flex gap-3 mt-6">
+            <button
+              onClick={onClose}
+              className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 rounded-xl text-sm transition-colors"
+            >
+              Try Again
+            </button>
+            {hasInstitutionDetails && (
+              <button
+                onClick={() => {
+                  onClose();
+                  window.history.back();
+                }}
+                className="flex-1 bg-red-500 hover:bg-red-600 text-white font-medium py-2.5 rounded-xl text-sm transition-colors"
+              >
+                Back to Cart
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ── Payment Method Selector ───────────────────────────────────────────────────
+
+const PaymentMethodSelector = ({
+  selected,
+  onChange,
+  walletBalance,
+  orderTotal,
+  hasWallet,
+}) => {
+  const canPayWithWallet = hasWallet && walletBalance >= orderTotal;
+
+  return (
+    <div className="space-y-3">
+      <h3 className="text-lg font-bold text-gray-900">Payment Method</h3>
+      <p className="text-sm text-gray-500 -mt-1">
+        Choose how you want to pay for this order.
+      </p>
+
+      <div className="grid grid-cols-1 gap-3">
+        {/* Paystack */}
+        <button
+          type="button"
+          onClick={() => onChange("paystack")}
+          className={`flex items-center gap-4 px-4 py-4 rounded-xl border-2 text-left transition-all duration-200 ${
+            selected === "paystack"
+              ? "border-yellow-400 bg-yellow-50"
+              : "border-gray-200 bg-white hover:border-yellow-200 hover:bg-yellow-50/40"
+          }`}
+        >
+          <div className="w-10 h-10 rounded-lg bg-[#0BA4DB]/10 flex items-center justify-center shrink-0">
+            <svg
+              className="w-5 h-5 text-[#0BA4DB]"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+            >
+              <path d="M20 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z" />
+            </svg>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-gray-900">
+              Pay with Paystack
+            </p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Card, bank transfer, or USSD
+            </p>
+          </div>
+          {selected === "paystack" && (
+            <div className="w-5 h-5 rounded-full bg-yellow-400 flex items-center justify-center shrink-0">
+              <svg
+                className="w-3 h-3 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={3}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+            </div>
+          )}
+        </button>
+
+        {/* Wallet */}
+        <button
+          type="button"
+          onClick={() => canPayWithWallet && onChange("wallet")}
+          disabled={!canPayWithWallet}
+          className={`flex items-center gap-4 px-4 py-4 rounded-xl border-2 text-left transition-all duration-200 ${
+            !canPayWithWallet
+              ? "border-gray-100 bg-gray-50 opacity-60 cursor-not-allowed"
+              : selected === "wallet"
+                ? "border-amber-400 bg-amber-50"
+                : "border-gray-200 bg-white hover:border-amber-200 hover:bg-amber-50/40"
+          }`}
+        >
+          <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
+            <svg
+              className="w-5 h-5 text-amber-600"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={1.5}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M21 12a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18-3a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 9m18 0V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v3"
+              />
+            </svg>
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-semibold text-gray-900">
+                Pay with Wallet
+              </p>
+              {hasWallet && (
+                <span
+                  className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                    canPayWithWallet
+                      ? "bg-emerald-100 text-emerald-700"
+                      : "bg-red-100 text-red-600"
+                  }`}
+                >
+                  ₦{Number(walletBalance).toLocaleString()}
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {!hasWallet
+                ? "No referral wallet found"
+                : !canPayWithWallet
+                  ? `Insufficient — need ₦${Number(orderTotal).toLocaleString()}`
+                  : "Pay instantly from your referral earnings"}
+            </p>
+          </div>
+          {selected === "wallet" && canPayWithWallet && (
+            <div className="w-5 h-5 rounded-full bg-amber-400 flex items-center justify-center shrink-0">
+              <svg
+                className="w-3 h-3 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={3}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+            </div>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// ── Main Checkout Component ───────────────────────────────────────────────────
 
 const Checkout = () => {
   const [formData, setFormData] = useState({
@@ -18,6 +269,8 @@ const Checkout = () => {
   });
 
   const [vendorNearby, setVendorNearby] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState("paystack");
+  const [modalError, setModalError] = useState(null);
 
   const { useCart } = useContext(GlobalContext);
   const navigate = useNavigate();
@@ -27,7 +280,6 @@ const Checkout = () => {
     isLoading: cartLoading,
     error: cartError,
   } = useCart();
-
   const cartItems = cartData?.items || [];
   const cartSummary = cartData?.summary || {
     subTotal: 0,
@@ -37,9 +289,18 @@ const Checkout = () => {
     total: 0,
   };
 
+  // Referral wallet
+  const {
+    hasReferral,
+    pendingPayout: walletBalance,
+    isLoadingProfile: walletLoading,
+  } = useReferral();
+
   const { mutate: createOrder, isPending: isCreatingOrder } = useCreateOrder();
   const { mutate: initializePayment, isPending: isInitializingPayment } =
     useInitializePayment();
+  const { mutate: payWithWallet, isPending: isPayingWithWallet } =
+    usePayWithWallet();
 
   const checkDeliveryTimeAvailability = () => {
     const now = new Date();
@@ -100,37 +361,18 @@ const Checkout = () => {
 
   const handleCheckoutError = (err) => {
     if (err.response?.data?.error_details) {
-      const errorDetails = err.response.data.error_details;
-      const vendorsByInstitution = errorDetails.vendors_by_institution;
-      let institutionDetails = "";
-      Object.entries(vendorsByInstitution).forEach(([institution, vendors]) => {
-        institutionDetails += `<strong>${institution}:</strong><br>`;
-        vendors.forEach((vendor) => {
-          institutionDetails += `• ${vendor}<br>`;
-        });
-        institutionDetails += "<br>";
-      });
-      Swal.fire({
-        icon: "error",
+      setModalError({
         title: "Order Cannot Be Processed",
-        html: `<div style="text-align: left;"><p><strong>Error:</strong> ${err.response.data.message}</p><br><p><strong>Vendors by Institution:</strong></p><div style="margin-left: 10px;">${institutionDetails}</div><p><strong>Suggestion:</strong> ${errorDetails.suggestion}</p></div>`,
-        confirmButtonText: "Go Back to Cart",
-        confirmButtonColor: "#3085d6",
-        width: "500px",
-      }).then((result) => {
-        if (result.isConfirmed) navigate(-1);
+        message: err.response.data.message,
+        error_details: err.response.data.error_details,
       });
     } else {
-      const errorMessage =
-        err.response?.data?.message ||
-        err.response?.data?.error ||
-        "An error occurred during checkout. Please try again.";
-      Swal.fire({
-        icon: "error",
+      setModalError({
         title: "Checkout Error",
-        text: errorMessage,
-        confirmButtonText: "Try Again",
-        confirmButtonColor: "#3085d6",
+        message:
+          err.response?.data?.message ||
+          err.response?.data?.error ||
+          "An error occurred during checkout. Please try again.",
       });
     }
   };
@@ -146,6 +388,26 @@ const Checkout = () => {
     const { name, value, type, checked } = e.target;
     setFormData({ ...formData, [name]: type === "checkbox" ? checked : value });
   };
+
+  const buildOrderData = () => ({
+    first_name: formData.firstName,
+    last_name: formData.lastName,
+    email: formData.email,
+    phone: formData.phone,
+    address: formData.address,
+    room_number: formData.room,
+    cart_items: cartItems.map((item) => item.id),
+    subtotal: cartSummary.subTotal,
+    shipping_fee: cartSummary.shippingFee,
+    tax: cartSummary.tax,
+    takeaway: cartSummary.takeaway,
+    total: cartSummary.total,
+    vendor_is_nearby: vendorNearby,
+    ...(cartData?.vendors && { vendors: cartData.vendors }),
+    ...(formData.referralCode.trim() && {
+      referral_code: formData.referralCode.trim().toUpperCase(),
+    }),
+  });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -192,26 +454,47 @@ const Checkout = () => {
       return;
     }
 
-    const orderData = {
-      first_name: formData.firstName,
-      last_name: formData.lastName,
-      email: formData.email,
-      phone: formData.phone,
-      address: formData.address,
-      room_number: formData.room,
-      cart_items: cartItems.map((item) => item.id),
-      subtotal: cartSummary.subTotal,
-      shipping_fee: cartSummary.shippingFee,
-      tax: cartSummary.tax,
-      takeaway: cartSummary.takeaway,
-      total: cartSummary.total,
-      vendor_is_nearby: vendorNearby,
-      ...(cartData?.vendors && { vendors: cartData.vendors }),
-      ...(formData.referralCode.trim() && {
-        referral_code: formData.referralCode.trim().toUpperCase(),
-      }),
-    };
+    const orderData = buildOrderData();
 
+    // ── Wallet flow ───────────────────────────────────────────────────────────
+    if (paymentMethod === "wallet") {
+      createOrder(orderData, {
+        onSuccess: (data) => {
+          localStorage.setItem("order_id", data.order_id);
+          payWithWallet(
+            { order_id: data.order_id },
+            {
+              onSuccess: (payData) => {
+                Swal.fire({
+                  icon: "success",
+                  title: "Payment Successful!",
+                  html: `
+                    <p class="text-gray-600">Your order <strong>${payData.order_number}</strong> has been placed.</p>
+                    <p class="text-sm text-gray-400 mt-2">₦${Number(payData.amount_deducted).toLocaleString()} deducted from your wallet.</p>
+                  `,
+                  confirmButtonText: "View Order",
+                  confirmButtonColor: "#EAB308",
+                }).then(() => {
+                  navigate(`/orders/${payData.order_number}`);
+                });
+              },
+              onError: (err) => {
+                setModalError({
+                  title: "Wallet Payment Failed",
+                  message:
+                    err.response?.data?.message ||
+                    "Unable to process wallet payment. Please try again or use Paystack.",
+                });
+              },
+            },
+          );
+        },
+        onError: handleCheckoutError,
+      });
+      return;
+    }
+
+    // ── Paystack flow (original) ──────────────────────────────────────────────
     createOrder(orderData, {
       onSuccess: (data) => {
         localStorage.setItem("order_id", data.order_id);
@@ -239,7 +522,11 @@ const Checkout = () => {
     });
   };
 
-  const isLoading = isCreatingOrder || isInitializingPayment || cartLoading;
+  const isLoading =
+    isCreatingOrder ||
+    isInitializingPayment ||
+    isPayingWithWallet ||
+    cartLoading;
 
   if (cartLoading) {
     return (
@@ -247,7 +534,7 @@ const Checkout = () => {
         <Header title="Checkout" />
         <div className="flex items-center justify-center py-20">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mx-auto mb-4" />
             <p className="text-gray-600">Loading cart...</p>
           </div>
         </div>
@@ -298,427 +585,465 @@ const Checkout = () => {
   const deliveryStatus = checkDeliveryTimeAvailability();
 
   return (
-    <div className="h-auto bg-gray-50 py-4 mt-38 lg:mt-0">
-      <div className="w-full mx-auto px-4 md:px-8">
-        {/* Delivery Hours Banner */}
-        <div className="mb-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg">
-          <div className="flex items-start">
-            <div className="shrink-0">
-              <svg
-                className="h-5 w-5 text-blue-500"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm text-blue-700">
-                <strong>Delivery Hours:</strong> Our riders are available from
-                7:00 AM to 6:00 PM daily.
-                {deliveryStatus.available && (
-                  <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    ✓ Available Now
-                  </span>
-                )}
-              </p>
+    <>
+      {/* Error Modal */}
+      <ErrorModal error={modalError} onClose={() => setModalError(null)} />
+
+      <div className="h-auto bg-gray-50 py-4 mt-38 lg:mt-0">
+        <div className="w-full mx-auto px-4 md:px-8">
+          {/* Delivery Hours Banner */}
+          <div className="mb-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg">
+            <div className="flex items-start">
+              <div className="shrink-0">
+                <svg
+                  className="h-5 w-5 text-blue-500"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-blue-700">
+                  <strong>Delivery Hours:</strong> Our riders are available from
+                  7:00 AM to 6:00 PM daily.
+                  {deliveryStatus.available && (
+                    <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      ✓ Available Now
+                    </span>
+                  )}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Checkout Form */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-2xl shadow-lg p-8">
-              <form onSubmit={handleSubmit} className="space-y-8">
-                {/* Contact Information */}
-                <div className="border-b border-gray-200 pb-8">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-6">
-                    Contact Information
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label
-                        htmlFor="firstName"
-                        className="block text-sm font-medium text-gray-700 mb-2"
-                      >
-                        First Name
-                      </label>
-                      <input
-                        type="text"
-                        id="firstName"
-                        name="firstName"
-                        value={formData.firstName}
-                        onChange={handleInputChange}
-                        required
-                        disabled={isLoading}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
-                      />
-                    </div>
-                    <div>
-                      <label
-                        htmlFor="lastName"
-                        className="block text-sm font-medium text-gray-700 mb-2"
-                      >
-                        Last Name
-                      </label>
-                      <input
-                        type="text"
-                        id="lastName"
-                        name="lastName"
-                        value={formData.lastName}
-                        onChange={handleInputChange}
-                        required
-                        disabled={isLoading}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                    <div>
-                      <label
-                        htmlFor="email"
-                        className="block text-sm font-medium text-gray-700 mb-2"
-                      >
-                        Email Address
-                      </label>
-                      <input
-                        type="email"
-                        id="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleInputChange}
-                        required
-                        disabled={isLoading}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
-                      />
-                    </div>
-                    <div>
-                      <label
-                        htmlFor="phone"
-                        className="block text-sm font-medium text-gray-700 mb-2"
-                      >
-                        Phone Number
-                      </label>
-                      <input
-                        type="tel"
-                        id="phone"
-                        name="phone"
-                        value={formData.phone}
-                        onChange={handleInputChange}
-                        required
-                        disabled={isLoading}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="mt-6">
-                    <label
-                      htmlFor="referralCode"
-                      className="block text-sm font-medium text-gray-700 mb-2"
-                    >
-                      Referral Code{" "}
-                      <span className="text-gray-500 font-normal">
-                        (Optional)
-                      </span>
-                    </label>
-                    <input
-                      type="text"
-                      id="referralCode"
-                      name="referralCode"
-                      value={formData.referralCode}
-                      onChange={handleInputChange}
-                      placeholder="Enter referral code"
-                      disabled={isLoading}
-                      maxLength={20}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed uppercase"
-                      style={{ textTransform: "uppercase" }}
-                    />
-                    <p className="mt-2 text-sm text-gray-500">
-                      Have a referral code? Enter it here to support your
-                      referrer!
-                    </p>
-                  </div>
-                </div>
-
-                {/* Shipping Address */}
-                <div className="space-y-6 border-b border-gray-200 pb-8">
-                  <h3 className="text-2xl font-bold text-gray-900">
-                    Shipping Address
-                  </h3>
-
-                  <div>
-                    <label
-                      htmlFor="address"
-                      className="block text-sm font-medium text-gray-700 mb-2"
-                    >
-                      Hostel Address
-                    </label>
-                    <input
-                      type="text"
-                      id="address"
-                      name="address"
-                      value={formData.address}
-                      onChange={handleInputChange}
-                      required
-                      disabled={isLoading}
-                      placeholder="Enter your hostel address"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label
-                        htmlFor="room"
-                        className="block text-sm font-medium text-gray-700 mb-2"
-                      >
-                        Delivery Address
-                      </label>
-                      <input
-                        type="text"
-                        id="room"
-                        name="room"
-                        value={formData.room}
-                        onChange={handleInputChange}
-                        required
-                        disabled={isLoading}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Vendor Proximity Question */}
-                <div className="space-y-3">
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-900">
-                      Is this vendor near you?
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Checkout Form */}
+            <div className="lg:col-span-2">
+              <div className="bg-white rounded-2xl shadow-lg p-8">
+                <form onSubmit={handleSubmit} className="space-y-8">
+                  {/* Contact Information */}
+                  <div className="border-b border-gray-200 pb-8">
+                    <h3 className="text-2xl font-bold text-gray-900 mb-6">
+                      Contact Information
                     </h3>
-                    <p className="text-sm text-gray-500 mt-0.5">
-                      This helps us match you with a nearby student picker if
-                      one is available.
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      disabled={isLoading}
-                      onClick={() => setVendorNearby(true)}
-                      className={`flex items-center justify-center gap-2.5 px-4 py-4 rounded-xl border-2 font-medium text-sm transition-all duration-200 disabled:cursor-not-allowed ${
-                        vendorNearby === true
-                          ? "border-yellow-400 bg-yellow-50 text-yellow-800"
-                          : "border-gray-200 bg-white text-gray-600 hover:border-yellow-200 hover:bg-yellow-50/40"
-                      }`}
-                    >
-                      <span className="text-xl leading-none">📍</span>
-                      <span>Yes, nearby</span>
-                      {vendorNearby === true && (
-                        <span className="ml-auto w-4 h-4 rounded-full bg-yellow-400 flex items-center justify-center shrink-0">
-                          <svg
-                            className="w-2.5 h-2.5 text-white"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth={3}
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M5 13l4 4L19 7"
-                            />
-                          </svg>
-                        </span>
-                      )}
-                    </button>
-
-                    <button
-                      type="button"
-                      disabled={isLoading}
-                      onClick={() => setVendorNearby(false)}
-                      className={`flex items-center justify-center gap-2.5 px-4 py-4 rounded-xl border-2 font-medium text-sm transition-all duration-200 disabled:cursor-not-allowed ${
-                        vendorNearby === false
-                          ? "border-gray-400 bg-gray-50 text-gray-800"
-                          : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50"
-                      }`}
-                    >
-                      <span className="text-xl leading-none">🗺️</span>
-                      <span>No, far away</span>
-                      {vendorNearby === false && (
-                        <span className="ml-auto w-4 h-4 rounded-full bg-gray-400 flex items-center justify-center shrink-0">
-                          <svg
-                            className="w-2.5 h-2.5 text-white"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth={3}
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M5 13l4 4L19 7"
-                            />
-                          </svg>
-                        </span>
-                      )}
-                    </button>
-                  </div>
-
-                  {vendorNearby === true && (
-                    <p className="text-xs text-yellow-700 bg-yellow-50 border border-yellow-100 rounded-lg px-3 py-2 flex items-start gap-1.5">
-                      <span className="mt-0.5 shrink-0">🎒</span>A student
-                      picker near you may be assigned to handle this delivery.
-                    </p>
-                  )}
-                  {vendorNearby === false && (
-                    <p className="text-xs text-gray-500 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 flex items-start gap-1.5">
-                      <span className="mt-0.5 shrink-0">🛵</span>Your order
-                      will be assigned to a regular delivery rider.
-                    </p>
-                  )}
-                </div>
-
-                {/* Form Actions */}
-                <div className="flex flex-col sm:flex-row gap-4 pt-2">
-                  <button
-                    type="button"
-                    onClick={goback}
-                    disabled={isLoading}
-                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Back to Cart
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="flex-1 bg-linear-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]"
-                  >
-                    {isLoading ? (
-                      <span className="flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                        Processing...
-                      </span>
-                    ) : (
-                      "Place Order & Pay"
-                    )}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-
-          {/* Order Summary */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl shadow-lg p-8 sticky top-8">
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">
-                Order Summary
-              </h3>
-
-              <div className="space-y-4 mb-8">
-                {cartItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="border-b border-gray-100 pb-4 last:border-b-0 last:pb-0"
-                  >
-                    <div className="flex items-start space-x-4">
-                      <div className="relative shrink-0">
-                        <img
-                          src={item.product_image}
-                          alt={item.product_name}
-                          className="w-16 h-16 object-cover rounded-lg"
-                          onError={(e) => {
-                            e.target.src = "/placeholder-image.png";
-                          }}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label
+                          htmlFor="firstName"
+                          className="block text-sm font-medium text-gray-700 mb-2"
+                        >
+                          First Name
+                        </label>
+                        <input
+                          type="text"
+                          id="firstName"
+                          name="firstName"
+                          value={formData.firstName}
+                          onChange={handleInputChange}
+                          required
+                          disabled={isLoading}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
                         />
-                        <span className="absolute -top-2 -right-2 bg-yellow-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-medium">
-                          {item.quantity}
-                        </span>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="text-sm font-medium text-gray-900 truncate">
-                          {item.product_name}
-                        </h4>
-                        <span className="text-lg font-bold text-yellow-600">
-                          {formatCurrency(Number(item.product_price))}
-                        </span>
+                      <div>
+                        <label
+                          htmlFor="lastName"
+                          className="block text-sm font-medium text-gray-700 mb-2"
+                        >
+                          Last Name
+                        </label>
+                        <input
+                          type="text"
+                          id="lastName"
+                          name="lastName"
+                          value={formData.lastName}
+                          onChange={handleInputChange}
+                          required
+                          disabled={isLoading}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        />
                       </div>
                     </div>
-                    {item.delivery_day && (
-                      <div className="mt-3 pt-3 border-t border-gray-100">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Delivery Day</span>
-                          <span className="font-medium text-gray-900">
-                            {item.delivery_day}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                      <div>
+                        <label
+                          htmlFor="email"
+                          className="block text-sm font-medium text-gray-700 mb-2"
+                        >
+                          Email Address
+                        </label>
+                        <input
+                          type="email"
+                          id="email"
+                          name="email"
+                          value={formData.email}
+                          onChange={handleInputChange}
+                          required
+                          disabled={isLoading}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        />
+                      </div>
+                      <div>
+                        <label
+                          htmlFor="phone"
+                          className="block text-sm font-medium text-gray-700 mb-2"
+                        >
+                          Phone Number
+                        </label>
+                        <input
+                          type="tel"
+                          id="phone"
+                          name="phone"
+                          value={formData.phone}
+                          onChange={handleInputChange}
+                          required
+                          disabled={isLoading}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mt-6">
+                      <label
+                        htmlFor="referralCode"
+                        className="block text-sm font-medium text-gray-700 mb-2"
+                      >
+                        Referral Code{" "}
+                        <span className="text-gray-500 font-normal">
+                          (Optional)
+                        </span>
+                      </label>
+                      <input
+                        type="text"
+                        id="referralCode"
+                        name="referralCode"
+                        value={formData.referralCode}
+                        onChange={handleInputChange}
+                        placeholder="Enter referral code"
+                        disabled={isLoading}
+                        maxLength={20}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed uppercase"
+                        style={{ textTransform: "uppercase" }}
+                      />
+                      <p className="mt-2 text-sm text-gray-500">
+                        Have a referral code? Enter it here to support your
+                        referrer!
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Shipping Address */}
+                  <div className="space-y-6 border-b border-gray-200 pb-8">
+                    <h3 className="text-2xl font-bold text-gray-900">
+                      Shipping Address
+                    </h3>
+                    <div>
+                      <label
+                        htmlFor="address"
+                        className="block text-sm font-medium text-gray-700 mb-2"
+                      >
+                        Hostel Address
+                      </label>
+                      <input
+                        type="text"
+                        id="address"
+                        name="address"
+                        value={formData.address}
+                        onChange={handleInputChange}
+                        required
+                        disabled={isLoading}
+                        placeholder="Enter your hostel address"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label
+                          htmlFor="room"
+                          className="block text-sm font-medium text-gray-700 mb-2"
+                        >
+                          Delivery Address
+                        </label>
+                        <input
+                          type="text"
+                          id="room"
+                          name="room"
+                          value={formData.room}
+                          onChange={handleInputChange}
+                          required
+                          disabled={isLoading}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Vendor Proximity */}
+                  <div className="space-y-3 border-b border-gray-200 pb-8">
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-900">
+                        Is this vendor near you?
+                      </h3>
+                      <p className="text-sm text-gray-500 mt-0.5">
+                        This helps us match you with a nearby student picker if
+                        one is available.
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        disabled={isLoading}
+                        onClick={() => setVendorNearby(true)}
+                        className={`flex items-center justify-center gap-2.5 px-4 py-4 rounded-xl border-2 font-medium text-sm transition-all duration-200 disabled:cursor-not-allowed ${
+                          vendorNearby === true
+                            ? "border-yellow-400 bg-yellow-50 text-yellow-800"
+                            : "border-gray-200 bg-white text-gray-600 hover:border-yellow-200 hover:bg-yellow-50/40"
+                        }`}
+                      >
+                        <span className="text-xl leading-none">📍</span>
+                        <span>Yes, nearby</span>
+                        {vendorNearby === true && (
+                          <span className="ml-auto w-4 h-4 rounded-full bg-yellow-400 flex items-center justify-center shrink-0">
+                            <svg
+                              className="w-2.5 h-2.5 text-white"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth={3}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M5 13l4 4L19 7"
+                              />
+                            </svg>
+                          </span>
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isLoading}
+                        onClick={() => setVendorNearby(false)}
+                        className={`flex items-center justify-center gap-2.5 px-4 py-4 rounded-xl border-2 font-medium text-sm transition-all duration-200 disabled:cursor-not-allowed ${
+                          vendorNearby === false
+                            ? "border-gray-400 bg-gray-50 text-gray-800"
+                            : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50"
+                        }`}
+                      >
+                        <span className="text-xl leading-none">🗺️</span>
+                        <span>No, far away</span>
+                        {vendorNearby === false && (
+                          <span className="ml-auto w-4 h-4 rounded-full bg-gray-400 flex items-center justify-center shrink-0">
+                            <svg
+                              className="w-2.5 h-2.5 text-white"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth={3}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M5 13l4 4L19 7"
+                              />
+                            </svg>
+                          </span>
+                        )}
+                      </button>
+                    </div>
+                    {vendorNearby === true && (
+                      <p className="text-xs text-yellow-700 bg-yellow-50 border border-yellow-100 rounded-lg px-3 py-2 flex items-start gap-1.5">
+                        <span className="mt-0.5 shrink-0">🎒</span>A student
+                        picker near you may be assigned to handle this delivery.
+                      </p>
+                    )}
+                    {vendorNearby === false && (
+                      <p className="text-xs text-gray-500 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 flex items-start gap-1.5">
+                        <span className="mt-0.5 shrink-0">🛵</span>Your order
+                        will be assigned to a regular delivery rider.
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Payment Method */}
+                  <div className="border-b border-gray-200 pb-8">
+                    <PaymentMethodSelector
+                      selected={paymentMethod}
+                      onChange={setPaymentMethod}
+                      walletBalance={walletBalance ?? 0}
+                      orderTotal={cartSummary.total}
+                      hasWallet={hasReferral && !walletLoading}
+                    />
+                  </div>
+
+                  {/* Form Actions */}
+                  <div className="flex flex-col sm:flex-row gap-4 pt-2">
+                    <button
+                      type="button"
+                      onClick={goback}
+                      disabled={isLoading}
+                      className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Back to Cart
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className={`flex-1 font-semibold py-3 px-6 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] text-white ${
+                        paymentMethod === "wallet"
+                          ? "bg-amber-500 hover:bg-amber-600"
+                          : "bg-linear-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700"
+                      }`}
+                    >
+                      {isLoading ? (
+                        <span className="flex items-center justify-center">
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2" />
+                          Processing...
+                        </span>
+                      ) : paymentMethod === "wallet" ? (
+                        "Place Order & Pay from Wallet"
+                      ) : (
+                        "Place Order & Pay"
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            {/* Order Summary */}
+            <div className="lg:col-span-1">
+              <div className="bg-white rounded-2xl shadow-lg p-8 sticky top-8">
+                <h3 className="text-2xl font-bold text-gray-900 mb-6">
+                  Order Summary
+                </h3>
+                <div className="space-y-4 mb-8">
+                  {cartItems.map((item) => (
+                    <div
+                      key={item.id}
+                      className="border-b border-gray-100 pb-4 last:border-b-0 last:pb-0"
+                    >
+                      <div className="flex items-start space-x-4">
+                        <div className="relative shrink-0">
+                          <img
+                            src={item.product_image}
+                            alt={item.product_name}
+                            className="w-16 h-16 object-cover rounded-lg"
+                            onError={(e) => {
+                              e.target.src = "/placeholder-image.png";
+                            }}
+                          />
+                          <span className="absolute -top-2 -right-2 bg-yellow-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-medium">
+                            {item.quantity}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-medium text-gray-900 truncate">
+                            {item.product_name}
+                          </h4>
+                          <span className="text-lg font-bold text-yellow-600">
+                            {formatCurrency(Number(item.product_price))}
                           </span>
                         </div>
                       </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+                      {item.delivery_day && (
+                        <div className="mt-3 pt-3 border-t border-gray-100">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">Delivery Day</span>
+                            <span className="font-medium text-gray-900">
+                              {item.delivery_day}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
 
-              <div className="space-y-3 pt-6 border-t border-gray-200">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Subtotal</span>
-                  <span className="font-medium text-gray-900">
-                    {formatCurrency(cartSummary.subTotal)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Shipping</span>
-                  <span className="font-medium text-gray-900">
-                    {formatCurrency(cartSummary.shippingFee)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Tax</span>
-                  <span className="font-medium text-gray-900">
-                    {formatCurrency(cartSummary.tax)}
-                  </span>
-                </div>
-                {cartSummary.takeaway > 0 && (
+                <div className="space-y-3 pt-6 border-t border-gray-200">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Takeaway Fee</span>
+                    <span className="text-gray-600">Subtotal</span>
                     <span className="font-medium text-gray-900">
-                      {formatCurrency(cartSummary.takeaway)}
+                      {formatCurrency(cartSummary.subTotal)}
                     </span>
                   </div>
-                )}
-                <div className="flex justify-between text-lg font-bold text-gray-900 pt-3 border-t border-gray-200">
-                  <span>Total</span>
-                  <span className="text-yellow-600">
-                    {formatCurrency(cartSummary.total)}
-                  </span>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Shipping</span>
+                    <span className="font-medium text-gray-900">
+                      {formatCurrency(cartSummary.shippingFee)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Tax</span>
+                    <span className="font-medium text-gray-900">
+                      {formatCurrency(cartSummary.tax)}
+                    </span>
+                  </div>
+                  {cartSummary.takeaway > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Takeaway Fee</span>
+                      <span className="font-medium text-gray-900">
+                        {formatCurrency(cartSummary.takeaway)}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-lg font-bold text-gray-900 pt-3 border-t border-gray-200">
+                    <span>Total</span>
+                    <span className="text-yellow-600">
+                      {formatCurrency(cartSummary.total)}
+                    </span>
+                  </div>
                 </div>
-              </div>
 
-              {vendorNearby !== null && (
+                {/* Payment method badge in summary */}
                 <div className="mt-4 pt-4 border-t border-gray-100">
                   <div
-                    className={`flex items-center gap-2 text-xs rounded-lg px-3 py-2 ${vendorNearby ? "bg-yellow-50 text-yellow-700" : "bg-gray-50 text-gray-500"}`}
+                    className={`flex items-center gap-2 text-xs rounded-lg px-3 py-2 ${
+                      paymentMethod === "wallet"
+                        ? "bg-amber-50 text-amber-700"
+                        : "bg-blue-50 text-blue-700"
+                    }`}
                   >
-                    <span>{vendorNearby ? "📍" : "🗺️"}</span>
+                    <span>{paymentMethod === "wallet" ? "👛" : "💳"}</span>
                     <span className="font-medium">
-                      {vendorNearby
-                        ? "Vendor marked as nearby"
-                        : "Vendor marked as far away"}
+                      {paymentMethod === "wallet"
+                        ? "Paying from referral wallet"
+                        : "Paying via Paystack"}
                     </span>
                   </div>
                 </div>
-              )}
+
+                {vendorNearby !== null && (
+                  <div className="mt-3">
+                    <div
+                      className={`flex items-center gap-2 text-xs rounded-lg px-3 py-2 ${
+                        vendorNearby
+                          ? "bg-yellow-50 text-yellow-700"
+                          : "bg-gray-50 text-gray-500"
+                      }`}
+                    >
+                      <span>{vendorNearby ? "📍" : "🗺️"}</span>
+                      <span className="font-medium">
+                        {vendorNearby
+                          ? "Vendor marked as nearby"
+                          : "Vendor marked as far away"}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

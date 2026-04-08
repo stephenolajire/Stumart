@@ -123,3 +123,13 @@ export const useCustomerConfirmDelivery = () => {
     },
   });
 };
+
+export const usePayWithWallet = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data) => orderService.payWithWallet(data).then((r) => r.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: orderKeys.history });
+    },
+  });
+};

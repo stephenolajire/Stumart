@@ -10,6 +10,7 @@ from .views import (
     PackOrderView,
     PaystackPaymentInitializeView,
     PaystackPaymentVerifyView,
+    WalletPaymentView,
 )
 
 app_name = "order"
@@ -55,4 +56,7 @@ urlpatterns = [
 
     # POST  order/delivery/customer-confirm/
     path("order/delivery/customer-confirm/", CustomerConfirmationView.as_view(), name="customer-confirm"),
+
+    # inside urlpatterns:
+    path("order/payment/wallet/", WalletPaymentView.as_view(), name="payment-wallet"),
 ]
