@@ -43,13 +43,13 @@ export default function ReferralWallet() {
 
   if (isLoadingProfile) {
     return (
-      <div className="w-full p-6 animate-pulse bg-gray-100 h-64 rounded-2xl" />
+      <div className="w-[95%] mx-auto p-6 animate-pulse bg-gray-100 h-64 rounded-2xl" />
     );
   }
 
   if (!hasReferral) {
     return (
-      <div className="w-full px-4 py-16">
+      <div className="w-[95%] mx-auto py-16">
         <div className="bg-white border border-dashed border-gray-200 rounded-2xl p-8 text-center">
           <div className="w-14 h-14 bg-amber-100 text-amber-700 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg
@@ -81,7 +81,7 @@ export default function ReferralWallet() {
   }
 
   return (
-    <div className="w-full px-3 py-6 flex flex-col gap-3 box-border">
+    <div className="w-[95%]  mx-auto py-6 flex flex-col gap-3 box-border">
       {/* Balance card */}
       <div className="relative overflow-hidden bg-[#1a1a1a] rounded-2xl p-5 text-white mt-36 lg:mt-0">
         <p className="text-[10px] font-medium uppercase tracking-widest text-gray-500">
@@ -136,7 +136,7 @@ export default function ReferralWallet() {
         </button>
       </div>
 
-      {/* Stats — two equal columns, no overflow */}
+      {/* Stats */}
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-gray-50 border border-gray-100 rounded-xl p-4 min-w-0">
           <p className="text-[10px] font-medium uppercase tracking-wider text-gray-400 truncate">
@@ -163,81 +163,113 @@ export default function ReferralWallet() {
         </p>
       </div>
 
-      {/* Payout table */}
+      {/* Payout history — card list on mobile, table on larger screens */}
       <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-100">
           <h3 className="text-sm font-medium text-gray-900">Payout history</h3>
         </div>
 
-        <div className="w-full overflow-x-auto">
-          <table
-            className="text-left"
-            style={{ tableLayout: "fixed", width: "100%", minWidth: "360px" }}
-          >
-            <colgroup>
-              <col style={{ width: "34%" }} />
-              <col style={{ width: "18%" }} />
-              <col style={{ width: "26%" }} />
-              <col style={{ width: "22%" }} />
-            </colgroup>
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 py-3 text-[10px] font-medium uppercase tracking-wider text-gray-400">
-                  Date
-                </th>
-                <th className="px-4 py-3 text-[10px] font-medium uppercase tracking-wider text-gray-400 text-right">
-                  Refs
-                </th>
-                <th className="px-4 py-3 text-[10px] font-medium uppercase tracking-wider text-gray-400 text-right">
-                  Amount
-                </th>
-                <th className="px-4 py-3 text-[10px] font-medium uppercase tracking-wider text-gray-400 text-center">
-                  Status
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {payoutHistory.length > 0 ? (
-                payoutHistory.map((payout) => (
-                  <tr
-                    key={payout.id}
-                    className="hover:bg-gray-50 transition-colors"
-                  >
-                    <td className="px-4 py-3 text-xs font-medium text-gray-800 whitespace-nowrap overflow-hidden text-ellipsis">
+        {payoutHistory.length === 0 ? (
+          <p className="px-4 py-8 text-center text-xs text-gray-400 italic">
+            No payouts recorded yet.
+          </p>
+        ) : (
+          <>
+            {/* Mobile: card list */}
+            <ul className="divide-y divide-gray-50 sm:hidden">
+              {payoutHistory.map((payout) => (
+                <li
+                  key={payout.id}
+                  className="px-4 py-3 flex items-center justify-between gap-3"
+                >
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-gray-800 truncate">
                       {formatDate(payout.payout_date)}
-                    </td>
-                    <td className="px-4 py-3 text-xs text-right text-gray-500 whitespace-nowrap">
-                      {payout.referral_count}
-                    </td>
-                    <td className="px-4 py-3 text-xs font-medium text-right text-gray-800 whitespace-nowrap overflow-hidden text-ellipsis">
+                    </p>
+                    <p className="text-[11px] text-gray-400 mt-0.5">
+                      {payout.referral_count} referral
+                      {payout.referral_count !== 1 ? "s" : ""}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-xs font-medium text-gray-800">
                       {formatCurrency(payout.amount)}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <span
-                        className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-medium uppercase tracking-wide whitespace-nowrap ${
-                          payout.email_sent
-                            ? "bg-emerald-100 text-emerald-800"
-                            : "bg-amber-100 text-amber-800"
-                        }`}
-                      >
-                        {payout.email_sent ? "Paid" : "Pending"}
-                      </span>
-                    </td>
+                    </span>
+                    <span
+                      className={`inline-block px-2 py-1 rounded-full text-[10px] font-medium uppercase tracking-wide ${
+                        payout.email_sent
+                          ? "bg-emerald-100 text-emerald-800"
+                          : "bg-amber-100 text-amber-800"
+                      }`}
+                    >
+                      {payout.email_sent ? "Paid" : "Pending"}
+                    </span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            {/* sm+: full table */}
+            <div className="hidden sm:block w-full overflow-x-auto">
+              <table
+                className="w-full text-left"
+                style={{ tableLayout: "fixed" }}
+              >
+                <colgroup>
+                  <col style={{ width: "34%" }} />
+                  <col style={{ width: "18%" }} />
+                  <col style={{ width: "26%" }} />
+                  <col style={{ width: "22%" }} />
+                </colgroup>
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-[10px] font-medium uppercase tracking-wider text-gray-400">
+                      Date
+                    </th>
+                    <th className="px-4 py-3 text-[10px] font-medium uppercase tracking-wider text-gray-400 text-right">
+                      Refs
+                    </th>
+                    <th className="px-4 py-3 text-[10px] font-medium uppercase tracking-wider text-gray-400 text-right">
+                      Amount
+                    </th>
+                    <th className="px-4 py-3 text-[10px] font-medium uppercase tracking-wider text-gray-400 text-center">
+                      Status
+                    </th>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td
-                    colSpan="4"
-                    className="px-4 py-8 text-center text-xs text-gray-400 italic"
-                  >
-                    No payouts recorded yet.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {payoutHistory.map((payout) => (
+                    <tr
+                      key={payout.id}
+                      className="hover:bg-gray-50 transition-colors"
+                    >
+                      <td className="px-4 py-3 text-xs font-medium text-gray-800 whitespace-nowrap overflow-hidden text-ellipsis">
+                        {formatDate(payout.payout_date)}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-right text-gray-500 whitespace-nowrap">
+                        {payout.referral_count}
+                      </td>
+                      <td className="px-4 py-3 text-xs font-medium text-right text-gray-800 whitespace-nowrap overflow-hidden text-ellipsis">
+                        {formatCurrency(payout.amount)}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <span
+                          className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-medium uppercase tracking-wide whitespace-nowrap ${
+                            payout.email_sent
+                              ? "bg-emerald-100 text-emerald-800"
+                              : "bg-amber-100 text-amber-800"
+                          }`}
+                        >
+                          {payout.email_sent ? "Paid" : "Pending"}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
