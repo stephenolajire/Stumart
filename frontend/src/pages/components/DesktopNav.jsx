@@ -16,6 +16,7 @@ import {
   Truck,
   LogIn,
   MessageCircle,
+  Wallet,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
@@ -120,7 +121,7 @@ const Navigation = () => {
   return (
     <div className="hidden lg:block flex-1 w-full">
       {/* Top Banner */}
-      <div className="bg-gradient-to-r from-purple-600 to-yellow-500 text-white text-sm py-2 px-10 w-[calc(100%-250px)]">
+      <div className="bg-linear-to-r from-purple-600 to-yellow-500 text-white text-sm py-2 px-10 w-[calc(100%-250px)]">
         <div className="flex justify-between items-center w-full mx-auto">
           <div className="flex items-center space-x-6">
             <div className="flex items-center space-x-2">
@@ -228,6 +229,13 @@ const Navigation = () => {
                       className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                     >
                       <Heart className="w-4 h-4 mr-3" /> Wishlist
+                    </Link>
+                    <Link
+                      to="/wallet"
+                      onClick={() => setAccountDropdownOpen(false)}
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    >
+                      <Wallet className="w-4 h-4 mr-3" /> Referral Wallet
                     </Link>
                     {isAuthenticated ? (
                       <>

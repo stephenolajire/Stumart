@@ -89,6 +89,7 @@ import VendorSignup from "./user/VendorSignup";
 import PickerSignup from "./user/PickerSignup";
 import StudentPickerSignup from "./user/StudentPickerSignup";
 import Bookmark from "./pages/Bookmark";
+import ReferralWallet from "./pages/ReferralWallet";
 
 // Create React Query client
 const queryClient = new QueryClient({
@@ -178,6 +179,14 @@ function App() {
                   element={
                     <ProtectedRoute allowedRoles={["student"]}>
                       <SubscriptionPlans />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="wallet"
+                  element={
+                    <ProtectedRoute allowedRoles={["student"]}>
+                      <ReferralWallet />
                     </ProtectedRoute>
                   }
                 />

@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import IsAdminUser, AllowAny
+from rest_framework.permissions import IsAdminUser, BasePermission
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.db import transaction
@@ -19,19 +19,71 @@ from .serializers import (
 from .email_utils import send_payout_notification_email, send_bulk_payout_notifications
 
 
+class IsAuthenticatedStudent(BasePermission):
+    """
+    Permission class that allows access only to authenticated student users.
+    """
+    message = 'Authentication credentials were not provided or the user is not a student.'
+
+    def has_permission(self, request, view):
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and getattr(request.user, 'user_type', None) == 'student'
+        )
+
+
+def get_student_referral_for_user(user, referral_code=None):
+    if referral_code:
+        try:
+            return get_object_or_404(Referral, referral_code=referral_code.upper(), user=user)
+        except Exception:
+            return get_object_or_404(
+                Referral,
+                referral_code=referral_code.upper(),
+                email=user.email
+            )
+
+    try:
+        return get_object_or_404(Referral, user=user)
+    except Exception:
+        return get_object_or_404(Referral, email=user.email)
+
+
 class CreateReferralView(APIView):
     """
     POST /api/referrals/create/
-    Create a new referral code for a user
+    Create a new referral code for a student user
     """
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticatedStudent]
     serializer_class = ReferralCreateSerializer
     
     def post(self, request):
-        serializer = ReferralCreateSerializer(data=request.data)
+        student = request.user
+
+        existing_referral = Referral.objects.filter(email=student.email).first()
+        if existing_referral is not None:
+            if existing_referral.user == student:
+                return Response({
+                    'error': 'Referral already exists for this student.',
+                    'details': 'Each student may only create one referral code.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            return Response({
+                'error': 'Referral already exists for this student email.',
+                'details': 'A referral with this email already exists.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        data = {
+            'first_name': student.first_name,
+            'last_name': student.last_name,
+            'email': student.email,
+        }
+        serializer = ReferralCreateSerializer(data=data)
         
         if serializer.is_valid():
             referral = serializer.save()
+            referral.user = student
+            referral.save(update_fields=['user'])
             response_serializer = ReferralSerializer(referral)
             
             return Response({
@@ -97,11 +149,10 @@ class GetReferralByCodeView(APIView):
     GET /api/referrals/code/<referral_code>/
     Get referral information by referral code
     """
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticatedStudent]
     
     def get(self, request, referral_code):
-        referral_code = referral_code.upper()
-        referral = get_object_or_404(Referral, referral_code=referral_code)
+        referral = get_student_referral_for_user(request.user, referral_code=referral_code)
         
         # Update stats before returning
         referral.update_stats()
@@ -114,12 +165,12 @@ class GetReferralByEmailView(APIView):
     serializer_class = ReferralDetailSerializer
     """
     GET /api/referrals/email/<email>/
-    Get referral information by email
+    Get referral information for the authenticated student
     """
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticatedStudent]
     
     def get(self, request, email):
-        referral = get_object_or_404(Referral, email=email)
+        referral = get_student_referral_for_user(request.user)
         
         # Update stats before returning
         referral.update_stats()
@@ -134,7 +185,7 @@ class ValidateReferralCodeView(APIView):
     POST /api/referrals/validate/
     Validate if a referral code exists and is active
     """
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticatedStudent]
     
     def post(self, request):
         serializer = ReferralValidateSerializer(data=request.data)
@@ -148,7 +199,7 @@ class ValidateReferralCodeView(APIView):
                 'message': 'Referral code is valid',
                 'referral': {
                     'code': referral.referral_code,
-                    'owner': f"{referral.first_name} {referral.last_name}"
+                    'owner': f"{referral.first_name} {referral.last_name}" 
                 }
             }, status=status.HTTP_200_OK)
         
@@ -163,11 +214,10 @@ class ReferralStatsView(APIView):
     GET /api/referrals/<referral_code>/stats/
     Get detailed statistics for a referral code
     """
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticatedStudent]
     
     def get(self, request, referral_code):
-        referral_code = referral_code.upper()
-        referral = get_object_or_404(Referral, referral_code=referral_code)
+        referral = get_student_referral_for_user(request.user, referral_code=referral_code)
         
         # Update stats
         referral.update_stats()
@@ -191,11 +241,10 @@ class UpdateReferralStatsView(APIView):
     POST /api/referrals/<referral_code>/update-stats/
     Manually trigger stats update for a referral code
     """
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticatedStudent]
     
     def post(self, request, referral_code):
-        referral_code = referral_code.upper()
-        referral = get_object_or_404(Referral, referral_code=referral_code)
+        referral = get_student_referral_for_user(request.user, referral_code=referral_code)
         
         stats = referral.update_stats()
         
@@ -425,11 +474,10 @@ class PayoutHistoryView(APIView):
     GET /api/referrals/<referral_code>/payout-history/
     Get payout history for a referral
     """
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticatedStudent]
     
     def get(self, request, referral_code):
-        referral_code = referral_code.upper()
-        referral = get_object_or_404(Referral, referral_code=referral_code)
+        referral = get_student_referral_for_user(request.user, referral_code=referral_code)
         
         payouts = PayoutHistory.objects.filter(referral=referral)
         serializer = PayoutHistorySerializer(payouts, many=True)
