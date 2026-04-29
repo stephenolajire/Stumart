@@ -121,7 +121,8 @@ def calculate_shipping_fee(vendor_count: int, cart_items) -> Decimal:
 # ─────────────────────────────────────────────────────────────
 
 TAKEAWAY_FEE = Decimal("300.00")
-TAX_FEE      = Decimal("100.00")
+TAX_FEE      = Decimal("400.00")
+SHIPPING_FEE = Decimal("0.00")  # default, overridden by calculate_shipping_fee
 
 
 def has_food_vendor(cart_items) -> bool:
