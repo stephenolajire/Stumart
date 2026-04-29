@@ -160,13 +160,28 @@ const drawWheel = (canvas, items, angle) => {
   ctx.fill();
 };
 
+// ── helper ────────────────────────────────────────────────────────────────────
+const isComeBackTomorrow = (item) => {
+  if (!item) return false;
+  const name = (item.name || "").toLowerCase();
+  return (
+    name.includes("come back") ||
+    name.includes("tomorrow") ||
+    name.includes("try again") ||
+    name.includes("better luck")
+  );
+};
+
 // ── Result Modal ──────────────────────────────────────────────────────────────
 const ResultModal = ({ spinResult, wheelItems, onClose }) => {
   if (!spinResult) return null;
 
   const item = spinResult.gift_item;
+  const isNoWin = isComeBackTomorrow(item);
   const idx = wheelItems.findIndex((w) => w.id === item.id);
-  const color = SEGMENT_COLORS[idx >= 0 ? idx % SEGMENT_COLORS.length : 0];
+  const color = isNoWin
+    ? "#9ca3af"
+    : SEGMENT_COLORS[idx >= 0 ? idx % SEGMENT_COLORS.length : 0];
   const emoji = SEGMENT_EMOJIS[idx >= 0 ? idx % SEGMENT_EMOJIS.length : 0];
 
   return (
@@ -207,133 +222,222 @@ const ResultModal = ({ spinResult, wheelItems, onClose }) => {
           animation: "ri-pop 0.45s cubic-bezier(0.34,1.56,0.64,1)",
         }}
       >
-        {/* Colour stripe matching the winning segment */}
+        {/* Colour stripe */}
         <div style={{ height: 7, background: color }} />
 
         <div style={{ padding: "24px 22px 22px" }}>
-          {/* Big emoji */}
-          <div style={{ fontSize: 56, lineHeight: 1, marginBottom: 10 }}>
-            🎉
-          </div>
+          {isNoWin ? (
+            // ── No-win variant ─────────────────────────────────────────────
+            <>
+              <div style={{ fontSize: 56, lineHeight: 1, marginBottom: 10 }}>
+                😴
+              </div>
 
-          <h3
-            style={{
-              fontSize: 22,
-              fontWeight: 800,
-              color: "#111",
-              margin: "0 0 4px",
-            }}
-          >
-            You Won!
-          </h3>
-          <p style={{ fontSize: 13, color: "#888", margin: "0 0 22px" }}>
-            {spinResult.message}
-          </p>
+              <h3
+                style={{
+                  fontSize: 22,
+                  fontWeight: 800,
+                  color: "#111",
+                  margin: "0 0 4px",
+                }}
+              >
+                Come Back Tomorrow!
+              </h3>
+              <p style={{ fontSize: 13, color: "#888", margin: "0 0 22px" }}>
+                Not your lucky spin today — but tomorrow is a fresh chance to
+                win something great!
+              </p>
 
-          {/* Prize display */}
-          <div
-            style={{
-              width: 104,
-              height: 104,
-              borderRadius: 22,
-              margin: "0 auto 14px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexDirection: "column",
-              background: color + "20",
-              border: `3px solid ${color}`,
-            }}
-          >
-            {item.image_url ? (
-              <img
-                src={item.image_url}
-                alt={item.name}
+              {/* Calendar illustration */}
+              <div
+                style={{
+                  width: 104,
+                  height: 104,
+                  borderRadius: 22,
+                  margin: "0 auto 14px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexDirection: "column",
+                  background: "#f3f4f6",
+                  border: "3px solid #e5e7eb",
+                  gap: 4,
+                }}
+              >
+                <span style={{ fontSize: 44 }}>📅</span>
+              </div>
+
+              <p
+                style={{
+                  fontSize: 13,
+                  color: "#6b7280",
+                  margin: "0 0 6px",
+                  fontWeight: 600,
+                }}
+              >
+                Your daily spin has been used.
+              </p>
+
+              {spinResult.next_spin_at && (
+                <p
+                  style={{
+                    fontSize: 12,
+                    color: "#9ca3af",
+                    margin: "0 0 20px",
+                  }}
+                >
+                  Next spin available{" "}
+                  <strong style={{ color: "#6b7280" }}>
+                    {formatNextSpin(spinResult.next_spin_at)}
+                  </strong>
+                </p>
+              )}
+
+              <button
+                onClick={onClose}
                 style={{
                   width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                  borderRadius: 19,
+                  padding: "13px 0",
+                  borderRadius: 16,
+                  border: "none",
+                  background: "linear-gradient(135deg,#6b7280,#9ca3af)",
+                  color: "#fff",
+                  fontSize: 15,
+                  fontWeight: 800,
+                  cursor: "pointer",
+                  letterSpacing: 0.2,
                 }}
-              />
-            ) : (
-              <span style={{ fontSize: 44 }}>{emoji}</span>
-            )}
-          </div>
+              >
+                Got it, see you tomorrow! 👋
+              </button>
+            </>
+          ) : (
+            // ── Win variant ────────────────────────────────────────────────
+            <>
+              <div style={{ fontSize: 56, lineHeight: 1, marginBottom: 10 }}>
+                🎉
+              </div>
 
-          {/* Prize name */}
-          <p
-            style={{
-              fontSize: 17,
-              fontWeight: 800,
-              color: "#111",
-              margin: "0 0 6px",
-            }}
-          >
-            {item.name}
-          </p>
+              <h3
+                style={{
+                  fontSize: 22,
+                  fontWeight: 800,
+                  color: "#111",
+                  margin: "0 0 4px",
+                }}
+              >
+                You Won!
+              </h3>
+              <p style={{ fontSize: 13, color: "#888", margin: "0 0 22px" }}>
+                {spinResult.message}
+              </p>
 
-          {/* Cart confirmation */}
-          {spinResult.cart_item && (
-            <p
-              style={{
-                fontSize: 12,
-                color: "#2ECC71",
-                fontWeight: 700,
-                margin: "0 0 16px",
-              }}
-            >
-              ✓ Added to your cart
-            </p>
+              {/* Prize display */}
+              <div
+                style={{
+                  width: 104,
+                  height: 104,
+                  borderRadius: 22,
+                  margin: "0 auto 14px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexDirection: "column",
+                  background: color + "20",
+                  border: `3px solid ${color}`,
+                }}
+              >
+                {item.image_url ? (
+                  <img
+                    src={item.image_url}
+                    alt={item.name}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      borderRadius: 19,
+                    }}
+                  />
+                ) : (
+                  <span style={{ fontSize: 44 }}>{emoji}</span>
+                )}
+              </div>
+
+              {/* Prize name */}
+              <p
+                style={{
+                  fontSize: 17,
+                  fontWeight: 800,
+                  color: "#111",
+                  margin: "0 0 6px",
+                }}
+              >
+                {item.name}
+              </p>
+
+              {/* Cart confirmation — only shown for real prizes */}
+              {spinResult.cart_item && (
+                <p
+                  style={{
+                    fontSize: 12,
+                    color: "#2ECC71",
+                    fontWeight: 700,
+                    margin: "0 0 16px",
+                  }}
+                >
+                  ✓ Added to your cart
+                </p>
+              )}
+
+              {/* "You landed on…" pill */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  marginBottom: 20,
+                  padding: "9px 16px",
+                  borderRadius: 12,
+                  background: "#f8f9fa",
+                  border: "1px solid #e9ecef",
+                }}
+              >
+                <div
+                  style={{
+                    width: 14,
+                    height: 14,
+                    borderRadius: 4,
+                    background: color,
+                    flexShrink: 0,
+                  }}
+                />
+                <span style={{ fontSize: 13, color: "#555" }}>
+                  Wheel stopped on&nbsp;
+                  <strong style={{ color: "#111" }}>{item.name}</strong>
+                </span>
+              </div>
+
+              {/* CTA */}
+              <button
+                onClick={onClose}
+                style={{
+                  width: "100%",
+                  padding: "13px 0",
+                  borderRadius: 16,
+                  border: "none",
+                  background: `linear-gradient(135deg,${color},#FF9900)`,
+                  color: "#fff",
+                  fontSize: 15,
+                  fontWeight: 800,
+                  cursor: "pointer",
+                  letterSpacing: 0.2,
+                }}
+              >
+                Awesome! 🎊
+              </button>
+            </>
           )}
-
-          {/* "You landed on…" pill */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 8,
-              marginBottom: 20,
-              padding: "9px 16px",
-              borderRadius: 12,
-              background: "#f8f9fa",
-              border: "1px solid #e9ecef",
-            }}
-          >
-            <div
-              style={{
-                width: 14,
-                height: 14,
-                borderRadius: 4,
-                background: color,
-                flexShrink: 0,
-              }}
-            />
-            <span style={{ fontSize: 13, color: "#555" }}>
-              Wheel stopped on&nbsp;
-              <strong style={{ color: "#111" }}>{item.name}</strong>
-            </span>
-          </div>
-
-          {/* CTA */}
-          <button
-            onClick={onClose}
-            style={{
-              width: "100%",
-              padding: "13px 0",
-              borderRadius: 16,
-              border: "none",
-              background: `linear-gradient(135deg,${color},#FF9900)`,
-              color: "#fff",
-              fontSize: 15,
-              fontWeight: 800,
-              cursor: "pointer",
-              letterSpacing: 0.2,
-            }}
-          >
-            Awesome! 🎊
-          </button>
         </div>
       </div>
 
@@ -445,20 +549,6 @@ const SpinWheel = () => {
       const n = wheelItems.length;
       const SA = (2 * Math.PI) / n;
 
-      /*
-       * The pointer sits at the very top of the canvas (12 o'clock).
-       * In canvas-angle terms that is -π/2.
-       *
-       * Segment i's midpoint sits at:
-       *   angle + i*SA + SA/2
-       *
-       * For the pointer to coincide with segment i's midpoint we need:
-       *   angle + i*SA + SA/2  ≡  -π/2  (mod 2π)
-       *   angle  ≡  -π/2 - i*SA - SA/2  (mod 2π)
-       *
-       * We compute how far the wheel must still turn (always clockwise = positive)
-       * then prepend MIN_ROTATIONS full loops.
-       */
       const currentMod =
         ((angleRef.current % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
       const desiredMod =
@@ -467,8 +557,8 @@ const SpinWheel = () => {
         (2 * Math.PI);
 
       let delta = desiredMod - currentMod;
-      if (delta < 0.01) delta += 2 * Math.PI; // always move forward
-      delta += MIN_ROTATIONS * 2 * Math.PI; // guaranteed full rotations
+      if (delta < 0.01) delta += 2 * Math.PI;
+      delta += MIN_ROTATIONS * 2 * Math.PI;
 
       const startAngle = angleRef.current;
       const startTime = performance.now();
@@ -484,7 +574,6 @@ const SpinWheel = () => {
         if (progress < 1) {
           rafRef.current = requestAnimationFrame(tick);
         } else {
-          // Snap cleanly
           angleRef.current = startAngle + delta;
           drawWheel(canvas, wheelItems, angleRef.current);
           setIsAnimating(false);
@@ -508,12 +597,12 @@ const SpinWheel = () => {
     if (!canSpin || isAnimating || isSpinning) return;
     setShowResult(false);
     resetSpin();
-    setIsAnimating(true); // wait for API
+    setIsAnimating(true);
     doSpin();
   };
 
   const busy = isAnimating || isSpinning;
-  const wrapSz = CANVAS_SIZE + 32; // canvas + 16px ring on each side
+  const wrapSz = CANVAS_SIZE + 32;
 
   return (
     <>

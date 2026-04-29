@@ -23,6 +23,17 @@ const selectSpinHistory = (res) => {
   return body ?? [];
 };
 
+// ── detect "come back tomorrow" / no-win results ──────────────────────────────
+const isNoWinResult = (body) => {
+  const name = (body?.gift_item?.name ?? "").toLowerCase();
+  return (
+    name.includes("come back") ||
+    name.includes("tomorrow") ||
+    name.includes("try again") ||
+    name.includes("better luck")
+  );
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const useGift = () => {
@@ -65,10 +76,15 @@ export const useGift = () => {
       return body;
     },
 
-    onSuccess: () => {
+    onSuccess: (body) => {
+      // Always refresh eligibility + history
       queryClient.invalidateQueries({ queryKey: CAN_SPIN_KEY });
       queryClient.invalidateQueries({ queryKey: MY_SPINS_KEY });
-      queryClient.invalidateQueries({ queryKey: ["cart"] });
+
+      // Only refresh cart when the user actually won a real prize
+      if (!isNoWinResult(body)) {
+        queryClient.invalidateQueries({ queryKey: ["cart"] });
+      }
     },
   });
 
