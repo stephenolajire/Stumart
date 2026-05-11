@@ -233,8 +233,8 @@ class CartItemsView(APIView):
             sub_total    = Decimal("0.00")
             vendor_count = 0
 
-        # shipping_fee = calculate_shipping_fee(vendor_count, cart_items)
-        shipping_fee = SHIPPING_FEE
+        shipping_fee = calculate_shipping_fee(vendor_count, cart_items)
+        # shipping_fee = SHIPPING_FEE
         takeaway     = calculate_takeaway_fee(cart_items)
         tax          = TAX_FEE
         total        = sub_total + shipping_fee + tax + takeaway
