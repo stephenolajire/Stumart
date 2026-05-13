@@ -301,7 +301,12 @@ class CreateOrderView(APIView):
             return Response(req.errors, status=status.HTTP_400_BAD_REQUEST)
 
         data = req.validated_data
-        cart_items = CartItem.objects.filter(id__in=data["cart_items"])
+
+        # ✅ Scope cart items to the requesting user — prevents using someone else's cart
+        cart_items = CartItem.objects.filter(
+            id__in=data["cart_items"],
+            cart__user=request.user
+        )
 
         if not cart_items.exists():
             return Response({"error": "No cart items found."}, status=status.HTTP_400_BAD_REQUEST)
@@ -323,6 +328,22 @@ class CreateOrderView(APIView):
         referral_code = data.get("referral_code", "").upper() or None
         vendor_is_nearby = data.get("vendor_is_nearby", False)
 
+        # ✅ CRITICAL: Compute all financials from DB — never trust client-sent values
+        product_items = cart_items.filter(product__isnull=False).select_related("product")
+
+        subtotal = sum(
+            item.product.price * item.quantity
+            for item in product_items
+        )
+        shipping_fee = Decimal("0.00") if vendor_is_nearby else Decimal("500.00")  # adjust to your flat rate
+        tax = Decimal("0.00")  # adjust to your tax rate/logic
+        takeaway = sum(
+            (item.product.takeaway_fee or Decimal("0.00")) * item.quantity
+            for item in product_items
+            if hasattr(item.product, "takeaway_fee")
+        )
+        total = subtotal + shipping_fee + tax + takeaway
+
         try:
             with transaction.atomic():
                 order = Order.objects.create(
@@ -333,22 +354,22 @@ class CreateOrderView(APIView):
                     phone=data["phone"],
                     address=data["address"],
                     room_number=data.get("room_number"),
-                    subtotal=data["subtotal"],
-                    shipping_fee=data["shipping_fee"],
-                    tax=data["tax"],
-                    takeaway=data.get("takeaway", Decimal("0.00")),  # ✅ was missing
-                    total=data["total"],
+                    subtotal=subtotal,        # ✅ server-computed
+                    shipping_fee=shipping_fee, # ✅ server-computed
+                    tax=tax,                   # ✅ server-computed
+                    takeaway=takeaway,         # ✅ server-computed
+                    total=total,               # ✅ server-computed
                     order_status="PENDING",
                     order_number=f"ORD-{uuid.uuid4().hex[:8].upper()}",
                     referral_code=referral_code,
-                    vendor_is_nearby=data.get("vendor_is_nearby", False),  # ✅ was missing
+                    vendor_is_nearby=vendor_is_nearby,
                 )
 
                 for cart_item in cart_items:
                     # Skip gift items - only create OrderItems for actual products
                     if not cart_item.product:
                         continue
-                    
+
                     vendor_instance = Vendor.objects.filter(user=cart_item.product.vendor).first()
                     if not vendor_instance:
                         return Response(
@@ -359,7 +380,7 @@ class CreateOrderView(APIView):
                         order=order,
                         product=cart_item.product,
                         quantity=cart_item.quantity,
-                        price=cart_item.product.price,
+                        price=cart_item.product.price,  # ✅ price from DB, not cart snapshot
                         vendor=vendor_instance,
                         color=cart_item.color,
                         size=cart_item.size,
@@ -387,7 +408,7 @@ class CreateOrderView(APIView):
             # Skip gift items - only validate product categories
             if not item.product:
                 continue
-            
+
             vendor = Vendor.objects.filter(user=item.product.vendor).first()
             if not vendor:
                 continue
@@ -399,16 +420,16 @@ class CreateOrderView(APIView):
             return "Food items cannot be ordered together with other categories. Please place separate orders."
         return None
 
-
+        
 # ─────────────────────────────────────────────────────────────
 # PAYMENT — INITIALIZE
 # ─────────────────────────────────────────────────────────────
 
 class PaystackPaymentInitializeView(APIView):
     """
-    POST order/payment/initialize/
+    POST /order/payment/initialize/
 
-    REQUEST  → PaystackInitializeRequestSerializer
+    REQUEST  → PaystackInitializeRequestSerializer  (order_id + callback_url only)
     RESPONSE → PaystackInitializeResponseSerializer
     """
     permission_classes = [IsAuthenticated]
@@ -420,23 +441,48 @@ class PaystackPaymentInitializeView(APIView):
 
         data = req.validated_data
 
+        # ✅ Scope to requesting user — prevents paying for someone else's order
         try:
-            order = Order.objects.get(id=data["order_id"])
+            order = Order.objects.get(id=data["order_id"], user=request.user)
         except Order.DoesNotExist:
-            return Response({"status": "failed", "message": "Order not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"status": "failed", "message": "Order not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
-        order_items = OrderItem.objects.filter(order=order).select_related("vendor", "vendor__user")
+        if order.order_status != "PENDING":
+            return Response(
+                {
+                    "status": "failed",
+                    "message": f"Order cannot be paid (current status: {order.order_status}).",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if Transaction.objects.filter(order=order, status="COMPLETED").exists():
+            return Response(
+                {"status": "failed", "message": "This order has already been paid."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        order_items = OrderItem.objects.filter(order=order).select_related(
+            "vendor", "vendor__user"
+        )
         if not order_items.exists():
-            return Response({"status": "failed", "message": "No items found in the order."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"status": "failed", "message": "No items found in the order."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         institutions = {item.vendor.user.institution for item in order_items}
         if len(institutions) > 1:
             vendors_by_inst = {}
             for item in order_items:
                 inst = item.vendor.user.institution
-                vendors_by_inst.setdefault(inst, []).append(
-                    {"vendor_name": item.vendor.business_name, "product_name": item.product.name}
-                )
+                vendors_by_inst.setdefault(inst, []).append({
+                    "vendor_name": item.vendor.business_name,
+                    "product_name": item.product.name,
+                })
             return Response(
                 {
                     "status": "failed",
@@ -450,15 +496,19 @@ class PaystackPaymentInitializeView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        # ✅ CRITICAL: amount from DB only — client cannot influence this
+        amount_in_kobo = int(order.total * 100)
+
+        # ✅ email from DB only — client cannot substitute a different Paystack account
         payload = {
-            "email": data["email"],
-            "amount": data["amount"],
+            "email":        order.email,
+            "amount":       amount_in_kobo,
             "callback_url": data["callback_url"],
-            "reference": f"ORD-{order.order_number}-{uuid.uuid4().hex[:8]}",
+            "reference":    f"ORD-{order.order_number}-{uuid.uuid4().hex[:8]}",
         }
         headers = {
             "Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}",
-            "Content-Type": "application/json",
+            "Content-Type":  "application/json",
         }
 
         try:
@@ -470,35 +520,41 @@ class PaystackPaymentInitializeView(APIView):
             ).json()
         except Exception:
             logger.exception("Paystack API call failed")
-            return Response({"status": "failed", "message": "Payment gateway error."}, status=status.HTTP_502_BAD_GATEWAY)
+            return Response(
+                {"status": "failed", "message": "Payment gateway error."},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
 
         if not ps_response.get("status"):
             return Response(
-                {"status": "failed", "message": ps_response.get("message", "Initialization failed.")},
+                {
+                    "status": "failed",
+                    "message": ps_response.get("message", "Initialization failed."),
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         Transaction.objects.create(
             order=order,
             transaction_id=ps_response["data"]["reference"],
-            amount=order.total,
+            amount=order.total,   # ✅ from DB
             status="PENDING",
         )
 
         return Response(
             PaystackInitializeResponseSerializer({
-                "status": "success",
-                "authorization_url": ps_response["data"]["authorization_url"],
-                "reference": ps_response["data"]["reference"],
+                "status":               "success",
+                "authorization_url":    ps_response["data"]["authorization_url"],
+                "reference":            ps_response["data"]["reference"],
                 "delivery_institution": list(institutions)[0],
             }).data,
             status=status.HTTP_200_OK,
         )
 
-
 # ─────────────────────────────────────────────────────────────
 # PAYMENT — VERIFY
 # ─────────────────────────────────────────────────────────────
+
 class PaystackPaymentVerifyView(APIView):
     """
     GET order/payment/verify/?reference=<ref>
@@ -521,6 +577,19 @@ class PaystackPaymentVerifyView(APIView):
 
         txn = Transaction.objects.filter(transaction_id=reference).first()
         if not txn:
+            return Response(
+                {"status": "failed", "message": "Transaction not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # ✅ FIX 6: ensure the transaction belongs to the requesting user
+        if txn.order.user != request.user:
+            logger.warning(
+                "User %s attempted to verify transaction %s belonging to user %s",
+                request.user.email,
+                reference,
+                txn.order.user.email,
+            )
             return Response(
                 {"status": "failed", "message": "Transaction not found."},
                 status=status.HTTP_404_NOT_FOUND,
@@ -561,6 +630,32 @@ class PaystackPaymentVerifyView(APIView):
             txn.save()
             return Response(
                 {"status": "failed", "message": "Payment failed or was cancelled."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # ✅ FIX 7 (CRITICAL): verify the amount Paystack actually charged
+        # matches the order total stored in our DB.
+        # Paystack returns amounts in kobo; order.total is in naira.
+        paid_kobo     = ps_response["data"]["amount"]
+        expected_kobo = int(txn.order.total * 100)
+
+        if paid_kobo < expected_kobo:
+            txn.status = "FAILED"
+            txn.save()
+            logger.warning(
+                "AMOUNT MISMATCH — ref=%s order=%s expected_kobo=%s paid_kobo=%s user=%s",
+                reference,
+                txn.order.order_number,
+                expected_kobo,
+                paid_kobo,
+                request.user.email,
+            )
+            return Response(
+                {
+                    "status": "failed",
+                    "message": "Payment amount does not match order total. "
+                               "Please contact support if you believe this is an error.",
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -619,8 +714,6 @@ class PaystackPaymentVerifyView(APIView):
                 )
 
             # 7. Clear the user's cart items so paid products don't reappear.
-            #    We DELETE the items but keep the Cart row itself — the user
-            #    still has a valid (now empty) cart for their next order.
             try:
                 user_cart = Cart.objects.filter(user=request.user).first()
                 if user_cart:
@@ -655,7 +748,6 @@ class PaystackPaymentVerifyView(APIView):
             }).data,
             status=status.HTTP_200_OK,
         )
-
 
 # ─────────────────────────────────────────────────────────────
 # CANCEL ORDER

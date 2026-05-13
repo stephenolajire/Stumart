@@ -397,13 +397,9 @@ const Checkout = () => {
     address: formData.address,
     room_number: formData.room,
     cart_items: cartItems.map((item) => item.id),
-    subtotal: cartSummary.subTotal,
-    shipping_fee: cartSummary.shippingFee,
-    tax: cartSummary.tax,
-    takeaway: cartSummary.takeaway,
-    total: cartSummary.total,
     vendor_is_nearby: vendorNearby,
-    ...(cartData?.vendors && { vendors: cartData.vendors }),
+    // ✅ REMOVED: subtotal, shipping_fee, tax, takeaway, total, vendors
+    // All financials are now computed exclusively on the server
     ...(formData.referralCode.trim() && {
       referral_code: formData.referralCode.trim().toUpperCase(),
     }),
@@ -494,7 +490,7 @@ const Checkout = () => {
       return;
     }
 
-    // ── Paystack flow (original) ──────────────────────────────────────────────
+ 
     createOrder(orderData, {
       onSuccess: (data) => {
         localStorage.setItem("order_id", data.order_id);
@@ -506,9 +502,8 @@ const Checkout = () => {
         initializePayment(
           {
             order_id: data.order_id,
-            email: formData.email,
-            amount: cartSummary.total * 100,
             callback_url: `${window.location.origin}/payment/verify/`,
+            // ✅ REMOVED: email, amount — server reads these from the order in DB
           },
           {
             onSuccess: (payData) => {
@@ -520,7 +515,7 @@ const Checkout = () => {
       },
       onError: handleCheckoutError,
     });
-  };
+  };;
 
   const isLoading =
     isCreatingOrder ||

@@ -5,7 +5,6 @@ from decimal import Decimal
 # ─────────────────────────────────────────────
 # REQUEST SERIALIZERS
 # ─────────────────────────────────────────────
-
 class CreateOrderRequestSerializer(serializers.Serializer):
     """POST /order/create/"""
     cart_items       = serializers.ListField(
@@ -18,24 +17,17 @@ class CreateOrderRequestSerializer(serializers.Serializer):
     phone            = serializers.CharField()
     address          = serializers.CharField(help_text="Delivery address / hostel name")
     room_number      = serializers.CharField(required=False, allow_null=True)
-    subtotal         = serializers.DecimalField(max_digits=10, decimal_places=2)
-    shipping_fee     = serializers.DecimalField(max_digits=10, decimal_places=2)
-    tax              = serializers.DecimalField(max_digits=10, decimal_places=2)
-    takeaway         = serializers.DecimalField(max_digits=10, decimal_places=2,  # ✅ was missing
-                                                required=False, default=Decimal("0.00"))
-    total            = serializers.DecimalField(max_digits=10, decimal_places=2)
+    # ✅ REMOVED: subtotal, shipping_fee, tax, takeaway, total — computed server-side
     referral_code    = serializers.CharField(required=False, allow_blank=True,
                                              help_text="Optional referral code (will be uppercased)")
-    vendor_is_nearby = serializers.BooleanField(required=False, default=False)  # ✅ was missing
-
+    vendor_is_nearby = serializers.BooleanField(required=False, default=False)
 
 
 class PaystackInitializeRequestSerializer(serializers.Serializer):
     """POST /order/payment/initialize/"""
     order_id     = serializers.IntegerField()
-    email        = serializers.EmailField()
-    amount       = serializers.IntegerField(help_text="Amount in kobo (naira × 100)")
     callback_url = serializers.URLField(help_text="URL Paystack redirects to after payment")
+    # ✅ REMOVED: email, amount — both come from the order record in DB
 
 
 class CancelOrderRequestSerializer(serializers.Serializer):
