@@ -130,6 +130,7 @@ export const usePayWithWallet = () => {
     mutationFn: (data) => orderService.payWithWallet(data).then((r) => r.data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: orderKeys.history });
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
     },
   });
 };

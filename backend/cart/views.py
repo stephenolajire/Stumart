@@ -191,6 +191,15 @@ class CartItemsView(APIView):
         cart = get_or_create_user_cart(request.user)
 
         base_qs = CartItem.objects.filter(cart=cart)
+        selected_vendor_id = request.query_params.get("selected_vendor_id")
+        if selected_vendor_id:
+            selected_vendor_user_id = (
+                Vendor.objects
+                .filter(id=selected_vendor_id)
+                .values_list("user_id", flat=True)
+                .first()
+            )
+            base_qs = base_qs.filter(product__vendor_id=selected_vendor_user_id)
 
         # Subquery: distinct vendor count
         vendor_subquery = (

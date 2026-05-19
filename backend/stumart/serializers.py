@@ -237,13 +237,15 @@ class CartItemSerializer(serializers.ModelSerializer):
     total_price     = serializers.SerializerMethodField()
     delivery_day    = serializers.SerializerMethodField()
     is_gift         = serializers.SerializerMethodField()
+    vendor_id       = serializers.SerializerMethodField()
+    vendor_name     = serializers.SerializerMethodField()
 
     class Meta:
         model = CartItem
         fields = [
             'id', 'product', 'gift_item', 'product_name', 'product_price', 'product_image',
             'quantity', 'size', 'color', 'total_price', 'created_at',
-            'promotion_price', 'delivery_day', 'is_gift',
+            'promotion_price', 'delivery_day', 'is_gift', 'vendor_id', 'vendor_name',
         ]
 
     def get_is_gift(self, obj):
@@ -288,6 +290,20 @@ class CartItemSerializer(serializers.ModelSerializer):
         if obj.product:
             return obj.product.delivery_day
         return None
+
+    def get_vendor_id(self, obj):
+        if not obj.product or not obj.product.vendor:
+            return None
+        vendor = getattr(obj.product.vendor, 'vendor_profile', None)
+        return vendor.id if vendor else obj.product.vendor_id
+
+    def get_vendor_name(self, obj):
+        if not obj.product or not obj.product.vendor:
+            return None
+        vendor = getattr(obj.product.vendor, 'vendor_profile', None)
+        if vendor:
+            return vendor.business_name
+        return obj.product.vendor.get_full_name() or obj.product.vendor.email
 
     def get_total_price(self, obj):
         price = 0

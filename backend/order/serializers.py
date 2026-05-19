@@ -11,6 +11,11 @@ class CreateOrderRequestSerializer(serializers.Serializer):
         child=serializers.IntegerField(),
         help_text="List of CartItem IDs to convert into an order"
     )
+    selected_vendor_id = serializers.IntegerField(
+        required=False,
+        allow_null=True,
+        help_text="Optional Vendor profile ID to scope checkout to one vendor"
+    )
     first_name       = serializers.CharField()
     last_name        = serializers.CharField()
     email            = serializers.EmailField()

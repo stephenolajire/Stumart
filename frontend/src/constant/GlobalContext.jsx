@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect, useCallback, use } from "react";
+import { createContext, useState, useEffect, useCallback } from "react";
 import {
   useQuery,
   useMutation,
@@ -20,7 +20,7 @@ const queryKeys = {
     "all-products",
     { ...filters, viewMode, isAuth },
   ],
-  cart: (cartCode) => ["cart", cartCode],
+  cart: (cartCode, selectedVendorId = null) => ["cart", cartCode, selectedVendorId],
   orders: ["orders"],
   search: (params) => ["search", params],
   videos: ["videos"],
@@ -193,14 +193,17 @@ export const useAllProducts = (
   });
 };
 
-export const useCart = () => {
+export const useCart = (selectedVendorId = null, options = {}) => {
   const getCartCode = () => localStorage.getItem("cart_code");
 
   return useQuery({
-    queryKey: queryKeys.cart(getCartCode()),
+    queryKey: queryKeys.cart(getCartCode(), selectedVendorId),
     queryFn: async () => {
       const cartCode = getCartCode();
       const params = cartCode ? { cart_code: cartCode } : {};
+      if (selectedVendorId) {
+        params.selected_vendor_id = selectedVendorId;
+      }
       const response = await api.get("cart/", { params });
 
       return {
@@ -219,6 +222,7 @@ export const useCart = () => {
     gcTime: 5 * 60 * 1000,
     retry: false,
     refetchOnWindowFocus: true, // Refetch cart on focus
+    ...options,
   });
 };
 

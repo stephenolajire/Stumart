@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext, useState, useEffect, useMemo } from "react";
 import { GlobalContext } from "../constant/GlobalContext";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
@@ -114,6 +114,98 @@ const ErrorModal = ({ error, onClose }) => {
 };
 
 // ── Payment Method Selector ───────────────────────────────────────────────────
+
+const VendorSelectionModal = ({
+  isOpen,
+  vendorGroups,
+  selectedVendorKey,
+  onSelect,
+  onClose,
+  formatCurrency,
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 mt-38 lg:mt-0">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[85vh] overflow-hidden">
+        <div className="h-1.5 w-full bg-yellow-500" />
+        <div className="p-6">
+          <div className="flex items-start justify-between gap-4 mb-5">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Select One Vendor
+              </h3>
+              <p className="text-sm text-gray-500 mt-1">
+                Orders can only include items from one vendor.
+              </p>
+            </div>
+            {selectedVendorKey && (
+              <button
+                type="button"
+                onClick={onClose}
+                className="text-sm font-medium text-gray-500 hover:text-gray-900"
+              >
+                Close
+              </button>
+            )}
+          </div>
+
+          <div className="space-y-3 overflow-y-auto max-h-[58vh] pr-1">
+            {vendorGroups.map((group) => (
+              <button
+                key={group.key}
+                type="button"
+                onClick={() => {
+                  onSelect(group.key);
+                  onClose();
+                }}
+                className={`w-full text-left border-2 rounded-xl p-4 transition-all ${
+                  selectedVendorKey === group.key
+                    ? "border-yellow-400 bg-yellow-50"
+                    : "border-gray-200 hover:border-yellow-200 hover:bg-yellow-50/40"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="font-semibold text-gray-900">
+                      {group.vendorName}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {group.items.length} item
+                      {group.items.length === 1 ? "" : "s"}
+                    </p>
+                  </div>
+                  <span className="text-sm font-bold text-yellow-700">
+                    {formatCurrency(group.total)}
+                  </span>
+                </div>
+                <div className="mt-3 space-y-2">
+                  {group.items.map((item) => (
+                    <div key={item.id} className="flex items-center gap-3 text-sm">
+                      <img
+                        src={item.product_image}
+                        alt={item.product_name}
+                        className="w-10 h-10 rounded-lg object-cover bg-gray-100"
+                        onError={(e) => {
+                          e.target.src = "/placeholder-image.png";
+                        }}
+                      />
+                      <span className="flex-1 truncate text-gray-700">
+                        {item.product_name}
+                      </span>
+                      <span className="text-gray-500">x{item.quantity}</span>
+                    </div>
+                  ))}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const PaymentMethodSelector = ({
   selected,
@@ -271,6 +363,8 @@ const Checkout = () => {
   const [vendorNearby, setVendorNearby] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState("paystack");
   const [modalError, setModalError] = useState(null);
+  const [selectedVendorKey, setSelectedVendorKey] = useState(null);
+  const [isVendorModalOpen, setIsVendorModalOpen] = useState(false);
 
   const { useCart } = useContext(GlobalContext);
   const navigate = useNavigate();
@@ -280,14 +374,106 @@ const Checkout = () => {
     isLoading: cartLoading,
     error: cartError,
   } = useCart();
-  const cartItems = cartData?.items || [];
-  const cartSummary = cartData?.summary || {
-    subTotal: 0,
-    shippingFee: 0,
-    tax: 0,
-    takeaway: 0,
-    total: 0,
-  };
+  const cartItems = useMemo(() => cartData?.items || [], [cartData?.items]);
+  const cartSummary = useMemo(
+    () =>
+      cartData?.summary || {
+        subTotal: 0,
+        shippingFee: 0,
+        tax: 0,
+        takeaway: 0,
+        total: 0,
+      },
+    [cartData?.summary],
+  );
+  const vendorGroups = useMemo(() => {
+    const groups = new Map();
+
+    cartItems
+      .filter((item) => !item.is_gift)
+      .forEach((item) => {
+        const key = String(item.vendor_id || item.vendor_name || "unknown");
+        const price = Number(item.promotion_price || item.product_price || 0);
+        const quantity = Number(item.quantity || 0);
+
+        if (!groups.has(key)) {
+          groups.set(key, {
+            key,
+            vendorName: item.vendor_name || "Unknown Vendor",
+            items: [],
+            total: 0,
+          });
+        }
+
+        const group = groups.get(key);
+        group.items.push(item);
+        group.total += price * quantity;
+      });
+
+    return Array.from(groups.values());
+  }, [cartItems]);
+  const hasMultipleVendors = vendorGroups.length > 1;
+  const activeVendorKey =
+    hasMultipleVendors && selectedVendorKey ? selectedVendorKey : vendorGroups[0]?.key;
+  const selectedVendorId = Number(activeVendorKey);
+  const shouldFetchSelectedVendorCart =
+    hasMultipleVendors && Number.isFinite(selectedVendorId);
+  const { data: selectedVendorCartData } = useCart(
+    shouldFetchSelectedVendorCart ? selectedVendorId : null,
+    { enabled: shouldFetchSelectedVendorCart },
+  );
+  const selectedCartItems = useMemo(
+    () =>
+      hasMultipleVendors
+        ? cartItems.filter(
+            (item) =>
+              String(item.vendor_id || item.vendor_name || "unknown") ===
+              activeVendorKey,
+          )
+        : cartItems,
+    [activeVendorKey, cartItems, hasMultipleVendors],
+  );
+  const selectedCartSummary = useMemo(() => {
+    if (!hasMultipleVendors) return cartSummary;
+
+    const backendSummary = selectedVendorCartData?.summary;
+    if (backendSummary) {
+      const shippingFee =
+        vendorNearby === true ? 0 : Number(backendSummary.shippingFee || 0);
+      const tax = Number(backendSummary.tax || 0);
+      const takeaway = Number(backendSummary.takeaway || 0);
+      const subTotal = Number(backendSummary.subTotal || 0);
+
+      return {
+        subTotal,
+        shippingFee,
+        tax,
+        takeaway,
+        total: subTotal + shippingFee + tax + takeaway,
+      };
+    }
+
+    const subTotal = selectedCartItems.reduce((sum, item) => {
+      const price = Number(item.promotion_price || item.product_price || 0);
+      return sum + price * Number(item.quantity || 0);
+    }, 0);
+
+    return {
+      subTotal,
+      shippingFee: vendorNearby === true ? 0 : Number(cartSummary.shippingFee || 0),
+      tax: Number(cartSummary.tax || 0),
+      takeaway: selectedCartItems.some((item) => Number(item.takeaway || 0) > 0)
+        ? Number(cartSummary.takeaway || 0)
+        : 0,
+      total:
+        subTotal +
+        (vendorNearby === true ? 0 : Number(cartSummary.shippingFee || 0)) +
+        Number(cartSummary.tax || 0) +
+        (selectedCartItems.some((item) => Number(item.takeaway || 0) > 0)
+          ? Number(cartSummary.takeaway || 0)
+          : 0),
+    };
+  }, [cartSummary, hasMultipleVendors, selectedCartItems, selectedVendorCartData, vendorNearby]);
 
   // Referral wallet
   const {
@@ -357,7 +543,20 @@ const Checkout = () => {
         if (result.isConfirmed) navigate(-1);
       });
     }
-  }, []);
+  }, [navigate]);
+
+  useEffect(() => {
+    if (!cartItems.length) return;
+
+    if (vendorGroups.length === 1) {
+      setSelectedVendorKey(vendorGroups[0].key);
+      return;
+    }
+
+    if (vendorGroups.length > 1 && !selectedVendorKey) {
+      setIsVendorModalOpen(true);
+    }
+  }, [cartItems.length, selectedVendorKey, vendorGroups]);
 
   const handleCheckoutError = (err) => {
     if (err.response?.data?.error_details) {
@@ -396,7 +595,10 @@ const Checkout = () => {
     phone: formData.phone,
     address: formData.address,
     room_number: formData.room,
-    cart_items: cartItems.map((item) => item.id),
+    cart_items: selectedCartItems.map((item) => item.id),
+    ...(Number.isFinite(selectedVendorId) && {
+      selected_vendor_id: selectedVendorId,
+    }),
     vendor_is_nearby: vendorNearby,
     // ✅ REMOVED: subtotal, shipping_fee, tax, takeaway, total, vendors
     // All financials are now computed exclusively on the server
@@ -427,6 +629,11 @@ const Checkout = () => {
         text: "Your cart is empty. Please add items before checkout.",
         confirmButtonColor: "#3085d6",
       });
+      return;
+    }
+
+    if (hasMultipleVendors && !selectedVendorKey) {
+      setIsVendorModalOpen(true);
       return;
     }
 
@@ -583,6 +790,14 @@ const Checkout = () => {
     <>
       {/* Error Modal */}
       <ErrorModal error={modalError} onClose={() => setModalError(null)} />
+      <VendorSelectionModal
+        isOpen={isVendorModalOpen}
+        vendorGroups={vendorGroups}
+        selectedVendorKey={selectedVendorKey}
+        onSelect={setSelectedVendorKey}
+        onClose={() => setIsVendorModalOpen(false)}
+        formatCurrency={formatCurrency}
+      />
 
       <div className="h-auto bg-gray-50 py-4 mt-38 lg:mt-0">
         <div className="w-full mx-auto px-4 md:px-8">
@@ -873,7 +1088,7 @@ const Checkout = () => {
                       selected={paymentMethod}
                       onChange={setPaymentMethod}
                       walletBalance={walletBalance ?? 0}
-                      orderTotal={cartSummary.total}
+                      orderTotal={selectedCartSummary.total}
                       hasWallet={hasReferral && !walletLoading}
                     />
                   </div>
@@ -919,8 +1134,30 @@ const Checkout = () => {
                 <h3 className="text-2xl font-bold text-gray-900 mb-6">
                   Order Summary
                 </h3>
+                {hasMultipleVendors && (
+                  <div className="mb-5 rounded-xl border border-yellow-200 bg-yellow-50 p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-yellow-700">
+                          Checking out from
+                        </p>
+                        <p className="text-sm font-semibold text-gray-900 truncate">
+                          {vendorGroups.find((group) => group.key === activeVendorKey)
+                            ?.vendorName || "Selected vendor"}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setIsVendorModalOpen(true)}
+                        className="shrink-0 rounded-lg bg-white px-3 py-2 text-xs font-semibold text-yellow-700 border border-yellow-200 hover:bg-yellow-100"
+                      >
+                        Change
+                      </button>
+                    </div>
+                  </div>
+                )}
                 <div className="space-y-4 mb-8">
-                  {cartItems.map((item) => (
+                  {selectedCartItems.map((item) => (
                     <div
                       key={item.id}
                       className="border-b border-gray-100 pb-4 last:border-b-0 last:pb-0"
@@ -966,33 +1203,33 @@ const Checkout = () => {
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Subtotal</span>
                     <span className="font-medium text-gray-900">
-                      {formatCurrency(cartSummary.subTotal)}
+                      {formatCurrency(selectedCartSummary.subTotal)}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Shipping</span>
                     <span className="font-medium text-gray-900">
-                      {formatCurrency(cartSummary.shippingFee)}
+                      {formatCurrency(selectedCartSummary.shippingFee)}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Tax</span>
                     <span className="font-medium text-gray-900">
-                      {formatCurrency(cartSummary.tax)}
+                      {formatCurrency(selectedCartSummary.tax)}
                     </span>
                   </div>
-                  {cartSummary.takeaway > 0 && (
+                  {selectedCartSummary.takeaway > 0 && (
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Takeaway Fee</span>
                       <span className="font-medium text-gray-900">
-                        {formatCurrency(cartSummary.takeaway)}
+                        {formatCurrency(selectedCartSummary.takeaway)}
                       </span>
                     </div>
                   )}
                   <div className="flex justify-between text-lg font-bold text-gray-900 pt-3 border-t border-gray-200">
                     <span>Total</span>
                     <span className="text-yellow-600">
-                      {formatCurrency(cartSummary.total)}
+                      {formatCurrency(selectedCartSummary.total)}
                     </span>
                   </div>
                 </div>

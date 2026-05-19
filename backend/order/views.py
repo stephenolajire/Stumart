@@ -13,6 +13,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from cart.utils import calculate_shipping_fee
 from stumart.models import Cart, CartItem, Order, OrderItem, Transaction
 from user.models import User, Vendor
 
@@ -65,6 +66,36 @@ from .utils import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _remove_order_items_from_user_cart(user, order, reference):
+    user_cart = Cart.objects.filter(user=user).first()
+    if not user_cart:
+        logger.warning("No cart found for user %s after payment ref=%s", user.email, reference)
+        return
+
+    deleted_count = 0
+    order_items = OrderItem.objects.filter(order=order).select_related("product")
+    for item in order_items:
+        filters = {
+            "cart": user_cart,
+            "product": item.product,
+            "size": item.size,
+            "color": item.color,
+        }
+        deleted, _ = CartItem.objects.filter(**filters).delete()
+        deleted_count += deleted
+
+    logger.info(
+        "Removed %d paid cart item(s) for user %s after payment ref=%s",
+        deleted_count,
+        user.email,
+        reference,
+    )
+
+    if not CartItem.objects.filter(cart=user_cart).exists():
+        user_cart.delete()
+        logger.info("Deleted empty cart for user %s after payment ref=%s", user.email, reference)
 
 
 # ─────────────────────────────────────────────────────────────
@@ -306,7 +337,17 @@ class CreateOrderView(APIView):
         cart_items = CartItem.objects.filter(
             id__in=data["cart_items"],
             cart__user=request.user
-        )
+        ).select_related("product", "product__vendor", "product__vendor__vendor_profile")
+
+        selected_vendor_id = data.get("selected_vendor_id")
+        if selected_vendor_id:
+            selected_vendor_user_id = (
+                Vendor.objects
+                .filter(id=selected_vendor_id)
+                .values_list("user_id", flat=True)
+                .first()
+            )
+            cart_items = cart_items.filter(product__vendor_id=selected_vendor_user_id)
 
         if not cart_items.exists():
             return Response({"error": "No cart items found."}, status=status.HTTP_400_BAD_REQUEST)
@@ -321,6 +362,22 @@ class CreateOrderView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        selected_vendor_profiles = self._get_cart_vendor_profiles(cart_items)
+        if len(selected_vendor_profiles) > 1:
+            return Response(
+                {
+                    "error": "Orders can only contain items from one vendor. Please select one vendor's items and checkout again.",
+                    "error_details": {
+                        "multiple_vendors_found": [
+                            {"vendor_id": vendor.id, "vendor_name": vendor.business_name}
+                            for vendor in selected_vendor_profiles
+                        ],
+                        "suggestion": "Split your cart into separate orders by vendor.",
+                    },
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         validation_error = self._validate_cart_categories(cart_items)
         if validation_error:
             return Response({"error": validation_error}, status=status.HTTP_400_BAD_REQUEST)
@@ -329,13 +386,17 @@ class CreateOrderView(APIView):
         vendor_is_nearby = data.get("vendor_is_nearby", False)
 
         # ✅ CRITICAL: Compute all financials from DB — never trust client-sent values
-        product_items = cart_items.filter(product__isnull=False).select_related("product")
+        product_items = cart_items.filter(product__isnull=False)
 
         subtotal = sum(
-            item.product.price * item.quantity
+            self._get_product_order_price(item.product) * item.quantity
             for item in product_items
         )
-        shipping_fee = Decimal("0.00") if vendor_is_nearby else Decimal("500.00")  # adjust to your flat rate
+        shipping_fee = (
+            Decimal("0.00")
+            if vendor_is_nearby
+            else calculate_shipping_fee(len(selected_vendor_profiles), product_items)
+        )
         tax = Decimal("0.00")  # adjust to your tax rate/logic
         takeaway = sum(
             (item.product.takeaway_fee or Decimal("0.00")) * item.quantity
@@ -370,7 +431,9 @@ class CreateOrderView(APIView):
                     if not cart_item.product:
                         continue
 
-                    vendor_instance = Vendor.objects.filter(user=cart_item.product.vendor).first()
+                    vendor_instance = getattr(cart_item.product.vendor, "vendor_profile", None)
+                    if not vendor_instance:
+                        vendor_instance = Vendor.objects.filter(user=cart_item.product.vendor).first()
                     if not vendor_instance:
                         return Response(
                             {"error": f"No vendor profile for {cart_item.product.vendor.email}"},
@@ -380,7 +443,7 @@ class CreateOrderView(APIView):
                         order=order,
                         product=cart_item.product,
                         quantity=cart_item.quantity,
-                        price=cart_item.product.price,  # ✅ price from DB, not cart snapshot
+                        price=self._get_product_order_price(cart_item.product),
                         vendor=vendor_instance,
                         color=cart_item.color,
                         size=cart_item.size,
@@ -400,6 +463,26 @@ class CreateOrderView(APIView):
         except Exception:
             logger.exception("Error creating order")
             return Response({"error": "An error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @staticmethod
+    def _get_product_order_price(product):
+        promotion_price = getattr(product, "promotion_price", None)
+        if promotion_price and promotion_price > Decimal("0.00") and promotion_price < product.price:
+            return promotion_price
+        return product.price
+
+    @staticmethod
+    def _get_cart_vendor_profiles(cart_items):
+        vendors_by_id = {}
+        for item in cart_items:
+            if not item.product:
+                continue
+            vendor = getattr(item.product.vendor, "vendor_profile", None)
+            if not vendor:
+                vendor = Vendor.objects.filter(user=item.product.vendor).first()
+            if vendor:
+                vendors_by_id[vendor.id] = vendor
+        return list(vendors_by_id.values())
 
     @staticmethod
     def _validate_cart_categories(cart_items):
@@ -597,6 +680,14 @@ class PaystackPaymentVerifyView(APIView):
 
         # ── Already verified — return early ───────────────────────────────────
         if txn.status == "COMPLETED":
+            try:
+                _remove_order_items_from_user_cart(request.user, txn.order, reference)
+            except Exception:
+                logger.exception(
+                    "Failed to clear cart for user %s after already-verified payment ref=%s",
+                    request.user.email,
+                    reference,
+                )
             return Response(
                 PaystackVerifyResponseSerializer({
                     "status": "success",
@@ -713,23 +804,9 @@ class PaystackPaymentVerifyView(APIView):
                     lambda o=order, v=first_vendor: _safe_call(_dispatch_delivery_opportunities, o, v)
                 )
 
-            # 7. Clear the user's cart items so paid products don't reappear.
+            # 7. Remove only the paid items from the user's cart.
             try:
-                user_cart = Cart.objects.filter(user=request.user).first()
-                if user_cart:
-                    deleted_count, _ = CartItem.objects.filter(cart=user_cart).delete()
-                    logger.info(
-                        "Cleared %d cart item(s) for user %s after payment ref=%s",
-                        deleted_count,
-                        request.user.email,
-                        reference,
-                    )
-                else:
-                    logger.warning(
-                        "No cart found for user %s after payment ref=%s",
-                        request.user.email,
-                        reference,
-                    )
+                _remove_order_items_from_user_cart(request.user, order, reference)
             except Exception:
                 logger.exception(
                     "Failed to clear cart for user %s after payment ref=%s",
@@ -1605,13 +1682,7 @@ class WalletPaymentView(APIView):
 
             # ── Clear cart ────────────────────────────────────────────────────
             try:
-                user_cart = Cart.objects.filter(user=request.user).first()
-                if user_cart:
-                    deleted_count, _ = CartItem.objects.filter(cart=user_cart).delete()
-                    logger.info(
-                        "Cleared %d cart item(s) for user %s after wallet payment ref=%s",
-                        deleted_count, request.user.email, wallet_ref,
-                    )
+                _remove_order_items_from_user_cart(request.user, order, wallet_ref)
             except Exception:
                 logger.exception(
                     "Failed to clear cart for user %s after wallet payment ref=%s",
