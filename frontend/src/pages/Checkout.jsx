@@ -1142,8 +1142,9 @@ const Checkout = () => {
                           Checking out from
                         </p>
                         <p className="text-sm font-semibold text-gray-900 truncate">
-                          {vendorGroups.find((group) => group.key === activeVendorKey)
-                            ?.vendorName || "Selected vendor"}
+                          {vendorGroups.find(
+                            (group) => group.key === activeVendorKey,
+                          )?.vendorName || "Selected vendor"}
                         </p>
                       </div>
                       <button
@@ -1213,7 +1214,7 @@ const Checkout = () => {
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Tax</span>
+                    <span className="text-gray-600">Service Charge</span>
                     <span className="font-medium text-gray-900">
                       {formatCurrency(selectedCartSummary.tax)}
                     </span>
