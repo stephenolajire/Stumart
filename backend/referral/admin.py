@@ -31,7 +31,6 @@ class ReferralAdmin(admin.ModelAdmin):
     ]
     
     readonly_fields = [
-        'referral_code',
         'total_referrals',
         'total_earnings',
         'lifetime_referrals',
@@ -87,22 +86,22 @@ class ReferralAdmin(admin.ModelAdmin):
         amount = obj.total_earnings
         if amount > 0:
             return format_html(
-                '<strong style="color: green;">₦{:,.2f}</strong>',
-                amount
+                '<strong style="color: green;">{}</strong>',
+                f'₦{amount:,.2f}'
             )
-        return format_html('<span style="color: gray;">₦0.00</span>')
+        return format_html('<span style="color: gray;">{}</span>', '₦0.00')
     current_earnings_display.short_description = 'Current Earnings'
     current_earnings_display.admin_order_field = 'total_earnings'
     
     def lifetime_earnings_display(self, obj):
         """Display lifetime earnings"""
-        return format_html('₦{:,.2f}', obj.lifetime_earnings)
+        return format_html('{}', f'₦{obj.lifetime_earnings:,.2f}')
     lifetime_earnings_display.short_description = 'Lifetime Earnings'
     lifetime_earnings_display.admin_order_field = 'lifetime_earnings'
     
     def total_paid_out_display(self, obj):
         """Display total paid out"""
-        return format_html('₦{:,.2f}', obj.total_paid_out)
+        return format_html('{}', f'₦{obj.total_paid_out:,.2f}')
     total_paid_out_display.short_description = 'Total Paid'
     total_paid_out_display.admin_order_field = 'total_paid_out'
     
@@ -110,8 +109,8 @@ class ReferralAdmin(admin.ModelAdmin):
         """Display last payout date and amount"""
         if obj.last_payout_date and obj.last_payout_amount:
             return format_html(
-                '₦{:,.2f}<br><small>{}</small>',
-                obj.last_payout_amount,
+                '{}<br><small>{}</small>',
+                f'₦{obj.last_payout_amount:,.2f}',
                 obj.last_payout_date.strftime('%b %d, %Y')
             )
         return '-'
@@ -272,7 +271,7 @@ class PayoutHistoryAdmin(admin.ModelAdmin):
     
     def amount_display(self, obj):
         """Display amount with formatting"""
-        return format_html('<strong>₦{:,.2f}</strong>', obj.amount)
+        return format_html('<strong>{}</strong>', f'₦{obj.amount:,.2f}')
     amount_display.short_description = 'Amount'
     amount_display.admin_order_field = 'amount'
     
