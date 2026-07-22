@@ -2,9 +2,8 @@ import React, { useState, useContext, useMemo } from "react";
 // import Navigation from "../components/nav/Navigation";
 import Footer from "../components/nav/Footer";
 import { Outlet } from "react-router-dom";
-// import { FaPlayCircle, FaTimes, FaComments } from "react-icons/fa";
-// import Chatbot from "../chatbot/Chatbot";
-// import styles from "../css/Layout.module.css";
+import { FaComments } from "react-icons/fa";
+import Chatbot from "../chatbot/Chatbot";
 import { GlobalContext } from "../constant/GlobalContext";
 import Navigation from "../pages/components/DesktopNav";
 import Sidebar from "../pages/components/Sidebar";
@@ -32,9 +31,12 @@ const Layout = () => {
           </div>
         </div>
       </div>
-      <div className="flex-1 lg:ml-[250px] ">
+      <div className="flex-1 lg:ml-[250px]">
         <Footer />
       </div>
+
+      {/* Chatbot floating widget */}
+      <Chatbot />
     </div>
   );
 };

@@ -179,11 +179,11 @@ const SpinWheelButton = ({ onOpen }) => {
   return (
     <button
       onClick={onOpen}
-      className="fixed bottom-8 right-6 z-40 flex flex-col items-center justify-center gap-1 rounded-full text-white font-semibold transition-all active:scale-95"
+      className="fixed bottom-18 right-3.5 lg:right-6 z-40 flex flex-col items-center justify-center gap-1 rounded-full text-white font-semibold transition-all active:scale-95"
       title="Spin the wheel to win free gifts!"
       style={{
-        width: 64,
-        height: 64,
+        width: 56,
+        height: 56,
         background: "linear-gradient(135deg, #FF6B35 0%, #FF9900 100%)",
         boxShadow: "0 6px 24px rgba(255,107,0,0.5)",
         animation: "float-btn 3s ease-in-out infinite",

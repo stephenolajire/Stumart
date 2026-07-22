@@ -51,7 +51,7 @@ const Chatbot = () => {
     <>
       {/* Chat Toggle Button */}
       <button
-        className="fixed bottom-6 right-3.5 lg:right-6 w-14 h-14 bg-yellow-500 text-white rounded-full shadow-lg hover:bg-yellow-600 transition-colors z-50 flex items-center justify-center"
+        className="fixed bottom-4 right-3.5 lg:right-6 w-14 h-14 bg-orange-500 text-white rounded-full shadow-lg hover:bg-yellow-600 transition-colors z-50 flex items-center justify-center"
         onClick={() => setIsOpen(!isOpen)}
       >
         {isOpen ? <FaTimes size={24} /> : <FaComment size={24} />}
@@ -70,7 +70,7 @@ const Chatbot = () => {
             {messages.map((msg, index) => (
               <div
                 key={index}
-                className={`max-w-xs p-3 rounded-lg break-words ${
+                className={`w-full p-3 rounded-lg break-words ${
                   msg.sender === "bot"
                     ? "bg-gray-100 text-gray-800 self-start"
                     : "bg-yellow-500 text-white self-end ml-auto"
